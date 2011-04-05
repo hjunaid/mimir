@@ -1,0 +1,13 @@
+#TeXlipse project settings
+#Mon Apr 04 14:58:26 BST 2011
+builderNum=2
+outputDir=
+makeIndSty=
+bibrefDir=
+outputFormat=pdf
+tempDir=
+mainTexFile=mimir-guide.tex
+outputFile=mimir-guide.pdf
+langSpell=en
+markDer=false
+srcDir=
