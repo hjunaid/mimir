@@ -8,6 +8,11 @@ class MimirTagLib {
   
   static namespace = "mimir"
 
+  /**
+   * Pointer to the Grails plugin manager.
+   */
+  def pluginManager
+  
   static NumberFormat percentNumberInstance = NumberFormat.getPercentInstance(Locale.US)
 
   static{
@@ -150,5 +155,12 @@ class MimirTagLib {
     out << "<div id=\"${attrs.id}\" style=\"display:none\">"  
     out << body()
     out << "</div>"
+  }
+  
+  /**
+   * Prints out the version of the M&iacute;mir plugin 
+   */
+  def version = {
+    out << pluginManager.getGrailsPlugin("mimir-web").version
   }
 }

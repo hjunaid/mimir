@@ -46,12 +46,5 @@
   </table>
   <div class="bluebar" id="resultsbar"></div>
   <div id="resultstable"></div>
-
-  <div align="center">
-    <p>GATE Unified Search, powered by M&iacute;mir
-    ${grailsApplication.metadata.'app.version'}.
-    &copy; <a href="http://gate.ac.uk">GATE</a> and
-    OWLIM &copy; <a href="http://www.ontotext.com">Ontotext</a>, 2010.</p>
-  </div>
 </body>
 </html>
