@@ -1,0 +1,77 @@
+<project name="mimir-client" default="publish" basedir=".">
+  <property name="app.name" value="mimir-client" />
+  <property name="app.title" value="Mimir Client" />
+  
+  <!-- Common Properties -->
+  
+  <property environment="env"/>
+  <property name="core-home" value="../mimir-core"/>
+  <property file="${core-home}/build.properties" />
+  
+  <path id="libs">
+    <fileset dir="${core-home}/lib" includes="**/*.jar" />
+    <fileset dir="${core-home}" includes="mimir-core-*.jar" />
+  </path>
+  
+  <property name="classes.dir" location="classes" />
+  <property name="src.dir" location="src" />
+  <property name="doc.dir" location="doc" />
+
+  <property name="mimir.grails.plugin" location="../grails-plugin-mimir" />
+  
+  <property name="jar.file" location="${app.name}-${app.version}.jar" />
+  <path id="compile.classpath">
+    <path refid="libs" />
+  </path>
+
+  <target name="clean">
+    <delete dir="${classes.dir}"/>
+    <delete file="${jar.file}"/>
+  </target>
+  
+  <target name="compile">
+    <mkdir dir="${classes.dir}"/>
+    <javac destdir="${classes.dir}"
+           srcdir="${src.dir}"
+           debug="true"
+           target="1.6"
+           source="1.6"
+           classpathref="compile.classpath" />
+  </target>
+  
+  <target name="jar" depends="clean, compile">
+    <jar file="${jar.file}" basedir="${classes.dir}" update="false"/>      
+  </target>  
+  
+  <target name="distro" depends="jar, javadoc" />
+  
+  <!-- Docs -->
+  <target name="javadoc">
+    <javadoc access="protected"
+             destdir="${doc.dir}/javadoc"
+             classpathref="compile.classpath"
+             Encoding="UTF-8"
+             Use="yes"
+             Windowtitle="${app.title} (${app.version}) JavaDoc"
+             docencoding="UTF-8"
+             charset="UTF-8"
+             source="1.6"
+             useexternalfile="yes"
+             breakiterator="true">
+      <fileset dir="${src.dir}" includes="**/*.java"/>
+      <link href="http://java.sun.com/javase/6/docs/api/"/>
+      <link href="http://hudson.gate.ac.uk/job/GATE-Nightly/javadoc/"/>
+    </javadoc>
+    <zip destfile="${app.name}-${app.version}-javadocs.zip">
+      <zipfileset dir="${doc.dir}/javadoc"
+                  prefix="${app.name}-${app.version}-javadocs" />
+    </zip>
+    <delete dir="${doc.dir}/javadoc" />
+  </target>
+
+  <target name="publish" depends="jar">
+    <copy todir="${mimir.grails.plugin}/lib" flatten="true">
+      <fileset file="${jar.file}" />
+    </copy>
+  </target>
+</project>
