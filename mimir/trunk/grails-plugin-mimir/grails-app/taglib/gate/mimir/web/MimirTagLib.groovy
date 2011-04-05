@@ -144,7 +144,7 @@ class MimirTagLib {
   /**
    * Creates a div that can be hidden/revealed by a revealAnchor.
    * Required attributes:
-   * id: the same ID as used for the corresponsind reveal anchor.
+   * id: the same ID as used for the corresponding reveal anchor.
    */
   def revealBlock = { attrs, body ->
     out << "<div id=\"${attrs.id}\" style=\"display:none\">"  
