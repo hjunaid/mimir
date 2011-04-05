@@ -1,0 +1,33 @@
+package gate.mimir.search.query;
+
+
+import gate.mimir.search.QueryEngine;
+
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.LinkedList;
+
+
+/**
+ * Filtering query that matches hits from the target query that
+ * contain a hit of the filter query, i.e. any
+ * X that has a Y within it.
+ */
+public class ContainsQuery extends AbstractOverlapQuery {
+
+  private static final long serialVersionUID = -3152202241528149456L;
+
+  public ContainsQuery(QueryNode outerQuery, QueryNode innerQuery) {
+    super(innerQuery,  outerQuery);
+  }
+
+  public QueryExecutor getQueryExecutor(QueryEngine engine) throws IOException {
+    return new AbstractOverlapQuery.OverlapQueryExecutor(this, engine, 
+            SubQuery.OUTER);
+  }
+  
+  public String toString(){
+    return "CONTAINS (\nOUTER:" + outerQuery.toString() + ",\nINNER:" + 
+        innerQuery.toString() +"\n)";
+  }
+}
