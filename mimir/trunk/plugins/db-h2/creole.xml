@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- This plugin does not provide any GATE resources, but uses the CREOLE 
+mechanism to supply a set of jar files to be added to the classpath of the caller.-->
+<CREOLE-DIRECTORY>
+  <JAR SCAN="true">mimir-plugin-db-h2-3.2.0.jar</JAR>
+</CREOLE-DIRECTORY>

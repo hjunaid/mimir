@@ -1,0 +1,4 @@
+In order to run, the ordi plugin requires BigOWLIM 3.3 from Ontotext.  You will
+need to obtain a properly licenced copy of this library from
+http://www.ontotext.com/owlim/ and place owlim-big-3.3.jar in this directory in
+order to be able to use the DefaultSemanticAnnotationHelper.
