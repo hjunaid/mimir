@@ -1,0 +1,57 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% mimir.tex
+%
+% This document describes the \Mimir\ indexing and search framework.
+%
+% $Id$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[10pt, a4paper, twoside]{report}
+\input{preamble}
+\newcommand{\Mimir}{M\'{i}mir}
+\begin{document}
+\title{{\Huge {\textsc{\Mimir}}}\\
+A Multi-paradigm Information Management\\
+Index and Repository\\
+{\small version 3.2.0}
+}
+
+\thispagestyle{empty}
+\maketitle
+
+
+\clearpage
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\thispagestyle{empty}
+\cleardoublepage
+
+\pagestyle{fancy}
+\fancyhead{} %clear all headings
+\fancyhead[RO,LE]{\Mimir}
+\fancyhead[LO, RE]{A User's Guide}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% main %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Introduction}\label{sec:intro}
+\input{introduction}
+%\chapter{Changes}\label{sec:changes}
+%\input{changes}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Installing and Managing \Mimir}\label{sec:admin}
+\input{admin}
+\chapter{Indexing Documents with \Mimir}\label{sec:indexing}
+\input{indexing}
+\chapter{Searching \Mimir\ Indexes}\label{sec:searching}
+\input{searching}
+\chapter{Extending and Customising \Mimir}\label{sec:extend}
+\input{extending}
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

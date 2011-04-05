@@ -1,0 +1,26 @@
+/@     1  @/import gate.creole.ANNIEConstants
+/@     2  @/import gate.mimir.index.OriginalMarkupMetadataHelper
+/@     3  @/import gate.mimir.db.DBSemanticAnnotationHelper as DefaultHelper
+/@     4  @/
+/@     5  @/tokenASName = "mimir"
+/@     6  @/tokenAnnotationType = ANNIEConstants.TOKEN_ANNOTATION_TYPE
+/@     7  @/tokenFeatures = {
+/@     8  @/  string()
+/@     9  @/  category()
+/@    10  @/  root()
+/@    11  @/}
+/@    12  @/
+/@    13  @/semanticASName = "mimir"
+/@    14  @/semanticAnnotations = {
+/@    15  @/  index {
+/@    16  @/    Sentence(type:DefaultHelper)
+/@    17  @/  }
+/@    18  @/  index {
+/@    19  @/    Person(type:DefaultHelper, nominalFeatures:["gender"])
+/@    20  @/    Location(type:DefaultHelper, nominalFeatures:["locType"])
+/@    21  @/    Organization(type:DefaultHelper, nominalFeatures:["orgType"])
+/@    22  @/    Date(type:DefaultHelper, integerFeatures:["normalized"])
+/@    23  @/  }
+/@    24  @/}
+/@    25  @/documentRenderer = new OriginalMarkupMetadataHelper()
+/@    26  @/documentMetadataHelpers = [documentRenderer]
