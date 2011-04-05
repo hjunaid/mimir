@@ -1,0 +1,35 @@
+<project name="mimir" default="all">
+  <property file="build.properties" />
+
+  <property name="mimir-core.dir" location="mimir-core" />
+  <property name="mimir-client.dir" location="mimir-client" />
+  <property name="plugins.dir" location="plugins" />
+  <property name="grails-plugin.dir" location="grails-plugin-mimir" />
+
+  <!-- Location of your grails binary - override this in build.properties if
+  grails is not on your path -->
+  <property name="grails.bin" value="grails" />
+
+  <target name="core">
+    <ant dir="${mimir-core.dir}" target="publish" />
+    <ant dir="${mimir-client.dir}" target="publish" />
+  </target>
+
+  <target name="plugins">
+    <ant dir="${plugins.dir}/db-h2" target="jar" />
+    <ant dir="${plugins.dir}/ordi" target="jar" />
+    <ant dir="${plugins.dir}/measurements" target="jar" />
+  </target>
+
+  <target name="grails-plugin">
+    <exec executable="${grails.bin}" dir="${grails-plugin.dir}">
+      <arg value="compile" />
+    </exec>
+
+    <exec executable="${grails.bin}" dir="${grails-plugin.dir}">
+      <arg value="compile-gwt-modules" />
+    </exec>
+  </target>
+
+  <target name="all" depends="core, plugins, grails-plugin" />
+</project>
