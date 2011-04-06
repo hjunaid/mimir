@@ -5,6 +5,17 @@ import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONException;
 import com.google.gwt.json.client.JSONObject;
@@ -36,6 +47,7 @@ import com.google.gwt.user.client.ui.KeyboardListener;
 import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
+import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -76,7 +88,14 @@ public class Application implements EntryPoint, HistoryListener {
 
   private GusServiceAsync gusService;
 
+  /**
+   * TextArea used for formulating the query.
+   */
   private TextArea searchBox;
+  /**
+   * The SuggestBox wrapping the search box
+   */
+  private SuggestBox suggestBox;
   private StatisticsLabel statisticsLabel;
   private FlexTable resultsTable;
   private HorizontalPanel pageListPanel;
@@ -97,29 +116,94 @@ public class Application implements EntryPoint, HistoryListener {
     searchBox = new TextArea();
     searchBox.setCharacterWidth(60);
     searchBox.setVisibleLines(5);
-    RootPanel.get("searchbox").add(searchBox);
     //wrap the search box into a suggest box
-    SuggestBox suggestBox = new SuggestBox(new MimirOracle(), searchBox);
-    suggestBox.addEventHandler(new SuggestionHandler() {
-      public void onSuggestionSelected(SuggestionEvent event) {
-        suggestionSelected = true;
-      }
-    });
+    suggestBox = new SuggestBox(new MimirOracle(), searchBox);
+    suggestBox.setTitle("Press Escape to hide suggestions list; press Ctrl+Space to show it again.");
     RootPanel.get("searchbox").add(suggestBox);
-    
-    searchBox.addKeyboardListener(new KeyboardListenerAdapter() {
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
-        super.onKeyUp(sender, keyCode, modifiers);
-        if (keyCode == (char) KeyboardListener.KEY_ENTER && 
-           (modifiers & KeyboardListener.MODIFIER_CTRL) != 0) {
-            //CTRL-ENTER -> fire the query
-            processQuery(searchBox.getText());      
+
+    suggestBox.addKeyUpHandler(new KeyUpHandler() {
+      @Override
+      public void onKeyUp(KeyUpEvent event) {
+        int keyCode = event.getNativeKeyCode();
+        if(keyCode == KeyCodes.KEY_ENTER && event.isControlKeyDown()){
+          // CTRL-ENTER -> fire the query
+          processQuery(searchBox.getText());
+        } else if(keyCode == KeyCodes.KEY_ESCAPE) {
+          ((SuggestBox.DefaultSuggestionDisplay)
+                  suggestBox.getSuggestionDisplay()).hideSuggestions();
+        } else if(keyCode == ' ' && event.isControlKeyDown()) {
+          // CTRL-Space: show suggestions
+          suggestBox.showSuggestionList();
+        }
+        if(((SuggestBox.DefaultSuggestionDisplay)
+                suggestBox.getSuggestionDisplay()).isSuggestionListShowing()) {
+          // gobble up navigation keys
+          if(keyCode == KeyCodes.KEY_UP ||
+             keyCode == KeyCodes.KEY_DOWN ||
+             keyCode == KeyCodes.KEY_ENTER) {
+            event.stopPropagation();
+            event.preventDefault();
+          }
         }
       }
     });
     
-    Button searchButton = new Button("Search", new ClickListener() {
-      public void onClick(Widget sender) {
+    suggestBox.addKeyDownHandler(new KeyDownHandler() {
+      @Override
+      public void onKeyDown(KeyDownEvent event) {
+        int keyCode = event.getNativeKeyCode();
+        if(((SuggestBox.DefaultSuggestionDisplay)
+                suggestBox.getSuggestionDisplay()).isSuggestionListShowing()) {
+          // gobble up navigation keys
+          if(keyCode == KeyCodes.KEY_UP ||
+             keyCode == KeyCodes.KEY_DOWN ||
+             keyCode == KeyCodes.KEY_ENTER) {
+            event.stopPropagation();
+            event.preventDefault();
+          }
+        }
+      }
+    });
+    
+    suggestBox.addKeyPressHandler(new KeyPressHandler() {
+      @Override
+      public void onKeyPress(KeyPressEvent event) {
+        int keyCode = event.getNativeEvent().getKeyCode();
+        if(((SuggestBox.DefaultSuggestionDisplay)
+                suggestBox.getSuggestionDisplay()).isSuggestionListShowing()) {
+          // gobble up navigation keys
+          if(keyCode == KeyCodes.KEY_UP ||
+             keyCode == KeyCodes.KEY_DOWN ||
+             keyCode == KeyCodes.KEY_ENTER) {
+            event.stopPropagation();
+            event.preventDefault();
+          }
+        }
+      }
+    });
+//    suggestBox.addKeyPressHandler(new KeyPressHandler() {
+//      @Override
+//      public void onKeyPress(KeyPressEvent event) {
+//        if(event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE) {
+//          ((SuggestBox.DefaultSuggestionDisplay)
+//                  suggestBox.getSuggestionDisplay()).hideSuggestions();
+//        } else if(event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
+//          if(event.isControlKeyDown()) {
+//            processQuery(searchBox.getText());
+//          } else {
+//            // gobble up the event
+//            event.stopPropagation();
+//          }
+//        } else if(event.getCharCode() == ' ' && event.isControlKeyDown()) {
+//          // CTRL-Space: show suggestions
+//          suggestBox.showSuggestionList();
+//        }
+//      }
+//    });
+    
+    Button searchButton = new Button("Search", new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent event) {
         processQuery(searchBox.getText());
       }
     });
@@ -584,6 +668,8 @@ public class Application implements EntryPoint, HistoryListener {
         boolean nonSpaceSeen = false;
         int charIdx = startIndex + 1;
         for(; charIdx < endIndex; charIdx++){
+          // this method is deprecated, but the replacement (isWhitespace())
+          // is not implemented in GWT
           if(Character.isSpace(query.charAt(charIdx))){
             if(nonSpaceSeen){
               //we found some space, after some actual content was seen
@@ -609,6 +695,7 @@ public class Application implements EntryPoint, HistoryListener {
               String suggestion = "{" + annotationsConfig[annTypeId][0];
               suggestions.add(new MultiWordSuggestion(
                       before + suggestion + after, suggestion));
+//              Window.alert("Suggestion is: \"" + before + suggestion + after + "\"!");
             }
           }
         }else{
@@ -653,10 +740,10 @@ public class Application implements EntryPoint, HistoryListener {
           if(inQuote){
             //suggest nothing
           }else{
-            String before = query.substring(0, lastSpace +1);
+            String before = query.substring(0, lastSpace + 1);
             String after = query.substring(endIndex);
             String middle = lastSpace < endIndex ? 
-                    query.substring(lastSpace+1, endIndex) : "";
+                    query.substring(lastSpace + 1, endIndex) : "";
             //we are still typing the feature name or operator
             //words appear in this sequence: <feature> <operator> <value>
             if(wordCount % 3 == 0){
