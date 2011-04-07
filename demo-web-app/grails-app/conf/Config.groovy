@@ -3,6 +3,9 @@
 
 grails.config.locations = [ "classpath:mimir-app-config.groovy",
                             "file:mimir-config.groovy"]
+if(System.properties["mimir.config"]) {
+  grails.config.locations << new File(System.properties["mimir.config"]).toURI().toURL()
+}
 
 // if(System.properties["${appName}.config.location"]) {
 //    grails.config.locations << "file:" + System.properties["${appName}.config.location"]
