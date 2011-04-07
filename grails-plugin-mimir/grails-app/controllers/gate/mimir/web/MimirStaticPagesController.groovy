@@ -7,5 +7,6 @@ package gate.mimir.web
 class MimirStaticPagesController {
   def index = {}
   
+  def admin = {}
   def error = {}
 }

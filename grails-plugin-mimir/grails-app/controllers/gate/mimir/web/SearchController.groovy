@@ -75,7 +75,18 @@ class SearchController {
   /**
    * By default just run the help action.
    */
-  static defaultAction = "help"
+  static defaultAction = "info"
+
+  
+  def info = {
+    def indexInstance = Index.findByIndexId(params.indexId)
+    if(!indexInstance) {
+      flash.message = "Index not found with index id ${params.indexId}"
+      redirect(uri:'/')
+      return
+    }
+    [indexInstance:indexInstance]
+  }
 
   /**
    * Default action: prints a short message explaining how to use the 

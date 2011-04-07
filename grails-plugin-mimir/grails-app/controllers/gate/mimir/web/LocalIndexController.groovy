@@ -176,7 +176,7 @@ class LocalIndexController {
         localIndexService.createIndex(localIndexInstance,
             indexTemplateInstance)
         flash.message = "LocalIndex \"${localIndexInstance.name}\" created"
-        redirect(controller:"indexManagement", action:"admin",
+        redirect(controller:"indexAdmin", action:"admin",
             params:[indexId:localIndexInstance.indexId])
         return
       }catch (Exception e) {
@@ -222,7 +222,7 @@ class LocalIndexController {
       localIndexInstance.indexId = UUID.randomUUID().toString()
       if(localIndexInstance.save()) {
         flash.message = "Local Index \"${localIndexInstance.name}\" imported"
-        redirect(controller:"indexManagement", action:"admin", 
+        redirect(controller:"indexAdmin", action:"admin", 
                  params:[indexId:localIndexInstance.indexId])
       }
       else {

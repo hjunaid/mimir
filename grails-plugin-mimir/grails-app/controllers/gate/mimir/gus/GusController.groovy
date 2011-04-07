@@ -13,13 +13,13 @@ class GusController {
   def searchService
 
   def index = {
-    redirect(action:"search", params:params)
+    redirect(action:"gus", params:params)
   }
 
   /**
    * Search action - nothing to do, all the logic is in the GSP/GWT.
    */
-  def search = {
+  def gus = {
     Index index = Index.findByIndexId(params.indexId)
     [indexId:params.indexId, uriIsLink:index?.uriIsExternalLink]
   }
@@ -28,7 +28,7 @@ class GusController {
    * Render the content of the given document.  Most of the magic happens in
    * the documentContent tag of the GusTagLib.
    */
-  def document = {
+  def gusDocument = {
     QueryRunner runner = searchService.getQueryRunner(params.queryId)
     if(runner){
       Index index = Index.findByIndexId(params.indexId)
@@ -50,7 +50,7 @@ class GusController {
   /**
    * Action that forwards to the real GWT RPC controller.
    */
-  def rpc = {
+  def gusRpc = {
     forward(controller:'gwt', action:'index', params:[module:'gate.mimir.gus.Application'])
   }
 }

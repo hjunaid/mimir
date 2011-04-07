@@ -81,7 +81,7 @@ public class MimirConnector {
       // add a slash if necessary
       indexURLString.append('/');
     }
-    indexURLString.append("buildIndex/indexUrl");
+    indexURLString.append("manage/indexUrl");
     StringBuilder postUrlBuilder = new StringBuilder();
     webUtils.getText(postUrlBuilder, indexURLString.toString());
 

@@ -74,7 +74,7 @@
 			<td valign="top" style="text-align: left;" class="value">
 			<ul>
 				<g:each var="i" in="${federatedIndexInstance.indexes}">
-					<li><g:link controller="indexManagement" action="admin"
+					<li><g:link controller="indexAdmin" action="admin"
 						params="[indexId:i.indexId]">
 						${i?.getName()}
 					</g:link></li>

@@ -43,7 +43,7 @@
 				</td>
 			</tr>
 			<tr>
-			  <td colspan="2">This should be the "Remote URL" from the target index's management page, not the "Index URL".</td>
+			  <td colspan="2">This should be the "Index URL" from the target index's management page.</td>
 			</tr>
 
       <tr class="prop">

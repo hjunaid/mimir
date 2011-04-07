@@ -114,7 +114,11 @@ class LocalIndexService {
   }
   
   public double closingProgress(LocalIndex index) {
-    return findIndexer(index).getClosingProgress()
+    try{
+      return findIndexer(index).getClosingProgress()
+    } catch (IllegalStateException e) {
+      return 1.0d
+    }
   }
   
   public synchronized QueryRunner getQueryRunner(LocalIndex index, String query) {

@@ -67,7 +67,7 @@ class Index implements Serializable {
   
   /**
    * Obtain the progress of the index closing operation if one is currently
-   * running, or 0 otherwise.
+   * running, or 1 otherwise.
    */
   double closingProgress() {
     throw new UnsupportedOperationException()
