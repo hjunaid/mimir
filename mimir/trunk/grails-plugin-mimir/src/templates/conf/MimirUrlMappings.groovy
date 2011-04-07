@@ -8,51 +8,46 @@
  * standard mappings ("/mimir/$indexId", "/mimir/remote/..." etc.).
  */
 class MimirUrlMappings {
-    static mappings = {
-      // static view mappings
-      "/"(controller:"mimirStaticPages", action:"index")
-      "500"(controller:"mimirStaticPages", action:"error")
-      
-      // these constraints are used in several mappings below
-      def isNotBin = {
-        constraints {
-          action(matches:/.*(?<!Bin)$/)
-        }
-      }
-      
-      def isBin = {
-        constraints {
-          action(matches:/.*Bin$/)
-        }
-      }
-  
-      // public actions - non-Bin search API, GUS and buildIndex, plus
-      // index info
-      
-      "/$indexId/search/$action?"(controller:"search", parseRequest:true, isNotBin)
+  static mappings = {
+    // static view mappings
+    "/"(controller:"mimirStaticPages", action:"index")
+    "500"(controller:"mimirStaticPages", action:"error")
 
-      "/$indexId/buildIndex/$action"(controller:"buildIndex", isNotBin)
+    // Searching
+    //
+    // action names that do not start "gus" are mapped to the search
+    // controller (the XML search service and the back-end used by
+    // RemoteQueryRunner)
+    "/$indexId/search/$action?"(controller:"search", parseRequest:true) {
+      constraints { action(matches:/^(?!gus).*$/) }
+    }
 
-      "/$indexId/gus/$action?/$id?"(controller:"gus")
+    // action names that start "gus" are mapped to the GUS demo web UI
+    "/$indexId/search/$action?/$id?"(controller:"gus") {
+      constraints { action(matches:/^gus.*$/) }
+    }
 
-      "/$indexId"(controller:"indexManagement", action:"info")
-      
-      // admin-only actions - CRUD controllers plus index management
-      
-      "/admin/$controller/$action?/$id?"{
-        constraints {
-          controller(inList:["federatedIndex", "localIndex", "remoteIndex",
-                             "indexTemplate"])
-        }
+    // the top-level "index URL" for a given index *must* be mapped to this
+    // action (the plugin assumes this and uses it to generate reverse
+    // mappings).
+    "/$indexId"(controller:"indexManagement", action:"index")
+
+    // Index management actions (adding documents, closing index, etc.)
+    "/$indexId/manage/$action?"(controller:"indexManagement")
+
+    // admin-only actions - CRUD controllers plus index administration
+
+    "/admin"(controller:"mimirStaticPages", action:"admin")
+    "/admin/$controller/$action?/$id?"{
+      constraints {
+        controller(inList:[
+          "federatedIndex",
+          "localIndex",
+          "remoteIndex",
+          "indexTemplate"
+        ])
       }
-      
-      "/admin/$indexId/manage/$action?"(controller:"indexManagement", isNotBin)
-      
-      // Remote protocol actions (essentially anything that ends Bin)
-      "/remote/$indexId/search/$action?"(controller:"search", parseRequest:true, isBin)
-      "/remote/$indexId/buildIndex/$action"(controller:"buildIndex", isBin)
-      "/remote/$indexId/manage/$action?"(controller:"indexManagement", isBin)
-      "/remote/$indexId"(controller:"indexManagement", action:"infoBin")
-      
-	}
+    }
+    "/admin/actions/$indexId/$action?"(controller:"indexAdmin")
+  }
 }

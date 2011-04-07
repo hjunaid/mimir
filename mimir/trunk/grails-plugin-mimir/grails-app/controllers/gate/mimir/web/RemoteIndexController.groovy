@@ -56,7 +56,7 @@ class RemoteIndexController {
       }
       else {
           flash.message = "Remote Index not found with id ${params.id}"
-          redirect("/")
+          redirect(uri:"/")
       }
   }
 
@@ -105,7 +105,7 @@ class RemoteIndexController {
   def create = {
     def remoteIndexInstance = new RemoteIndex()
     remoteIndexInstance.properties = params
-    return ['remoeIndexInstance':remoteIndexInstance]
+    return ['remoteIndexInstance':remoteIndexInstance]
   }
   
   /**
@@ -122,7 +122,7 @@ class RemoteIndexController {
       //make sure the proxy object is created
       remoteIndexService.findProxy(remoteIndexInstance)
       flash.message = "Remote Index \"${remoteIndexInstance.name}\" created"
-      redirect(controller:"indexManagement", action:"admin", 
+      redirect(controller:"indexAdmin", action:"admin", 
         params:[indexId:remoteIndexInstance.indexId])
     }
     else {

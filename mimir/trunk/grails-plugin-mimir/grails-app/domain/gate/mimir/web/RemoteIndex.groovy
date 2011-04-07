@@ -70,7 +70,7 @@ class RemoteIndex extends Index {
   String indexUrl() {
     StringBuilder responseString = new StringBuilder()
     String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) + 
-        "buildIndex/indexUrlBin";
+        "manage/indexUrl";
     try{
       webUtilsManager.currentWebUtils(remoteUrl).getText(responseString, urlStr)
     }catch(IOException e){
@@ -88,7 +88,7 @@ class RemoteIndex extends Index {
    */
   void close() {
     String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) + 
-    "manage/closeBin";
+    "manage/close";
     try{
       webUtilsManager.currentWebUtils(remoteUrl).getVoid(urlStr)
     }catch(IOException e){

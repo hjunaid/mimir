@@ -1,5 +1,6 @@
 package gate.mimir.web;
 
+import gate.mimir.util.WebUtilsManager;
 import gate.mimir.web.Index;
 import gate.mimir.web.RemoteIndex;
 
@@ -24,7 +25,7 @@ class RemoteIndexService {
   public synchronized RemoteIndexProxy findProxy(RemoteIndex index) {
     RemoteIndexProxy p = proxies[index.id]
     if(!p) {
-      p = new RemoteIndexProxy(index)
+      p = new RemoteIndexProxy(index, webUtilsManager)
       proxies[index.id] = p
     }
     return p
@@ -51,9 +52,11 @@ class RemoteIndexProxy implements Runnable {
   
   private static final Logger log = Logger.getLogger("grails.app.service.${RemoteIndexProxy.class.getName()}")
   private static final int DELAY = 10000
+  def webUtilsManager
   
-  public RemoteIndexProxy(RemoteIndex index) {
+  public RemoteIndexProxy(RemoteIndex index, webUtilsManager) {
     this.id = index.id
+    this.webUtilsManager = webUtilsManager
     Thread t = new Thread(this)
     t.setDaemon(true)
     t.start()
@@ -101,7 +104,6 @@ class RemoteIndexProxy implements Runnable {
           "${index.remoteUrl}/manage/closingProgressBin")
     }
     catch(IOException e) {
-      index.state = Index.FAILED
       log.error("Problem communicating with remote index", e)
     }
   }

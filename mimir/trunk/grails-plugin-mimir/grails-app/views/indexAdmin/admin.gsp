@@ -12,7 +12,7 @@
 			<g:if test="${indexInstance.state == Index.CLOSING}">
 				// start regular updates of the progress bar
 				new Ajax.PeriodicalUpdater('closeProgress',
-				'${g.createLink(controller:"indexManagement",
+				'${g.createLink(controller:"indexAdmin",
 				action:"closingProgress",
 				params:[indexId:indexInstance.indexId]).encodeAsJavaScript()}', {
 				frequency: 5
@@ -55,14 +55,6 @@
 							</td>
 						</tr>
 						<tr class="prop">
-							<td valign="top" class="name"
-							title="This is the URL you should specify when creating a remote index in another Mimir server pointing to this index."
-							>Remote URL:</td>
-							<td valign="top" class="value">
-								<mimir:createRemoteIndexUrl indexId="${indexInstance.indexId}" />
-							</td>
-						</tr>
-						<tr class="prop">
 							<td valign="top" class="name">State:</td>
 							<td valign="top" class="value">${indexInstance.state}</td>
 						</tr>
@@ -70,10 +62,10 @@
 						<g:if test="${indexInstance.state == Index.SEARCHING}">
 							<tr class="prop">
 								<td colspan="2">
-									<g:link controller="gus" action="search"
+									<g:link controller="gus" action="gus"
 										params="[indexId:indexInstance.indexId]" title="Search this index">Search this
 										index using the web interface.</g:link><br />
-										<g:link controller="search"
+										<g:link controller="search" action="help"
                     params="[indexId:indexInstance.indexId]" title="Search this index">Search this
                     index using the XML service interface.</g:link>
 								</td>

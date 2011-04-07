@@ -109,7 +109,7 @@ public class Application implements EntryPoint, HistoryListener {
     // initialize the connection with the server
     gusService = (GusServiceAsync) GWT.create(GusService.class);
     ServiceDefTarget endpoint = (ServiceDefTarget) gusService;
-    String rpcUrl = GWT.getHostPageBaseURL() + "rpc";
+    String rpcUrl = GWT.getHostPageBaseURL() + "gusRpc";
     endpoint.setServiceEntryPoint(rpcUrl);
     
     //create the search box
@@ -522,13 +522,13 @@ public class Application implements EntryPoint, HistoryListener {
                 documentURI, "documentWindow"));
         linksPanel.add(new InlineLabel(" ("));
         linksPanel.add(new Anchor("cached", false,
-                "document/" + documentID + "?queryId=" + queryID, "documentWindow"));
+                "gusDocument/" + documentID + "?queryId=" + queryID, "documentWindow"));
         linksPanel.add(new InlineLabel(")"));
         hitGrid.setWidget(0, 0, linksPanel);
       } else {
         // generate one link: cached, with document name as text
         hitGrid.setWidget(0, 0, new Anchor(documentURIText, true,
-                "document/" + documentID + "?queryId=" + queryID, "documentWindow"));
+                "gusDocument/" + documentID + "?queryId=" + queryID, "documentWindow"));
       }
       // second row is the hit text + contexts 
       HTML snippet = new HTML(

@@ -49,19 +49,7 @@ class MimirTagLib {
        (request.scheme == "http" && request.severPort != 80)) {
       out << ":${request.serverPort}"
     }
-    out << g.createLink(controller:"indexManagement", action:"info",
-                        params:[indexId:attrs.indexId])
-  }
-  
-  def createRemoteIndexUrl = { attrs, body ->
-    out << request.scheme
-    out << "://"
-    out << request.serverName
-    if((request.scheme == "https" && request.serverPort != 443) ||
-       (request.scheme == "http" && request.severPort != 80)) {
-      out << ":${request.serverPort}"
-    }
-    out << g.createLink(controller:"indexManagement", action:"infoBin",
+    out << g.createLink(controller:"indexManagement", action:"index",
                         params:[indexId:attrs.indexId])
   }
 
