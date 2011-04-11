@@ -325,30 +325,39 @@ installation the plugin adds a number of files to the host application:
 
 \subsection{URL mappings}
 
-The standard URL mappings for \Mimir\ are rather complex because different
-actions of the same controllers need to be mapped to different places in the
-URI space.  These mappings may be modified, but the protocols used by client
+The standard URL mappings for \Mimir\ adhere to the following conventions:
+\bit
+  \item All administrative actions have URLs that start with {\tt /admin}. This
+  is intended to simplify the job of providing security via an external
+  mechanism, such as the default container-provided security defined by the
+  servlet specification.
+  \item The URLs for all actions referring to a given index have a common prefix
+  (by default {\tt /\{indexId\}/}). This is used to support remote access
+  through the {\tt mimir-client} library, which relies on a base URL to which it
+  adds known suffixes to access given functionality (e.g. the search actions
+  are all found under {\tt /\{indexId\}/search/\{actionName\}}). The
+  mimir-client library is used, for example, in the implemenation of remote
+  indexes.
+\eit
+
+These default mappings may be modified, but the protocols used by client
 code to push documents into an index, to search using the XML API, and to
 interact with remote indexes all make assumptions about certain relative paths.
-Therefore you must follow a few rules when configuring the URL mappings.
+Therefore, if you need to allow remote access via the {\tt mimir-client}
+library, then you must make sure that:
 
-\begin{itemize}
-\item The relative path between the mapping of the non-Bin actions of the
-  buildIndex controller and the mapping of the indexManagement controller's
-  ``info'' action must be preserved.  By default indexManagement-info maps to
-  /\{indexId\} and buildIndex maps to /\{indexId\}/buildIndex.
-\item The relative paths between the ``Bin'' actions of the various controllers
-  and indexManagement-infoBin for a given indexId must be preserved (i.e. the
-  actions that are mapped by default under /remote).
-\item all actions of the search controller (both Bin and non-Bin) must have
-  {\tt parseRequest:true}.
-\end{itemize}
+\bit
+\item there is a URL prefix that is common to all actions provided by the {\tt
+	IndexManagementController} and the {\tt SearchController}. Let us call
+	this common prefix the {\tt \{indexUrl\}};
+\item all actions provided by the {\tt IndexManagementController} should be
+  published under {\tt \{indexUrl\}/manage/\{actionName\}};
+\item all actions provided by the {\tt SearchController} should be
+  published under {\tt \{indexUrl\}/search/\{actionName\}};
+\item all actions of the search controller must have {\tt parseRequest:true}; 
+\item the names of the actions in the controllers above must not be changed.
+\eit 
 
-Of course, if you do not intend your \Mimir\ instance to be usable for indexing
-(e.g. if you only intend to open existing indexes in searching mode) then you
-do not need to map the buildIndex controller, and if you do not intend your
-\Mimir\ to be usable as a remote index from another \Mimir\ then you do not
-need to map the Bin actions at all
 
 \subsection{Security considerations}
 
