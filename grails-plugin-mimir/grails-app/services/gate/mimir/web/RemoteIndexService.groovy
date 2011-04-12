@@ -89,7 +89,7 @@ class RemoteIndexProxy implements Runnable {
   private fetchRemoteState(RemoteIndex index) {
     StringBuilder sb = new StringBuilder()
     try {
-      webUtilsManager.currentWebUtils(index.remoteUrl).getText(sb, "${index.remoteUrl}/manage/stateBin")
+      webUtilsManager.currentWebUtils(index).getText(sb, "${index.remoteUrl}/manage/stateBin")
       index.state = sb.toString()
     }
     catch(IOException e) {
@@ -100,7 +100,7 @@ class RemoteIndexProxy implements Runnable {
   
   private fetchClosingProgress(RemoteIndex index) {
     try {
-      closingProgress = webUtilsManager.currentWebUtils(index.remoteUrl).getDouble(
+      closingProgress = webUtilsManager.currentWebUtils(index).getDouble(
           "${index.remoteUrl}/manage/closingProgressBin")
     }
     catch(IOException e) {

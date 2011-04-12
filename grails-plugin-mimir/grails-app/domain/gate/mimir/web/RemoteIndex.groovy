@@ -12,12 +12,27 @@ class RemoteIndex extends Index {
   
   static constraints = {
     remoteUrl(blank:false, nullable:false)
+    remoteUsername(blank:true, nullable:true)
+    remotePassword(blank:true, nullable:true)
   }
   
   /**
    * The URL of the server hosting the remote index.
    */
   String remoteUrl
+  
+  
+  /**
+   * If the remote server uses authentication, the username to be used when 
+   * connecting.
+   */
+  String remoteUsername
+  
+  /**
+   * If the remote server uses authentication, the password to be used when 
+   * connecting
+   */
+  String remotePassword
   
   // behaviour
   
@@ -46,7 +61,7 @@ class RemoteIndex extends Index {
     
     //create a local RemoteQueryRunner and store the service URL, index ID, 
     //and query ID in it.
-    return new RemoteQueryRunner(remoteUrl, query, searchThreadPool, webUtilsManager.currentWebUtils(remoteUrl))
+    return new RemoteQueryRunner(remoteUrl, query, searchThreadPool, webUtilsManager.currentWebUtils(this))
   }
 
   /**
@@ -57,7 +72,7 @@ class RemoteIndex extends Index {
     String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) + 
         "search/annotationsConfigBin";
     try{
-      return webUtilsManager.currentWebUtils(remoteUrl).getObject(urlStr)
+      return webUtilsManager.currentWebUtils(this).getObject(urlStr)
     }catch(Exception e){
       return new String[0][0]
     }
@@ -72,7 +87,7 @@ class RemoteIndex extends Index {
     String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) + 
         "manage/indexUrl";
     try{
-      webUtilsManager.currentWebUtils(remoteUrl).getText(responseString, urlStr)
+      webUtilsManager.currentWebUtils(this).getText(responseString, urlStr)
     }catch(IOException e){
       log.error("Problem communicating with the remote server!", e)
       RemoteIndex.withTransaction{
@@ -90,7 +105,7 @@ class RemoteIndex extends Index {
     String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) + 
     "manage/close";
     try{
-      webUtilsManager.currentWebUtils(remoteUrl).getVoid(urlStr)
+      webUtilsManager.currentWebUtils(this).getVoid(urlStr)
     }catch(IOException e){
       log.error("Problem communicating with the remote server!", e)
       RemoteIndex.withTransaction{

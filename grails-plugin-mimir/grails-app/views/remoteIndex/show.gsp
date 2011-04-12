@@ -76,6 +76,15 @@
 			</td>
 		</tr>
 
+		<tr class="prop">
+			<td valign="top" class="name"><label style="margin-left: 20px">Remote
+			Username:</label></td>
+			<td valign="top" class="value">
+			${fieldValue(bean:remoteIndexInstance,
+								field:'remoteUsername')}
+			</td>
+		</tr>
+		
     <tr class="prop">
       <td valign="top" class="name"><label for="uriIsExternalLink">Document
       URIs are external links:</label></td>
