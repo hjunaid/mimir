@@ -55,8 +55,8 @@
 				</td>
 			</tr>
 			<tr>
-			  <td colspan="2">If the remote server requires authentication, enter here
-			  the username that should be used when connecting.</td>
+			  <td colspan="2">If the remote server requires authentication, enter 
+			  above the username that should be used when connecting.</td>
 			</tr>
 			
 			<tr class="prop">
@@ -68,8 +68,8 @@
 				</td>
 			</tr>
 			<tr>
-			  <td colspan="2">If the remote server requires authentication, enter here
-			  the password that should be used when connecting.</td>
+			  <td colspan="2">If the remote server requires authentication, enter 
+				above the password that should be used when connecting.</td>
 			</tr>
 
       <tr class="prop">
