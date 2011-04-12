@@ -22,11 +22,11 @@
   </target>
 
   <target name="grails-plugin">
-    <exec executable="${grails.bin}" dir="${grails-plugin.dir}">
+    <exec executable="${grails.bin}" dir="${grails-plugin.dir}" failonerror="true">
       <arg value="compile" />
     </exec>
 
-    <exec executable="${grails.bin}" dir="${grails-plugin.dir}">
+    <exec executable="${grails.bin}" dir="${grails-plugin.dir}" failonerror="true">
       <arg value="compile-gwt-modules" />
     </exec>
   </target>
