@@ -1,5 +1,7 @@
 package gate.mimir.tool;
 
+import gate.util.GateRuntimeException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -8,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
@@ -18,6 +21,8 @@ import java.nio.CharBuffer;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.bind.DatatypeConverter;
+
 /**
  * A collection of methods that provide various utility functions for web
  * applications.
@@ -26,12 +31,32 @@ public class WebUtils {
   
   private CookieHandler cookieJar;
   
-  public WebUtils(CookieHandler cookieJar) {
-    this.cookieJar = cookieJar;
+  private String authHeader;
+
+  public WebUtils() {
+    this(new CookieManager(), null, null);
   }
   
-  public WebUtils() {
-    this(new CookieManager());
+  public WebUtils(CookieHandler cookieJar) {
+    this(cookieJar, null, null);
+  }
+  
+  public WebUtils(String userName, String password) {
+    this(new CookieManager(), userName, password);
+  }
+  
+  public WebUtils(CookieHandler cookieJar, String userName, String password) {
+    this.cookieJar = cookieJar;
+    if(userName != null && userName.length() > 0){
+      try {
+        String userPass = userName + ":" + password;
+        authHeader = "Basic " + DatatypeConverter.printBase64Binary(userPass.getBytes("UTF-8"));
+      } catch(UnsupportedEncodingException e) {
+        throw new GateRuntimeException("UTF-8 encoding not supported by this JVM!", e);
+      }    
+    } else {
+      authHeader = null;
+    }
   }
   
   private static WebUtils staticWebUtils = null;
@@ -93,6 +118,9 @@ public class WebUtils {
     } catch(URISyntaxException e) {
       throw (IOException)new IOException(
               "Error converting URL " + u + " to a URI").initCause(e);
+    }
+    if(authHeader != null) {
+      conn.setRequestProperty("Authorization", authHeader);
     }
     return conn;
   }
