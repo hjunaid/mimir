@@ -32,3 +32,13 @@ eventCreateWarStart = { warName, stagingDir ->
     }
   }
 }
+
+/**
+ * Force a GWT compile when packaging the plugin.
+ */
+eventPackagePluginStart = {pluginName ->
+  if(pluginName == 'mimir-web') {
+    includeTargets << new File("${gwtPluginDir}/scripts/_GwtInternal.groovy")
+    compileGwtModules()
+  }
+}
