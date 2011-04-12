@@ -34,7 +34,7 @@
 			</tr>
 
 			<tr class="prop">
-				<td valign="top" class="name"><label for="serverUrl">Remote
+				<td valign="top" class="name"><label for="remoteUrl">Remote
 				URL:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:remoteIndexInstance,field:'remoteUrl','errors')}">
@@ -44,6 +44,32 @@
 			</tr>
 			<tr>
 			  <td colspan="2">This should be the "Index URL" from the target index's management page.</td>
+			</tr>
+
+			<tr class="prop">
+				<td valign="top" class="name"><label for="remoteUsername">Remote Username:</label></td>
+				<td valign="top"
+					class="value ${hasErrors(bean:remoteIndexInstance,field:'remoteUsername','errors')}">
+				<input type="text" id="remoteUsername" name="remoteUsername"
+					value="${fieldValue(bean:remoteIndexInstance,field:'remoteUsername')}" />
+				</td>
+			</tr>
+			<tr>
+			  <td colspan="2">If the remote server requires authentication, enter here
+			  the username that should be used when connecting.</td>
+			</tr>
+			
+			<tr class="prop">
+				<td valign="top" class="name"><label for="remotePassword">Remote Password:</label></td>
+				<td valign="top"
+					class="value ${hasErrors(bean:remoteIndexInstance,field:'remotePassword','errors')}">
+				<input type="password" id="remotePassword" name="remotePassword"
+					value="${fieldValue(bean:remoteIndexInstance,field:'remotePassword')}" />
+				</td>
+			</tr>
+			<tr>
+			  <td colspan="2">If the remote server requires authentication, enter here
+			  the password that should be used when connecting.</td>
 			</tr>
 
       <tr class="prop">
