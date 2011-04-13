@@ -11,24 +11,30 @@ class MimirConfigLoader {
   
   public static synchronized void loadMimirConfig() {
     if(mimirConfigLoaded) return
+    ConfigObject fullMimirConfig = new ConfigObject()
     ConfigSlurper slurper = new ConfigSlurper(Environment.current.name)
     try {
-      // load the default mimir configuration and merge it into the config
-      // loaded from Config.groovy, with values from Config.groovy winning
-      ConfigObject defaultMimirConf = slurper.parse(DefaultMimirConfig)
-      CH.config.gate.mimir = defaultMimirConf.merge(CH.config.gate.mimir)
+      // parse the default config
+      fullMimirConfig = slurper.parse(DefaultMimirConfig)
     } catch(Exception e) {
       println "Could not load DefaultMimirConfig"
     }
     try {
-      // do the same with the app-provided MimirConfig.groovy (don't worry
-      // if this fails).
+      // parse the app-provided MimirConfig (if it exists) and merge this into
+      // the default config (app-provided settings win over defaults)
       GroovyClassLoader classLoader = new GroovyClassLoader(MimirConfigLoader.class.getClassLoader())
       ConfigObject mimirConf = slurper.parse(classLoader.loadClass("MimirConfig"))
-      CH.config.gate.mimir = mimirConf.merge(CH.config.gate.mimir)
+      fullMimirConfig = fullMimirConfig.merge(mimirConf)
     } catch(Exception e) {
       // ignore, MimirConfig may legitimately be missing.
     }
+
+    // finally merge in any settings coming from the existing app config
+    fullMimirConfig = fullMimirConfig.merge(CH.config.gate.mimir)
+
+    // and store the result back in the main config
+    CH.config.gate.mimir = fullMimirConfig
+
     mimirConfigLoaded = true
   }
 }
