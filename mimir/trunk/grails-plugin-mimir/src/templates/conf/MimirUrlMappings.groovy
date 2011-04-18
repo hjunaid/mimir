@@ -1,11 +1,19 @@
-/**
- * These are the default URL mappings for Mimir actions.  You may change
- * them if you wish but the views and the remote indexing and searching
- * protocol make a number of assumptions about the mappings, so be sure
- * you know what you are doing before you change things.  Any change must
- * ensure that the relative paths between the various mappings stay the
- * same.  For example it is safe to add a fixed prefix to all of the
- * standard mappings ("/mimir/$indexId", "/mimir/remote/..." etc.).
+/*
+ *  MimirUrlMappings.groovy
+ *
+ *  Copyright (c) 2007-2011, The University of Sheffield.
+ *
+ *  This file is part of GATE Mímir (see http://gate.ac.uk/family/mimir.html), 
+ *  and is free software, licenced under the GNU Affero General Public License,
+ *  Version 3, November 2007 (also included with this distribution as file 
+ *  LICENCE-AGPL3.html).
+ *
+ *  A commercial licence is also available for organisations whose business
+ *  models preclude the adoption of open source and is subject to a licence
+ *  fee charged by the University of Sheffield. Please contact the GATE team
+ *  (see http://gate.ac.uk/g8/contact) if you require a commercial licence.
+ *
+ *  $Id$
  */
 class MimirUrlMappings {
   static mappings = {

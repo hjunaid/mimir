@@ -1,10 +1,21 @@
 /*
- * Copyright (c) 1998-2009, The University of Sheffield.
- * 
- * Valentin Tablan, 25 Feb 2009
- * 
- * $Id: DefaultSemanticAnnotationHelper.java 12684 2010-05-11 11:32:52Z ontotext
- * $
+ *  ORDISemanticAnnotationHelper.java
+ *
+ *  Copyright (c) 2007-2011, The University of Sheffield.
+ *
+ *  This file is part of GATE Mímir (see http://gate.ac.uk/family/mimir.html), 
+ *  and is free software, licenced under the GNU Affero General Public License,
+ *  Version 3, November 2007 (also included with this distribution as file 
+ *  LICENCE-AGPL3.html).
+ *
+ *  A commercial licence is also available for organisations whose business
+ *  models preclude the adoption of open source and is subject to a licence
+ *  fee charged by the University of Sheffield. Please contact the GATE team
+ *  (see http://gate.ac.uk/g8/contact) if you require a commercial licence.
+ *  
+ *  Valentin Tablan, 20 Feb 2009
+ *  
+ *  $Id$
  */
 package gate.mimir.ordi;
 
