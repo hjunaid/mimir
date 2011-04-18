@@ -15,6 +15,7 @@
 *
 *  $Id$
 */
+
 // external configuration location
 grails.config.locations = ["file:mimir.groovy"]
 if(System.properties["mimir.config"]) {
