@@ -55,6 +55,23 @@ public class SPARQLSemanticAnnotationHelper extends
   private static final Logger logger = Logger
       .getLogger(SPARQLSemanticAnnotationHelper.class);
 
+  
+  /**
+   * A query fragment that, if set, gets prepended to all SPARQL queries sent 
+   * to the end point. This could be used, for example, for setting up a list of 
+   * prefixes.
+   */
+  private String queryPrefix;
+  
+
+  /**
+   * A query fragment that, if set, gets appended to all SPARQL queries sent 
+   * to the end point. This could be used, for example, for setting up a 
+   * LIMIT constraint.
+   */
+  private String querySuffix;
+  
+  
   /**
    * The name used for the synthetic feature used at query time to supply the
    * SPARQL query.
@@ -65,6 +82,41 @@ public class SPARQLSemanticAnnotationHelper extends
    * The service endpoint where SPARQL queries are forwarded to.
    */
   private String sparqlEndpoint;
+
+  
+  /**
+   * See {@link #setQueryPrefix(String)}
+   * @return
+   */
+  public String getQueryPrefix() {
+    return queryPrefix;
+  }
+
+  /**
+   * Sets the query prefix: a query fragment that, if set, gets prepended to 
+   * all SPARQL queries sent to the end point. This could be used, for example,
+   * for setting up a list of PREFIXes.
+   */
+  public void setQueryPrefix(String queryPrefix) {
+    this.queryPrefix = queryPrefix;
+  }
+
+  /**
+   * See {@link #setQuerySuffix(String)}.
+   * @return
+   */
+  public String getQuerySuffix() {
+    return querySuffix;
+  }
+
+  /**
+   * Sets the query suffix: a query fragment that, if set, gets appended to 
+   * all SPARQL queries sent to the end point. This could be used, for example,
+   * for setting up a LIMIT constraint.
+   */  
+  public void setQuerySuffix(String querySuffix) {
+    this.querySuffix = querySuffix;
+  }
 
   public SPARQLSemanticAnnotationHelper(String annotationType,
       String sparqlEndpoint, String[] nominalFeatureNames,
@@ -90,7 +142,9 @@ public class SPARQLSemanticAnnotationHelper extends
     String query = null;
     for(Constraint aConstraint : constraints) {
       if(aConstraint.getFeatureName() == SPARQL_QUERY_FEATURE_NAME) {
-        query = (String)aConstraint.getValue();
+        query = (queryPrefix != null ? queryPrefix : "") + 
+            (String)aConstraint.getValue() + 
+            (querySuffix != null ? querySuffix : "");
       } else {
         passThroughConstraints.add(aConstraint);
       }
