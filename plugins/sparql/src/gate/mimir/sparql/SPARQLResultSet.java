@@ -246,7 +246,7 @@ public class SPARQLResultSet {
    * The values returned by the SPARQL endpoint. Each row is an array of String
    * values, each entry in the array being a value for the corresponding column 
    * (as returned by {@link #getColumnNames()}).  
-   * @return a bi-dimnesional array of Strings, where the first index selects 
+   * @return a bi-dimensional array of Strings, where the first index selects 
    * the row, and the second index selects the column. 
    */
   public String[][] getRows() {
