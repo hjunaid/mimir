@@ -56,7 +56,7 @@ class LocalIndex extends Index implements Serializable {
 
     // call the createIndexUrl tag through the current controller
     return controller.mimir.createIndexUrl([indexId:indexId]) + 
-        '/buildIndex/addDocuments'
+        '/manage/addDocuments'
   }
 
   void indexDocuments(InputStream stream) {
