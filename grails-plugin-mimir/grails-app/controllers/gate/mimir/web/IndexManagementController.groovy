@@ -41,7 +41,7 @@ class IndexManagementController {
     def theIndex = Index.findByIndexId(params.indexId)
     if(theIndex) {
       if(theIndex.state == Index.INDEXING) {
-        render(text:request.theIndex.indexUrl(), contentType:"text/plain",
+        render(text:theIndex.indexUrl(), contentType:"text/plain",
             encoding:"UTF-8")
       } else {
         response.sendError(HttpServletResponse.SC_FORBIDDEN,
@@ -54,7 +54,7 @@ class IndexManagementController {
     def theIndex = Index.findByIndexId(params.indexId)
     if(theIndex) {
       if(theIndex.state == Index.INDEXING) {
-        request.theIndex.close()
+        theIndex.close()
         render("OK")
       } else {
         response.sendError(HttpServletResponse.SC_FORBIDDEN,
