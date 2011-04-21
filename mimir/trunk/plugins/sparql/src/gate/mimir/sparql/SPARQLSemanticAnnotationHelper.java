@@ -26,8 +26,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.xml.stream.XMLInputFactory;
@@ -36,6 +38,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.apache.log4j.Logger;
 
+import gate.mimir.AbstractSemanticAnnotationHelper;
 import gate.mimir.Constraint;
 import gate.mimir.ConstraintType;
 import gate.mimir.SemanticAnnotationHelper;
@@ -78,6 +81,23 @@ public class SPARQLSemanticAnnotationHelper extends
    */
   public static final String SPARQL_QUERY_FEATURE_NAME = "sparql";
 
+  
+  public static final String NOMINAL_FEATURES_KEY = "nominalFeatures";
+  
+  public static final String INTEGER_FEATURES_KEY = "integerFeatures";
+  
+  public static final String FLOAT_FEATURES_KEY = "floatFeatures";
+  
+  public static final String TEXT_FEATURES_KEY = "textFeatures";
+  
+  public static final String URI_FEATURES_KEY = "uriFeatures";
+  
+  public static final String ANN_TYPE_KEY = "annotationType";
+  
+  public static final String DELEGATE_KEY = "delegate";
+  
+  public static final String SPARQL_ENDPOINT_KEY = "sparqlEndpoint";
+  
   /**
    * The service endpoint where SPARQL queries are forwarded to.
    */
@@ -123,11 +143,46 @@ public class SPARQLSemanticAnnotationHelper extends
       String[] integerFeatureNames, String[] floatFeatureNames,
       String[] textFeatureNames, String[] uriFeatureNames,
       SemanticAnnotationHelper delegate) {
-    super(annotationType, nominalFeatureNames, integerFeatureNames,
+    super(annotationType, 
+        concatenateArrays(nominalFeatureNames, 
+            new String[]{SPARQL_QUERY_FEATURE_NAME}), integerFeatureNames,
         floatFeatureNames, textFeatureNames, uriFeatureNames, delegate);
     this.sparqlEndpoint = sparqlEndpoint;
   }
 
+  public SPARQLSemanticAnnotationHelper(Map<String, Object> params) {
+    this((String)params.get(ANN_TYPE_KEY), 
+        (String)params.get(SPARQL_ENDPOINT_KEY),
+        featureNames(params.get(NOMINAL_FEATURES_KEY)),
+        featureNames(params.get(INTEGER_FEATURES_KEY)),
+        featureNames(params.get(FLOAT_FEATURES_KEY)),
+        featureNames(params.get(TEXT_FEATURES_KEY)),
+        featureNames(params.get(URI_FEATURES_KEY)),
+        (SemanticAnnotationHelper)params.get(DELEGATE_KEY));
+  }
+  
+  public SPARQLSemanticAnnotationHelper(String sparqlEndpoint, 
+      AbstractSemanticAnnotationHelper delegate) {
+    this(delegate.getAnnotationType(), 
+        sparqlEndpoint, 
+        delegate.getNominalFeatureNames(),
+        delegate.getIntegerFeatureNames(),
+        delegate.getFloatFeatureNames(),
+        delegate.getTextFeatureNames(),
+        delegate.getUriFeatureNames(),
+        delegate);
+  }
+  
+  protected static String[] featureNames(Object param) {
+    if(param == null) return null;
+    if(param instanceof String[]) return (String[])param;
+    if(param instanceof Collection) {
+      return ((Collection<String>)param).toArray(new String[((Collection)param).size()]);
+    }
+    throw new IllegalArgumentException("Supplied parameter is neither a " +
+    		"String array nor a String collection!");
+  }
+  
   @Override
   public void init(QueryEngine queryEngine) {
     super.init(queryEngine);
@@ -141,7 +196,7 @@ public class SPARQLSemanticAnnotationHelper extends
     List<Constraint> passThroughConstraints = new ArrayList<Constraint>();
     String query = null;
     for(Constraint aConstraint : constraints) {
-      if(aConstraint.getFeatureName() == SPARQL_QUERY_FEATURE_NAME) {
+      if(SPARQL_QUERY_FEATURE_NAME.equals(aConstraint.getFeatureName())) {
         query = (queryPrefix != null ? queryPrefix : "") + 
             (String)aConstraint.getValue() + 
             (querySuffix != null ? querySuffix : "");

@@ -277,28 +277,19 @@ public class SPARQLResultSet {
     return str.toString();
   }
 
-  public static void main(String[] args) throws Exception{
-    String query = "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
-    		"PREFIX dbpedia: <http://dbpedia.org/resource/>\n" +
-    		"PREFIX dbp: <http://dbpedia.org/ontology/>\n" +
-    		"PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
-    		"PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-    		"SELECT DISTINCT ?label ?inst ?cls\n" +
-    		"   WHERE {\n" +
-    		"   {\n" +
-    		"     ?inst dbp:type dbpedia:Public_company .\n" +
-    		"     ?inst foaf:name ?label .\n" +
-    		"     FILTER (lang(?label) = \"en\")\n" +
-				"     ?inst a ?cls .\n" +
-				"     ?cls a owl:Class .\n" +
-				"     FILTER (?cls = dbp:Company)\n" +
-				"   }\n" +
-				"}";
-    SPARQLSemanticAnnotationHelper ssah = new SPARQLSemanticAnnotationHelper(
-            "annType", "http://localhost:8080/openrdf-workbench/repositories/DBPedia/query", new String[]{}, 
-            new String[]{}, new String[]{}, new String[]{}, new String[]{}, 
-            null);
-    System.out.println(ssah.runQuery(query));
-  }
+//  /**
+//   * Test code.
+//   * TODO: remove it
+//   * @param args
+//   * @throws Exception
+//   */
+//  public static void main(String[] args) throws Exception{
+//    String query = "PREFIX :<http://dbpedia.org/ontology/> SELECT ?inst WHERE { ?inst a ?class . FILTER (?class = :Mountain)} LIMIT 100";
+//    SPARQLSemanticAnnotationHelper ssah = new SPARQLSemanticAnnotationHelper(
+//            "annType", "http://gateservice5:8081/openrdf-workbench/repositories/DBPedia/query", new String[]{}, 
+//            new String[]{}, new String[]{}, new String[]{}, new String[]{}, 
+//            null);
+//    System.out.println(ssah.runQuery(query));
+//  }
   
 }
