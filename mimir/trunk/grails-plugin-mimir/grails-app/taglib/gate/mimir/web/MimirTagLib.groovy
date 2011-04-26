@@ -58,10 +58,17 @@ class MimirTagLib {
 '''
   }
   
+  /**
+   * Creates an Index URL value by generating a link to the &quot;index&quot; 
+   * action of the &quot;indexManagement&quot; controller.
+   * 
+   * If provided, the <code>serverName</code> attribute is used to override the 
+   * the host name part of the produced URL.
+   */
   def createIndexUrl = { attrs, body ->
     out << request.scheme
     out << "://"
-    out << request.serverName
+    out << attrs?.serverName?: request.serverName
     if((request.scheme == "https" && request.serverPort != 443) ||
        (request.scheme == "http" && request.severPort != 80)) {
       out << ":${request.serverPort}"
