@@ -68,7 +68,7 @@ class MimirTagLib {
   def createIndexUrl = { attrs, body ->
     if(attrs.urlBase) {
       String urlBase = attrs.urlBase.toString()
-      out << urlBase.endsWith('/') ? urlBase.substring(0, urlBase.length() -1) : urlBase
+      out << (urlBase.endsWith('/') ? urlBase.substring(0, urlBase.length() -1) : urlBase)
     } else {
       out << request.scheme
       out << "://"
