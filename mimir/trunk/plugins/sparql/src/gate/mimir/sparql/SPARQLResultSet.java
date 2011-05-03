@@ -284,7 +284,7 @@ public class SPARQLResultSet {
 //   * @throws Exception
 //   */
 //  public static void main(String[] args) throws Exception{
-//    String query = "PREFIX :<http://dbpedia.org/ontology/> SELECT ?inst WHERE { ?inst a ?class . FILTER (?class = :Mountain)} LIMIT 100";
+//    String query = "PREFIX :<http://dbpedia.org/ontology/> THIS IS AN ERROR SELECT ?inst WHERE { ?inst a ?class . FILTER (?class = :Mountain)} LIMIT 100";
 //    SPARQLSemanticAnnotationHelper ssah = new SPARQLSemanticAnnotationHelper(
 //            "annType", "http://gateservice5:8081/openrdf-workbench/repositories/DBPedia/query", new String[]{}, 
 //            new String[]{}, new String[]{}, new String[]{}, new String[]{}, 
