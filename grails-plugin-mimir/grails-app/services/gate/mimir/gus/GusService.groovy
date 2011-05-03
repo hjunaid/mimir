@@ -99,7 +99,7 @@ class GusService implements InitializingBean, DisposableBean {
         throw e
       } catch(Exception e) {
         log.warn("Exception starting search", e)
-        throw new SearchException("Could not start search: ${e.message}");
+        throw new SearchException("Could not start search. Error was:\n${e.message}");
       }
     }
   }

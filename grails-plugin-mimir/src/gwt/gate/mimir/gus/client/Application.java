@@ -858,7 +858,7 @@ public class Application implements EntryPoint, HistoryListener {
     clearTable();
     resultsTable.getCellFormatter().setHorizontalAlignment(0, 0,
       HasHorizontalAlignment.ALIGN_CENTER);
-    resultsTable.setWidget(0, 0, new HTML("<p>"+message+"</p>"));
+    resultsTable.setWidget(0, 0, new HTML(message.replaceAll("\n", "<br />")));
   }
   
   private native String getIndexId() /*-{
