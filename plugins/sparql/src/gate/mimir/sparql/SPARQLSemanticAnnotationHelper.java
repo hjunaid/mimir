@@ -195,11 +195,12 @@ public class SPARQLSemanticAnnotationHelper extends
     Set<Mention> mentions = new HashSet<Mention>();
     List<Constraint> passThroughConstraints = new ArrayList<Constraint>();
     String query = null;
+    String originalQuery = null;
     for(Constraint aConstraint : constraints) {
       if(SPARQL_QUERY_FEATURE_NAME.equals(aConstraint.getFeatureName())) {
+        originalQuery = (String)aConstraint.getValue(); 
         query = (queryPrefix != null ? queryPrefix : "") + 
-            (String)aConstraint.getValue() + 
-            (querySuffix != null ? querySuffix : "");
+            originalQuery + (querySuffix != null ? querySuffix : "");
       } else {
         passThroughConstraints.add(aConstraint);
       }
@@ -211,6 +212,17 @@ public class SPARQLSemanticAnnotationHelper extends
       // run the query on the SPARQL endpoint
       try {
         SPARQLResultSet srs = runQuery(query);
+        // check for errors
+        for(int i = 0; i < srs.getColumnNames().length; i++) {
+          if(srs.getColumnNames()[i].equals("error-message")) {
+            // we have an error message
+            String errorMessage = (srs.getRows().length > 0 &&  
+                srs.getRows()[0].length > i) ? srs.getRows()[0][i] : null;
+            throw new IllegalArgumentException("Query \"" + originalQuery + 
+                "\" resulted in an error" + 
+                (errorMessage != null ? (":\n" + errorMessage) : "."));
+          }
+        }
         // convert each result row into a query for the delegate
         for(String[] aRow : srs.getRows()) {
           List<Constraint> delegateConstraints =
