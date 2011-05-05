@@ -18,7 +18,9 @@
   <target name="plugins">
     <ant dir="${plugins.dir}/db-h2" target="jar" />
     <ant dir="${plugins.dir}/ordi" target="jar" />
+    <ant dir="${plugins.dir}/sesame" target="jar" />
     <ant dir="${plugins.dir}/measurements" target="jar" />
+    <ant dir="${plugins.dir}/sparql" target="jar" />
   </target>
 
   <target name="grails-plugin">
