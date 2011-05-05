@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.openrdf.OpenRDFException;
@@ -240,6 +241,8 @@ public class SesameSemanticAnnotationHelper extends
           .getLogger(SesameSemanticAnnotationHelper.class);
 
   protected String sesameConfigLocation = "resources/owlim.ttl";
+  
+  protected String absoluteConfigLocation = "";
 
   /**
    * Constructs a new SesameSemanticAnnotationHelper.
@@ -286,20 +289,24 @@ public class SesameSemanticAnnotationHelper extends
    *          values.
    * @param uriFeatureNames
    *          the names of the features to be indexed that have URIs as values.
-   * @param configLocation
-   *          the location of the sesame repository config file
+   * @param settings
+   *          a Map containing settings for the location of the sesame repository
+   *          config file. Use "relativePath" or "abstractPath" as keys
    */
   public SesameSemanticAnnotationHelper(String annotationType,
           String[] nominalFeatureNames, String[] integerFeatureNames,
           String[] floatFeatureNames, String[] textFeatureNames,
-          String[] uriFeatureNames, String configLocation) {
+          String[] uriFeatureNames, Map<String, Object> settings) {
     super(annotationType, nominalFeatureNames, integerFeatureNames,
             floatFeatureNames, textFeatureNames, uriFeatureNames);
     this.nominalFeaturePredicates = new URI[this.nominalFeatureNames.length];
     this.floatFeaturePredicates = new URI[this.floatFeatureNames.length];
     this.textFeaturePredicates = new URI[this.textFeatureNames.length];
     this.uriFeaturePredicates = new URI[this.uriFeatureNames.length];
-    this.sesameConfigLocation = configLocation;
+    if(settings.containsKey("relativePath"))
+    	this.sesameConfigLocation = (String) settings.get("relativePath");
+    if(settings.containsKey("absolutePath"))
+    	this.absoluteConfigLocation = (String) settings.get("absolutePath");
   }
 
   /**
@@ -594,8 +601,14 @@ public class SesameSemanticAnnotationHelper extends
       File topDir = config.getIndexDirectory();
       File sesameIndexDir = new File(topDir, SESAME_INDEX_DIRNAME);
       sesameIndexDir.mkdirs();
-      URL configPath = resolveUrl(sesameConfigLocation);
-      RepositoryConfig repositoryConfig = prepareConfig(configPath.getPath());
+      RepositoryConfig repositoryConfig;
+      if(!absoluteConfigLocation.equals("")){
+    	  repositoryConfig = prepareConfig(absoluteConfigLocation);
+      }
+      else{
+    	  URL configPath = resolveUrl(sesameConfigLocation);
+    	  repositoryConfig = prepareConfig(configPath.getPath());
+      }
       manager = new LocalRepositoryManager(sesameIndexDir);
       try {
         manager.initialize();
