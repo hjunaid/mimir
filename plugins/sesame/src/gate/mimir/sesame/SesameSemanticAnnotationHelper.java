@@ -257,6 +257,41 @@ public class SesameSemanticAnnotationHelper extends
 		this.textFeaturePredicates = new URI[this.textFeatureNames.length];
 		this.uriFeaturePredicates = new URI[this.uriFeatureNames.length];
 	}
+	
+	/**
+	 * Constructs a new SesameSemanticAnnotationHelper.
+	 * 
+	 * @param annotationType
+	 *            the type of the annotations handled by this helper.
+	 * @param nominalFeatureNames
+	 *            the names of the features to be indexed that have nominal
+	 *            values (i.e. values from a small set of values).
+	 * @param floatFeatureNames
+	 *            the names of the features to be indexed that have numeric
+	 *            values (i.e. values that can be converted to a double).
+	 * @param textFeatureNames
+	 *            the names of the features to be indexed that have arbitrary
+	 *            text values.
+	 * @param uriFeatureNames
+	 *            the names of the features to be indexed that have URIs as
+	 *            values.
+	 * @param configLocation
+	 * 			  the location of the sesame repository config file
+	 */
+	public SesameSemanticAnnotationHelper(String annotationType,
+			String[] nominalFeatureNames, String[] integerFeatureNames,
+			String[] floatFeatureNames, String[] textFeatureNames,
+			String[] uriFeatureNames, String configLocation) {
+
+		super(annotationType, nominalFeatureNames, integerFeatureNames,
+				floatFeatureNames, textFeatureNames, uriFeatureNames);
+
+		this.nominalFeaturePredicates = new URI[this.nominalFeatureNames.length];
+		this.floatFeaturePredicates = new URI[this.floatFeatureNames.length];
+		this.textFeaturePredicates = new URI[this.textFeatureNames.length];
+		this.uriFeaturePredicates = new URI[this.uriFeatureNames.length];
+		this.sesameConfigLocation = configLocation;
+	}
 
 	/**
 	 * 
