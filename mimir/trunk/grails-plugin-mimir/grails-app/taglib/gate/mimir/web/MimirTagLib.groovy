@@ -70,12 +70,12 @@ class MimirTagLib {
       String urlBase = attrs.urlBase.toString()
       out << (urlBase.endsWith('/') ? urlBase.substring(0, urlBase.length() -1) : urlBase)
     } else {
-      out << request.scheme
+      out << request.getScheme()
       out << "://"
-      out << attrs?.serverName?: request.serverName
-      if((request.scheme == "https" && request.serverPort != 443) ||
-         (request.scheme == "http" && request.severPort != 80)) {
-        out << ":${request.serverPort}"
+      out << (attrs?.serverName?: request.getServerName())
+      if((request.getScheme() == "https" && request.getServerPort() != 443) ||
+         (request.getScheme() == "http" && request.getServerPort() != 80)) {
+        out << ":${request.getServerPort()}"
       }
     }
     out << g.createLink(controller:"indexManagement", action:"index",
