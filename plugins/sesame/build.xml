@@ -1,4 +1,4 @@
-<project name="mimir-plugin-ordi" default="jar" basedir=".">
+<project name="mimir-plugin-sesame" default="jar" basedir=".">
   <property name="app.name" value="mimir-plugin-sesame" />
   <property name="app.title" value="Mimir Plugin: Sesame" />
   
