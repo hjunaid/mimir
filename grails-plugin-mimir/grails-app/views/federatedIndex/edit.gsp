@@ -29,21 +29,21 @@
 		<tbody>
 
 			<tr class="prop">
-				<td valign="top" class="name"><label for="name">Name:</label></td>
-				<td valign="top"
-					class="value ${hasErrors(bean:federatedIndexInstance,field:'name','errors')}">
-				<input type="text" id="name" name="name"
-					value="${fieldValue(bean:federatedIndexInstance,field:'name')}" />
-				</td>
-			</tr>
-
-			<tr class="prop">
 				<td valign="top" class="name"><label for="indexId">Index
 				Id:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:federatedIndexInstance,field:'indexId','errors')}">
 				<input type="text" id="indexId" name="indexId"
 					value="${fieldValue(bean:federatedIndexInstance,field:'indexId')}" />
+				</td>
+			</tr>
+
+			<tr class="prop">
+				<td valign="top" class="name"><label for="name">Name:</label></td>
+				<td valign="top"
+					class="value ${hasErrors(bean:federatedIndexInstance,field:'name','errors')}">
+				<input type="text" id="name" name="name"
+					value="${fieldValue(bean:federatedIndexInstance,field:'name')}" />
 				</td>
 			</tr>
 
