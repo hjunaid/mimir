@@ -34,13 +34,20 @@
 		<tbody>
 
 			<tr class="prop">
-				<td valign="top" class="name"><label for="indexId">Index
-				Id:</label></td>
+				<td valign="top" class="name"><label for="indexId">Index ID:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:localIndexInstance,field:'indexId','errors')}">
 				<input type="text" id="indexId" name="indexId"
 					value="${fieldValue(bean:localIndexInstance,field:'indexId')}" />
 				</td>
+			</tr>
+
+			<tr class="prop">
+				<td valign="top" class="name"><label for="name">Name:</label></td>
+				<td valign="top"
+					class="value ${hasErrors(bean:localIndexInstance,field:'name','errors')}">
+				<input type="text" id="name" name="name"
+					value="${fieldValue(bean:localIndexInstance,field:'name')}" /></td>
 			</tr>
 
 			<tr class="prop">
