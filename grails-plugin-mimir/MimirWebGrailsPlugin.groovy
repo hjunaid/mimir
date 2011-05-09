@@ -31,7 +31,7 @@ class MimirWebGrailsPlugin {
     static Logger log = Logger.getLogger('gate.mimir.mimir-web')
   
     // the plugin version
-    def version = "3.2.0-snapshot"
+    def version = "3.2.1-snapshot"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.5 > *"
     // the other plugins this plugin depends on
