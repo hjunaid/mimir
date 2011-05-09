@@ -4,7 +4,7 @@ mechanism to supply a set of jar files to be added to the classpath of the calle
 <CREOLE-DIRECTORY>
   <!-- Most of the dependencies are referenced by the manifest Class-Path entry
   in the plugin JAR -->
-  <JAR>mimir-plugin-ordi-3.2.0-snapshot.jar</JAR>
+  <JAR>mimir-plugin-ordi-3.2.1-snapshot.jar</JAR>
 
   <!-- This plugin requires BigOWLIM 3.3, you need to obtain a suitably
   licenced copy of this from Ontotext and place it in the owlim directory -->
