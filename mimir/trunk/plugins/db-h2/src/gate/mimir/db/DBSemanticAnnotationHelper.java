@@ -254,8 +254,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       // open the database in read-only mode
       dbConnection = DriverManager.getConnection(
               "jdbc:h2:file:" + dbDir.getAbsolutePath() + 
-              "/" + tableBaseName + ";CACHE_SIZE=" + cacheSizeStr + 
-              ";ACCESS_MODE_DATA=r", "sa", "");
+              "/" + tableBaseName + ";CACHE_SIZE=" + cacheSizeStr, "sa", "");
       dbConnection.setReadOnly(true);
     } catch(SQLException e) {
       throw new RuntimeException("Error while initialising the database", e);
