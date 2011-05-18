@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -261,8 +262,9 @@ public class SPARQLSemanticAnnotationHelper extends
       String urlStr =
           sparqlEndpoint + "?query=" + URLEncoder.encode(query, "UTF-8");
       URL url = new URL(urlStr);
-      InputStream is = url.openStream();
-      return new SPARQLResultSet(is);
+      URLConnection urlConn = url.openConnection();
+      urlConn.setRequestProperty("Accept", "application/sparql-results+xml");
+      return new SPARQLResultSet(urlConn.getInputStream());
     } catch(UnsupportedEncodingException e) {
       // like that's gonna happen...
       throw new RuntimeException("UTF-8 encoding not supported by this JVM");
