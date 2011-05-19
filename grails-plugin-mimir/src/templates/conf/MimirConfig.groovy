@@ -16,12 +16,15 @@ gateInit {
 }
 
 // Mimir plugins to load.  You generally need at least one of the standard
-// db-h2 and/or ordi plugins, as well as the measurements plugin if you are
-// using Measurement annotations.  The plugins will be loaded from their
-// specified locations for run-app and will be packaged into the WAR for
-// deployment.
+// db-h2, ordi, or sesame plugins, as well as the measurements plugin if 
+// you are using Measurement annotations.  The plugins will be loaded from 
+// their specified locations for run-app and will be packaged into the WAR 
+// for deployment.
+// By default we load all plugins that don't have external dependencies
 plugins {
   h2 = "../plugins/db-h2"
+  measurements = "../plugins/measurements"
+  sparql = "../plugins/sparql"
 }
 
 // the xgapp file that defines the query tokeniser.  Alternatively
