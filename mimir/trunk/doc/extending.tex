@@ -220,16 +220,24 @@ import gate.mimir.measurements.MeasurementAnnotationHelper
 // \ldots
 semanticAnnotations = {
   index {
+    // Measurement helper with default settings
     Measurement(new MeasurementAnnotationHelper(
-          delegateHelperType:DefaultHelper,
-          unitsFile:'resources/myUnits.dat'))
+          delegateHelperType:DefaultHelper))
   }
 }
 \end{lstlisting}
 
 The {\tt MeasurementAnnotationHelper} constructor takes a {\tt Map} of
-parameters, which can be specified in Groovy as ``named arguments'' as shown
-above.  The following parameters are supported:
+parameters, which can be specified in Groovy as ``named arguments'':
+\begin{lstlisting}[firstnumber=6,texcl]
+    // Example of how to configure a custom ``units'' file
+    Measurement(new MeasurementAnnotationHelper(
+          delegateHelperType:DefaultHelper,
+          unitsFile:'resources/americanUnits.dat',
+          locale:'en_US'))
+\end{lstlisting}
+
+The following parameters are supported:
 \bde
 \item[delegateHelperType (required)] a {\tt Class} object representing the type
 of generic helper that the Measurements helper should delegate to.
@@ -347,9 +355,9 @@ Therefore, if you need to allow remote access via the {\tt mimir-client}
 library, then you must make sure that:
 
 \bit
-\item there is a URL prefix that is common to all actions provided by the {\tt
-	IndexManagementController} and the {\tt SearchController}. Let us call
-	this common prefix the {\tt \{indexUrl\}};
+\item there is a URL prefix that is common to all actions provided by the
+  {\tt IndexManagementController} and the {\tt SearchController}. Let us call
+  this common prefix the {\tt \{indexUrl\}};
 \item all actions provided by the {\tt IndexManagementController} should be
   published under {\tt \{indexUrl\}/manage/\{actionName\}};
 \item all actions provided by the {\tt SearchController} should be
@@ -357,7 +365,6 @@ library, then you must make sure that:
 \item all actions of the search controller must have {\tt parseRequest:true}; 
 \item the names of the actions in the controllers above must not be changed.
 \eit 
-
 
 \subsection{Security considerations}
 
@@ -376,17 +383,17 @@ any or all of the following.
   could be restricted to administrative users, the gus pages to registered
   searchers, etc.
 \item If your \Mimir\ instance is a slave in a federated index, use firewall
-  rules or a Grails filter to restrict access to the /remote URLs to only the
+  rules or a Grails filter to restrict access to the */search URLs to only the
   master \Mimir\ server.
 \end{itemize}
 
 Note that if you use user authentication on the XML search API or the remote
 protocol then you will need to modify the default client code to authenticate
 itself appropriately.  For example if you require HTTP basic authentication for
-the /remote URLs then you will need to configure the master \Mimir\ server that
-uses this as a remote to make it pass the relevant Authorization HTTP header.
-The remote protocol uses the {\tt WebUtils} class in {\tt mimir-client} to make
-its HTTP calls, and there is a subclass of this class that is able to provide
-basic authentication headers, you can wire this in by overriding the definition
-of the webUtilsManager Spring bean supplied by the \Mimir\ plugin -- see the
-plugin source code for full details.
+the search or manage URLs then you will need to configure the master \Mimir\
+server that uses this as a remote to make it pass the relevant Authorization
+HTTP header.  The remote protocol uses the {\tt WebUtils} class in
+{\tt mimir-client} to make its HTTP calls, and there is a subclass of this
+class that is able to provide basic authentication headers, you can wire this
+in by overriding the definition of the webUtilsManager Spring bean supplied by
+the \Mimir\ plugin -- see the plugin source code for full details.
