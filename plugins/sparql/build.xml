@@ -17,7 +17,8 @@
   <property name="src.dir" location="src" />
   <property name="doc.dir" location="doc" />
   
-  <property name="jar.file" location="${app.name}-${app.version}.jar" />
+  <property name="jar.name" value="${app.name}-${app.version}.jar" />
+  <property name="jar.file" location="${jar.name}" />
   <path id="compile.classpath">
     <path refid="core-libs" />
   </path>
@@ -41,6 +42,14 @@
     <jar file="${jar.file}" basedir="${classes.dir}" update="false">
   	</jar>
   </target>  
+  
+  <target name="creole.xml">
+      <copy file="creole.xml.template" tofile="creole.xml">
+        <filterset>
+          <filter token="jar" value="${jar.name}" />
+        </filterset>
+      </copy>
+    </target>  
   
   <target name="distro" depends="jar, javadoc" />
   
