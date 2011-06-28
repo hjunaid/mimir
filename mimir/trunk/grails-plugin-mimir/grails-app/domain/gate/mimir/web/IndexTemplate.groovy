@@ -39,7 +39,7 @@ class IndexTemplate {
   static constraints = {
     name(nullable:false, blank:false)
     comment(nullable:true, blank:true)
-    configuration(nullable:false, maxSize:10240)
+    configuration(nullable:false, maxSize:102400)
   }
 
   /**
