@@ -534,6 +534,9 @@ public class ORDISemanticAnnotationHelper extends
    */
   public void init(Indexer indexer){
     if(initDone) return;
+    logger.warn("The ORDI Semantic Annotation Helper is now deprecated and " +
+    		"should only be used for opening old indexes.\nPlease use the new " +
+    		"Sesame Semantic Annotation Helper instead for building new indexes!");
     try {
       TSource ordiSource = getOrdiSource(indexer.getIndexConfig());
       ordiConnection = ordiSource.getConnection();
