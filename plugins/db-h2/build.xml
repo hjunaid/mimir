@@ -1,82 +1,75 @@
 <project name="mimir-plugin-db-h2" default="jar" basedir=".">
 	<property name="app.name" value="mimir-plugin-db-h2" />
 	<property name="app.title" value="Mimir Plugin: DB (H2)" />
-	
-  <!-- Common Properties -->
-	
-  <property environment="env"/>
-	<property name="core-home" value="../../mimir-core"/>
+
+	<!-- Common Properties -->
+
+	<property environment="env" />
+	<property name="core-home" value="../../mimir-core" />
 	<property file="${core-home}/build.properties" />
-	
-  <path id="core-libs">
-    <fileset dir="${core-home}/lib" includes="**/*.jar" />
-  	<fileset dir="${core-home}" includes="mimir-core-*.jar" />
-  </path>
-	
-  <path id="local-libs">
-  	<fileset dir="lib" includes="**/*.jar" />
-  </path>
-	
-  <property name="classes.dir" location="classes" />
-  <property name="src.dir" location="src" />
-  <property name="doc.dir" location="doc" />
-  
-  <property name="jar.file" location="${app.name}-${app.version}.jar" />
-  <path id="compile.classpath">
-    <path refid="core-libs" />
-  	<path refid="local-libs" />
-  </path>
+
+	<path id="core-libs">
+		<fileset dir="${core-home}/lib" includes="**/*.jar" />
+		<fileset dir="${core-home}" includes="mimir-core-*.jar" />
+	</path>
+
+	<path id="local-libs">
+		<fileset dir="lib" includes="**/*.jar" />
+	</path>
+
+	<property name="classes.dir" location="classes" />
+	<property name="src.dir" location="src" />
+	<property name="doc.dir" location="doc" />
+
+	<property name="jar.name" value="${app.name}-${app.version}.jar" />
+	<property name="jar.file" location="${jar.name}" />
+	<path id="compile.classpath">
+		<path refid="core-libs" />
+		<path refid="local-libs" />
+	</path>
 	<manifestclasspath property="manifest.runtime.classpath" jarfile="${jar.file}">
-	  <classpath refid="local-libs" />
+		<classpath refid="local-libs" />
 	</manifestclasspath>
 
-		
-  <target name="clean">
-    <delete dir="${classes.dir}"/>
-    <delete file="${jar.file}"/>
-  </target>
-  
-  <target name="compile">
-    <mkdir dir="${classes.dir}"/>
-    <javac destdir="${classes.dir}"
-           srcdir="${src.dir}"
-           debug="true"
-           target="1.6"
-           source="1.6"
-           classpathref="compile.classpath" />
-  </target>
-  
-  <target name="jar" depends="clean, compile">
-    <jar file="${jar.file}" basedir="${classes.dir}" update="false">
-    	<manifest>
-    		<attribute name="Class-Path" value="${manifest.runtime.classpath}" />
-    	</manifest>
-  	</jar>
-  </target>  
-  
-  <target name="distro" depends="jar, javadoc" />
-  
-  <!-- Docs -->
-  <target name="javadoc">
-	  <javadoc access="protected"
-	           destdir="${doc.dir}/javadoc"
-	           classpathref="compile.classpath"
-	           Encoding="UTF-8"
-	           Use="yes"
-	           Windowtitle="${app.title} (${app.version}) JavaDoc"
-	           docencoding="UTF-8"
-	           charset="UTF-8"
-	           source="1.6"
-	           useexternalfile="yes"
-	           breakiterator="true">
-	    <fileset dir="${src.dir}" includes="**/*.java"/>
-	    <link href="http://java.sun.com/javase/6/docs/api/"/>
-	    <link href="http://hudson.gate.ac.uk/job/GATE-Nightly/javadoc/"/>
-	  </javadoc>
-	  <zip destfile="${app.name}-${app.version}-javadocs.zip">
-	    <zipfileset dir="${doc.dir}/javadoc"
-	                prefix="${app.name}-${app.version}-javadocs" />
-	  </zip>
-	  <delete dir="${doc.dir}/javadoc" />
-  </target>
+
+	<target name="clean">
+		<delete dir="${classes.dir}" />
+		<delete file="${jar.file}" />
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${classes.dir}" />
+		<javac destdir="${classes.dir}" srcdir="${src.dir}" debug="true" target="1.6" source="1.6" classpathref="compile.classpath" />
+	</target>
+
+	<target name="jar" depends="clean, compile, creole.xml">
+		<jar file="${jar.file}" basedir="${classes.dir}" update="false">
+			<manifest>
+				<attribute name="Class-Path" value="${manifest.runtime.classpath}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="distro" depends="jar, javadoc" />
+
+	<!-- Docs -->
+	<target name="javadoc">
+		<javadoc access="protected" destdir="${doc.dir}/javadoc" classpathref="compile.classpath" Encoding="UTF-8" Use="yes" Windowtitle="${app.title} (${app.version}) JavaDoc" docencoding="UTF-8" charset="UTF-8" source="1.6" useexternalfile="yes" breakiterator="true">
+			<fileset dir="${src.dir}" includes="**/*.java" />
+			<link href="http://java.sun.com/javase/6/docs/api/" />
+			<link href="http://hudson.gate.ac.uk/job/GATE-Nightly/javadoc/" />
+		</javadoc>
+		<zip destfile="${app.name}-${app.version}-javadocs.zip">
+			<zipfileset dir="${doc.dir}/javadoc" prefix="${app.name}-${app.version}-javadocs" />
+		</zip>
+		<delete dir="${doc.dir}/javadoc" />
+	</target>
+
+	<target name="creole.xml">
+		<copy file="creole.xml.template" tofile="creole.xml">
+			<filterset>
+				<filter token="jar" value="${jar.name}" />
+			</filterset>
+		</copy>
+	</target>
 </project>
