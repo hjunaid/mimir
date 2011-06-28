@@ -38,7 +38,7 @@
            classpathref="compile.classpath" />
   </target>
   
-  <target name="jar" depends="clean, compile">
+  <target name="jar" depends="clean, compile, creole.xml">
     <jar file="${jar.file}" basedir="${classes.dir}" update="false">
   	</jar>
   </target>  
