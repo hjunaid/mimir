@@ -23,7 +23,8 @@
   <property name="sesame.dir" location=""/>
 
   
-  <property name="jar.file" location="${app.name}-${app.version}.jar" />
+  <property name="jar.name" value="${app.name}-${app.version}.jar" />
+  <property name="jar.file" location="${jar.name}" />
   <path id="compile.classpath">
     <path refid="core-libs" />
     <path refid="local-libs" />
@@ -48,14 +49,23 @@
            classpathref="compile.classpath" />
   </target>
   
-  <target name="jar" depends="clean, compile">
+  <target name="jar" depends="clean, compile, creole.xml">
     <jar file="${jar.file}" basedir="${classes.dir}" update="false">
     <fileset dir="${sesame.dir}" includes="*.ttl" />
       <manifest>
         <attribute name="Class-Path" value="${manifest.runtime.classpath}" />
       </manifest>
     </jar>
-  </target>  
+  </target>
+  
+  <target name="creole.xml">
+      <copy file="creole.xml.template" tofile="creole.xml">
+        <filterset>
+          <filter token="jar" value="${jar.name}" />
+        </filterset>
+      </copy>
+    </target>
+  
   
   <target name="distro" depends="jar, javadoc" />
   
