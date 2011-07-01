@@ -259,7 +259,7 @@ class SearchController {
       if(docIdStr){
         int docId = docIdStr as int
         // see if any fields were requested
-        Map<String, Serializable> medatada = null;
+        Map<String, Serializable> metadata = null;
         def fieldNamesStr = p["fieldNames"]
         if(fieldNamesStr) {
           Set<String> fieldNames = new HashSet<String>()
@@ -268,7 +268,7 @@ class SearchController {
             // un-escape commas
             it.replace('\\,', ',')
           }.each{fieldNames.add(it)}
-          medatada = runner.getDocumentMetadataFields(docId, fieldNames)
+          metadata = runner.getDocumentMetadataFields(docId, fieldNames)
         }
         try{
           //we have all required parameters
