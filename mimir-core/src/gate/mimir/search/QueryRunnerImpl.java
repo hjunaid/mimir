@@ -25,9 +25,13 @@ import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -261,6 +265,24 @@ public class QueryRunnerImpl implements QueryRunner {
 
   public String getDocumentTitle(int documentID) throws IndexException {
     return queryExecutor.getQueryEngine().getDocumentTitle(documentID);
+  }
+
+  @Override
+  public Serializable getDocumentMetadataField(int docID, String fieldName)
+      throws IndexException {
+    return queryExecutor.getQueryEngine().getDocumentMetadataField(docID, 
+        fieldName);
+  }
+
+  @Override
+  public Map<String, Serializable> getDocumentMetadataFields(int docID,
+      Set<String> fieldNames) throws IndexException {
+    Map<String, Serializable> res = new HashMap<String, Serializable>();
+    for(String fieldName : fieldNames) {
+      Serializable value = getDocumentMetadataField(docID, fieldName);
+      if(value != null) res.put(fieldName, value);
+    }
+    return res;
   }
 
 

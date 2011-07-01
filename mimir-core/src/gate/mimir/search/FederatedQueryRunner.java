@@ -23,11 +23,14 @@ import gate.mimir.index.IndexException;
 import gate.mimir.search.query.Binding;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -313,6 +316,26 @@ public class FederatedQueryRunner implements QueryRunner {
     int subQuery = documentID % subRunners.length;
     int idWithinSubIndex = documentID / subRunners.length;
     return subRunners[subQuery].getDocumentTitle(idWithinSubIndex);    
+  }
+
+  
+  
+  @Override
+  public Serializable getDocumentMetadataField(int documentID, String fieldName)
+      throws IndexException {
+    int subQuery = documentID % subRunners.length;
+    int idWithinSubIndex = documentID / subRunners.length;
+    return subRunners[subQuery].getDocumentMetadataField(idWithinSubIndex, 
+        fieldName);    
+  }
+
+  @Override
+  public Map<String, Serializable> getDocumentMetadataFields(int documentID,
+      Set<String> fieldNames) throws IndexException {
+    int subQuery = documentID % subRunners.length;
+    int idWithinSubIndex = documentID / subRunners.length;
+    return subRunners[subQuery].getDocumentMetadataFields(idWithinSubIndex, 
+        fieldNames);    
   }
 
   public List<Binding> getHits(int startIndex, int hitCount)

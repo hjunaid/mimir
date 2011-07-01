@@ -21,12 +21,16 @@ package gate.mimir.search;
 
 
 
+import gate.mimir.DocumentMetadataHelper;
 import gate.mimir.index.IndexException;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 
@@ -183,6 +187,36 @@ public interface QueryRunner {
    */
   public String getDocumentTitle(int documentID) throws IndexException;
   
+  /**
+   * Obtains an arbitrary document metadata field from the stored document data.
+   * {@link DocumentMetadataHelper}s used at indexing time can add arbitrary 
+   * {@link Serializable} values as metadata fields for the documents being
+   * indexed. This method is used at search time to retrieve those values. 
+   *  
+   * @param docID the ID of document for which the metadata is sought.
+   * @param fieldName the name of the metadata fields to be obtained
+   * @return the de-serialised value stored at indexing time for the given 
+   * field name and document.
+   * @throws IndexException
+   */  
+  public Serializable getDocumentMetadataField(int docID, String fieldName) 
+      throws IndexException;
+  
+  /**
+   * Obtains a set of arbitrary document metadata fields from the stored 
+   * document data.
+   * {@link DocumentMetadataHelper}s used at indexing time can add arbitrary 
+   * {@link Serializable} values as metadata fields for the documents being
+   * indexed. This method is used at search time to retrieve those values. 
+   *  
+   * @param docID the ID of document for which the metadata is sought.
+   * @param fieldNames the names of the metadata fields to be obtained
+   * @return the de-serialised values stored at indexing time for the given 
+   * field names and document (as a Map from field name to filed value).
+   * @throws IndexException
+   */  
+  public Map<String, Serializable> getDocumentMetadataFields(int docID, 
+      Set<String> fieldNames) throws IndexException;  
   
   /**
    * Gets a segment of the document text for a given document. 
