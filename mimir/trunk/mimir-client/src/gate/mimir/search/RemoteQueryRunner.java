@@ -25,9 +25,13 @@ import gate.mimir.search.query.Binding;
 import gate.mimir.tool.WebUtils;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 import org.apache.log4j.Logger;
@@ -180,6 +184,8 @@ public class RemoteQueryRunner implements QueryRunner {
   protected static final String ACTION_DOC_URI_BIN = "docURIBin";
   
   protected static final String ACTION_DOC_TITLE_BIN = "docTitleBin";
+  
+  protected static final String ACTION_DOC_MEDATADA_FIELDS_BIN = "docMetadataFieldsBin";
 
   protected static final String ACTION_GET_MORE_HITS = "getMoreHits";
 
@@ -360,6 +366,42 @@ public class RemoteQueryRunner implements QueryRunner {
     }
   }
   
+  @Override
+  public Serializable getDocumentMetadataField(int documentId, String fieldName)
+      throws IndexException {
+    Set<String> names = new HashSet<String>();
+    names.add(fieldName);
+    return getDocumentMetadataFields(documentId, names).get(fieldName);
+  }
+
+  @Override
+  public Map<String, Serializable> getDocumentMetadataFields(int documentId,
+      Set<String> fieldNames) throws IndexException {
+    try {
+      // build a comma-separated value
+      StringBuilder namesStr = new StringBuilder();
+      boolean first = true;
+      for(String aName : fieldNames) {
+        if(first) {
+          first = false;
+        } else {
+          namesStr.append(", ");
+        }
+        namesStr.append(aName.replace(",", "\\,"));
+      }
+      return (Map<String, Serializable>)webUtils.getObject(
+              getActionBaseUrl(ACTION_DOC_MEDATADA_FIELDS_BIN),
+              "queryId", queryId,
+              "documentId", Integer.toString(documentId),
+              "fieldNames", namesStr.toString());
+    } catch(IOException e) {
+      throw new IndexException(e);
+    } catch(ClassNotFoundException e) {
+      throw new IndexException("Was expecting a Map<String, Serializable> " +
+      		"value, but got an unknown object type!", e);
+    }    
+  }
+
   public String getDocumentTitle(int documentID) throws IndexException {
     try {
       return (String)webUtils.getObject(

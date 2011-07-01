@@ -502,8 +502,8 @@ public class QueryEngine {
    * indexed. This method is used at search time to retrieve those values. 
    *  
    * @param docID the ID of document for which the metadata is sought.
-   * @param fieldName the name if the metadata filed to be obtained
-   * @return the de-serialised value stored at indexing time for the ginen 
+   * @param fieldName the name of the metadata filed to be obtained
+   * @return the de-serialised value stored at indexing time for the given 
    * field name and document.
    * @throws IndexException
    */

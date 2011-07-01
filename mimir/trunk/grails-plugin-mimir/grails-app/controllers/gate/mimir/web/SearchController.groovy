@@ -257,13 +257,29 @@ class SearchController {
       //get the parameters
       String docIdStr = p["documentId"]
       if(docIdStr){
+        int docId = docIdStr as int
+        // see if any fields were requested
+        Map<String, Serializable> medatada = null;
+        def fieldNamesStr = p["fieldNames"]
+        if(fieldNamesStr) {
+          Set<String> fieldNames = new HashSet<String>()
+          // split on each comma (not preceded by a backslash)
+          fieldNamesStr.split("\\s*(?<=[^\\\\]),\\s*").collect{
+            // un-escape commas
+            it.replace('\\,', ',')
+          }.each{fieldNames.add(it)}
+          medatada = runner.getDocumentMetadataFields(docId, fieldNames)
+        }
         try{
           //we have all required parameters
-          String documentURI = runner.getDocumentURI(docIdStr as int)
-          String documentTitle = runner.getDocumentTitle(docIdStr as int)
+          String documentURI = runner.getDocumentURI(docId)
+          String documentTitle = runner.getDocumentTitle(docId)
           message = buildMessage(SUCCESS, null){
             delegate.documentTitle(documentTitle)
             delegate.documentURI(documentURI)
+            metadata?.each{String key, Serializable value -> 
+              delegate.metadataField(name:key, value:value.toString())
+            }
           }
         }catch(Exception e){
           message = buildMessage(ERROR, "Error while obtaining the document statistics: \"" + 
@@ -849,7 +865,7 @@ class SearchController {
   
   
   /**
-   * Gets the URI of a document as a serialise String value.
+   * Gets the URI of a document as a serialises String value.
    */
   def docURIBin = {
     def p = params["request"] ?: params
@@ -914,7 +930,54 @@ class SearchController {
       response.sendError(HttpServletResponse.SC_NOT_FOUND, 
           "Query ID ${queryId} not known!")
     }
-  }  
+  }
+  
+  /**
+   * Gets a set of arbitrary document metadata fields
+   */
+  def docMetadataFieldsBin = {
+    def p = params["request"] ?: params
+    //get the query ID
+    String queryId = p["queryId"]
+    QueryRunner runner = searchService.getQueryRunner(queryId);
+    if(runner){
+      //get the parameters: int documentID
+      def documentIdParam = p["documentId"]
+      if(documentIdParam){
+        def fieldNamesStr = p["fieldNames"]
+        if(fieldNamesStr) {
+          try{
+            //we have all required parameters
+            int documentId = documentIdParam.toInteger()
+            Set<String> fieldNames = new HashSet<String>()
+            // split on each comma (not preceded by a backslash)
+            fieldNamesStr.split("\\s*(?<=[^\\\\]),\\s*").collect{
+              // un-escape commas
+              it.replace('\\,', ',')
+            }.each{fieldNames.add(it)}
+            Map<String, Serializable> medatada = 
+                runner.getDocumentMetadataFields(documentId, fieldNames)
+            new ObjectOutputStream (response.outputStream).withStream {stream ->
+              stream.writeObject(medatada)
+            }
+          }catch(Exception e){
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                "Error while obtaining the document title: \"" +
+                e.getMessage() + "\"!")
+          }
+        } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+          "No value provided for parameter fieldNames!")
+        }
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+            "No value provided for parameter documentId!")
+      }
+    } else {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
+          "Query ID ${queryId} not known!")
+    }
+  }
   
   /**
    * Gets the annotations config for a given index, as a serialised String[][] 
