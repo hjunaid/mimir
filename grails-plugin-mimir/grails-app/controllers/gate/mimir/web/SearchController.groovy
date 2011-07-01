@@ -264,7 +264,7 @@ class SearchController {
         if(fieldNamesStr) {
           Set<String> fieldNames = new HashSet<String>()
           // split on each comma (not preceded by a backslash)
-          fieldNamesStr.split("\\s*(?<=[^\\\\]),\\s*").collect{
+          fieldNamesStr.split(/\s*(?<!\\),\s*/).collect{
             // un-escape commas
             it.replace('\\,', ',')
           }.each{fieldNames.add(it)}
@@ -951,7 +951,7 @@ class SearchController {
             int documentId = documentIdParam.toInteger()
             Set<String> fieldNames = new HashSet<String>()
             // split on each comma (not preceded by a backslash)
-            fieldNamesStr.split("\\s*(?<=[^\\\\]),\\s*").collect{
+            fieldNamesStr.split(/\s*(?<!\\),\s*/).collect{
               // un-escape commas
               it.replace('\\,', ',')
             }.each{fieldNames.add(it)}
