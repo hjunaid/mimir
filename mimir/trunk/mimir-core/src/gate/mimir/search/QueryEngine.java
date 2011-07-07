@@ -44,6 +44,8 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.log4j.Logger;
@@ -52,6 +54,31 @@ import org.apache.log4j.Logger;
  * This class represents the entry point to the Mimir search API.
  */
 public class QueryEngine {
+  
+  private class WriteDeletedDocsTask extends TimerTask {
+    public void run() {
+      synchronized(writeDeletedDocsTimer) {
+        File delFile = new File(indexDir, DELETED_DOCUMENT_IDS_FILE_NAME);
+        if(delFile.exists()) {
+          delFile.delete();
+        }
+        try{
+          logger.debug("Writing deleted documents set");
+          ObjectOutputStream oos = new ObjectOutputStream(
+                  new GZIPOutputStream(
+                  new BufferedOutputStream(
+                  new FileOutputStream(delFile))));
+          oos.writeObject(deletedDocumentIds);
+          oos.flush();
+          oos.close();
+          logger.debug("Writing deleted documents set completed.");
+        }catch (IOException e) {
+          logger.error("Exception while writing deleted documents set", e);
+        }        
+      }
+    }
+  }
+  
   /**
    * The various indexes in the Mimir composite index. The array contains first
    * the token indexes (in the same order as listed in the index configuration),
@@ -76,7 +103,32 @@ public class QueryEngine {
    * The maximum number of documents to be stored in the document cache.
    */
   protected static final int DOCUMENT_CACHE_SIZE = 100;
+  
+  /**
+   * The set of IDs for the documents marked as deleted. 
+   */
+  private transient SortedSet<Integer> deletedDocumentIds;
+  
+  /**
+   * A timer used to execute the writing of deleted documents data to disk.
+   * This timer is used to create a delay, allowing a batch of writes to be 
+   * coalesced into a single one.
+   */
+  private transient Timer writeDeletedDocsTimer;
+  
+  /**
+   * The timer task used to top write to disk the deleted documents data.
+   * This value is non-null only when there is a pending write. 
+   */
+  private volatile transient WriteDeletedDocsTask writeDeletedDocsTask;
 
+  /**
+   * The name for the file (stored in the root index directory) containing 
+   * the serialised version of the {@link #deletedDocumentIds}. 
+   */
+  public static final String DELETED_DOCUMENT_IDS_FILE_NAME = "deleted.ser";
+  
+  
   /**
    * The maximum size of an index that can be loaded in memory (by default 64
    * MB).
@@ -261,6 +313,7 @@ public class QueryEngine {
           }
         }
       }
+      readDeletedDocs();
       
       activeQueryRunners = Collections.synchronizedList(
               new ArrayList<QueryRunner>());
@@ -270,6 +323,7 @@ public class QueryEngine {
       throw new IndexException("Input/output exception!", e);
     }
     subBindingsEnabled = false;
+    writeDeletedDocsTimer = new Timer("Delete documents writer");
   }
 
   /**
@@ -524,6 +578,9 @@ public class QueryEngine {
    */
   protected synchronized DocumentData getDocument(int documentID)
   throws IndexException {
+    if(isDeleted(documentID)) {
+      throw new IndexException("Invalid document ID " + documentID);
+    }
     DocumentData documentData = documentCache.get(documentID);
     if(documentData == null) {
       // cache miss
@@ -560,6 +617,15 @@ public class QueryEngine {
           }
         }
       }
+    }
+    // write the deleted documents set
+    synchronized(writeDeletedDocsTimer) {
+      if(writeDeletedDocsTask != null) {
+        writeDeletedDocsTask.cancel();
+      }
+      writeDeletedDocsTimer.cancel();
+      // explicitly call it one last time
+      new WriteDeletedDocsTask().run();
     }
     documentCache.clear();
     indexes = null;
@@ -684,5 +750,94 @@ public class QueryEngine {
       theIndex = Index.getInstance(indexUri.toString());
     }
     return theIndex;
+  }
+  
+  /**
+   * Marks a given document (identified by its ID) as deleted. Deleted documents
+   * are never returned as search results.
+   * @param documentId
+   */
+  public void deleteDocument(int documentId) {
+    if(deletedDocumentIds.add(documentId)) {
+      writeDeletedDocsLater();
+    }
+  }
+
+  /**
+   * Marks the given batch of documents (identified by ID) as deleted. Deleted
+   * documents are never returned as search results.
+   * @param documentIds
+   */
+  public void deleteDocuments(Collection<Integer> documentIds) {
+    if(deletedDocumentIds.addAll(documentIds)) {
+      writeDeletedDocsLater();
+    }
+  }
+  
+  /**
+   * Checks whether a given document (specified by its ID) is marked as deleted. 
+   * @param documentId
+   * @return
+   */
+  public boolean isDeleted(int documentId) {
+    return deletedDocumentIds.contains(documentId);
+  }
+  
+  /**
+   * Mark the given document (identified by ID) as <i>not</i> deleted.  Calling
+   * this method for a document ID that is not currently marked as deleted has
+   * no effect.
+   */
+  public void undeleteDocument(int documentId) {
+    if(deletedDocumentIds.remove(documentId)) {
+      writeDeletedDocsLater();
+    }
+  }
+  
+  /**
+   * Mark the given documents (identified by ID) as <i>not</i> deleted.  Calling
+   * this method for a document ID that is not currently marked as deleted has
+   * no effect.
+   */
+  public void undeleteDocuments(Collection<Integer> documentIds) {
+    if(deletedDocumentIds.removeAll(documentIds)) {
+      writeDeletedDocsLater();
+    }
+  }
+  
+  /**
+   * Writes the set of deleted document to disk in a background thread, after a
+   * short delay. If a previous request has not started yet, this new request 
+   * will replace it. 
+   */
+  protected void writeDeletedDocsLater() {
+    synchronized(writeDeletedDocsTimer) {
+      if(writeDeletedDocsTask != null) {
+        writeDeletedDocsTask.cancel();
+      }
+      writeDeletedDocsTask = new WriteDeletedDocsTask();
+      writeDeletedDocsTimer.schedule(writeDeletedDocsTask, 1000);
+    }
+  }
+  
+  /**
+   * Reads the list of deleted documents from disk. 
+   */
+  protected synchronized void readDeletedDocs() throws IOException{
+    deletedDocumentIds = Collections.synchronizedSortedSet(
+            new TreeSet<Integer>());
+    File delFile = new File(indexDir, DELETED_DOCUMENT_IDS_FILE_NAME);
+    if(delFile.exists()) {
+      try {
+        ObjectInputStream ois = new ObjectInputStream(
+                new GZIPInputStream(
+                new BufferedInputStream(
+                new FileInputStream(delFile))));
+        deletedDocumentIds.addAll((Set<Integer>)ois.readObject());
+      } catch(ClassNotFoundException e) {
+        // this should never happen
+        throw new RuntimeException(e);
+      }
+    }
   }
 }
