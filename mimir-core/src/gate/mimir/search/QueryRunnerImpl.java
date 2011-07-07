@@ -62,8 +62,7 @@ public class QueryRunnerImpl implements QueryRunner {
         long startTime = System.currentTimeMillis();
         if(currentDocStats == null){
           //this is the first search stage
-          currentDocStats = new int[]{queryExecutor.nextDocument(
-                  queryExecutor.getLatestDocument()), 0};
+          currentDocStats = new int[]{nextNonDeleted(), 0};
         }
         int hitsThisStage = 0;
         while(hitsThisStage < maxHitsPerStage &&
@@ -91,8 +90,7 @@ public class QueryRunnerImpl implements QueryRunner {
               documentStats.add(currentDocStats); 
             }
             //and move to the next doc
-            currentDocStats = new int[]{queryExecutor.nextDocument(
-                    queryExecutor.getLatestDocument()), 0};
+            currentDocStats = new int[]{nextNonDeleted(), 0};
           }
         }
       } catch(IOException e) {
@@ -107,6 +105,21 @@ public class QueryRunnerImpl implements QueryRunner {
           runningThread = null;  
         }
       }      
+    }
+
+    /**
+     * Find the next available document from the query runner that is not
+     * marked as deleted.
+     */
+    private int nextNonDeleted() throws IOException {
+      int nextDocId = queryExecutor.nextDocument(
+              queryExecutor.getLatestDocument());
+      while(nextDocId != -1 && 
+            queryExecutor.getQueryEngine().isDeleted(nextDocId)) {
+        nextDocId = queryExecutor.nextDocument(
+                queryExecutor.getLatestDocument());
+      }
+      return nextDocId;
     }
   }
   
