@@ -452,35 +452,41 @@ public abstract class MimirIndexBuilder implements Runnable {
     //zero document related counters
     tokenPosition = 0;
 
-    //get the annotations to be processed
-    Annotation[] annotsToProcess = getAnnotsToProcess(gateDocument);
-    
-    logger.debug("Starting document "
-            + gateDocument.getDocument().getName() + ". "
-            + annotsToProcess.length + " annotations to process");
-    
-    documentStarting(gateDocument);
-
-    //process the annotations one by one.
-    for(Annotation ann : annotsToProcess){
-      processAnnotation(ann, gateDocument);
-    }
-    
-    documentEnding(gateDocument);
-
-    //write the size of the current document to the sizes stream
     try {
-      sizesStream.writeGamma(tokenPosition + 1);
-    } catch(IOException e) {
-      throw new IndexException(e);
+      //get the annotations to be processed
+      Annotation[] annotsToProcess = getAnnotsToProcess(gateDocument);
+      
+      logger.debug("Starting document "
+              + gateDocument.getDocument().getName() + ". "
+              + annotsToProcess.length + " annotations to process");
+  
+      documentStarting(gateDocument);
+  
+      try {
+        //process the annotations one by one.
+        for(Annotation ann : annotsToProcess){
+          processAnnotation(ann, gateDocument);
+        }
+      } finally {
+        documentEnding(gateDocument);
+      }
     }
-        
-    if(tokenPosition > maxTermPositionInBatch) {
-      maxTermPositionInBatch = tokenPosition;
+    finally {
+      //write the size of the current document to the sizes stream
+      try {
+        sizesStream.writeGamma(tokenPosition + 1);
+      } catch(IOException e) {
+        throw new IndexException(e);
+      }
+      finally {
+        if(tokenPosition > maxTermPositionInBatch) {
+          maxTermPositionInBatch = tokenPosition;
+        }
+        //increment doc pointer for next doc
+        documentPointer++;
+        progressLogger.update();
+      }
     }
-    //increment doc pointer for next doc
-    documentPointer++;
-    progressLogger.update();
   }
   
   /**
