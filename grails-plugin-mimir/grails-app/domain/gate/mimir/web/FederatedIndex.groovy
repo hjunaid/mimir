@@ -94,5 +94,13 @@ class FederatedIndex extends Index {
   public double closingProgress() {
     return federatedIndexService.findProxy(this).closingProgress
   }
-    
+
+  public void deleteDocuments(Collection<Integer> documentIds) {
+    federatedIndexService.deleteDocuments(this, documentIds)
+  }
+
+  public void undeleteDocuments(Collection<Integer> documentIds) {
+    federatedIndexService.undeleteDocuments(this, documentIds)
+  }
+  
 }

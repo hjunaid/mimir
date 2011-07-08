@@ -106,5 +106,37 @@ class IndexManagementController {
       "Index ID ${params.indexId} not known!")
     }
   }
+  
+
+  /**
+   * Common implementation for delete and undelete actions
+   * (they are identical apart from the method to call on the
+   * underlying Index domain object).
+   */
+  private handleDeleteOrUndeleteBin = { String method, dummy ->
+    def indexInstance = Index.findByIndexId(params.indexId)
+    if(indexInstance){
+      try {
+        def documentIds = null
+        request.inputStream.withObjectInputStream { ois ->
+          documentIds = ois.readObject()
+        }
+        if(documentIds instanceof Collection) {
+          indexInstance."${method}Documents"(documentIds)
+          render(text:"OK", contentType:'text/plain', encoding:'UTF-8')
+        }
+      } catch(Exception e) {
+        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          "Error while marking documents as ${method}d: \"" + e.getMessage() + "\"!")
+      }
+    } else{
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
+          "Index ID ${params.indexId} not known!")
+    }
+  }
+
+  def deleteDocumentsBin = handleDeleteOrUndeleteBin.curry("delete")
+
+  def undeleteDocumentsBin = handleDeleteOrUndeleteBin.curry("undelete")
 
 }
