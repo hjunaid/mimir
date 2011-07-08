@@ -144,6 +144,15 @@ class LocalIndexService {
     return getQueryEngine(index).getQueryRunner(query)
   }
   
+  public synchronized void deleteDocuments(LocalIndex index, Collection<Integer> documentIds) {
+    getQueryEngine(index).deleteDocuments(documentIds)
+  }
+
+  public synchronized void undeleteDocuments(LocalIndex index, Collection<Integer> documentIds) {
+    getQueryEngine(index).undeleteDocuments(documentIds)
+  }
+    
+  
   private synchronized QueryEngine getQueryEngine (LocalIndex index){
     QueryEngine engine = queryEngines[index.id]
     if(!engine) {

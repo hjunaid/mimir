@@ -95,4 +95,13 @@ class LocalIndex extends Index implements Serializable {
   QueryRunner startQuery(String queryString) {
     return localIndexService.getQueryRunner(this, queryString)
   }
+
+  void deleteDocuments(Collection<Integer> documentIds) {
+    localIndexService.deleteDocuments(this, documentIds)
+  }
+
+  void undeleteDocuments(Collection<Integer> documentIds) {
+    localIndexService.undeleteDocuments(this, documentIds)
+  }
+  
 }

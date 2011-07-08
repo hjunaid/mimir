@@ -66,4 +66,77 @@ class IndexAdminController {
     }
     redirect(action:admin, params:params)    
   }
+  
+  def deletedDocuments = {
+    def indexInstance = Index.findByIndexId(params.indexId)
+
+    if(!indexInstance) {
+      flash.message = "Index not found with index id ${params.indexId}"
+      redirect(action:admin, params:params)
+    }
+    else if(indexInstance.state != Index.SEARCHING) {
+      flash.message = "Index \"${indexInstance.name}\" is not in the searching state"
+      redirect(action:admin, params:params)
+    }
+    else {
+      return [indexInstance:indexInstance, documents:new DeletedDocumentsCommand(documentIds:"")]
+    }
+  }
+
+  /**
+   * deleteDocuments and undeleteDocuments are almost identical, so we
+   * use a common implementation.
+   */
+  def doDeleteOrUndelete = { DeletedDocumentsCommand cmd ->
+    def indexInstance = Index.findByIndexId(params.indexId)
+
+    if(!indexInstance) {
+      flash.message = "Index not found with index id ${params.indexId}"
+      redirect(action:admin, params:params)
+    }
+    else if(indexInstance.state != Index.SEARCHING) {
+      flash.message = "Index \"${indexInstance.name}\" is not in the searching state"
+      redirect(action:admin, params:params)
+    }
+    else {
+      if(cmd.hasErrors()) {
+        // invalid operation
+        render(view:'deletedDocuments', model:[indexInstance:indexInstance, documents:cmd])
+      } else {
+        def lastTriedNumber = null
+        try {
+          def idsToDelete = cmd.documentIds.split(/\p{javaWhitespace}+/).collect {
+            lastTriedNumber = it
+            return it.toInteger()
+          }
+
+          // if we get to here we have a list of Integers
+          indexInstance."${cmd.operation}Documents"(idsToDelete)
+          flash.message = "${idsToDelete.size()} document(s) marked as ${cmd.operation}d"
+          redirect(action:admin, params:[indexId:params.indexId])
+        }
+        catch(NumberFormatException e) {
+          cmd.errors.rejectValue("documentIds",
+            "gate.mimir.web.DeletedDocumentsCommand.documentIds.notnumber",
+            [lastTriedNumber] as String[],
+            "\"${lastTriedNumber}\" is not a valid document ID")
+          render(view:'deletedDocuments', model:[indexInstance:indexInstance, documents:cmd])
+        }
+      }
+    }
+  }
+}
+
+
+/**
+ * Simple command object used by the deleteDocuments and undeleteDocuments
+ * actions so we can attach errors to the field.
+ */
+class DeletedDocumentsCommand {
+  String documentIds
+  String operation
+
+  static constraints = {
+    operation(inList:['delete', 'undelete'])
+  }
 }

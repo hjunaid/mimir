@@ -134,4 +134,32 @@ class RemoteIndex extends Index {
     }   
   }
   
+  /**
+   * Asks the remote index to mark objects as deleted.
+   */
+  void deleteDocuments(Collection<Integer> documentIds) {
+    doDeleteOrUndelete("delete", documentIds)
+  }
+
+  /**
+   * Asks the remote index to mark objects as not deleted.
+   */
+  void undeleteDocuments(Collection<Integer> documentIds) {
+    doDeleteOrUndelete("undelete", documentIds)
+  }
+
+  private void doDeleteOrUndelete(String method, Collection<Integer> documentIds) {
+    String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) +
+        "manage/${method}DocumentsBin";
+    try{
+      webUtilsManager.currentWebUtils(this).postObject(urlStr, documentIds)
+    }catch(IOException e){
+      log.error("Problem communicating with the remote server!", e)
+      RemoteIndex.withTransaction{
+        //by convention, any communication error switches the index state
+        state = Index.FAILED
+      }
+    }
+  }
+  
 }

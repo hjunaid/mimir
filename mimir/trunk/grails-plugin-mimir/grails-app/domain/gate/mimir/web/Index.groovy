@@ -105,6 +105,22 @@ class Index implements Serializable {
     throw new UnsupportedOperationException() 
   }
 
+  /**
+   * Mark the given document IDs in this index as having been deleted,
+   * preventing them from being subsequently returned by any queries.
+   */
+  void deleteDocuments(Collection<Integer> documentIds) {
+    throw new UnsupportedOperationException()
+  }
+
+  /**
+   * Mark the given document IDs in this index as not having been deleted,
+   * allowing them to bereturned by future queries.
+   */
+  void undeleteDocuments(Collection<Integer> documentIds) {
+    throw new UnsupportedOperationException()
+  }
+  
   // Constants for the possible state values
   public static final String INDEXING = "indexing"
   public static final String SEARCHING = "searching"

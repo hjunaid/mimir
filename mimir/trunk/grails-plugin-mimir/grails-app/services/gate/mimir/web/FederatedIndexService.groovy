@@ -92,6 +92,26 @@ class FederatedIndexService {
       if(it.state == Index.INDEXING) registerIndex(it)
     }
   }
+  
+
+  private void deleteOrUndelete(String method, FederatedIndex fedIndex, Collection<Integer> documentIds) {
+    def numIndexes = fedIndex.indexes.size()
+    // map the supplied federated document IDs to the corresponding IDs in the
+    // sub-indexes - first separate out the IDs that belong in each index
+    Map subIndexIds = documentIds.groupBy { it % numIndexes }
+    // and intdiv them by the number of indexes to get the sub-index document ID
+    subIndexIds.each { i, fedIds ->
+      fedIndex.indexes[i]."${method}Documents"(fedIds.collect { it.intdiv(numIndexes) })
+    }
+  }
+
+  public void deleteDocuments(FederatedIndex index, Collection<Integer> documentIds) {
+    deleteOrUndelete("delete", index, documentIds)
+  }
+
+  public void undeleteDocuments(FederatedIndex index, Collection<Integer> documentIds) {
+    deleteOrUndelete("undelete", index, documentIds)
+  } 
 }
 
 class FederatedIndexProxy implements Runnable{
