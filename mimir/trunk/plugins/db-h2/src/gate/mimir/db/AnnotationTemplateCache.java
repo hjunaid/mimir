@@ -44,6 +44,12 @@ public class AnnotationTemplateCache {
     public static final long NO_ID = -1;
 
     /**
+     * Value for a Tag's ID when no ID exists (i.e. an alternative 
+     * representation for when the Tag value should be null).
+     */
+    public static final long NULL_ID = -2;
+    
+    /**
      * Gets the ID associated with this tag. If the values returned is -1, then
      * the has no ID.
      * 
@@ -190,7 +196,7 @@ public class AnnotationTemplateCache {
   /**
    * Type for value going in the level 2 cache (a simple wrapper for a long).
    */
-  protected class LongTag implements Tag {
+  protected static class LongTag implements Tag {
     public LongTag() {
       this.id = NO_ID;
     }
@@ -210,10 +216,11 @@ public class AnnotationTemplateCache {
    * Type for keys going in the level 3 cache
    */
   protected class MentionKey {
-    public MentionKey(long annotationId, int mentionLength) {
-      this.annotationId = annotationId;
+    public MentionKey(long l1Id, long l2id, int mentionLength) {
+      this.level1Id = l1Id;
+      this.level2Id = l2id;
       this.mentionLength = mentionLength;
-      this.hashcode = Arrays.hashCode(new long[]{annotationId, mentionLength});
+      this.hashcode = Arrays.hashCode(new long[]{level1Id, level2Id, mentionLength});
     }
 
     @Override
@@ -224,11 +231,15 @@ public class AnnotationTemplateCache {
     @Override
     public boolean equals(Object obj) {
       MentionKey other = (MentionKey)obj;
-      return other != null && annotationId == other.annotationId
-              && mentionLength == other.mentionLength;
+      return other != null && 
+             level1Id == other.level1Id && 
+             level2Id == other.level2Id && 
+             mentionLength == other.mentionLength;
     }
 
-    long annotationId;
+    long level1Id;
+    
+    long level2Id;
 
     int mentionLength;
 
@@ -366,8 +377,11 @@ public class AnnotationTemplateCache {
    * will have an ID value of {@link #NO_ID} - it is the responsibility of the
    * client code to obtain the correct ID and set it on the tag.
    */
-  public Tag getLevel3Tag(Tag tag, int length) {
-    MentionKey key = new MentionKey(tag.getId(), length);
+  public Tag getLevel3Tag(Tag level1tag, Tag level2tag, int length) {
+    MentionKey key = new MentionKey(
+        level1tag == null ? Tag.NULL_ID : level1tag.getId(),
+        level2tag == null ? Tag.NULL_ID : level2tag.getId(),
+        length);
     LongTag l3Tag = (LongTag)level3Cache.get(key);
     if(l3Tag == null) {
       l3CacheMisses++;
