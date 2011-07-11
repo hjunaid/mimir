@@ -491,3 +491,39 @@ in the master but not the slave index it points to).  However to do so would
 put the remote index on the master (and hence any federated index that it is
 part of) into the {\em failed} state, preventing further use until the problem
 is resolved.
+
+\section{``Deleting'' Documents from a \Mimir\ Index}
+
+While \Mimir\ indexes are not directly modifiable once they have been created,
+there are situations in which it is necessary to remove documents that should
+not have been indexed in the first place, or documents that may be considered
+libellous, etc.  To support this, \Mimir\ provides a mechanism to mark
+individual documents in the index as ``deleted'', and any documents so marked
+will be excluded from future queries.  It is not possible to completely delete
+the data from the index files on disk, short of completely re-building the
+index from scratch, but documents marked as deleted are not accessible through
+any of the public \Mimir\ APIs or user interfaces.
+
+To mark a document as deleted (or to remove an existing deletion marker, making
+the document available for queries again), use the ``Manage deleted documents''
+link from the index's administration page.  This will present the screen shown
+in figure~\ref{fig:deleted-documents}, with a text box into which you can type
+one or more (space-separated) document IDs, and choose whether to mark them as
+deleted or as ``not deleted'' (i.e. to remove any existing deletion markers for
+those document IDs).
+%
+\begin{figure}[htb!]
+\begin{center}
+\includegraphics[scale=0.5]{img/deleted-documents}
+\end{center}
+\caption{Managing deleted documents}
+\label{fig:deleted-documents}
+\end{figure}
+
+Note that the IDs required here are not the URIs that were provided with the
+documents when they were indexed, but the internal \Mimir\ document IDs which
+are numbers starting from 0, as returned in the hit lists and ``docStats'' by
+the \Mimir\ query APIs (see section~\ref{sec:search:service}).  In the GUS
+interface (section~\ref{sec:search:gus}) the document ID is part of the URL to
+the ``cached'' document text,
+{\tt .../search/gusDocument/{\it $<$documentID$>$}?queryId=...}.
