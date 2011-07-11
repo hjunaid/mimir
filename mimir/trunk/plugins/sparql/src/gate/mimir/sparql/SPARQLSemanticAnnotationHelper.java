@@ -225,15 +225,17 @@ public class SPARQLSemanticAnnotationHelper extends
           }
         }
         // convert each result row into a query for the delegate
-        for(String[] aRow : srs.getRows()) {
-          List<Constraint> delegateConstraints =
-              new ArrayList<Constraint>(passThroughConstraints);
-          for(int i = 0; i < srs.getColumnNames().length; i++) {
-            delegateConstraints.add(new Constraint(ConstraintType.EQ, srs
-                .getColumnNames()[i], aRow[i]));
-          }
-          mentions.addAll(delegate.getMentions(annotationType, 
-              delegateConstraints, engine));
+        if(srs.getRows() != null) {
+          for(String[] aRow : srs.getRows()) {
+            List<Constraint> delegateConstraints =
+                new ArrayList<Constraint>(passThroughConstraints);
+            for(int i = 0; i < srs.getColumnNames().length; i++) {
+              delegateConstraints.add(new Constraint(ConstraintType.EQ, srs
+                  .getColumnNames()[i], aRow[i]));
+            }
+            mentions.addAll(delegate.getMentions(annotationType, 
+                delegateConstraints, engine));
+          }          
         }
       } catch(IOException e) {
         logger.error(
