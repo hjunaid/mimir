@@ -527,7 +527,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       }
       
       // find the Level-1 Mention ID (ignoring the L2 values)
-      Tag mentionL1Tag = cache.getLevel3Tag(level1Tag, length);
+      Tag mentionL1Tag = cache.getLevel3Tag(level1Tag, null, length);
       Tag mentionL2Tag = null;
       while(mentionL1Tag.getId() == NO_ID){
         mentionsSelectStmt.setLong(1, level1Tag.getId());
@@ -576,7 +576,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
             level2Tag.setId(res.getLong(1));
             // sanity check
             if(res.next()) throw new RuntimeException(
-                    "Multiple Unique IDs foud in level 2 table for annotation " + 
+                    "Multiple Unique IDs found in level 2 table for annotation " + 
                     annotation.toString());
           } else {
             // insert the new row
@@ -591,7 +591,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
           }
         }
         // find the Level-2 Mention ID
-        mentionL2Tag = cache.getLevel3Tag(level2Tag, length);
+        mentionL2Tag = cache.getLevel3Tag(level1Tag, level2Tag, length);
         while(mentionL2Tag.getId() == NO_ID){
           mentionsSelectStmt.setLong(1,level1Tag.getId());
           mentionsSelectStmt.setLong(2, level2Tag.getId());
