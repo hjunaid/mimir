@@ -196,6 +196,7 @@ class LocalIndexController {
         return
       }catch (Exception e) {
         flash.message = "Could not create local index. Problem was: \"${e.message}\"."
+        log.debug("Error creating local index", e)
         localIndexInstance.delete()
         redirect(uri:"/")
         return
