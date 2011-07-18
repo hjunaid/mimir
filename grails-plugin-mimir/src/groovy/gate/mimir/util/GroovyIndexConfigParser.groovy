@@ -33,22 +33,28 @@ public class GroovyIndexConfigParser {
     def scriptBinding = new Binding([:])
     def shell = new GroovyShell(Gate.classLoader,
         scriptBinding)
-    shell.evaluate(groovyScript)
+    def tokenFeaturesHandler = new TokenFeaturesHandler()
+    def semanticAnnotationsHandler = new SemanticAnnotationsHandler()
+    Script script = shell.parse(groovyScript)
+
+    // make the "createHelper" method available anywhere in the script
+    // using the metaclass mechanism
+    GroovySystem.metaClassRegistry.removeMetaClass(script.getClass())
+    def mc = script.getClass().metaClass
+    mc.createHelper = semanticAnnotationsHandler.&createHelper
+    script.metaClass = mc
+    
+    script.run()
 
     // process the tokenFeatures section
-    def tokenFeaturesHandler = new TokenFeaturesHandler()
     def tokenFeaturesClosure = scriptBinding.tokenFeatures
     tokenFeaturesClosure.delegate = tokenFeaturesHandler
-    tokenFeaturesClosure.resolveStrategy = Closure.DELEGATE_FIRST
     tokenFeaturesClosure.call()
 
     // process the semanticAnnotations section
-    def semanticAnnotationsHandler = new SemanticAnnotationsHandler()
     def semanticAnnotationsClosure = scriptBinding.semanticAnnotations
     semanticAnnotationsClosure.delegate = semanticAnnotationsHandler
-    semanticAnnotationsClosure.resolveStrategy = Closure.DELEGATE_FIRST
     semanticAnnotationsClosure.call()
-    semanticAnnotationsHandler.finish()
 
     // build the index config
     def indexConfig = new IndexConfig(

@@ -28,7 +28,7 @@ import it.unimi.dsi.mg4j.index.NullTermProcessor
  * of features to index.  If a TermProcessor is passed as an argument to a
  * method call, that processor is used for the given feature.  If no processor
  * is passed in, the first feature is given a DowncaseTermProcessor and
- * subsequent features are unproessed.
+ * subsequent features are unprocessed.
  */
 class TokenFeaturesHandler {
 

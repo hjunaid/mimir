@@ -33,42 +33,102 @@ import org.apache.log4j.Logger
  * textFeatures and uriFeatures, which will be used to create a default helper.
  */
 class SemanticAnnotationsHandler {
-  
+
   private static final Logger log = Logger.getLogger(SemanticAnnotationsHandler)
 
   List indexerConfigs = []
 
-  private IndexHandler defaultHandler = new IndexHandler(this)
+  Map currentIndex = [:]
 
   def index(Closure callable) {
-    def handler = new IndexHandler(this)
-    callable.delegate = handler
-    callable.resolveStrategy = Closure.DELEGATE_FIRST
+    Map savedCurrentIndex = currentIndex
+    currentIndex = [annotationTypes:[], helpers:[]]
+    callable.delegate = this
     callable.call()
 
     indexerConfigs << new SemanticIndexerConfig(
-                            handler.annotationTypes as String[],
-                            handler.helpers as SemanticAnnotationHelper[])
+        currentIndex.annotationTypes as String[],
+        currentIndex.helpers as SemanticAnnotationHelper[])
+    
+    currentIndex = savedCurrentIndex
   }
 
   /**
-   * Checks if there were any semantic annotation type calls outside any
-   * <code>index</code> block, and if so, groups them together into an extra
-   * SemanticIndexerConfig.
+   * Main DSL method.  Expects a named parameter "helper" specifying
+   * the SemanticAnnotationHelper to register.  If the helper does
+   * not provide a getAnnotationType method (i.e. if it is not a
+   * subclass of AbstractSemanticAnnotationHelper) then an additional
+   * argument named "type" is also required to specify the annotation
+   * type against which the helper should be registered.
+   * <pre>
+   * annotation helper:new DefaultHelper(annType:'Person', nominalFeatures:['gender'])
+   * </pre>
    */
-  void finish() {
-    if(defaultHandler.annotationTypes) {
-      indexerConfigs << new SemanticIndexerConfig(
-                         defaultHandler.annotationTypes as String[],
-                         defaultHandler.helpers as SemanticAnnotationHelper[])
+  void annotation(Map args) {
+    if(!currentIndex) {
+      throw new IllegalStateException("annotation method called outside any \"index\" closure")
     }
+    def helper = args.helper
+    if(!helper) {
+      throw new IllegalArgumentException("annotation method requires a \"helper\" parameter")
+    }
+    if(!(helper instanceof SemanticAnnotationHelper)) {
+      throw new IllegalArgumentException("annotation method \"helper\" parameter must be a " +
+        "SemanticAnnotationHelper, but ${helper.getClass().getName()} is not.")
+    }
+    def type = args.type
+    if(!type) {
+      if(helper.hasProperty("annotationType")) {
+        type = helper.annotationType
+      }
+    }
+    if(!type) {
+      throw new IllegalArgumentException("annotation method could not determine annotation " +
+        "type - type could not be determined from the helper, and no explicit \"type\" parameter " +
+        "was provided.")
+    }
+
+    currentIndex.annotationTypes << type
+    currentIndex.helpers << helper
   }
 
   /**
-   * Delegate everything else to the default handler.
+   * Old-style DSL method to create and register a semantic annotation helper by calling a method named for the annotation type.  This pattern is now deprecated.
+   * Expects the following
+   * map entries:
+   * <dl>
+   *   <dt>type</dt><dd>The Class object representing the type
+   *     of the helper.  This class must implement
+   *     {@link SemanticAnnotationHelper} and must provide a
+   *     constructor taking six arguments - the annotation type
+   *     and five String[] arguments giving the nominal, integer,
+   *     float, text and URI feature names.</dd>
+   *   <dt>nominalFeatures</dt>
+   *   <dt>integerFeatures</dt>
+   *   <dt>floatFeatures</dt>
+   *   <dt>textFeatures</dt>
+   *   <dt>uriFeatures</dt><dd>The features of various kinds that
+   *     should be indexed by the helper.  These entries should be
+   *     String arrays or List<String> (anything that is convertable
+   *     to a String array by Groovy's <code>as String[]</code>
+   *     operator)</dd>
+   * </dl>
    */
-  def methodMissing(String name, args) {
-    defaultHandler."$name"(args)
-  }
+  void methodMissing(String annotationType, Map defParams) {
+    Class theClass = null
+    if(defParams?.type) {
+      // a Class object
+      theClass = defParams.type
+    } else {
+      throw new IllegalArgumentException("Index template does not include the " +
+      "type for the semantic annotation helper for annotation type ${annotationType}.")
+    }
 
+    annotation(helper:theClass.newInstance(annotationType,
+        defParams?.nominalFeatures as String[],
+        defParams?.integerFeatures as String[],
+        defParams?.floatFeatures as String[],
+        defParams?.textFeatures as String[],
+        defParams?.uriFeatures as String[]))
+  }
 }

@@ -57,6 +57,11 @@ public abstract class DelegatingSemanticAnnotationHelper extends
                                                         AbstractSemanticAnnotationHelper {
   private static final long serialVersionUID = 458089145672457600L;
 
+  /**
+   * Map key for the Groovy-friendly constructor in subclasses.
+   */
+  public static final String DELEGATE_KEY = "delegate";
+
   protected SemanticAnnotationHelper delegate;
 
   /**
@@ -114,4 +119,59 @@ public abstract class DelegatingSemanticAnnotationHelper extends
   public void close(QueryEngine qEngine) {
     delegate.close(qEngine);
   }
+  
+  public static String getAnnTypeFromMapOrDelegate(Map<String, ?> params) {
+    String fromMap = getString(params, ANN_TYPE_KEY);
+    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
+      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getAnnotationType();
+    } else {
+      return fromMap;
+    }
+  }
+  
+  public static String[] getNominalFeaturesFromMapOrDelegate(Map<String, ?> params) {
+    String[] fromMap = getArray(params, NOMINAL_FEATURES_KEY);
+    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
+      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getNominalFeatureNames();
+    } else {
+      return fromMap;
+    }
+  }
+
+  public static String[] getIntegerFeaturesFromMapOrDelegate(Map<String, ?> params) {
+    String[] fromMap = getArray(params, INTEGER_FEATURES_KEY);
+    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
+      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getIntegerFeatureNames();
+    } else {
+      return fromMap;
+    }
+  }
+
+  public static String[] getFloatFeaturesFromMapOrDelegate(Map<String, ?> params) {
+    String[] fromMap = getArray(params, FLOAT_FEATURES_KEY);
+    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
+      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getFloatFeatureNames();
+    } else {
+      return fromMap;
+    }
+  }
+
+  public static String[] getTextFeaturesFromMapOrDelegate(Map<String, ?> params) {
+    String[] fromMap = getArray(params, TEXT_FEATURES_KEY);
+    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
+      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getTextFeatureNames();
+    } else {
+      return fromMap;
+    }
+  }
+
+  public static String[] getUriFeaturesFromMapOrDelegate(Map<String, ?> params) {
+    String[] fromMap = getArray(params, URI_FEATURES_KEY);
+    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
+      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getUriFeatureNames();
+    } else {
+      return fromMap;
+    }
+  }
+
 }

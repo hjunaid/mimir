@@ -81,23 +81,12 @@ public class SPARQLSemanticAnnotationHelper extends
    * SPARQL query.
    */
   public static final String SPARQL_QUERY_FEATURE_NAME = "sparql";
-
-  
-  public static final String NOMINAL_FEATURES_KEY = "nominalFeatures";
-  
-  public static final String INTEGER_FEATURES_KEY = "integerFeatures";
-  
-  public static final String FLOAT_FEATURES_KEY = "floatFeatures";
-  
-  public static final String TEXT_FEATURES_KEY = "textFeatures";
-  
-  public static final String URI_FEATURES_KEY = "uriFeatures";
-  
-  public static final String ANN_TYPE_KEY = "annotationType";
-  
-  public static final String DELEGATE_KEY = "delegate";
   
   public static final String SPARQL_ENDPOINT_KEY = "sparqlEndpoint";
+  
+  public static final String QUERY_PREFIX_KEY = "queryPrefix";
+  
+  public static final String QUERY_SUFFIX_KEY = "querySuffix";
   
   /**
    * The service endpoint where SPARQL queries are forwarded to.
@@ -152,14 +141,20 @@ public class SPARQLSemanticAnnotationHelper extends
   }
 
   public SPARQLSemanticAnnotationHelper(Map<String, Object> params) {
-    this((String)params.get(ANN_TYPE_KEY), 
-        (String)params.get(SPARQL_ENDPOINT_KEY),
-        featureNames(params.get(NOMINAL_FEATURES_KEY)),
-        featureNames(params.get(INTEGER_FEATURES_KEY)),
-        featureNames(params.get(FLOAT_FEATURES_KEY)),
-        featureNames(params.get(TEXT_FEATURES_KEY)),
-        featureNames(params.get(URI_FEATURES_KEY)),
+    this(getAnnTypeFromMapOrDelegate(params), 
+        getString(params, SPARQL_ENDPOINT_KEY),
+        getNominalFeaturesFromMapOrDelegate(params),
+        getIntegerFeaturesFromMapOrDelegate(params),
+        getFloatFeaturesFromMapOrDelegate(params),
+        getTextFeaturesFromMapOrDelegate(params),
+        getUriFeaturesFromMapOrDelegate(params),
         (SemanticAnnotationHelper)params.get(DELEGATE_KEY));
+    if(params.containsKey(QUERY_PREFIX_KEY)) {
+      setQueryPrefix(getString(params, QUERY_PREFIX_KEY));
+    }
+    if(params.containsKey(QUERY_SUFFIX_KEY)) {
+      setQuerySuffix(getString(params, QUERY_SUFFIX_KEY));
+    }
   }
   
   public SPARQLSemanticAnnotationHelper(String sparqlEndpoint, 
@@ -172,16 +167,6 @@ public class SPARQLSemanticAnnotationHelper extends
         delegate.getTextFeatureNames(),
         delegate.getUriFeatureNames(),
         delegate);
-  }
-  
-  protected static String[] featureNames(Object param) {
-    if(param == null) return null;
-    if(param instanceof String[]) return (String[])param;
-    if(param instanceof Collection) {
-      return ((Collection<String>)param).toArray(new String[((Collection)param).size()]);
-    }
-    throw new IllegalArgumentException("Supplied parameter is neither a " +
-    		"String array nor a String collection!");
   }
   
   @Override
