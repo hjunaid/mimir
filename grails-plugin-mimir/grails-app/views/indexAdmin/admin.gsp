@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="${resource(dir:'css',file:'progressbar.css')}" />
 <g:javascript library="prototype" />
 <title>Mimir index &quot;${indexInstance.name}&quot;</title>
+<mimir:load/>
 
 <g:javascript>
 			function pageLoaded() {
@@ -64,6 +65,12 @@
               ${indexInstance.state}
             </td>
           </tr>
+          <tr style="vertical-align:top">
+            <td>Annotations indexed:</td>
+            <td><mimir:revealAnchor id="annotsConf">Detail...</mimir:revealAnchor>
+            <mimir:revealBlock id="annotsConf"><mimir:indexAnnotationsConfig index="${indexInstance}"/></mimir:revealBlock>
+            </td>
+          </tr>          
 
           <g:if test="${indexInstance.state == Index.SEARCHING}">
             <tr class="prop">

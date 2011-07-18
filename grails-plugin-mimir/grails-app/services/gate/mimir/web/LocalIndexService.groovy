@@ -169,8 +169,12 @@ class LocalIndexService {
   }
   
   public String[][] annotationsConfig(LocalIndex index) {
-    
-    IndexConfig indexConfig = getQueryEngine(index)?.indexConfig
+    IndexConfig indexConfig = null
+    if(index.state == Index.INDEXING) {
+      indexConfig = findIndexer(index)?.indexConfig
+    } else if(index.state == Index.SEARCHING) {
+      indexConfig = getQueryEngine(index)?.indexConfig
+    }
     if(indexConfig) {
       SemanticIndexerConfig[] semIndexers = indexConfig.getSemanticIndexers();
       List<String[]> rows = new ArrayList<String[]>();
@@ -207,8 +211,7 @@ class LocalIndexService {
       return rows.toArray(new String[rows.size()][]);
     }
     else {
-      throw new IllegalStateException(
-        "Index ${index.indexId} is not open for searching")
+      return ([] as String[][])
     }
   }
   
