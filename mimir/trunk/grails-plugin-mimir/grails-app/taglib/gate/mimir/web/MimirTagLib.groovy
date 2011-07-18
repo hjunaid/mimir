@@ -180,4 +180,32 @@ class MimirTagLib {
   def version = {
     out << pluginManager.getGrailsPlugin("mimir-web").version
   }
+  
+  /**
+   * Render the annotation types and features known to a particular
+   * index as an HTML table.
+   */
+  def indexAnnotationsConfig = { attrs, body ->
+    def index = attrs.index
+    String[][] annotConf = index.annotationsConfig()
+    if(annotConf) {
+      out << "<table>\n";
+      out << "  <thead><tr><td><b>Annotation type</b></td><td><b>Features</b></td></thead>\n"
+      out << "  <tbody>\n"
+      annotConf.each { String[] ann ->
+        def annType = ann.head()
+        def features = ann.tail()
+        out << "  <tr><td>${annType}</td><td>";
+        if(features) {
+          out << features.join(', ')
+        } else {
+          out << "<i>&lt;none&gt;</i>";
+        }
+        out << "</td></tr>\n"
+      }
+      out << "</table>\n";
+    } else {
+      out << "<p><i>Information not available</i></p>\n"
+    }
+  }
 }
