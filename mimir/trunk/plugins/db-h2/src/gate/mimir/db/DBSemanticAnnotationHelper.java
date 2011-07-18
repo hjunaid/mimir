@@ -58,6 +58,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -199,6 +200,19 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     }
     
     cache = new AnnotationTemplateCache(this);
+  }
+  
+  /**
+   * Groovy-friendly constructor for the index template DSL.
+   * @param params map containing mappings for at least the key
+   *         "annType" (the annotation type), and optionally any
+   *         or all of nominal-, integer-, float-, text- and
+   *         uriFeatures (lists or arrays of feature names)
+   */
+  public DBSemanticAnnotationHelper(Map<String, ?> params) {
+    this(getString(params, ANN_TYPE_KEY), getArray(params, NOMINAL_FEATURES_KEY),
+        getArray(params, INTEGER_FEATURES_KEY), getArray(params, FLOAT_FEATURES_KEY),
+        getArray(params, TEXT_FEATURES_KEY), getArray(params, URI_FEATURES_KEY));
   }
   
   @Override

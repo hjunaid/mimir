@@ -300,17 +300,29 @@ public class SesameSemanticAnnotationHelper extends
 			String[] nominalFeatureNames, String[] integerFeatureNames,
 			String[] floatFeatureNames, String[] textFeatureNames,
 			String[] uriFeatureNames, Map<String, Object> settings) {
-		super(annotationType, nominalFeatureNames, integerFeatureNames,
+		this(annotationType, nominalFeatureNames, integerFeatureNames,
 				floatFeatureNames, textFeatureNames, uriFeatureNames);
-		this.nominalFeaturePredicates = new URI[this.nominalFeatureNames.length];
-		this.floatFeaturePredicates = new URI[this.floatFeatureNames.length];
-		this.textFeaturePredicates = new URI[this.textFeatureNames.length];
-		this.uriFeaturePredicates = new URI[this.uriFeatureNames.length];
 		if (settings.containsKey("relativePath"))
-			this.sesameConfigLocation = (String) settings.get("relativePath");
+			this.sesameConfigLocation = getString(settings, "relativePath");
 		if (settings.containsKey("absolutePath"))
-			this.absoluteConfigLocation = (String) settings.get("absolutePath");
+			this.absoluteConfigLocation = getString(settings, "absolutePath");
 	}
+	
+  /**
+   * Groovy-friendly constructor for the index template DSL.
+   * @param params map containing mappings for at least the key
+   *         "annType" (the annotation type), and optionally any
+   *         or all of nominal-, integer-, float-, text- and
+   *         uriFeatures (lists or arrays of feature names).
+   *         May also contain String values for the keys
+   *         "relativePath" or "absolutePath" giving the path
+   *         to the sesame repository config file.
+   */
+  public SesameSemanticAnnotationHelper(Map<String, Object> params) {
+    this(getString(params, ANN_TYPE_KEY), getArray(params, NOMINAL_FEATURES_KEY),
+        getArray(params, INTEGER_FEATURES_KEY), getArray(params, FLOAT_FEATURES_KEY),
+        getArray(params, TEXT_FEATURES_KEY), getArray(params, URI_FEATURES_KEY), params);
+  }
 
 	/**
 	 * 

@@ -147,16 +147,16 @@ public class MeasurementAnnotationHelper extends
                   null,
                   null));
     if(settings.containsKey(UNITS_FILE_LOCATION_KEY)) {
-      unitsFileLocation = (String)settings.get(UNITS_FILE_LOCATION_KEY);
+      unitsFileLocation = getString(settings, UNITS_FILE_LOCATION_KEY);
     }
     if(settings.containsKey(COMMON_WORDS_LOCATION_KEY)) {
-      commonWordsLocation = (String)settings.get(COMMON_WORDS_LOCATION_KEY);
+      commonWordsLocation = getString(settings, COMMON_WORDS_LOCATION_KEY);
     }
     if(settings.containsKey(LOCALE_KEY)) {
-      locale = (String)settings.get(LOCALE_KEY);
+      locale = getString(settings, LOCALE_KEY);
     }
     if(settings.containsKey(ENCODING_KEY)) {
-      encoding = (String)settings.get(ENCODING_KEY);
+      encoding = getString(settings, ENCODING_KEY);
     }
   }
 

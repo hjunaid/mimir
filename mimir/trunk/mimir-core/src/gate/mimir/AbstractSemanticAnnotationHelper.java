@@ -24,6 +24,7 @@ import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -51,16 +52,33 @@ import java.util.Map.Entry;
  *     <li>uri</li>
  *     </ul>
  * </ul>
- * If a particular helper does not support certain feature types it should
+ * <p>If a particular helper does not support certain feature types it should
  * use the {@link #concatenateArrays} method to combine those features with
  * another kind that it can support.  For example, helpers that do not have
  * access to a full semantic repository may choose to treat URI features as
- * if they were simply text features with no semantics.
+ * if they were simply text features with no semantics.</p>
+ * <p>It is also good manners for subclasses to provide a constructor taking a
+ * Map whose keys are the ANN_TYPE and *_FEATURES constants defined in this
+ * class.  This constructor can delegate to the 6-argument one using the
+ * {@link #getArray} method to convert Collection values into String
+ * arrays.  This constructor provides a more user-friendly way to create
+ * helper instances from the Groovy DSL used to create new indexes in the
+ * web UI:</p>
+ * <pre>
+ * annotation helper: new MyHelper(annType:"Person", nominalFeatures:["gender"])
+ * </pre>
  */
 public abstract class AbstractSemanticAnnotationHelper implements
                                                       SemanticAnnotationHelper {
 	
 	private static final long serialVersionUID = -5432862771431426914L;
+	
+	public static final String ANN_TYPE_KEY = "annType";
+	public static final String NOMINAL_FEATURES_KEY = "nominalFeatures";
+	public static final String INTEGER_FEATURES_KEY = "integerFeatures";
+	public static final String FLOAT_FEATURES_KEY = "floatFeatures";
+	public static final String TEXT_FEATURES_KEY = "textFeatures";
+	public static final String URI_FEATURES_KEY = "uriFeatures";
 	
   public AbstractSemanticAnnotationHelper(String annotationType,
           String[] nominalFeatureNames, String[] integerFeatureNames,
@@ -77,6 +95,53 @@ public abstract class AbstractSemanticAnnotationHelper implements
         textFeatureNames != null ? textFeatureNames : new String[]{};
     this.uriFeatureNames = 
         uriFeatureNames != null ? uriFeatureNames : new String[]{};
+  }
+  
+  /**
+   * Utility method to assist subclasses in providing a Groovy-friendly
+   * constructor.  Searches for the given key in the given map.  If the
+   * key is not mapped, returns <code>null</code>.  If the key is mapped
+   * to an array or a Collection, returns a String array of the same
+   * size as the original array/Collection containing the
+   * toString values of each item in the original array/Collection in
+   * order.  Note that this method deliberately does not restrict the
+   * map values to arrays or collections of java.lang.String, as when
+   * called from Groovy the values may be GStrings etc.
+   */
+  public static String[] getArray(Map<String, ?> map, String key) {
+    Object feats = map.get(key);
+    if(feats == null || feats instanceof String[]) {
+      return (String[])feats;
+    } else if(feats instanceof Object[]) {
+      String[] featsArray = new String[((Object[])feats).length];
+      for(int i = 0 ; i < featsArray.length; i++) {
+        featsArray[i] = ((Object[])feats)[i].toString();
+      }
+      return featsArray;
+    } else if(feats instanceof Collection) {
+      String[] featsArray = new String[((Collection)feats).size()];
+      int i = 0;
+      for(Object f : (Collection)feats) {
+        featsArray[i++] = (f == null) ? null : f.toString();
+      }
+      return featsArray;
+    } else {
+      throw new IllegalArgumentException(
+          "Error extracting feature names for key " + key +
+          ": value \"" + feats + "\" has type " + feats.getClass().getName() +
+          " but only arrays or Collections are supported.");
+    }
+  }
+  
+  /**
+   * Utility method to do a null-safe get from the given map.  If the
+   * given key is not in the map or is mapped to null then null is
+   * returned, otherwise the toString() of the value is returned.
+   */
+  public static String getString(Map<String, ?> map, String key) {
+    Object val = map.get(key);
+    if(val == null) return null;
+    else return val.toString();
   }
 
   /**
