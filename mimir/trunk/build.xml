@@ -34,4 +34,20 @@
   </target>
 
   <target name="all" depends="core, plugins, grails-plugin" />
+
+  <target name="clean">
+    <ant dir="${mimir-core.dir}" target="clean" />
+    <ant dir="${mimir-client.dir}" target="clean" />
+    <ant dir="${plugins.dir}/db-h2" target="clean" />
+    <ant dir="${plugins.dir}/ordi" target="clean" />
+    <ant dir="${plugins.dir}/sesame" target="clean" />
+    <ant dir="${plugins.dir}/measurements" target="clean" />
+    <ant dir="${plugins.dir}/sparql" target="clean" />
+    <exec executable="${grails.bin}" dir="${grails-plugin.dir}" failonerror="true">
+      <arg value="clean" />
+    </exec>
+    <delete>
+      <fileset dir="${grails-plugin.dir}/lib" includes="**/*" />
+    </delete>
+  </target>
 </project>
