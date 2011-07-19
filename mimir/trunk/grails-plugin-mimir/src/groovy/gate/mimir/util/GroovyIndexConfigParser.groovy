@@ -37,11 +37,15 @@ public class GroovyIndexConfigParser {
     def semanticAnnotationsHandler = new SemanticAnnotationsHandler()
     Script script = shell.parse(groovyScript)
 
-    // make the "createHelper" method available anywhere in the script
-    // using the metaclass mechanism
+    // make the "annotation" method available anywhere in the script
+    // using the metaclass mechanism - this makes it possible to declare
+    // a method in the script that calls annotation(helper:...) and
+    // then call that method from inside an index {} block, but it will
+    // still throw an exception if there is not an index {} closure
+    // somewhere in the current call stack. 
     GroovySystem.metaClassRegistry.removeMetaClass(script.getClass())
     def mc = script.getClass().metaClass
-    mc.createHelper = semanticAnnotationsHandler.&createHelper
+    mc.annotation = semanticAnnotationsHandler.&annotation
     script.metaClass = mc
     
     script.run()
