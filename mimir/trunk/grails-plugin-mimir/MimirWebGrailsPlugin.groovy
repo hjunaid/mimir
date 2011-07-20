@@ -153,13 +153,13 @@ tokenFeatures = {
 semanticASName = "mimir"
 semanticAnnotations = {
   index {
-    Sentence(type:DefaultHelper)
+    annotation helper:new DefaultHelper(annType:'Sentence')
   }
   index {
-    Person(type:DefaultHelper, nominalFeatures:["gender"])
-    Location(type:DefaultHelper, nominalFeatures:["locType"])
-    Organization(type:DefaultHelper, nominalFeatures:["orgType"])
-    Date(type:DefaultHelper, integerFeatures:["normalized"])
+    annotation helper:new DefaultHelper(annType:'Person', nominalFeatures:["gender"])
+    annotation helper:new DefaultHelper(annType:'Location', nominalFeatures:["locType"])
+    annotation helper:new DefaultHelper(annType:'Organization', nominalFeatures:["orgType"])
+    annotation helper:new DefaultHelper(annType:'Date', integerFeatures:["normalized"])
   }
 }
 documentRenderer = new OriginalMarkupMetadataHelper()
