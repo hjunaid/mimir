@@ -19,8 +19,6 @@
  */
 package gate.mimir.tool;
 
-import gate.util.GateRuntimeException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -37,6 +35,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.CharBuffer;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.Map;
 
@@ -71,7 +70,7 @@ public class WebUtils {
         String userPass = userName + ":" + password;
         authHeader = "Basic " + DatatypeConverter.printBase64Binary(userPass.getBytes("UTF-8"));
       } catch(UnsupportedEncodingException e) {
-        throw new GateRuntimeException("UTF-8 encoding not supported by this JVM!", e);
+        throw new UnsupportedCharsetException("UTF-8");
       }    
     } else {
       authHeader = null;
