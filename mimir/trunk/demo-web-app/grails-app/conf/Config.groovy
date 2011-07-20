@@ -22,7 +22,7 @@
 grails.config.locations = [ "classpath:mimir-app-config.groovy",
                             "file:mimir-config.groovy"]
 if(System.properties["mimir.config"]) {
-  grails.config.locations << new File(System.properties["mimir.config"]).toURI().toURL()
+  grails.config.locations << new File(System.properties["mimir.config"]).toURI().toString()
 }
 
 // if(System.properties["${appName}.config.location"]) {
@@ -107,3 +107,4 @@ log4j = {
     info 'gate'
     debug 'gate.mimir', 'grails.app'
 }
+
