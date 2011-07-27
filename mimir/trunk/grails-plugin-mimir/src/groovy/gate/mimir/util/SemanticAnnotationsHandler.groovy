@@ -114,7 +114,11 @@ class SemanticAnnotationsHandler {
    *     operator)</dd>
    * </dl>
    */
-  void methodMissing(String annotationType, Map defParams) {
+  void methodMissing(String annotationType, args) {
+    if(args.size() != 1 || !(args[0] instanceof Map)) {
+      throw new MissingMethodException(annotationType, this.getClass(), args)
+    }
+    Map defParams = args[0]
     Class theClass = null
     if(defParams?.type) {
       // a Class object
