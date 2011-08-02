@@ -12,10 +12,14 @@ plugins, leveraging the CREOLE plugin framework of GATE Embedded).
 \item[plugins/db-h2] The default annotation storage implementation.  This
 stores annotation data using H2, an in-process embedded SQL database.
 
-\item[plugins/ordi] An alternative annotation storage implementation that
-stores its annotation data in a triple store using the ORDI API
-(\url{http://ordi.sourceforge.net}).  Annotations with an ``inst'' feature are
+\item[plugins/sesame] An alternative annotation storage implementation that
+stores its annotation data in a triple store using the Sesame API
+(\url{http://www.openrdf.org/}).  Annotations with an ``inst'' feature are
 treated as links into the knowledge base, supporting richer semantic queries.
+
+\item[plugins/sparql] A helper that is layered on top of a generic storage
+implementation to provide semantic querying against a separate knowledge base,
+accessible at a SPARQL endpoint.
 
 \item[plugins/measurements] A special-purpose helper for Measurement
 annotations created by the GATE {\tt Tagger\_Measurements} plugin.  Queries are
@@ -128,12 +132,12 @@ plugins {
 This section specifies the \Mimir\ plugins that should be loaded, and
 determines the kinds of annotation helpers you will be able to use in your
 indexes.  You generally need at least one of the standard {\tt db-h2} and/or
-{\tt ordi} plugins to be able to do anything useful with \Mimir, and you may
+{\tt sesame} plugins to be able to do anything useful with \Mimir, and you may
 want the {\tt measurements} plugin as well if you will be searching on
-Measurement annotations.  Section~\ref{sec:indexing:helpers} has more
-information about the standard annotation helpers, and
-section~\ref{sec:extend:helpers} discusses how to implement your
-own custom ones.
+Measurement annotations and/or the {\tt sparql} plugin if you have an external
+knowledge base.  Section~\ref{sec:indexing:helpers} has more information about
+the standard annotation helpers, and section~\ref{sec:extend:helpers} discusses
+how to implement your own custom ones.
 
 \Mimir\ uses the GATE plugin mechanism, so \Mimir\ plugins are actually
 very simple CREOLE plugins\footnote{See
@@ -210,8 +214,10 @@ then the plugins must be specified using absolute URLs, i.e.
 {\tt gate.mimir.plugins.custom = "file:/opt/mimir/plugins/custom"}.  Relative
 plugin paths are ignored at runtime by \Mimir\ when running from a WAR
 deployment.  However, since \Mimir\ plugins are simply standard GATE CREOLE
-plugins you can load extra plugins relative to your web app by using Spring
-configuration in {\tt WEB-INF/spring/resources.xml}:
+plugins and the \Mimir\ Grails plugin initializes GATE Embedded using Spring
+you can load extra plugins relative to your web app by using Spring
+configuration in {\tt WEB-INF/spring/resources.xml} (see
+\url{http://gate.ac.uk/userguide/sec:api:spring} for details):
 
 \begin{lstlisting}
 <beans xmlns="http://www.springframework.org/schema/beans"
@@ -237,6 +243,11 @@ environment variable.  For example (using bash or a similar POSIX shell):
 $ JAVA_OPTS='-Xmx4G' grails prod run-war
 \end{verbatim}
 
+To shut down a web app started using {\tt run-app} or {\tt run-war}, simply
+create an empty file in the {\tt demo-web-app} directory named
+``{\tt .kill-run-app}''.  Grails watches for this file and will shut down
+gracefully when it detects that the file has been created.
+
 For production deployments, a better option is to build a WAR file using
 {\tt grails prod war} and deploy that to a standalone servlet container such as
 Apache Tomcat.  If you are using Ubuntu or Debian GNU/Linux, it is better to
@@ -256,10 +267,10 @@ Any values in these files override values specified in {\tt MimirConfig.groovy}
 or the main application {\tt Config.groovy}.  For production deployments, you
 should be sure to specify the public URL of your \Mimir\ server in one of these
 configuration files.  For example:
-\begin{lstlisting}
+\begin{lstlisting}[texcl]
 gate.mimir.indexBaseDirectory = "/data/mimir/indexes"
 grails.serverURL = "http://example.com/mimir"
-// or just http://example.com if you have deployed Mimir
+// or just http://example.com if you have deployed \Mimir
 // as the ROOT web application
 \end{lstlisting}
 

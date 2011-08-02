@@ -13,13 +13,13 @@
 /@    13  @/semanticASName = "mimir"
 /@    14  @/semanticAnnotations = {
 /@    15  @/  index {
-/@    16  @/    Sentence(type:DefaultHelper)
+/@    16  @/    annotation helper:new DefaultHelper(annType:'Sentence')
 /@    17  @/  }
 /@    18  @/  index {
-/@    19  @/    Person(type:DefaultHelper, nominalFeatures:["gender"])
-/@    20  @/    Location(type:DefaultHelper, nominalFeatures:["locType"])
-/@    21  @/    Organization(type:DefaultHelper, nominalFeatures:["orgType"])
-/@    22  @/    Date(type:DefaultHelper, integerFeatures:["normalized"])
+/@    19  @/    annotation helper:new DefaultHelper(annType:'Person', nominalFeatures:["gender"])
+/@    20  @/    annotation helper:new DefaultHelper(annType:'Location', nominalFeatures:["locType"])
+/@    21  @/    annotation helper:new DefaultHelper(annType:'Organization', nominalFeatures:["orgType"])
+/@    22  @/    annotation helper:new DefaultHelper(annType:'Date', integerFeatures:["normalized"])
 /@    23  @/  }
 /@    24  @/}
 /@    25  @/documentRenderer = new OriginalMarkupMetadataHelper()

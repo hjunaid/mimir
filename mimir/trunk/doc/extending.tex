@@ -51,7 +51,7 @@ the helper is searching).  Both the Indexer and QueryEngine provide access to
 an {\tt IndexConfig} object which defines the configuration of the index,
 including the location of the index files on disk, and provides a mutable
 ``context'' map that can be used to share objects among the various SAH objects
-(for example the ORDI helper uses the context to share a single connection to
+(for example the Sesame helper uses the context to share a single connection to
 the semantic repository among all the helpers associated with the index).  The
 appropriate {\tt init} method is called by \Mimir\ when the index is opened (in
 whichever mode), before any other requests are passed to the helper, and the
@@ -149,9 +149,8 @@ advertise different features from those supported by its delegate.
 
 Semantic annotation helper objects go through a specific lifecycle in \Mimir.
 When creating a new index for indexing, the helpers defined for each semantic
-annotation type are instantiated by calling their constructors, either directly
-from the Groovy DSL (see the measurements example below) or implicitly when
-using the default helper shorthand (type:db, nominalFeatures:['foo'], etc.).
+annotation type are instantiated by calling their constructors
+from the Groovy DSL (see the measurements example below).
 Once instantiated, the {\tt init(Indexer)} methods of each helper in turn are
 called (one after the other, in a single thread, so if you are sharing objects
 among your helpers through the context you can be sure that you have exclusive
@@ -221,8 +220,8 @@ import gate.mimir.measurements.MeasurementAnnotationHelper
 semanticAnnotations = {
   index {
     // Measurement helper with default settings
-    Measurement(new MeasurementAnnotationHelper(
-          delegateHelperType:DefaultHelper))
+    annotation helper:new MeasurementAnnotationHelper(
+          delegateHelperType:DefaultHelper)
   }
 }
 \end{lstlisting}
@@ -231,10 +230,10 @@ The {\tt MeasurementAnnotationHelper} constructor takes a {\tt Map} of
 parameters, which can be specified in Groovy as ``named arguments'':
 \begin{lstlisting}[firstnumber=6,texcl]
     // Example of how to configure a custom ``units'' file
-    Measurement(new MeasurementAnnotationHelper(
+    annotation helper:new MeasurementAnnotationHelper(
           delegateHelperType:DefaultHelper,
           unitsFile:'resources/americanUnits.dat',
-          locale:'en_US'))
+          locale:'en_US')
 \end{lstlisting}
 
 The following parameters are supported:
