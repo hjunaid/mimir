@@ -130,7 +130,7 @@ Special-purpose helpers for particular annotation types typically operate by
 mapping the features of their target annotations and/or the feature constraints
 in a query into a different set of features or constraints which can then be
 handled by a generic helper.  The Measurement helper described in
-section~\ref{sec:extend:measurement-helper} operates in this way.  To support
+section~\ref{sec:plugins:measurements} operates in this way.  To support
 this pattern, \Mimir\ provides an abstract
 {\tt DelegatingSemanticAnnotationHelper} which implements all the SAH interface
 methods to simply delegate to another helper instance.  Subclasses can then
@@ -186,99 +186,6 @@ method, which has been discussed in detail above.
 
 Finally, when the index is shut down the {\tt close(QueryEngine)} methods of
 the helpers are called in sequence.
-
-\subsection{An example special-purpose helper -- the {\tt measurements} plugin}
-\label{sec:extend:measurement-helper}
-
-The GATE {\tt Tagger\_Measurements} plugin, introduced in GATE 6.1, is able to
-recognise many different kinds of measurement expressions in text.  It
-normalizes the value and unit of each measurement into the SI system of
-measurements and stores these values as features of the Measurement annotation.
-For example, the text ``45 cm'' would be annotated with a normalized unit of
-metres and a normalized value of 0.45, the text ``18 in'' would also be
-normalized to metres, in this case with a normalized value of 0.4572.
-
-The \Mimir\ {\tt measurements} plugin provides a SAH that implements the same
-normalization on queries.  It processes queries for a ``virtual'' feature
-called ``spec'' which represents a measurement specification in a controlled
-language and converts constraints on this feature into the corresponding
-constraints on the real normalized value and unit features that have been
-indexed.  For example, a search for \{Measurement spec="1 to 3 feet"\} would be
-treated as a query for measurements whose normalized unit is metres and whose
-normalized value is between 0.3048 and 0.9144, which would match both the ``45
-cm'' and ``18 in'' examples above.
-
-\subsubsection{Configuring the Measurements SAH}
-
-To use the measurements helper you need to first ensure that the
-{\tt measurements} plugin is loaded into your \Mimir\ instance, then create an
-index template that specifies the right helper for Measurement annotations.
-\begin{lstlisting}[texcl]
-import gate.mimir.measurements.MeasurementAnnotationHelper
-
-// \ldots
-semanticAnnotations = {
-  index {
-    // Measurement helper with default settings
-    annotation helper:new MeasurementAnnotationHelper(
-          delegateHelperType:DefaultHelper)
-  }
-}
-\end{lstlisting}
-
-The {\tt MeasurementAnnotationHelper} constructor takes a {\tt Map} of
-parameters, which can be specified in Groovy as ``named arguments'':
-\begin{lstlisting}[firstnumber=6,texcl]
-    // Example of how to configure a custom ``units'' file
-    annotation helper:new MeasurementAnnotationHelper(
-          delegateHelperType:DefaultHelper,
-          unitsFile:'resources/americanUnits.dat',
-          locale:'en_US')
-\end{lstlisting}
-
-The following parameters are supported:
-\bde
-\item[delegateHelperType (required)] a {\tt Class} object representing the type
-of generic helper that the Measurements helper should delegate to.
-\item[unitsFile] the location of the {\tt units.dat} file used to configure the
-  measurements parser.  If not specified, a default file provided with the
-  {\tt measurements} plugin is used.  This value can be an absolute URL
-  (file:/path/to/units.dat) or a relative path which will be resolved against
-  the {\tt measurements} plugin directory.
-\item[commonWords] the location of the common words file used by the
-  measurements parser.  As with the {\tt unitsFile} parameter, if omitted a
-  default file bundled with the plugin is used.
-\item[locale] the locale under which the measurements will be parsed.  Defaults
-  to ``en\_GB'' if unspecified.
-\item[encoding] the character encoding used to read the configuration files.
-  Defaults to ``UTF-8'' if unspecified.
-\ede
-
-The measurements SAH is pre-configured with the feature names that the
-measurements tagger produces, and can only be used for annotations of type
-{\tt Measurement}.
-
-\subsubsection{Measurements helper implementation}
-
-The {\tt MeasurementAnnotationHelper} extends the
-{\tt DelegatingSemanticAnnotationHelper} base class described above.  It does
-not add any behaviour at indexing time, simply passing all the annotations
-through directly to its delegate.  However it overrides the {\tt getMentions}
-search method to support the ``spec'' feature.
-
-When a query including a spec feature constraint is received, the helper parses
-this spec using the measurements parser to obtain a normalized unit and value
-or values for the measurement sought.  It then constructs a number of new
-constraint sets that match annotations compatible with the spec and then for
-each of these alternatives, runs these constraints in combination with the
-other non-spec constraints of the original query against the delegate helper.
-The final set of URIs returned is the union of the results obtained from the
-delegate for all the alternative reformulations of the spec constraint.
-
-As well as being useful in its own right for Measurement annotations, the
-measurements helper serves as an example of how to implement your own
-special-purpose helper based on the delegating base class.  Feel free to use it
-as a template for your own helper implementations.
 
 \subsection{Packaging new helper types for use with \Mimir}
 

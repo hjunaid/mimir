@@ -99,9 +99,20 @@ Examples:\\
 
 \{Measurement type $=$ scalar normalisedValue $>0$ normalisedValue $<10$
 normalisedUnit $=$ m\} -- searches for scalar measurements, with a unit of {\it
-metre}, and a normalised value between $0$ and $10$.\footnote{The extended
+metre}, and a normalised value between $0$ and $10$\footnote{The extended
 support for Measurement annotations is discussed further in
-section~\ref{sec:extend:measurement-helper}.}
+section~\ref{sec:plugins:measurements}.}.  Note that the same feature name
+can be used in several constraints, in which case only annotations where the
+feature meets {\em all} the constraints will be matched by the query.  For
+disjunctive queries, use the OR operator described below.
+
+In order to be able to search on a particular feature, that feature
+must have been specified in the index template when the index was created --
+\Mimir\ indexes only the features it has been told to index.  There may be
+additional ``synthetic'' features available at query time depending on the
+semantic annotation helper that the index uses for the given annotation type,
+for example the SPARQL helper allows queries on the ``feature'' named
+``sparql'', the measurements helper allows queries for ``spec'' etc.
 
 \subsection{AND Operator: ``{\tt \&}''}\label{sec:and-query}
 
@@ -219,23 +230,6 @@ AND & ``AND''\\
 \vspace{1ex}
 Escaping reserved constructs in the \Mimir\ query language
 \end{center}
-
-\subsection{Semantic queries with the {\tt sesame} plugin}
-
-If you are using the {\tt sesame} semantic annotation helper plugin, and have a
-URI-valued feature named ``inst'' on your annotations, then the helper provides
-an additional ``synthetic'' feature named {\tt semanticConstraint} that
-provides a way to query for annotations based on information in the knowledge
-base.
-\begin{lstlisting}[breaklines]
-{Organization semanticConstraint = "?inst <http://proton.semanticweb.org/2005/04/protont#locatedIn> <http://example.com#Sheffield> ."}
-\end{lstlisting}
-
-The value of the semanticConstraint feature is a SPARQL fragment that has
-access to the {\tt ?inst} variable, referring to the URI in the ``inst''
-feature of the annotation.  Clearly, the semanticConstraint mechanism is not
-intended for direct use by end-users, but rather for use by other tools that
-build \Mimir\ queries automatically.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -91,9 +91,7 @@ annotation types that will be indexed and stored together in one index.  The
 choice of how to group annotation types together into indexes can affect the
 indexing speed, as the annotations within one index are processed sequentially
 by a single thread, whereas types in separate indexes can be indexed in
-parallel.  If all the types are to be stored in the same index then the
-\lstinline!index! block is optional (i.e. the types can be listed directly
-inside the \lstinline!semanticAnnotations! block).
+parallel.
 
 Each annotation type to be indexed is introduced by ``{\tt annotation}''.  This
 is a method call in the Groovy DSL which takes the following named arguments:
@@ -131,53 +129,8 @@ GATE {\tt Tagger\_Measurements} plugin) is also provided, in the
 and to serve as a template for how to implement your own helpers for other
 complex annotation types.  The {\tt sparql} plugin provides a helper that can
 wrap any other helper and add the ability to query for URI-valued features by
-making a query to a SPARQL endpoint.
-
-The DB and Sesame generic helper classes have a constructor that takes a
-{\tt Map} of configuration parameters.  Groovy has special support for
-{\tt Map}-valued method and constructor parameters, allowing a ``named
-argument'' style as shown in the examples of
-listing~\ref{lst:default-index-template}.  The standard helpers support the
-following named arguments in their constructors:
-
-\begin{description}
-\item[annType:] the annotation type which the helper is to process.
-\item[nominalFeatures:] the names of the features to be indexed that have
-  nominal values. An annotation feature is said be nominal if the range of
-  possible values is clearly defined and limited in size. There is no hard rule
-  regarding the size of the set of permitted values, but, for optimal results,
-  this should not exceed a few tens of values.
-\item[integerFeatures:] the names of the features to be indexed that have
-  integer values (i.e. values that can be converted to a Java {\tt long}
-  value).
-\item[floatFeatures:] the names of the features to be indexed that have
-  floating-point numeric values (i.e. values that can be converted to a Java
-  {\tt double} value).
-\item[textFeatures:] the names of the features to be indexed that have
-  arbitrary text values (as opposed to the nominal case of a fixed list of
-  possible values).
-\item[uriFeatures:] the names of the features to be indexed that have
-  URIs as values. These could be used for example to associate annotations with
-  pre-existing entities in the knowledge base.
-\end{description}
-
-For special-purpose helpers the syntax is the same, simply pass a properly
-configured instance of the relevant helper class as the {\tt helper} argument:
-
-\begin{lstlisting}[texcl]
-import gate.mimir.measurements.MeasurementAnnotationHelper
-// \ldots
-index {
-  // see section~\ref{sec:extend:measurement-helper} for details of the parameters you can pass
-  // to the MAH constructor.
-  annotation helper:new MeasurementAnnotationHelper(
-      delegateHelperType:DefaultHelper)
-}
-\end{lstlisting}
-
-There is more detail on the implementation of the default helpers and the
-format they use to represent annotations in
-section~\ref{sec:indexing:dsah-detail}.
+making a query to a SPARQL endpoint.  These plugins are discussed in detail in
+chapter~\ref{sec:plugins}.
 
 {\bf Note for users upgrading from \Mimir\ 3.2.0 and earlier:} the previous
 index template DSL style using the annotation type as the method name and the
