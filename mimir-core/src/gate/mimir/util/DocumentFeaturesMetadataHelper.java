@@ -89,7 +89,7 @@ public class DocumentFeaturesMetadataHelper implements DocumentMetadataHelper {
       Object value = document.getDocument().getFeatures().get(mapping.getKey());
       if(value instanceof Serializable) {
         documentData.putMetadataField(mapping.getValue(), (Serializable)value);
-      } else {
+      } else if(value != null) { // null is not an instanceof anything
         logger.warn("Value for document feature \"" + mapping.getKey() + 
                 "\" on document with title \"" + 
                 (document.title() == null ? "<null>" : document.title()) +
