@@ -35,8 +35,8 @@ import gate.util.OffsetComparator;
 
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.SequenceQuery.Gap;
-import gate.mimir.index.ConstraintType;
-import gate.mimir.index.Constraint;
+import gate.mimir.ConstraintType;
+import gate.mimir.Constraint;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -390,7 +390,7 @@ public class QueryParser {
     Corpus corpus = null;
     synchronized(queryTokeniser) {
       try {
-        document = Factory.newDocument(unescape(s));
+        document = Factory.newDocument(s);
         corpus = Factory.newCorpus("QueryParser corpus");
         corpus.add(document);
         queryTokeniser.setCorpus(corpus);
@@ -882,20 +882,32 @@ Query TermOrNamedIndexQuery() :
   Token t;
   Token t1;
   String n;
+  TermQuery tq;
 }
 {
   (
     LOOKAHEAD(2) 
     (
-      t = <tok> 
-      <colon>
-      t1 = <tok>
-      {
-        TermQuery tq = new TermQuery();
-        tq.index = unescape(t.image);
-        tq.term = unescape(t1.image); 
-        return tq;
-      }
+      (
+        t = <tok> 
+        <colon>
+        {
+          tq = new TermQuery();
+          tq.index = unescape(t.image);
+        }
+      )
+      (
+        (
+          t1 = <tok>
+          { tq.term = unescape(t1.image); }
+        )
+        |
+        (
+          t1 = <string>
+          { tq.term = t.image.substring(1, t.image.length()-1); } 
+        )
+      )
+      { return tq; }
     )
     |
     (
@@ -903,7 +915,7 @@ Query TermOrNamedIndexQuery() :
       {
         // if no index name is specified, parse the token like a quoted
         // string.
-        return parseString(t.image);
+        return parseString(unescape(t.image));
       }
     )
     |
@@ -911,7 +923,7 @@ Query TermOrNamedIndexQuery() :
       // bare number is treated as a query for that number as a string
       n = number()
       {
-        return parseString(n);
+        return parseString(unescape(n));
       }
     )
   )
