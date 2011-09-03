@@ -34,7 +34,7 @@ class LocalIndexController {
   def index = { redirect(uri:"/") }
   
   // the delete, save and update actions only accept POST requests
-  static allowedMethods = [delete:'POST', save:'POST', update:'POST']
+  static allowedMethods = [delete:'POST', save:'POST', update:'POST', deleteBin:'POST']
   
   def list = {
     params.max = Math.min( params.max ? params.max.toInteger() : 10,  100)
@@ -52,6 +52,11 @@ class LocalIndexController {
     }
   }
   
+  def deleteBin = {
+    def indexInstance = Index.findByIndexId(params.indexId)
+    localIndexService.deleteIndex(indexInstance,params.deleteFiles)
+    render("OK")
+  }
   
   def deleteFlow = {
     triage {
