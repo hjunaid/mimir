@@ -111,7 +111,7 @@ class LocalIndexService {
       def indexId = index.id
       Thread.start {
         try {
-          indexers[indexId]?.close()
+          indexers.remove(indexId)?.close()
           LocalIndex.withTransaction { status ->
             def theIndex = LocalIndex.get(indexId)
             theIndex.state = Index.SEARCHING
@@ -220,7 +220,10 @@ class LocalIndexService {
     String indexDirectory = index.indexDirectory
     // stop the index
     try{
-      getQueryEngine(index).close()
+      QueryEngine engine = queryEngines.remove(index.id)
+      if (engine) {
+        engine.close()
+      }
     } catch(Exception e) {
       log.warn("Exception while trying to close index, prior to deletion", e)
     }
