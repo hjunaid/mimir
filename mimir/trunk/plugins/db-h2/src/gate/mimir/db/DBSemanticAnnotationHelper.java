@@ -1019,20 +1019,46 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
 
   @Override
   public void close(Indexer indexer) {
-    try {
-      dbConnection.close();
-    } catch(SQLException e) {
-      logger.warn("Error while closing DB COnnection", e);
-    }
+    closeDB();
   }
 
   @Override
   public void close(QueryEngine qEngine) {
-    try {
-      dbConnection.close();
+    closeDB();
+  }
+  
+  private void closeDB() {
+	
+	//Explicitly close and nullify all the prepared statements.
+    level1InsertStmt = closeAndNullify(level1InsertStmt);
+    level1SelectStmt = closeAndNullify(level1SelectStmt);
+    level2InsertStmt = closeAndNullify(level2InsertStmt);
+    level2SelectStmt = closeAndNullify(level2SelectStmt);
+    mentionsInsertStmt = closeAndNullify(mentionsInsertStmt);
+    mentionsSelectStmt = closeAndNullify(mentionsSelectStmt);
+	 
+    //now close the connection
+	try {
+	  dbConnection.close();
+      dbConnection = null;
     } catch(SQLException e) {
-      logger.warn("Error while closing DB COnnection", e);
-    }
+	  logger.warn("Error while closing DB COnnection", e);
+	}
+  }
+  
+  /**
+   * Close a prepared statement to help free resources
+   * @param stmt
+   * @return null, as a utility for easily nullifying the original object
+   */
+  private PreparedStatement closeAndNullify(PreparedStatement stmt) {
+	  try {
+		  if (stmt != null) stmt.close();
+	  } catch (SQLException e) {
+		  logger.warn("Error closing DB statement");
+	  }
+	  
+	  return null;
   }
   
   /**
