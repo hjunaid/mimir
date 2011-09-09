@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.bind.DatatypeConverter;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -84,6 +86,10 @@ public class SPARQLSemanticAnnotationHelper extends
   
   public static final String SPARQL_ENDPOINT_KEY = "sparqlEndpoint";
   
+  public static final String SPARQL_ENDPOINT_USER_KEY = "sparqlEndpointUser";
+  
+  public static final String SPARQL_ENDPOINT_PASSWORD_KEY = "sparqlEndpointPassword";
+  
   public static final String QUERY_PREFIX_KEY = "queryPrefix";
   
   public static final String QUERY_SUFFIX_KEY = "querySuffix";
@@ -93,6 +99,11 @@ public class SPARQLSemanticAnnotationHelper extends
    */
   private String sparqlEndpoint;
 
+  /**
+   * HTTP Header used to authenticate with the remote endpoint. If set to 
+   * <code>null</code>, then no authentication is done.
+   */
+  private String authHeader;
   
   /**
    * See {@link #setQueryPrefix(String)}
@@ -129,7 +140,8 @@ public class SPARQLSemanticAnnotationHelper extends
   }
 
   public SPARQLSemanticAnnotationHelper(String annotationType,
-      String sparqlEndpoint, String[] nominalFeatureNames,
+      String sparqlEndpoint, String username, String password,
+      String[] nominalFeatureNames,
       String[] integerFeatureNames, String[] floatFeatureNames,
       String[] textFeatureNames, String[] uriFeatureNames,
       SemanticAnnotationHelper delegate) {
@@ -138,11 +150,24 @@ public class SPARQLSemanticAnnotationHelper extends
             new String[]{SPARQL_QUERY_FEATURE_NAME}), integerFeatureNames,
         floatFeatureNames, textFeatureNames, uriFeatureNames, delegate);
     this.sparqlEndpoint = sparqlEndpoint;
+    if(username != null && username.length() > 0){
+      try {
+        String userPass = username + ":" + password;
+        authHeader = "Basic " + DatatypeConverter.printBase64Binary(
+            userPass.getBytes("UTF-8"));
+      } catch(UnsupportedEncodingException e) {
+        throw new UnsupportedCharsetException("UTF-8");
+      }
+    } else {
+      authHeader = null;
+    }
   }
 
   public SPARQLSemanticAnnotationHelper(Map<String, Object> params) {
     this(getAnnTypeFromMapOrDelegate(params), 
         getString(params, SPARQL_ENDPOINT_KEY),
+        getString(params, SPARQL_ENDPOINT_USER_KEY),
+        getString(params, SPARQL_ENDPOINT_PASSWORD_KEY),
         getNominalFeaturesFromMapOrDelegate(params),
         getIntegerFeaturesFromMapOrDelegate(params),
         getFloatFeaturesFromMapOrDelegate(params),
@@ -157,16 +182,22 @@ public class SPARQLSemanticAnnotationHelper extends
     }
   }
   
-  public SPARQLSemanticAnnotationHelper(String sparqlEndpoint, 
-      AbstractSemanticAnnotationHelper delegate) {
+  public SPARQLSemanticAnnotationHelper(String sparqlEndpoint, String username,
+                                        String password, 
+                                        AbstractSemanticAnnotationHelper delegate) {
     this(delegate.getAnnotationType(), 
-        sparqlEndpoint, 
+        sparqlEndpoint, username, password,
         delegate.getNominalFeatureNames(),
         delegate.getIntegerFeatureNames(),
         delegate.getFloatFeatureNames(),
         delegate.getTextFeatureNames(),
         delegate.getUriFeatureNames(),
         delegate);
+  }
+
+  public SPARQLSemanticAnnotationHelper(String sparqlEndpoint, 
+      AbstractSemanticAnnotationHelper delegate){
+    this(sparqlEndpoint, null, null, delegate);
   }
   
   @Override
@@ -251,6 +282,9 @@ public class SPARQLSemanticAnnotationHelper extends
       URL url = new URL(urlStr);
       URLConnection urlConn = url.openConnection();
       urlConn.setRequestProperty("Accept", "application/sparql-results+xml");
+      if(authHeader != null) {
+        urlConn.setRequestProperty("Authorization", authHeader);
+      }
       return new SPARQLResultSet(urlConn.getInputStream());
     } catch(UnsupportedEncodingException e) {
       // like that's gonna happen...
