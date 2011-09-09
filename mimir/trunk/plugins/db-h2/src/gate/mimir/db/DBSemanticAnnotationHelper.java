@@ -1028,8 +1028,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   }
   
   private void closeDB() {
-	
-	//Explicitly close and nullify all the prepared statements.
+    //Explicitly close and nullify all the prepared statements.
     level1InsertStmt = closeAndNullify(level1InsertStmt);
     level1SelectStmt = closeAndNullify(level1SelectStmt);
     level2InsertStmt = closeAndNullify(level2InsertStmt);
@@ -1038,12 +1037,12 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     mentionsSelectStmt = closeAndNullify(mentionsSelectStmt);
 	 
     //now close the connection
-	try {
-	  dbConnection.close();
+    try {
+      dbConnection.close();
       dbConnection = null;
     } catch(SQLException e) {
-	  logger.warn("Error while closing DB COnnection", e);
-	}
+      logger.warn("Error while closing DB COnnection", e);
+    }
   }
   
   /**
@@ -1052,13 +1051,13 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
    * @return null, as a utility for easily nullifying the original object
    */
   private PreparedStatement closeAndNullify(PreparedStatement stmt) {
-	  try {
-		  if (stmt != null) stmt.close();
-	  } catch (SQLException e) {
-		  logger.warn("Error closing DB statement");
-	  }
-	  
-	  return null;
+    try {
+      if (stmt != null) stmt.close();
+    } catch (SQLException e) {
+      logger.warn("Error closing DB statement");
+    }
+  
+    return null;
   }
   
   /**
