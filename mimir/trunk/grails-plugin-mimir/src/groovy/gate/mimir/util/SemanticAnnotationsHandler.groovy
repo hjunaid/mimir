@@ -40,6 +40,11 @@ class SemanticAnnotationsHandler {
 
   Map currentIndex = [:]
 
+  public void clear() {
+    indexerConfigs?.clear()
+    currentIndex?.clear()
+  }
+
   def index(Closure callable) {
     Map savedCurrentIndex = currentIndex
     currentIndex = [annotationTypes:[], helpers:[]]

@@ -34,6 +34,10 @@ class TokenFeaturesHandler {
 
   List indexerConfigs = []
 
+  public void clear() {
+    indexerConfigs?.clear()
+  }
+
   def invokeMethod(String name, args) {
     def firstFeature = indexerConfigs.isEmpty()
 
