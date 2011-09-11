@@ -71,6 +71,12 @@ public class GroovyIndexConfigParser {
         scriptBinding.documentMetadataHelpers as DocumentMetadataHelper[],
         scriptBinding.documentRenderer)
 
+    semanticAnnotationsHandler.clear()
+    tokenFeaturesHandler.clear()
+    // clean up the metaclass to prevent memory leaks
+    script.metaClass = null
+    GroovySystem.metaClassRegistry.removeMetaClass(script.getClass())
+
     return indexConfig
   }
 
