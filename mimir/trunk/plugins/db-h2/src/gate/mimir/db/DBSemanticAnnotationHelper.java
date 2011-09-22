@@ -199,7 +199,6 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
               + "they will be indexed but only as text literals!");
     }
     
-    cache = new AnnotationTemplateCache(this);
   }
   
   /**
@@ -217,6 +216,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   
   @Override
   public void init(Indexer indexer) {
+    cache = new AnnotationTemplateCache(this);
     // calculate the basename
     // to avoid inter-locking between the multiple SB-based indexers, they each 
     // create their ow database.
