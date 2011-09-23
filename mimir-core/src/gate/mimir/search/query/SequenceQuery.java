@@ -23,6 +23,7 @@ package gate.mimir.search.query;
 import gate.mimir.search.QueryEngine;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -48,7 +49,7 @@ public class SequenceQuery implements QueryNode {
    * A gap with <code>min=max=0</code> allows no space between sub-query 
    * results.      
    */
-  public static class Gap{
+  public static class Gap implements Serializable {
     /**
      * Creates a new {@link Gap}.
      * @param min the minimum number of terms required. 
