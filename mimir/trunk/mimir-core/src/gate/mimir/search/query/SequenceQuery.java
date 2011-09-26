@@ -50,7 +50,10 @@ public class SequenceQuery implements QueryNode {
    * results.      
    */
   public static class Gap implements Serializable {
-    /**
+
+    public static final long serialVersionUID = 4792642842105791776L;
+
+     /**
      * Creates a new {@link Gap}.
      * @param min the minimum number of terms required. 
      * @param max the maximum number of terms permitted.
