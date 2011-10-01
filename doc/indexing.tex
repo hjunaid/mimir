@@ -71,13 +71,12 @@ The following options can be configured:
 The {\em tokenFeatures} block should list the features to be indexed as shown
 in the example, each feature name followed by parentheses.  For advanced users
 an MG4J \lstinline!TermProcessor! instance may be provided inside these
-parentheses (including custom implementations loaded from \Mimir\ plugins).  By
-default, if no term processors are specified, the {\em first} feature is
-converted to lowercase and the subsequent features are not modified.  Since
-terms in a query are processed using the same processor as those in the index,
-this has the effect of making searches on the first feature case-insensitive,
-and searches on the other features case-sensitive. To stop any processing
-being done, you should supply a
+parentheses.  By default, if no term processors are specified, the {\em first}
+feature is converted to lowercase and the subsequent features are not modified.
+Since terms in a query are processed using the same processor as those in the
+index, this has the effect of making searches on the first feature
+case-insensitive, and searches on the other features case-sensitive. To stop
+any processing being done, you should supply a
 \lstinline!it.unimi.dsi.mg4j.index.NullTermProcessor! value, by specifying e.g.
 \lstinline!string(NullTermProcessor.getInstance())!, after including the
 relevant \lstinline!import! statement at the top.
