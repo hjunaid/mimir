@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/mimir-core"/>
 	<classpathentry kind="lib" path="lib/junit-4.1.jar"/>
+	<classpathentry kind="lib" path="conf"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

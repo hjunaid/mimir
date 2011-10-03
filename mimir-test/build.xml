@@ -69,6 +69,19 @@
     <delete dir="${doc.dir}/javadoc" />
   </target>
 
+	<target name="speedTest">
+		<java classname="gate.mimir.test.Scratch"
+			    maxmemory="4G"
+			    fork="true">
+      <classpath>
+        <pathelement location="${conf.dir}" />
+        <pathelement location="${classes.dir}" />
+        <path refid="compile.classpath" />
+      </classpath>
+			<arg value="/data/mimir-indexes/index-patents-300k.mimir"/>
+		</java>
+	</target>
+	
   <target name="test" depends="compile">
     <junit fork="true" showoutput="yes" printsummary="yes" maxmemory="1G">
       <classpath>
