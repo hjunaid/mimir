@@ -265,10 +265,17 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
               DB_CACHE_SIZE_OPTIONS_KEY);
       // default to 100 MiB, if not provided
       if(cacheSizeStr == null) cacheSizeStr = Integer.toString(100 *1024);
-      // open the database in read-only mode
+      // open the database in write mode first: when the DB was not shutdown
+      // properly, H2 performs an automatic recovery, which needs write mode.
       dbConnection = DriverManager.getConnection(
               "jdbc:h2:file:" + dbDir.getAbsolutePath() + 
               "/" + tableBaseName + ";CACHE_SIZE=" + cacheSizeStr, "sa", "");
+      dbConnection.close();
+      // now open the database in read-only mode, whjich speeds things up 
+      // considerably.
+      dbConnection = DriverManager.getConnection(
+              "jdbc:h2:file:" + dbDir.getAbsolutePath() + 
+              "/" + tableBaseName + ";ACCESS_MODE_DATA=r;CACHE_SIZE=" + cacheSizeStr, "sa", "");
       dbConnection.setReadOnly(true);
     } catch(SQLException e) {
       throw new RuntimeException("Error while initialising the database", e);
