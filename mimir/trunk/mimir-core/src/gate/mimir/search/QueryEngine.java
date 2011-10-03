@@ -36,6 +36,8 @@ import gate.mimir.search.query.parser.QueryParser;
 import it.unimi.dsi.mg4j.index.DiskBasedIndex;
 import it.unimi.dsi.mg4j.index.Index;
 import it.unimi.dsi.mg4j.index.Index.UriKeys;
+import it.unimi.dsi.mg4j.search.score.CountScorer;
+import it.unimi.dsi.mg4j.util.SemiExternalOffsetList;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -79,13 +81,14 @@ public class QueryEngine {
     }
   }
   
+  
   /**
    * The various indexes in the Mimir composite index. The array contains first
    * the token indexes (in the same order as listed in the index configuration),
    * followed by the mentions indexes (in the same order as listed in the index
    * configuration).
    */
-  protected Index[] indexes;
+  protected IndexReaderPool[] indexReaderPools;
 
   /**
    * The zipped document collection from MG4J (built during the indexing of the
@@ -242,8 +245,8 @@ public class QueryEngine {
    * 
    * @return an array of {@link Index} objects.
    */
-  public Index[] getIndexes() {
-    return indexes;
+  public IndexReaderPool[] getIndexes() {
+    return indexReaderPools;
   }
 
   /**
@@ -253,9 +256,11 @@ public class QueryEngine {
    * @param featureName
    * @return
    */
-  public Index getTokenIndex(String featureName) {
+  public IndexReaderPool getTokenIndex(String featureName) {
     for(int i = 0; i < indexConfig.getTokenIndexers().length; i++) {
-      if(indexConfig.getTokenIndexers()[i].getFeatureName().equals(featureName)) { return indexes[i]; }
+      if(indexConfig.getTokenIndexers()[i].getFeatureName().equals(featureName)) {
+        return indexReaderPools[i]; 
+      }
     }
     return null;
   }
@@ -267,11 +272,11 @@ public class QueryEngine {
    * @param annotationType
    * @return
    */
-  public Index getAnnotationIndex(String annotationType) {
+  public IndexReaderPool getAnnotationIndex(String annotationType) {
     for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
       for(String aType : indexConfig.getSemanticIndexers()[i]
                                                            .getAnnotationTypes()) {
-        if(aType.equals(annotationType)) { return indexes[indexConfig
+        if(aType.equals(annotationType)) { return indexReaderPools[indexConfig
                                                           .getTokenIndexers().length
                                                           + i]; }
       }
@@ -338,7 +343,8 @@ public class QueryEngine {
    */
   public QueryRunner getQueryRunner(QueryNode query) throws IOException {
     logger.info("Executing query: " + query.toString());
-    QueryRunner qRunner = new QueryRunnerImpl(query.getQueryExecutor(this));
+    QueryExecutor qExecutor = query.getQueryExecutor(this);
+    QueryRunner qRunner = new QueryRunnerImpl(qExecutor);
     activeQueryRunners.add(qRunner);
     return qRunner;
   }
@@ -601,7 +607,8 @@ public class QueryEngine {
         logger.debug("Closing query runner: " + aRunner.toString());
         aRunner.close();
       } catch(IOException e) {
-        // ignore
+        // log and ignore
+        logger.error("Exception while closing query runner.", e);
       }
     }
     // close the document collection
@@ -628,7 +635,15 @@ public class QueryEngine {
       new WriteDeletedDocsTask().run();
     }
     documentCache.clear();
-    indexes = null;
+    for(IndexReaderPool aPool : indexReaderPools) {
+      try {
+        aPool.close();
+      } catch(IOException e) {
+        // log and ignore
+        logger.error("Exception while closing index reader pool.", e);
+      }
+    }
+    indexReaderPools = null;
   }
 
   /**
@@ -638,8 +653,8 @@ public class QueryEngine {
    * @throws IndexException
    */
   protected void initMG4J() throws IOException, IndexException {
-    indexes =
-      new Index[indexConfig.getTokenIndexers().length
+    indexReaderPools =
+      new IndexReaderPool[indexConfig.getTokenIndexers().length
                 + indexConfig.getSemanticIndexers().length];
     try {
       File mg4JIndexDir = new File(indexDir, Indexer.MG4J_INDEX_DIRNAME);
@@ -649,7 +664,7 @@ public class QueryEngine {
           new File(mg4JIndexDir, Indexer.MG4J_INDEX_BASENAME + "-"
                   + TokenIndexBuilder.TOKEN_INDEX_BASENAME + "-" + i);
         URI indexURI = indexBasename.toURI();
-        indexes[i] = openOneSubIndex(indexURI);
+        indexReaderPools[i] = openOneSubIndex(indexURI);
       }
       // load the mentions indexes
       for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
@@ -658,7 +673,7 @@ public class QueryEngine {
                   + MentionsIndexBuilder.MENTIONS_INDEX_BASENAME + "-"
                   + i);
         URI indexURI = indexBasename.toURI();
-        indexes[indexConfig.getTokenIndexers().length + i] =
+        indexReaderPools[indexConfig.getTokenIndexers().length + i] =
           openOneSubIndex(indexURI);
       }
       // open the zipped document collection
@@ -702,7 +717,7 @@ public class QueryEngine {
    * @throws InvocationTargetException
    * @throws NoSuchMethodException
    */
-  protected Index openOneSubIndex(URI indexUri) throws ConfigurationException,
+  protected IndexReaderPool openOneSubIndex(URI indexUri) throws ConfigurationException,
   SecurityException, IOException, URISyntaxException,
   ClassNotFoundException, InstantiationException,
   IllegalAccessException, InvocationTargetException,
@@ -735,13 +750,13 @@ public class QueryEngine {
                 "Could not locate the index file at " + aFile.getAbsolutePath()
                 + "!");
       }
-      String options =
-        "?"
-        + (size <= MAX_IN_MEMORY_INDEX ? UriKeys.INMEMORY.name()
-                .toLowerCase() : UriKeys.MAPPED.name()
-                .toLowerCase()) + "=1";
+      String options = "?" + (size <= MAX_IN_MEMORY_INDEX ? 
+          UriKeys.INMEMORY.toString().toLowerCase() + "=1" : 
+          (UriKeys.MAPPED.name().toLowerCase() + "=1;" + 
+           UriKeys.OFFSETSTEP.toString().toLowerCase() + "=-" + 
+           DiskBasedIndex.DEFAULT_OFFSET_STEP ));
       logger.debug("Opening index: " + indexUri.toString() + options);
-      theIndex = Index.getInstance(indexUri.toString() + options);
+      theIndex = Index.getInstance(indexUri.toString() + options, true, true);
     } catch(IOException e) {
       // memory mapping failed
       logger.info("Memory mapping failed for index " + indexUri
@@ -749,7 +764,7 @@ public class QueryEngine {
       // now try to just open it as an on-disk index
       theIndex = Index.getInstance(indexUri.toString());
     }
-    return theIndex;
+    return new IndexReaderPool(theIndex);
   }
   
   /**

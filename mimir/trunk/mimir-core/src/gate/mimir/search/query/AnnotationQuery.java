@@ -29,6 +29,10 @@ import gate.mimir.index.Mention;
 import gate.mimir.index.mg4j.MentionsIndexBuilder;
 import gate.mimir.search.QueryEngine;
 
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import it.unimi.dsi.mg4j.index.Index;
+import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -86,7 +90,6 @@ public class AnnotationQuery implements QueryNode {
                     query.getConstraints(), engine);
       logger.debug(mentions.size() + " mentions obtained in " + 
         (System.currentTimeMillis() - start) + " ms");
-//if(true) System.exit(0);
       // now create a big OrQuery of all the possible mentions with
       // appropriate gaps
       QueryNode[] disjuncts = new QueryNode[mentions.size()];
@@ -160,7 +163,35 @@ public class AnnotationQuery implements QueryNode {
               underlyingHit.getLength(),
               underlyingHit.getContainedBindings());
     }
+   
+    @Override
+    public ReferenceSet<Index> indices() {
+      return underlyingExecutor.indices();
+    }
     
+    public <T> T accept( final DocumentIteratorVisitor<T> visitor ) throws IOException {
+      if ( ! visitor.visitPre( this ) ) return null;
+      final T[] a = visitor.newArray( 1 );
+      if ( a == null ) {
+        if ( underlyingExecutor.accept( visitor ) == null ) return null;
+      }
+      else {
+        if ( ( a[ 0 ] = underlyingExecutor.accept( visitor ) ) == null ) return null;
+      }
+      return visitor.visitPost( this, a );
+    }
+
+    public <T> T acceptOnTruePaths( final DocumentIteratorVisitor<T> visitor ) throws IOException {
+      if ( ! visitor.visitPre( this ) ) return null;
+      final T[] a = visitor.newArray( 1 );
+      if ( a == null ) {
+        if ( underlyingExecutor.acceptOnTruePaths( visitor ) == null ) return null;     
+      }
+      else {
+        if ( ( a[ 0 ] = underlyingExecutor.acceptOnTruePaths( visitor ) ) == null ) return null;
+      }
+      return visitor.visitPost( this, a );
+    }
   }
   
   /**

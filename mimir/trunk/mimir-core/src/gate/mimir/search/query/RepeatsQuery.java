@@ -22,6 +22,10 @@ package gate.mimir.search.query;
 
 import gate.mimir.search.QueryEngine;
 
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import it.unimi.dsi.mg4j.index.Index;
+import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -179,7 +183,7 @@ public class RepeatsQuery implements QueryNode {
     
     /**
      * Recursively extracts the hits 
-     * @param hits the arrays of hits, one row for each of the {@link #executors}.
+     * @param hits the arrays of hits, one row for each of the {@link #executorsCache}.
      * @param marks the marks for the hits 
      * @param currentSlot which slot to fill at this stage (used for recursion).
      * @param currentHit for the current slot, which candidate hit to start from.
@@ -254,6 +258,35 @@ public class RepeatsQuery implements QueryNode {
                 hitSlots[0].getTermPosition(),length , 
                 (engine.isSubBindingsEnabled() ? hitSlots : null));
       }
+    }
+
+    @Override
+    public ReferenceSet<Index> indices() {
+      return wrappedExecutor.indices();
+    }
+    
+    public <T> T accept( final DocumentIteratorVisitor<T> visitor ) throws IOException {
+      if ( ! visitor.visitPre( this ) ) return null;
+      final T[] a = visitor.newArray( 1 );
+      if ( a == null ) {
+        if ( wrappedExecutor.accept( visitor ) == null ) return null;
+      }
+      else {
+        if ( ( a[ 0 ] = wrappedExecutor.accept( visitor ) ) == null ) return null;
+      }
+      return visitor.visitPost( this, a );
+    }
+
+    public <T> T acceptOnTruePaths( final DocumentIteratorVisitor<T> visitor ) throws IOException {
+      if ( ! visitor.visitPre( this ) ) return null;
+      final T[] a = visitor.newArray( 1 );
+      if ( a == null ) {
+        if ( wrappedExecutor.acceptOnTruePaths( visitor ) == null ) return null;     
+      }
+      else {
+        if ( ( a[ 0 ] = wrappedExecutor.acceptOnTruePaths( visitor ) ) == null ) return null;
+      }
+      return visitor.visitPost( this, a );
     }
   }
   

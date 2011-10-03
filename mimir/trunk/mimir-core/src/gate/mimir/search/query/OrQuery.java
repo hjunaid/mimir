@@ -23,8 +23,14 @@ package gate.mimir.search.query;
 import gate.mimir.search.QueryEngine;
 
 import it.unimi.dsi.fastutil.Swapper;
+import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
 import it.unimi.dsi.fastutil.ints.IntComparator;
+import it.unimi.dsi.fastutil.ints.IntHeapSemiIndirectPriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import it.unimi.dsi.mg4j.index.Index;
+import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 import java.util.*;
@@ -55,9 +61,16 @@ public class OrQuery implements QueryNode {
       this.query = query;
       //prepare all the executors
       this.executors = new ExecutorsList(engine, query.getNodes());
+      currentDoc = new int[executors.size()];
+      front = new int[executors.size()];
       this.hitsOnCurrentDocument = new ObjectArrayList<Binding>();
+      queue = new IntHeapSemiIndirectPriorityQueue(currentDoc);
       for(int i = 0; i < executors.size(); i++){
-        executors.nextDocument(i, -1);
+        int doc = executors.nextDocument(i, -1);
+        if (doc >= 0) {
+          currentDoc[i] = doc;
+          queue.enqueue(i);
+        }
       }
     }
 
@@ -76,10 +89,13 @@ public class OrQuery implements QueryNode {
      */
     protected ObjectArrayList<Binding> hitsOnCurrentDocument;
     
+    protected boolean hitsObtained = false;
+    
     /**
      * The {@link QueryExecutor}s for the contained nodes.
      */
     protected ExecutorsList executors;
+    
     
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#close()
@@ -91,10 +107,37 @@ public class OrQuery implements QueryNode {
       hitsOnCurrentDocument.clear();
     }
 
+    
+    public int nextDocument(int greaterThan) throws IOException {
+      if(closed) return latestDocument = -1;
+      if(latestDocument == -1) return latestDocument;
+      if(latestDocument != -2) {
+        // advance
+        int first = queue.first();
+        while(currentDoc[first] == latestDocument || 
+              currentDoc[first] <= greaterThan) {
+          currentDoc[first] = executors.nextDocument(first, greaterThan);
+          if(currentDoc[first] < 0) {
+            queue.dequeue();
+            if(queue.isEmpty()) return latestDocument = -1;
+          } else {
+            queue.changed();            
+          }
+          first = queue.first();
+        }
+      }
+      latestDocument = currentDoc[queue.first()];
+      // collect all the hits from the current document
+      frontSize =  queue.front(front);
+      hitsOnCurrentDocument.clear();
+      hitsObtained = false;
+      return latestDocument;
+    }
+    
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#nextDocument(int)
      */
-    public int nextDocument(int greaterThan) throws IOException {
+    public int nextDocumentOld(int greaterThan) throws IOException {
       if(closed) return latestDocument = -1;
       if(latestDocument == -1) return latestDocument;
       //find the minimum value for latest document
@@ -103,6 +146,12 @@ public class OrQuery implements QueryNode {
         for(int i = 0 ; i < executors.size(); i++){
           if(executors.latestDocument(i) <= greaterThan){
             executors.nextDocument(i, greaterThan);
+          }
+        }
+      } else {
+        for(int i = 0 ; i < executors.size(); i++){
+          if(executors.latestDocument(i) == latestDocument) {
+            executors.nextDocument(i, -1);
           }
         }
       }
@@ -138,16 +187,11 @@ public class OrQuery implements QueryNode {
             aHit = executors.nextHit(i);
           }
           //move the executor to its next document
-          executors.nextDocument(i, -1);
+//          executors.nextDocument(i, -1);
         }
         //now sort the list of candidates
         it.unimi.dsi.fastutil.Arrays.quickSort(0, hitsOnCurrentDocument.size(),
-                new IntComparator() {
-                  @Override
-                  public int compare(Integer one, Integer other) {
-                    return compare(one.intValue(), other.intValue());
-                  }
-                  
+                new AbstractIntComparator() {
                   @Override
                   public int compare(int one, int other) {
                     return hitsOnCurrentDocument.get(one).compareTo(
@@ -172,6 +216,22 @@ public class OrQuery implements QueryNode {
      */
     public Binding nextHit() throws IOException {
       if(closed) return null;
+      if(!hitsObtained) {
+        for(int i = 0; i < frontSize; i++){
+          //extract all results on the new current document
+          Binding aHit = executors.nextHit(front[i]);
+          while(aHit != null){
+            hitsOnCurrentDocument.add(aHit);
+            aHit = executors.nextHit(front[i]);
+          }
+        }
+        //now sort the list of candidates
+        it.unimi.dsi.fastutil.objects.ObjectArrays.quickSort(
+          (Object[])hitsOnCurrentDocument.elements(), 0, 
+          hitsOnCurrentDocument.size());
+        hitsObtained = true;
+      }
+      
       if(hitsOnCurrentDocument.isEmpty()){
         //no more hits
         return null;
@@ -196,7 +256,67 @@ public class OrQuery implements QueryNode {
                 aHit.getLength(), containedBindings); 
       }
     }
-
+    
+    @Override
+    public ReferenceSet<Index> indices() {
+      if(indices == null) {
+        indices = new ReferenceArraySet<Index>();
+        for(int i = 0; i < executors.size(); i++) {
+          try {
+            QueryExecutor qExec = executors.getExecutor(i);
+            indices.addAll(qExec.indices());
+          } catch(IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+      return indices;
+    }
+   
+    public <T> T accept(final DocumentIteratorVisitor<T> visitor)
+      throws IOException {
+      if(!visitor.visitPre(this)) return null;
+      int n = executors.size();
+      final T[] a = visitor.newArray(n);
+      if(a == null) {
+        for(int i = 0; i < n; i++)
+          if(executors.latestDocument(i) >= 0 &&
+            executors.getExecutor(i).accept(visitor) == null) return null;
+      } else {
+        for(int i = 0; i < n; i++)
+          if(executors.latestDocument(i) >= 0 &&
+            (a[i] = executors.getExecutor(i).accept(visitor)) == null) return null;
+      }
+      return visitor.visitPost(this, a);
+    }
+    
+    public <T> T acceptOnTruePaths(final DocumentIteratorVisitor<T> visitor)
+      throws IOException {
+      if(!visitor.visitPre(this)) return null;
+      final T[] a = visitor.newArray(frontSize);
+      if(a == null) {
+        for(int i = 0; i < frontSize; i++){
+          if(executors.getExecutor(front[i]).acceptOnTruePaths(visitor) == null) return null;
+        }
+      } else {
+        for(int i = 0; i < frontSize; i++){
+          if((a[front[i]] = executors.getExecutor(front[i]).acceptOnTruePaths(visitor)) == null)
+            return null;
+        }
+      }
+      return visitor.visitPost(this, a);
+    }
+    
+    protected ReferenceSet<Index> indices;
+    
+    protected int[] currentDoc;
+    
+    protected int front[];
+    
+    protected int frontSize;
+    
+    protected IntHeapSemiIndirectPriorityQueue queue;
+    
   }
   
   protected QueryNode[] nodes;

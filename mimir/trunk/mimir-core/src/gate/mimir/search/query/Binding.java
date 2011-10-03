@@ -19,6 +19,8 @@
  */
 package gate.mimir.search.query;
 
+import gate.mimir.search.QueryEngine;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +127,9 @@ public class Binding implements Comparable<Binding>, Serializable {
   
   /**
    * Gets the bindings corresponding to all the sub-nodes of the query node for 
-   * this binding.
+   * this binding. This value is only populated if the sub-bindings are enabled
+   * in the {@link QueryEngine} that produced it (see 
+   * {@link QueryEngine#setSubBindingsEnabled(boolean)}).
    * To save memory, in the case of compound {@link QueryNode}s (i.e. nodes that
    * contain other nodes), only the top node will contain this array of 
    * bindings, which will include the bindings for the entire hierarchy of nodes 

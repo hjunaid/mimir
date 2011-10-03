@@ -40,6 +40,8 @@ import gate.mimir.IndexConfig;
 import gate.mimir.index.*;
 import gate.util.GateRuntimeException;
 import it.unimi.dsi.Util;
+import it.unimi.dsi.util.ShiftAddXorSignedStringMap;
+import it.unimi.dsi.bits.TransformationStrategies;
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.Swapper;
@@ -64,8 +66,10 @@ import it.unimi.dsi.mg4j.tool.Combine;
 import it.unimi.dsi.mg4j.tool.Concatenate;
 import it.unimi.dsi.mg4j.tool.Scan;
 import it.unimi.dsi.mg4j.tool.Scan.Completeness;
+import it.unimi.dsi.sux4j.mph.LcpMonotoneMinimalPerfectHashFunction;
 import it.unimi.dsi.util.ImmutableExternalPrefixMap;
 import it.unimi.dsi.util.Properties;
+import it.unimi.dsi.util.StringMap;
 import it.unimi.dsi.util.StringMaps;
 
 /**
@@ -896,27 +900,31 @@ public abstract class MimirIndexBuilder implements Runnable {
 
   
   /**
-   * Closes this indexer, performing all required operations to finalise the 
+   * Closes this indexer, performing all required operations to finalise the
    * index (e.g. combining the batches produced during the indexing process).
-   * @throws IndexException if there are any problems while closing the index.
+   * 
+   * @throws IndexException
+   *           if there are any problems while closing the index.
    */
   public void close() throws IndexException {
     closingProgress = 0;
     logger.info("Combining batches for index " + indexBasename());
-    //finished all docs -> combine the batches
+    // finished all docs -> combine the batches
     try {
-      final String[] inputBasename = new Properties(
-              getGlobalFile(Scan.CLUSTER_PROPERTIES_EXTENSION)).
-              getStringArray( IndexCluster.PropertyKeys.LOCALINDEX );
+      final String[] inputBasename =
+        new Properties(getGlobalFile(Scan.CLUSTER_PROPERTIES_EXTENSION))
+          .getStringArray(IndexCluster.PropertyKeys.LOCALINDEX);
       combineBatches(inputBasename, getGlobalFile("").getAbsolutePath());
-
-      //save the termMap
-      BinIO.storeObject( StringMaps.synchronize(
-          ImmutableExternalPrefixMap.class.getConstructor(Iterable.class).
-          newInstance(new FileLinesCollection(
-          getGlobalFile(DiskBasedIndex.TERMS_EXTENSION).getAbsolutePath(), 
-          "UTF-8" ))), 
-          getGlobalFile(DiskBasedIndex.TERMMAP_EXTENSION));
+      // save the termMap
+      FileLinesCollection fileLinesCollection =
+        new FileLinesCollection(getGlobalFile(DiskBasedIndex.TERMS_EXTENSION)
+          .getAbsolutePath(), "UTF-8");
+      StringMap<CharSequence> terms = new ShiftAddXorSignedStringMap(fileLinesCollection.iterator(),
+        new LcpMonotoneMinimalPerfectHashFunction<CharSequence>(
+          fileLinesCollection, TransformationStrategies.prefixFreeUtf16()));
+      
+      
+      BinIO.storeObject(terms, getGlobalFile(DiskBasedIndex.TERMMAP_EXTENSION));
     } catch(Exception e) {
       throw new IndexException("Exception while closing the index", e);
     }
