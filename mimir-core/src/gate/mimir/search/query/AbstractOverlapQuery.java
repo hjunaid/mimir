@@ -22,6 +22,11 @@ package gate.mimir.search.query;
 
 import gate.mimir.search.QueryEngine;
 
+import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import it.unimi.dsi.mg4j.index.Index;
+import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -55,7 +60,8 @@ public abstract class AbstractOverlapQuery implements QueryNode{
      * @param query
      * @throws IOException 
      */
-    public OverlapQueryExecutor(AbstractOverlapQuery query, QueryEngine engine, SubQuery target) throws IOException {
+    public OverlapQueryExecutor(AbstractOverlapQuery query, QueryEngine engine, 
+                                SubQuery target) throws IOException {
       super(engine);
       this.targetQuery = target;
       this.query = query;
@@ -183,7 +189,50 @@ public abstract class AbstractOverlapQuery implements QueryNode{
         }
       }
     }
+
+    public <T> T accept( final DocumentIteratorVisitor<T> visitor ) throws IOException {
+      if ( ! visitor.visitPre( this ) ) return null;
+      final T[] a = visitor.newArray( 2 );
+      if ( a == null ) {
+        if ( innerExecutor.accept( visitor ) == null ) return null;
+        if ( outerExecutor.accept( visitor ) == null ) return null;
+      }
+      else {
+        if ( ( a[ 0 ] = innerExecutor.accept( visitor ) ) == null ) return null;
+        if ( ( a[ 1 ] = outerExecutor.accept( visitor ) ) == null ) return null;
+      }
+      return visitor.visitPost( this, a );
+    }
+
+    public <T> T acceptOnTruePaths( final DocumentIteratorVisitor<T> visitor ) throws IOException {
+      if ( ! visitor.visitPre( this ) ) return null;
+      final T[] a = visitor.newArray( 1 );
+      QueryExecutor executor = targetQuery == SubQuery.INNER ?
+          innerExecutor : outerExecutor;
+      System.out.println("True path executor: " + executor.toString());
+      if ( a == null ) {
+        if ( executor.acceptOnTruePaths( visitor ) == null ) return null;
+      }
+      else {
+        if ( ( a[ 0 ] = executor.acceptOnTruePaths( visitor ) ) == null ) return null;
+      }
+      return visitor.visitPost( this, a );
+    }
     
+    
+    @Override
+    public ReferenceSet<Index> indices() {
+      if(indices == null) {
+        // we keep all indexes (even though only the ones on one branch will be 
+        // needed) so that the visiting doesn't need to care about the orientation. 
+        indices = new ReferenceArraySet<Index>();
+        indices.addAll(innerExecutor.indices());
+        indices.addAll(outerExecutor.indices());
+      }
+      return indices;
+    }
+    
+    protected ReferenceSet<Index> indices;
   }
 
   /**

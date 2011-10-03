@@ -42,36 +42,7 @@ import org.apache.log4j.Logger;
  * 
  */
 public class ExecutorsList {
-  
-  
-  /**
-   * The memory cache storing live executors.
-   */
-  protected class ExecutorCache extends LinkedHashMap<Integer, QueryExecutor>{
 
-    public ExecutorCache() {
-      super(maxLiveExecutors > 0 ? maxLiveExecutors : nodes.length, 
-            DEFAULT_LOAD_FACTOR, true);
-    }
-
-    /* (non-Javadoc)
-     * @see java.util.LinkedHashMap#removeEldestEntry(java.util.Map.Entry)
-     */
-    @Override
-    protected boolean removeEldestEntry(Entry<Integer, QueryExecutor> eldest) {
-      if (maxLiveExecutors > 0  && size() > maxLiveExecutors){
-        try {
-          eldest.getValue().close();
-        } catch(IOException e) {
-          logger.warn("Problem while closing old query execcutor!", e);
-        }
-        executorsClosed++;
-        return true;
-      }else{
-        return false;
-      }
-    }
-  }
   
   /**
    * Constructor.
@@ -92,9 +63,17 @@ public class ExecutorsList {
     Arrays.fill(latestDocuments, EXECUTOR_NOT_STARTED);
     hitsOnLatestDocument = new Binding[nodes.length][];
     hitsReturned = new int[nodes.length];
-    executors = new ExecutorCache();
+    
     executorsOpened = 0;
     executorsClosed = 0;
+    
+    // alternative implementation
+    executors = new QueryExecutor[nodes.length];
+    executorsNext = new int[nodes.length];
+    executorsPrev = new int[nodes.length];
+    executorsFirst = -1;
+    executorsLast = -1;
+    executorsSize = 0;
   }
 
   /**
@@ -115,39 +94,44 @@ public class ExecutorsList {
   }
 
 
-  protected QueryExecutor getExecutor(int nodeId) throws IOException{
-    //try the cache
-    QueryExecutor executor = executors.get(nodeId);
-    if(executor == null){
+  public QueryExecutor getExecutor(int nodeId) throws IOException{
+    if(executors[nodeId] == null) { // we need to create a new executor
+      executorsSize++;
+      if(executorsSize > maxLiveExecutors) { // about to go over: remove last
+        executors[executorsLast].close();
+        executorsClosed++;
+        executors[executorsLast] = null;
+        int newLast = executorsPrev[executorsLast];
+        executorsNext[newLast] = -1;
+        executorsPrev[executorsLast] = -1;
+        executorsNext[executorsLast] = -1;
+        executorsLast = newLast;
+      }
+      // open the new executor
+      executors[nodeId] = nodes[nodeId].getQueryExecutor(engine);
       executorsOpened++;
-      //recreate the executor
-      executor = nodes[nodeId].getQueryExecutor(engine);
-//      //scroll the executor to the right document
-//      if(latestDocuments[nodeId] != EXECUTOR_NOT_STARTED){
-//        int oldLatest = latestDocuments[nodeId];
-//        latestDocuments[nodeId] = executor.nextDocument( 
-//              latestDocuments[nodeId] - 1);
-//        if(oldLatest != latestDocuments[nodeId]){
-//          throw new RuntimeException("Malfunction in " + 
-//                  this.getClass().getName() + 
-//                  ": executor scrolled to a different document after reload!");
-//        }
-//        //skip the hits already returned
-//        for(int i = 0; i< hitsReturned[nodeId]; i++){
-//          if(executor.nextHit() == null){
-//            throw new RuntimeException("Malfunction in " + 
-//                    this.getClass().getName() + 
-//                    ": executor did not return the same hits after reload!");
-//          }
-//        }
-//        
-//      }else{
-//        //the executor has not been started yet, so no need to do so 
-//      }
-      //add to the cache
-      executors.put(nodeId, executor);
+      // add first to the list
+      executorsNext[nodeId] = executorsFirst;
+      executorsPrev[nodeId] = -1;
+      if(executorsFirst != -1) { // old first becomes second
+        executorsPrev[executorsFirst] = nodeId;
+      } else { // there was no first -> list was empty -> first = last
+        executorsLast = nodeId;
+      }
+      //nodeId is the new first
+      executorsFirst = nodeId;
+    } else { // move to front
+      int prev = executorsPrev[nodeId];
+      int next = executorsNext[nodeId];
+      if(prev >= 0) executorsNext[prev] = next;
+      if(next >= 0) executorsPrev[next] = prev;
+      
+      executorsPrev[nodeId] = -1;
+      executorsNext[nodeId] = executorsFirst;
+      executorsPrev[executorsFirst] = nodeId;
+      executorsFirst = nodeId;
     }
-    return executor;
+    return executors[nodeId];
   }
   
   public int nextDocument(int nodeId, int greaterThan) throws IOException{
@@ -208,19 +192,22 @@ public class ExecutorsList {
     return latestDocuments[nodeId];
   }
   
+  
+  
   /**
    * Closes all executors still live, and releases all memory resources.
    * @throws IOException 
    */
   public void close() throws IOException{
     closed = true;
-    for(QueryExecutor executor : executors.values()){
-      executor.close();
-      executorsClosed++;
+    for(int i = 0; i< executors.length; i++) {
+      if(executors[i] != null) {
+        executors[i].close();
+        executors[i] = null;
+        executorsClosed++;
+      }
     }
     engine = null;
-    executors.clear();
-    executors = null;
     hitsReturned = null;
     latestDocuments = null;
     nodes = null;
@@ -228,10 +215,11 @@ public class ExecutorsList {
             executorsOpened +"/" + executorsClosed);
   }
   
+  
   /**
    * The default maximum number of executor to be kept live.
    */
-  public static final int DEFAULT_MAX_LIVE_EXECUTORS = 20000;
+  public static final int DEFAULT_MAX_LIVE_EXECUTORS = 200000;
   
   /**
    * The load factor used when none specified in constructor.
@@ -292,8 +280,14 @@ public class ExecutorsList {
   
   
   /**
-   * The memory cache that holds the live executors.
+   * An array contining the executors (some position may be null, if the 
+   * executor on that location has been dropped from RAM).
    */
-  protected Map<Integer, QueryExecutor> executors;
+  protected QueryExecutor[] executors;
   
+  protected int[] executorsNext;
+  protected int[] executorsPrev;
+  protected int executorsFirst;
+  protected int executorsLast;
+  protected int executorsSize;
 }

@@ -21,11 +21,18 @@
 package gate.mimir.search.query;
 
 import gate.mimir.IndexConfig;
+import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import it.unimi.dsi.lang.MutableString;
 import it.unimi.dsi.mg4j.index.Index;
 import it.unimi.dsi.mg4j.index.IndexIterator;
+import it.unimi.dsi.mg4j.index.IndexReader;
+import it.unimi.dsi.mg4j.index.payload.Payload;
+import it.unimi.dsi.mg4j.search.IntervalIterator;
+import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 import java.util.*;
@@ -81,7 +88,7 @@ public class TermQuery implements QueryNode {
   /**
    * A {@link QueryExecutor} for {@link TermQuery} nodes.
    */
-  public static class TermQueryExecutor extends AbstractQueryExecutor{
+  public static class TermQueryExecutor extends AbstractQueryExecutor implements IndexIterator{
 
     
     /**
@@ -90,7 +97,18 @@ public class TermQuery implements QueryNode {
     private TermQuery query;
     
     /**
-     * The index running on. 
+     * A local reference to the {@link IndexReaderPool} from the 
+     * {@link QueryEngine}.
+     */
+    private IndexReaderPool indexReaderPool;
+    
+    /**
+     * The {@link IndexReader} from the {@link #indexReaderPool}.
+     */
+    private IndexReader indexReader;
+    
+    /**
+     * The index iterator used to obtain hits. 
      */
     private IndexIterator indexIterator;
     
@@ -108,30 +126,30 @@ public class TermQuery implements QueryNode {
     public TermQueryExecutor(TermQuery node, QueryEngine engine) throws IOException {
       super(engine);
       this.query = node;
-      Index index;
       switch(this.query.indexType){
         case TOKENS:
           if(query.indexName == null){
             //token query, with no index name provided -> use the default
-            index = engine.getIndexes()[0];
+            indexReaderPool = engine.getIndexes()[0];
           }else{
-            index = engine.getTokenIndex(query.indexName);
+            indexReaderPool = engine.getTokenIndex(query.indexName);
           }
           break;
         case ANNOTATIONS:
-          index = engine.getAnnotationIndex(query.indexName);
+          indexReaderPool = engine.getAnnotationIndex(query.indexName);
           break;
         default:
           throw new IllegalArgumentException("Indexes of type " + 
                   this.query.indexType + " are not supported!"); 
       }
 
-      if(index == null) throw new IllegalArgumentException(
+      if(indexReaderPool == null) throw new IllegalArgumentException(
               "No index provided for field " + node.getIndexName() + "!");
       //use the term processor for the query term
       MutableString mutableString = new MutableString(query.getTerm());
-      index.termProcessor.processTerm(mutableString);
-      this.indexIterator = index.documents(mutableString.toString());
+      indexReader = indexReaderPool.borrowReader();
+      indexReaderPool.getIndex().termProcessor.processTerm(mutableString);
+      this.indexIterator = indexReader.documents(mutableString.toString());
       positionsIterator = null;
     }
 
@@ -157,9 +175,7 @@ public class TermQuery implements QueryNode {
         //so we just return the next document
         latestDocument = indexIterator.nextDocument();
       }
-      if(latestDocument != -1){
-        positionsIterator = indexIterator.positions();
-      }
+      
       return latestDocument;
     }
 
@@ -168,6 +184,7 @@ public class TermQuery implements QueryNode {
      */
     public Binding nextHit() throws IOException{
       if(closed) return null;
+      if(positionsIterator == null) positionsIterator = indexIterator.positions();
       if(latestDocument >= 0 && positionsIterator.hasNext()){
         int position = positionsIterator.nextInt();
         return new Binding(query, latestDocument, position, query.length, null);
@@ -182,8 +199,132 @@ public class TermQuery implements QueryNode {
      */
     public void close() throws IOException {
       super.close();
-      indexIterator.dispose();
+//      indexIterator.dispose();
       indexIterator = null;
+      indexReaderPool.returnReader(indexReader);
+    }
+
+    
+    public boolean hasNext() {
+      throw new UnsupportedOperationException("Method not implemented!");
+    }
+
+    public Integer next() {
+      throw new UnsupportedOperationException("Method not implemented!");
+    }
+
+    public void remove() {
+      throw new UnsupportedOperationException("Method not implemented!");
+    }
+
+    public Index index() {
+      return indexIterator.index();
+    }
+
+    public IntervalIterator intervalIterator() throws IOException {
+      return indexIterator.intervalIterator();
+    }
+
+    public int frequency() throws IOException {
+      return indexIterator.frequency();
+    }
+
+    public IntervalIterator intervalIterator(Index index) throws IOException {
+      return indexIterator.intervalIterator(index);
+    }
+
+    public Payload payload() throws IOException {
+      return indexIterator.payload();
+    }
+
+    public int count() throws IOException {
+      return indexIterator.count();
+    }
+
+    public IntIterator positions() throws IOException {
+      return indexIterator.positions();
+    }
+
+    public int positions(int[] positions) throws IOException {
+      return indexIterator.positions(positions);
+    }
+
+    public Reference2ReferenceMap<Index, IntervalIterator> intervalIterators()
+      throws IOException {
+      return indexIterator.intervalIterators();
+    }
+
+    public int[] positionArray() throws IOException {
+      return indexIterator.positionArray();
+    }
+
+    public ReferenceSet<Index> indices() {
+      return indexIterator.indices();
+    }
+
+    public int nextInt() {
+      return indexIterator.nextInt();
+    }
+
+    public IndexIterator id(int id) {
+      return indexIterator.id(id);
+    }
+
+    public int nextDocument() throws IOException {
+      return indexIterator.nextDocument();
+    }
+
+    public int id() {
+      return indexIterator.id();
+    }
+
+    public int document() {
+      return indexIterator.document();
+    }
+
+    public <T> T accept(DocumentIteratorVisitor<T> visitor) throws IOException {
+      return indexIterator.accept(visitor);
+    }
+
+    public <T> T acceptOnTruePaths(DocumentIteratorVisitor<T> visitor)
+      throws IOException {
+      return indexIterator.acceptOnTruePaths(visitor);
+    }
+
+    public void dispose() throws IOException {
+      indexIterator.dispose();
+    }
+
+    public IntervalIterator iterator() {
+      return indexIterator.iterator();
+    }
+
+    public int skip(int arg0) {
+      return indexIterator.skip(arg0);
+    }
+
+    public int termNumber() {
+      return indexIterator.termNumber();
+    }
+
+    public String term() {
+      return indexIterator.term();
+    }
+
+    public IndexIterator term(CharSequence term) {
+      return indexIterator.term(term);
+    }
+
+    public IndexIterator weight(double weight) {
+      return indexIterator.weight(weight);
+    }
+
+    public int skipTo(int n) throws IOException {
+      return indexIterator.skipTo(n);
+    }
+
+    public double weight() {
+      return indexIterator.weight();
     }
     
   }

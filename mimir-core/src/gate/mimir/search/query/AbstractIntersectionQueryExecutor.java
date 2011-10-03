@@ -22,6 +22,11 @@ package gate.mimir.search.query;
 
 import gate.mimir.search.QueryEngine;
 
+import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import it.unimi.dsi.mg4j.index.Index;
+import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+
 import java.io.IOException;
 
 
@@ -30,8 +35,7 @@ import java.io.IOException;
  * shared between all query executors that combine a set of sub-executors and
  * only need to return results on common documents. 
  */
-public abstract class AbstractIntersectionQueryExecutor extends
-                                                       AbstractQueryExecutor {
+public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExecutor {
   
   
   /**
@@ -48,9 +52,19 @@ public abstract class AbstractIntersectionQueryExecutor extends
     for(int i = 0; i < nodes.length; i++) {
       executors[i] = nodes[i].getQueryExecutor(engine);
       nextDocIDs[i] = executors[i].nextDocument(-1);
+      if(nextDocIDs[i] < 0) {
+        // no results!
+        latestDocument = -1;
+        break;
+      }
     }
 
   }
+
+  /**
+   * The {@link QueryExecutor}s for the contained nodes.
+   */
+  protected QueryExecutor[] executors;
 
 
   public int nextDocument(int greaterThan) throws IOException {
@@ -68,14 +82,16 @@ public abstract class AbstractIntersectionQueryExecutor extends
     while(!doneAdvancing) {
       doneAdvancing = true;
       for(int i = 0; i < executors.length; i++) {
-        if(nextDocIDs[i] == -1) {
-          // one executor has run out of documents -> we're done here!
-          return latestDocument = -1;
-        }else if(nextDocIDs[i] < max) {
+        if(nextDocIDs[i] < max) {
           // this needs to move forward to at least max
           nextDocIDs[i] = executors[i].nextDocument(max - 1);
+          if(nextDocIDs[i] == -1) {
+            // one executor has run out of documents -> we're done here!
+            return latestDocument = -1;
+          }
           doneAdvancing = false;
-        }else if(nextDocIDs[i] > max) {
+        }
+        if(nextDocIDs[i] > max) {
           max = nextDocIDs[i];
           //we need to move all others to the same value
           doneAdvancing = false;
@@ -88,11 +104,44 @@ public abstract class AbstractIntersectionQueryExecutor extends
   }
   
   
-  /**
-   * The {@link QueryExecutor}s for the contained nodes.
-   */
-  protected QueryExecutor[] executors;
+  public <T> T accept( final DocumentIteratorVisitor<T> visitor ) throws IOException {
+    if ( ! visitor.visitPre( this ) ) return null;
+    int n = executors.length;
+    final T[] a = visitor.newArray( n );
+    if ( a == null ) {
+      for( int i = 0; i < n; i++ ) if ( executors[ i ] != null && executors[ i ].accept( visitor ) == null ) return null;
+    }
+    else {
+      for( int i = 0; i < n; i++ ) if ( executors[ i ] != null && ( a[ i ] = executors[ i ].accept( visitor ) ) == null ) return null;
+    }
+    return visitor.visitPost( this, a );
+  }
   
+  public <T> T acceptOnTruePaths( final DocumentIteratorVisitor<T> visitor ) throws IOException {
+    if ( ! visitor.visitPre( this ) ) return null;
+    int n = executors.length;
+    final T[] a = visitor.newArray( n ); 
+    if ( a == null ) {
+      for( int i = 0; i < n; i++ ) if ( executors[ i ] != null && executors[ i ].acceptOnTruePaths( visitor ) == null ) return null;
+    }
+    else {
+      for( int i = 0; i < n; i++ ) if ( executors[ i ] != null && ( a[ i ] = executors[ i ].acceptOnTruePaths( visitor ) ) == null ) return null;
+    }
+    return visitor.visitPost( this, a );
+  }  
+  
+  
+  @Override
+  public ReferenceSet<Index> indices() {
+    if(indices == null) {
+      indices = new ReferenceArraySet<Index>();
+      for(QueryExecutor qExec : executors) {
+        indices.addAll(qExec.indices());
+      }
+    }
+    return indices;
+  }
+
   /**
    * The sub-queries
    */
@@ -102,5 +151,7 @@ public abstract class AbstractIntersectionQueryExecutor extends
    * An array of current nextDocumentID values, for all of the sub nodes.
    */
   protected int[] nextDocIDs;
+  
+  protected ReferenceSet<Index> indices;
   
 }

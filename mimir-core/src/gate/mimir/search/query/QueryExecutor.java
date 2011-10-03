@@ -21,6 +21,7 @@ package gate.mimir.search.query;
 
 import gate.mimir.search.QueryEngine;
 import it.unimi.dsi.mg4j.index.Index;
+import it.unimi.dsi.mg4j.search.DocumentIterator;
 
 import java.io.IOException;
 import java.util.Map;
@@ -31,7 +32,7 @@ import java.util.concurrent.BlockingQueue;
  * A query executor is capable of running a query (represented as a tree of 
  * {@link QueryNode}s over a set of indexes. 
  */
-public interface QueryExecutor {
+public interface QueryExecutor extends DocumentIterator{
   
 
   /**
@@ -44,14 +45,15 @@ public interface QueryExecutor {
    * 
    * The query executor will <b>never</b> roll back: all document IDs returned
    * are in ascending order. This means that if the value provided for the 
-   * <code>greaterThan<code> parameter is lower than the latest document ID 
+   * <code>greaterThan</code> parameter is lower than the latest document ID 
    * returned, it will have no effect. 
    *  
    * @param greaterThan a document ID representing the lowest bound (exclusive) for 
    * the requested document ID.  
    * @return the matching document ID, or <tt>-1</tt> if no more documents match
-   * the query. The returned value will be greater than <code>from</code>, or 
-   * <code>-1</code> if no more matching documents are found.
+   * the query. The returned value will be strictly greater than 
+   * <code>greaterThan</code>, or <code>-1</code> if no more matching documents
+   * are found.
    * @throws IOException if the index files cannot be accessed.
    */
   public int nextDocument(int greaterThan) throws IOException;
@@ -69,8 +71,7 @@ public interface QueryExecutor {
    * of start offset, but hits that start at the same place may be returned in
    * any order (i.e. not necessarily longest first or shortest first).
    * @return the {@link Binding} corresponding to the root query node for this 
-   * executor. This returned binding will also be included in the bindings map.
-   * If no further matches are possible on the current document, then 
+   * executor. If no further matches are possible on the current document, then 
    * <code>null</code> is returned.
    * @throws IOException if the index files cannot be accessed.  
    */
