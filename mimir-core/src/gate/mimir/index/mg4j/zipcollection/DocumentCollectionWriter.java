@@ -186,7 +186,7 @@ public class DocumentCollectionWriter {
    * @throws IOException 
    */
   protected void closeZipFile() throws IOException{
-    zipOuputStream.close();
+    if(zipOuputStream != null) zipOuputStream.close();
   }
   
   /**
