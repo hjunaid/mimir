@@ -10,6 +10,45 @@
   grails is not on your path -->
   <property name="grails.bin" value="grails" />
 
+  <!-- Grails is a .bat file on Windows, which has to be run in an ant <exec>
+  using cmd.exe /c, so need to detect the OS and set up the <exec>
+  appropriately. -->
+  <target name="detect.os">
+    <condition property="running.on.windows">
+      <os family="winnt" />
+    </condition>
+  </target>
+
+  <target name="grails.command.win" if="running.on.windows">
+    <echo>Detected Windows operating system</echo>
+    <macrodef name="grails">
+      <element name="extraargs" implicit="true" />
+      <attribute name="dir" />
+      <sequential>
+        <exec executable="cmd.exe" dir="@{dir}" failonerror="true">
+          <arg value="/c" />
+          <arg value="${grails.bin}" />
+          <extraargs />
+        </exec>
+      </sequential>
+    </macrodef>
+  </target>
+
+  <target name="grails.command.notwin" unless="running.on.windows">
+    <echo>Detected non-Windows operating system</echo>
+    <macrodef name="grails">
+      <element name="extraargs" implicit="true" />
+      <attribute name="dir" />
+      <sequential>
+        <exec executable="${grails.bin}" dir="@{dir}" failonerror="true">
+          <extraargs />
+        </exec>
+      </sequential>
+    </macrodef>
+  </target>
+
+  <target name="grails.command" depends="detect.os, grails.command.win, grails.command.notwin" />
+
   <target name="core">
     <ant dir="${mimir-core.dir}" target="publish" />
     <ant dir="${mimir-client.dir}" target="publish" />
@@ -23,19 +62,19 @@
     <ant dir="${plugins.dir}/sparql" target="jar" />
   </target>
 
-  <target name="grails-plugin">
-    <exec executable="${grails.bin}" dir="${grails-plugin.dir}" failonerror="true">
+  <target name="grails-plugin" depends="grails.command">
+    <grails dir="${grails-plugin.dir}">
       <arg value="compile" />
-    </exec>
+    </grails>
 
-    <exec executable="${grails.bin}" dir="${grails-plugin.dir}" failonerror="true">
+    <grails dir="${grails-plugin.dir}">
       <arg value="compile-gwt-modules" />
-    </exec>
+    </grails>
   </target>
 
   <target name="all" depends="core, plugins, grails-plugin" />
 
-  <target name="clean">
+  <target name="clean" depends="grails.command">
     <ant dir="${mimir-core.dir}" target="clean" />
     <ant dir="${mimir-client.dir}" target="clean" />
     <ant dir="${plugins.dir}/db-h2" target="clean" />
@@ -43,9 +82,9 @@
     <ant dir="${plugins.dir}/sesame" target="clean" />
     <ant dir="${plugins.dir}/measurements" target="clean" />
     <ant dir="${plugins.dir}/sparql" target="clean" />
-    <exec executable="${grails.bin}" dir="${grails-plugin.dir}" failonerror="true">
+    <grails dir="${grails-plugin.dir}">
       <arg value="clean" />
-    </exec>
+    </grails>
     <delete>
       <fileset dir="${grails-plugin.dir}/lib" includes="**/*" />
     </delete>
