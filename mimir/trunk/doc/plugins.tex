@@ -245,6 +245,9 @@ The SPARQL semantic annotation helper class is called
 \item[querySuffix] an optional suffix that will be appended to the end of the
   SPARQL queries.  Thus the actual SPARQL query submitted to the endpoint is
   {\em queryPrefix} + {\tt sparql} feature + {\em querySuffix}.
+\item[sparqlEndpointUser and sparqlEndpointPassword] username and password used
+  to authenticate to the SPARQL endpoint (only HTTP basic authentication is
+  supported).  May be omitted if your endpoint does not require authentication.
 \ede
 
 The helper also accepts the usual ``annType'' and ``{\em xxx}Features''
