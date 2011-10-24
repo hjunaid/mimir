@@ -1,10 +1,14 @@
 <project name="mimir" default="all">
   <property file="build.properties" />
-
+  <property file="mimir-web/application.properties"  prefix="mimir.web." />
+  
   <property name="mimir-core.dir" location="mimir-core" />
+  
   <property name="mimir-client.dir" location="mimir-client" />
   <property name="plugins.dir" location="plugins" />
   <property name="grails-plugin.dir" location="grails-plugin-mimir" />
+  <property name="grails-demo-webapp.name" value="mimir-demo" />
+  <property name="grails-demo-webapp.dir" location="${grails-demo-webapp.name}" />
 
   <!-- Location of your grails binary - override this in build.properties if
   grails is not on your path -->
@@ -72,6 +76,49 @@
     </grails>
   </target>
 
+  <target name="check-demo-app">
+    <!-- If the directory already exists, exit -->
+    <available property="app-exists" file="${grails-demo-webapp.dir}" />  
+  </target>
+  
+  <target name="fail-ifexists" if="app-exists">
+    <echo>Target directory (${grails-demo-webapp.dir}) already exists! Please delete/move it manually and try again.</echo>
+    <fail message="Application already exists."/>
+  </target>
+  
+  <target name="mimir-demo" depends="grails.command, check-demo-app, fail-ifexists">
+    <echo>This will create a new Grails application at ${grails-demo-webapp.dir}...</echo>
+
+    <grails dir="${grails-plugin.dir}">
+      <arg value="package-plugin" />
+    </grails>
+    
+    <xmlproperty prefix="mimir.web" file="${grails-plugin.dir}/plugin.xml" />
+    <grails dir=".">
+      <arg value="create-app" />
+      <arg value="${grails-demo-webapp.name}" />
+    </grails>
+
+    <grails dir="${grails-demo-webapp.dir}">
+      <arg value="install-plugin" />
+      <arg file="${grails-plugin.dir}/grails-${mimir.web.plugin(name)}-${mimir.web.plugin(version)}.zip" />
+    </grails>
+    
+    <grails dir="${grails-demo-webapp.dir}">
+      <arg value="dependency-report" />
+    </grails>    
+    
+    <grails dir="${grails-demo-webapp.dir}">
+      <arg value="compile" />
+    </grails>
+    <echo>A new Grails application was created at ${grails-demo-webapp.name}. Please edit the configuration according to your local set-up (see in particular /grails-app/conf/MimirConfig.groovy). Check the user manual (in doc/mimir-guide.pdf) for details of what the various configuration options mean.</echo>
+  </target>  
+  
+  <target name="foo">
+    <xmlproperty prefix="mimir.web" file="${grails-plugin.dir}/plugin.xml" />
+    <echo>${mimir.web.plugin(name)}</echo>
+  </target>
+  
   <target name="all" depends="core, plugins, grails-plugin" />
 
   <target name="clean" depends="grails.command">
