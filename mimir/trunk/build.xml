@@ -6,10 +6,17 @@
   
   <property name="mimir-client.dir" location="mimir-client" />
   <property name="plugins.dir" location="plugins" />
-  <property name="grails-plugin.dir" location="grails-plugin-mimir" />
+  <property name="grails-plugin.dir" location="mimir-web" />
   <property name="grails-demo-webapp.name" value="mimir-demo" />
   <property name="grails-demo-webapp.dir" location="${grails-demo-webapp.name}" />
 
+  <!-- Load the AntContrib tasks -->
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+  <classpath>
+    <pathelement location="${mimir-core.dir}/lib/ant-contrib-1.0b3.jar"/>
+  </classpath>
+  </taskdef>
+  
   <!-- Location of your grails binary - override this in build.properties if
   grails is not on your path -->
   <property name="grails.bin" value="grails" />
@@ -67,10 +74,23 @@
   </target>
 
   <target name="grails-plugin" depends="grails.command">
-    <grails dir="${grails-plugin.dir}">
-      <arg value="compile" />
-    </grails>
-
+    <!-- The first compile always fails due to GWT classes being added to the
+    classpath too late. When that happens, we need to run compile a second time.
+    -->
+    <trycatch>
+      <try>
+        <grails dir="${grails-plugin.dir}">
+          <arg value="compile" />
+        </grails>      
+      </try>
+      <catch>
+        <echo>First Grails compilation failed (GWT not on the classpath?). Re-trying...</echo>
+        <grails dir="${grails-plugin.dir}">
+          <arg value="compile" />
+        </grails>      
+      </catch>
+    </trycatch>
+    
     <grails dir="${grails-plugin.dir}">
       <arg value="compile-gwt-modules" />
     </grails>

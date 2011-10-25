@@ -14,7 +14,7 @@
   <property name="src.dir" location="src" />
   <property name="doc.dir" location="doc" />
 
-  <property name="mimir.grails.plugin" location="../grails-plugin-mimir" />
+  <property name="mimir.grails.plugin" location="../mimir-web" />
   
   <property name="jar.file" location="${app.name}-${app.version}.jar" />
   <path id="compile.classpath">
