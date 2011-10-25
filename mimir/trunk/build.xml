@@ -124,20 +124,30 @@
       <arg file="${grails-plugin.dir}/grails-${mimir.web.plugin(name)}-${mimir.web.plugin(version)}.zip" />
     </grails>
     
-    <grails dir="${grails-demo-webapp.dir}">
-      <arg value="dependency-report" />
-    </grails>    
-    
-    <grails dir="${grails-demo-webapp.dir}">
-      <arg value="compile" />
-    </grails>
-    <echo>A new Grails application was created at ${grails-demo-webapp.name}. Please edit the configuration according to your local set-up (see in particular /grails-app/conf/MimirConfig.groovy). Check the user manual (in doc/mimir-guide.pdf) for details of what the various configuration options mean.</echo>
+    <!-- The first compile always fails due to GWT classes being added to the
+    classpath too late. When that happens, we need to run compile a second time.
+    -->
+    <trycatch>
+      <try>
+      <grails dir="${grails-demo-webapp.dir}">
+        <arg value="compile" />
+      </grails>
+    </try>
+      <catch>
+        <echo>First Grails compilation failed (GWT not on the classpath?). Re-trying...</echo>
+        <grails dir="${grails-demo-webapp.dir}">
+          <arg value="compile" />
+        </grails>
+      </catch>
+    </trycatch>
+
+    <echo>
+    A new Grails application was created at ${grails-demo-webapp.name}.
+    Please edit the configuration according to your local set-up (see in
+    particular /grails-app/conf/MimirConfig.groovy). Check the user manual (in
+    doc/mimir-guide.pdf) for details of what the various configuration options
+    mean.</echo>
   </target>  
-  
-  <target name="foo">
-    <xmlproperty prefix="mimir.web" file="${grails-plugin.dir}/plugin.xml" />
-    <echo>${mimir.web.plugin(name)}</echo>
-  </target>
   
   <target name="all" depends="core, plugins, grails-plugin" />
 
