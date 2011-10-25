@@ -4,7 +4,7 @@ following directories:
 - mimir-core: the core Mímir Java library, used by all components of Mímir.
 - mimir-client: Java library for connecting to a remote Mímir server.
 - doc: the Mímir user guide (LaTeX source and built PDF)
-- grails-plugin-mimir: a Grails (http://grails.org) plugin providing Mímir
+- mimir-web: a Grails (http://grails.org) plugin providing Mímir
   functionality for Grails-base web applications.
 - plugins: Mímir plugins providing various Semantic Annotation Helper (SAH) 
   implementations.

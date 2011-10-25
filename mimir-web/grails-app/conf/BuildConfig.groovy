@@ -44,7 +44,7 @@ grails.project.dependency.resolution = {
     dependencies {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
       plugins {
-        compile ':gwt:latest.integration'
+        build ':gwt:latest.integration'
         runtime ":webflow:$grailsVersion"
       }
 
