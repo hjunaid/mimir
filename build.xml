@@ -113,7 +113,13 @@
   </target>
   
   <target name="fail-ifexists" if="app-exists">
-    <echo>Target directory (${grails-demo-webapp.dir}) already exists! Please delete/move it manually and try again.</echo>
+<echo>===========================================================
+
+Target directory already exists:
+  ${grails-demo-webapp.dir}	
+Please delete/move it manually and try again!
+
+===========================================================</echo>
     <fail message="Application already exists."/>
   </target>
   
