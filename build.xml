@@ -112,7 +112,7 @@
     <available property="app-exists" file="${grails-demo-webapp.dir}" />  
   </target>
   
-  <target name="fail-ifexists" if="app-exists">
+  <target name="fail-if-exists" if="app-exists" depends="check-demo-app">
 <echo>===========================================================
 
 Target directory already exists:
@@ -123,7 +123,7 @@ Please delete/move it manually and try again!
     <fail message="Application already exists."/>
   </target>
   
-  <target name="mimir-demo" depends="grails.command, check-demo-app, fail-ifexists">
+  <target name="mimir-demo" depends="grails.command, fail-if-exists">
     <echo>This will create a new Grails application at ${grails-demo-webapp.dir}...</echo>
 
     <grails dir="${grails-plugin.dir}">
@@ -137,7 +137,7 @@ Please delete/move it manually and try again!
       <arg value="${grails-demo-webapp.name}" />
     </grails>
 
-  	<grails dir=".">
+  	<grails dir="${grails-demo-webapp.dir}">
       <arg value="set-version" />
       <arg value="${app.version}" />
     </grails>
