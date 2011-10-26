@@ -3,14 +3,14 @@
   <property name="app.title" value="Mimir Plugin: DB (H2)" />
 
   <!-- Common Properties -->
-
   <property environment="env" />
-  <property name="core-home" value="../../mimir-core" />
-  <property file="${core-home}/build.properties" />
+  <property file="../../build.properties" />
 
+	<property name="core-home" location="../../${mimir-core.dirname}"/>
+  	
   <path id="core-libs">
     <fileset dir="${core-home}/lib" includes="**/*.jar" />
-    <fileset dir="${core-home}" includes="mimir-core-*.jar" />
+  	<fileset dir="${core-home}" includes="mimir-core-${app.version}.jar" />
   </path>
 
   <path id="local-libs">
@@ -35,7 +35,9 @@
 
   <target name="clean">
     <delete dir="${classes.dir}" />
-    <delete file="${jar.file}" />
+    <delete>
+      <fileset dir="." includes="${app.name}-*.jar" />
+    </delete>    
   </target>
 
   <target name="compile">

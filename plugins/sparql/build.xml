@@ -3,10 +3,10 @@
 	<property name="app.title" value="Mimir Plugin: SPARQL" />
 	
   <!-- Common Properties -->
-	
-  <property environment="env"/>
-	<property name="core-home" value="../../mimir-core"/>
-	<property file="${core-home}/build.properties" />
+  <property environment="env" />
+  <property file="../../build.properties" />
+
+  <property name="core-home" location="../../${mimir-core.dirname}"/>
 	
   <path id="core-libs">
     <fileset dir="${core-home}/lib" includes="**/*.jar" />
@@ -25,7 +25,9 @@
 		
   <target name="clean">
     <delete dir="${classes.dir}"/>
-    <delete file="${jar.file}"/>
+    <delete>
+      <fileset dir="." includes="${app.name}-*.jar" />
+    </delete>
   </target>
   
   <target name="compile">

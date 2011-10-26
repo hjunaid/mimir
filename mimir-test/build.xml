@@ -3,15 +3,15 @@
   <property name="app.title" value="Mimir Tests" />
   
   <!-- Common Properties -->
-  
+  <property file="../build.properties" />
   <property environment="env"/>
-  <property name="core-home" value="../mimir-core"/>
-  <property file="${core-home}/build.properties" />
-  
+	
+	<property name="core-home" location="../${mimir-core.dirname}"/>
+	
   <path id="libs">
     <fileset dir="lib" includes="**/*.jar" />
     <fileset dir="${core-home}/lib" includes="**/*.jar" />
-    <fileset dir="${core-home}" includes="mimir-core-*.jar" />
+  	<fileset dir="${core-home}" includes="mimir-core-${app.version}.jar" />
   </path>
   
   <property name="classes.dir" location="classes" />

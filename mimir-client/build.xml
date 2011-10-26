@@ -3,22 +3,22 @@
   <property name="app.title" value="Mimir Client" />
   
   <!-- Common Properties -->
-  
+	<property file="../build.properties" />
   <property environment="env"/>
-  <property name="core-home" value="../mimir-core"/>
-  <property file="${core-home}/build.properties" />
+	
+  <property name="core-home" location="../${mimir-core.dirname}"/>
   
   <path id="libs">
     <fileset dir="${core-home}/lib" includes="**/*.jar" />
-    <fileset dir="${core-home}" includes="mimir-core-*.jar" />
+    <fileset dir="${core-home}" includes="mimir-core-${app.version}.jar" />
   </path>
   
   <property name="classes.dir" location="classes" />
   <property name="src.dir" location="src" />
   <property name="doc.dir" location="doc" />
 
-  <property name="mimir.grails.plugin" location="../mimir-web" />
-  
+	<property name="grails-plugin.dir" location="../${grails-plugin.dirname}" />
+	
   <property name="jar.file" location="${app.name}-${app.version}.jar" />
   <path id="compile.classpath">
     <path refid="libs" />
@@ -26,7 +26,9 @@
 
   <target name="clean">
     <delete dir="${classes.dir}"/>
-    <delete file="${jar.file}"/>
+    <delete>
+      <fileset dir="." includes="${app.name}-*.jar" />
+    </delete>
   </target>
   
   <target name="compile">
@@ -70,7 +72,7 @@
   </target>
 
   <target name="publish" depends="jar">
-    <copy todir="${mimir.grails.plugin}/lib" flatten="true">
+    <copy todir="${grails-plugin.dir}/lib" flatten="true">
       <fileset file="${jar.file}" />
     </copy>
   </target>

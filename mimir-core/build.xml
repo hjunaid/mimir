@@ -2,7 +2,7 @@
   <property name="app.name" value="mimir-core" />
   <property name="app.title" value="Mimir Core" />
 
-  <property file="build.properties" />
+  <property file="../build.properties" />
   
   <!-- Common Properties -->
   <property environment="env"/>
@@ -14,7 +14,7 @@
   <property name="src.dir" location="src" />
   <property name="doc.dir" location="doc" />
 
-  <property name="mimir.grails.plugin" location="../mimir-web" />
+	<property name="grails-plugin.dir" location="../${grails-plugin.dirname}" />
   
   <property name="jar.file" location="${app.name}-${app.version}.jar" />
   <path id="compile.classpath">
@@ -23,7 +23,9 @@
     
   <target name="clean">
     <delete dir="${classes.dir}"/>
-    <delete file="${jar.file}"/>
+    <delete>
+    	<fileset dir="." includes="${app.name}-*.jar" />
+    </delete>
   </target>
   
   <target name="compile">
@@ -76,7 +78,7 @@
   </target>
 
   <target name="publish" depends="jar">
-    <copy todir="${mimir.grails.plugin}/lib" flatten="true">
+    <copy todir="${grails-plugin.dir}/lib" flatten="true">
       <fileset refid="libs.fileset" />
       <fileset file="${jar.file}" />
     </copy>
