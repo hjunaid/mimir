@@ -182,5 +182,8 @@
     <delete>
       <fileset dir="${grails-plugin.dir}/lib" includes="**/*" />
     </delete>
+  	<delete>
+  	  <fileset dir="${grails-plugin.dir}" includes="grails-${grails-plugin.name}-*.zip" />
+  	</delete>
   </target>
 </project>
