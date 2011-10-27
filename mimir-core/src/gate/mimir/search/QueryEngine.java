@@ -762,7 +762,7 @@ public class QueryEngine {
       logger.info("Memory mapping failed for index " + indexUri
               + ". Loading as file index instead");
       // now try to just open it as an on-disk index
-      theIndex = Index.getInstance(indexUri.toString());
+      theIndex = Index.getInstance(indexUri.toString(), true, true);
     }
     return new IndexReaderPool(theIndex);
   }
