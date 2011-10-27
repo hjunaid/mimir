@@ -26,6 +26,7 @@ import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.IndexConfig.SemanticIndexerConfig;
 import gate.mimir.index.IndexException;
 import gate.mimir.index.Indexer;
+import gate.mimir.index.Mention;
 import gate.util.OffsetComparator;
 
 import java.util.Arrays;
@@ -189,7 +190,7 @@ public class MentionsIndexBuilder extends MimirIndexBuilder implements Runnable 
       // obtain the URIs to be indexed for the *document* metadata
       List<String> terms = new LinkedList<String>();
       for(SemanticAnnotationHelper aHelper : documentHelpers) {
-        String[] someTerms = aHelper.getMentionUris(null, -1, indexer);
+        String[] someTerms = aHelper.getMentionUris(null, Mention.NO_LENGTH, indexer);
         if(someTerms != null) {
           for(String aTerm : someTerms) {
             terms.add(aTerm);
