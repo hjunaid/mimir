@@ -23,12 +23,11 @@ package gate.mimir.search.query;
 import gate.mimir.Constraint;
 import gate.mimir.ConstraintType;
 import gate.mimir.IndexConfig;
-import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.IndexConfig.SemanticIndexerConfig;
+import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.Mention;
-import gate.mimir.index.mg4j.MentionsIndexBuilder;
 import gate.mimir.search.QueryEngine;
-
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import it.unimi.dsi.mg4j.index.Index;
 import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
@@ -78,12 +77,15 @@ public class AnnotationQuery implements QueryNode {
      */
     private QueryExecutor underlyingExecutor;
     
+    private transient boolean isInDocumentMode;
+    
     /**
      * Build the underlying OrQuery executor that this annotation query uses.
      */
     protected void buildQuery() throws IOException {
       // find the semantic annotation helper for the right annotation type
       SemanticAnnotationHelper helper = getAnnotationHelper(engine.getIndexConfig());
+      isInDocumentMode = helper.isInDocumentMode();
       // ask the helper for the mentions that correspond to this query
       long start = System.currentTimeMillis();      
             List<Mention> mentions = helper.getMentions(query.getAnnotationType(),
@@ -157,11 +159,18 @@ public class AnnotationQuery implements QueryNode {
       if(closed) return null;
       Binding underlyingHit = underlyingExecutor.nextHit();
       if(underlyingHit == null) return null;
-      
-      return new Binding(query, underlyingHit.getDocumentId(),
-              underlyingHit.getTermPosition(),
-              underlyingHit.getLength(),
-              underlyingHit.getContainedBindings());
+      int doc = underlyingHit.getDocumentId();
+      if(isInDocumentMode) {
+        return new Binding(query, doc, 0,
+          engine.getDocumentSizes().getInt(doc),
+          underlyingHit.getContainedBindings());        
+      } else {
+        return new Binding(query, doc,
+          underlyingHit.getTermPosition(),
+          underlyingHit.getLength(),
+          underlyingHit.getContainedBindings());        
+      }
+
     }
    
     @Override

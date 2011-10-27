@@ -174,7 +174,7 @@ public abstract class AbstractSemanticAnnotationHelper implements
    */
   protected String annotationType;
 	
-  private boolean isDocumentHelper = false;
+  private boolean isInDocumentMode = false;
   
   public String getAnnotationType() {
     return annotationType;
@@ -251,7 +251,7 @@ public abstract class AbstractSemanticAnnotationHelper implements
 
   @Override
   public boolean isInDocumentMode() {
-    return isDocumentHelper;
+    return isInDocumentMode;
   }
   
   /**
@@ -260,7 +260,7 @@ public abstract class AbstractSemanticAnnotationHelper implements
    * as a document helper. 
    */
   public SemanticAnnotationHelper asDocumentHelper() {
-    isDocumentHelper = true;
+    isInDocumentMode = true;
     return this;
   }
   

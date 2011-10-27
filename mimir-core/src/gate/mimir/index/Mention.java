@@ -23,6 +23,13 @@ package gate.mimir.index;
  * Simple holder class holding the URI and length of a mention.
  */
 public class Mention {
+  
+  /**
+   * Special value used when the mention has no length information (e.g. if it
+   * refers to document metadata hit).
+   */
+  public static final int NO_LENGTH = -1;
+  
   private int length;
 
   private String uri;

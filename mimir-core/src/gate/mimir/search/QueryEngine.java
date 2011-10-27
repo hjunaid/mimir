@@ -33,6 +33,7 @@ import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.*;
 import gate.mimir.search.query.parser.ParseException;
 import gate.mimir.search.query.parser.QueryParser;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.mg4j.index.DiskBasedIndex;
 import it.unimi.dsi.mg4j.index.Index;
 import it.unimi.dsi.mg4j.index.Index.UriKeys;
@@ -125,6 +126,12 @@ public class QueryEngine {
    */
   private volatile transient WriteDeletedDocsTask writeDeletedDocsTask;
 
+  /**
+   * The document sizes used during search time (if running in document mode) to
+   * simulate document-spanning annotations.
+   */
+  private transient IntList documentSizes;
+  
   /**
    * The name for the file (stored in the root index directory) containing 
    * the serialised version of the {@link #deletedDocumentIds}. 
@@ -250,6 +257,15 @@ public class QueryEngine {
   }
 
   /**
+   * Gets the list of document sizes from one underlying MG4J index (all 
+   * sub-indexes should have the same sizes).
+   * @return
+   */
+  public IntList getDocumentSizes() {
+    return documentSizes;
+  }
+  
+  /**
    * Returns the index that stores the data for a particular feature of token
    * annotations.
    * 
@@ -315,6 +331,10 @@ public class QueryEngine {
         for(SemanticIndexerConfig sic : indexConfig.getSemanticIndexers()){
           for(SemanticAnnotationHelper sah : sic.getHelpers()){
             sah.init(this);
+            if(sah.isInDocumentMode() && documentSizes == null) {
+              documentSizes =
+                getAnnotationIndex(sic.getAnnotationTypes()[0]).getIndex().sizes;
+            }            
           }
         }
       }
