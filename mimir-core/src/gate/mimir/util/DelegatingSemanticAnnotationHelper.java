@@ -110,6 +110,21 @@ public abstract class DelegatingSemanticAnnotationHelper extends
     delegate.documentEnd();
   }
 
+  
+  @Override
+  public boolean isInDocumentMode() {
+    return delegate.isInDocumentMode();
+  }
+
+
+  @Override
+  public SemanticAnnotationHelper asDocumentHelper() {
+    if(delegate.isInDocumentMode()) return this;
+    else throw new UnsupportedOperationException(
+      "The delegate provided is not configured to work as a document helper.");
+  }
+
+
   @Override
   public void close(Indexer indexer) {
     delegate.close(indexer);

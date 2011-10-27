@@ -30,7 +30,24 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Interface for classes that convert annotations into semantic metadata.
+ * Interface for classes that convert annotations into semantic metadata. At 
+ * indexing time, for each annotation to be indexed, the helper produces a set 
+ * of mentions URIs (obtained by calling 
+ * {@link #getMentionUris(Annotation, int, Indexer)}).
+ * At search time, given a set of constraints, the helper produces set of 
+ * &lt;mention URIs, mention length&gt; pairs (obtained by calling on of the 
+ * {@link #getMentions(String, List, QueryEngine)}, 
+ * {@link #getMentions(String, Map, QueryEngine)} methods).
+ * 
+ * Each helper can function in annotation mode (the default) or in document 
+ * mode. The current functioning mode can be obtained by calling 
+ * {@link #isInDocumentMode()}. When in document mode, the helper should behave
+ * as if a single annotation covering the whole document span is being indexed 
+ * (or searched for). In this mode, document features are used instead of 
+ * annotation features. This has efficiency advantages over actually creating a 
+ * document-spanning annotation, as the implementations can avoid actually 
+ * storing the annotation length in the index (as it is always the same as the 
+ * document length).     
  */
 public interface SemanticAnnotationHelper extends Serializable{
   
@@ -110,5 +127,16 @@ public interface SemanticAnnotationHelper extends Serializable{
    * operations (such as closing connections to ORDI, etc) on this call.
    */
   public void close(QueryEngine qEngine);
+
+  /**
+   * Checks whether this helper is configured to work in document helper mode. 
+   * If that's the case, then the indexer will call its 
+   * {@link #getMentionUris(Annotation, int, Indexer)} method only once for 
+   * each input document, with a <code>null</code> value for the annotation.
+   * 
+   * @return Returns <code>true</code> if this helper has been configured to 
+   * work in document helper mode.
+   */
+  public boolean isInDocumentMode();
   
 }

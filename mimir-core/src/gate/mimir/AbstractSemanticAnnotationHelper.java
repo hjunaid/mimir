@@ -174,6 +174,8 @@ public abstract class AbstractSemanticAnnotationHelper implements
    */
   protected String annotationType;
 	
+  private boolean isDocumentHelper = false;
+  
   public String getAnnotationType() {
     return annotationType;
   }
@@ -246,4 +248,20 @@ public abstract class AbstractSemanticAnnotationHelper implements
     }
     return concat;
   }
+
+  @Override
+  public boolean isInDocumentMode() {
+    return isDocumentHelper;
+  }
+  
+  /**
+   * Switches this helper in document helper mode. 
+   * @return a reference to this helper, after it has been configured to work
+   * as a document helper. 
+   */
+  public SemanticAnnotationHelper asDocumentHelper() {
+    isDocumentHelper = true;
+    return this;
+  }
+  
 }
