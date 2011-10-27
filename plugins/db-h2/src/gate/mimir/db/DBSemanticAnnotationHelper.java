@@ -22,6 +22,7 @@ package gate.mimir.db;
 import static gate.mimir.db.AnnotationTemplateCache.Tag.NO_ID;
 import gate.Annotation;
 import gate.Document;
+import gate.FeatureMap;
 import gate.Gate;
 import gate.creole.ANNIEConstants;
 import gate.mimir.AbstractSemanticAnnotationHelper;
@@ -40,6 +41,7 @@ import gate.mimir.index.OriginalMarkupMetadataHelper;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryRunner;
 import gate.mimir.search.query.Binding;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.mg4j.index.DowncaseTermProcessor;
 import it.unimi.dsi.mg4j.index.NullTermProcessor;
 
@@ -174,6 +176,13 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   private static transient NumberFormat percentFormat = NumberFormat.getPercentInstance();
   
   private static transient Logger logger = Logger.getLogger(DBSemanticAnnotationHelper.class);
+  
+  /**
+   * When in document mode (see
+   *  {@link SemanticAnnotationHelper#isInDocumentMode()}), stores the features 
+   *  for the current document.
+   */
+  private transient FeatureMap documentFeatures;
   
   public DBSemanticAnnotationHelper(String annotationType,
           String[] nominalFeatureNames, String[] integerFeatureNames,
@@ -519,14 +528,21 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   }
   
   @Override
-  public String[] getMentionUris(Annotation annotation, int length,
+  public String[] getMentionUris(Annotation ann, int length,
           Indexer indexer) {
+    FeatureMap featuresToIndex;
+    if(isInDocumentMode()) {
+      length = -1;
+      featuresToIndex = documentFeatures;
+    } else {
+      featuresToIndex = ann.getFeatures();
+    }
     
     try {
       // find the level 1 ID
-      Tag level1Tag = cache.getLevel1Tag(annotation);
+      Tag level1Tag = cache.getLevel1Tag(featuresToIndex);
       while(level1Tag.getId() == NO_ID){
-        setStatementParameters(level1SelectStmt, annotation);
+        setStatementParameters(level1SelectStmt, featuresToIndex);
         ResultSet res = level1SelectStmt.executeQuery();
         if(res.next()) {
           // we have found the level 1 ID
@@ -534,10 +550,10 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
           // sanity check
           if(res.next()) throw new RuntimeException(
                   "Multiple Unique IDs foud in level 1 table for annotation " + 
-                  annotation.toString());
+                  ann.toString());
         } else {
           // insert the new row
-          setStatementParameters(level1InsertStmt, annotation);
+          setStatementParameters(level1InsertStmt, featuresToIndex);
           if(level1InsertStmt.executeUpdate() != 1) {
             // the update failed
             logger.error("Error while inserting into database. Annotation was lost!");
@@ -565,7 +581,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
           // sanity check
           if(res.next()) throw new RuntimeException(
                   "Multiple Unique IDs foud in mentions table for annotation " + 
-                  "(of length "+ length + "):\n" +annotation.toString());
+                  "(of length "+ length + "):\n" +ann.toString());
         } else {
           // insert the new row
           mentionsInsertStmt.setLong(1, level1Tag.getId());
@@ -586,10 +602,10 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       
       if(level2Used){
         // find the level 2 ID
-        Tag level2Tag = cache.getLevel2Tag(annotation, level1Tag);
+        Tag level2Tag = cache.getLevel2Tag(featuresToIndex, level1Tag);
         while(level2Tag.getId() == NO_ID){
           level2SelectStmt.setLong(1, level1Tag.getId());
-          setStatementParameters(level2SelectStmt, annotation);
+          setStatementParameters(level2SelectStmt, featuresToIndex);
 
           ResultSet res = level2SelectStmt.executeQuery();
           if(res.next()) {
@@ -598,11 +614,11 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
             // sanity check
             if(res.next()) throw new RuntimeException(
                     "Multiple Unique IDs found in level 2 table for annotation " + 
-                    annotation.toString());
+                    ann.toString());
           } else {
             // insert the new row
             level2InsertStmt.setLong(1, level1Tag.getId());
-            setStatementParameters(level2InsertStmt, annotation);
+            setStatementParameters(level2InsertStmt, featuresToIndex);
             if(level2InsertStmt.executeUpdate() != 1) {
               // the update failed
               logger.error("Error while inserting into database. Annotation was lost!");
@@ -625,7 +641,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
             // sanity check
             if(res.next()) throw new RuntimeException(
                     "Multiple Unique IDs foud in mentions table for annotation " + 
-                    "(of length "+ length + "):\n" +annotation.toString());
+                    "(of length "+ length + "):\n" +ann.toString());
           } else {
             // insert the new row
             mentionsInsertStmt.setLong(1, level1Tag.getId());
@@ -667,12 +683,12 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
    * @throws SQLException 
    */
   protected void setStatementParameters(PreparedStatement stmt, 
-          Annotation annotation) throws SQLException {
+          FeatureMap annFeats) throws SQLException {
     if(stmt == level1InsertStmt || stmt == level1SelectStmt) {
       if(nominalFeatureNames != null){
         int paramIdx = 1;
         for(String aFeatureName : nominalFeatureNames) {
-          Object value = annotation.getFeatures().get(aFeatureName);
+          Object value = annFeats.get(aFeatureName);
           if(value != null) {
             stmt.setString(paramIdx++, value.toString());
           } else {
@@ -686,7 +702,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       int paramIdx = 2;
       if(integerFeatureNames != null){
         for(String aFeatureName : integerFeatureNames) {
-          Object valueObj = annotation.getFeatures().get(aFeatureName);
+          Object valueObj = annFeats.get(aFeatureName);
           Long value = null;
           if(valueObj != null){
             if(valueObj instanceof Number) {
@@ -714,7 +730,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       }
       if(floatFeatureNames != null){
         for(String aFeatureName : floatFeatureNames) {
-          Object valueObj = annotation.getFeatures().get(aFeatureName);
+          Object valueObj = annFeats.get(aFeatureName);
           Double value = null;
           if(valueObj != null){
             if(valueObj instanceof Number) {
@@ -742,7 +758,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       }
       if(textFeatureNames != null) {
         for(String aFeatureName : textFeatureNames) {
-          Object valueObj = annotation.getFeatures().get(aFeatureName);
+          Object valueObj = annFeats.get(aFeatureName);
           if(valueObj != null) {
             stmt.setString(paramIdx++, valueObj.toString());
           } else {
@@ -988,7 +1004,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       ResultSet res = dbConnection.createStatement().executeQuery(selectStr.toString());
       while(res.next()) {
         long id = res.getLong(1);
-        int length = res.getInt(2);
+        int length = isInDocumentMode()? Mention.NO_LENGTH : res.getInt(2);
         mentions.add(new Mention(annotationType + ":" + id, length));
       }
     } catch(SQLException e) {
@@ -998,8 +1014,18 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     return mentions;
   }
   
+  
+  
+  @Override
+  public void documentStart(Document document) {
+    if(isInDocumentMode()) {
+      documentFeatures = document.getFeatures();
+    }
+  }
+
   @Override
   public void documentEnd() {
+    documentFeatures = null;
     if(cache != null) {
       double l1ratio = cache.getL1CacheHitRatio();
       double l2ratio = cache.getL2CacheHitRatio();

@@ -20,6 +20,7 @@
 package gate.mimir.db;
 
 import gate.Annotation;
+import gate.FeatureMap;
 import gate.mimir.AbstractSemanticAnnotationHelper;
 import it.unimi.dsi.fastutil.objects.Object2ShortMap;
 import it.unimi.dsi.fastutil.objects.Object2ShortOpenHashMap;
@@ -72,14 +73,13 @@ public class AnnotationTemplateCache {
    * The key that goes into the level 1 cache map.
    */
   protected class NominalFeatures {
-    public NominalFeatures(Annotation ann) {
+    public NominalFeatures(FeatureMap annFeats) {
       // nominalValues is guaranteed to be non-null and to have the same size
       // as owner.getNominalFeatureNames() (i.e. 0, if no nominal features)
       features = new short[nominalvalues.length];
       for(int i = 0; i < nominalvalues.length; i++) {
         String value =
-                (String)ann.getFeatures()
-                        .get(owner.getNominalFeatureNames()[i]);
+                (String)annFeats.get(owner.getNominalFeatureNames()[i]);
         if(value == null) {
           features[i] = NULL;
         } else {
@@ -114,7 +114,7 @@ public class AnnotationTemplateCache {
    * The type of keys that go into the level2 cache.
    */
   protected class NonNominalFeatures {
-    public NonNominalFeatures(Annotation ann) {
+    public NonNominalFeatures(FeatureMap annFeats) {
       int length = 0;
       if(owner.getIntegerFeatureNames() != null)
         length += owner.getIntegerFeatureNames().length;
@@ -128,22 +128,22 @@ public class AnnotationTemplateCache {
       int i = 0;
       if(owner.getIntegerFeatureNames() != null) {
         for(String aFeature : owner.getIntegerFeatureNames()) {
-          values[i++] = ann.getFeatures().get(aFeature);
+          values[i++] = annFeats.get(aFeature);
         }
       }
       if(owner.getFloatFeatureNames() != null) {
         for(String aFeature : owner.getFloatFeatureNames()) {
-          values[i++] = ann.getFeatures().get(aFeature);
+          values[i++] = annFeats.get(aFeature);
         }
       }
       if(owner.getTextFeatureNames() != null) {
         for(String aFeature : owner.getTextFeatureNames()) {
-          values[i++] = ann.getFeatures().get(aFeature);
+          values[i++] = annFeats.get(aFeature);
         }
       }
       if(owner.getUriFeatureNames() != null) {
         for(String aFeature : owner.getUriFeatureNames()) {
-          values[i++] = ann.getFeatures().get(aFeature);
+          values[i++] = annFeats.get(aFeature);
         }
       }
       // cache the hash code.
@@ -335,9 +335,9 @@ public class AnnotationTemplateCache {
    * an ID value of {@link #NO_ID} - it is the responsibility of the client code
    * to obtain the correct ID and set it on the tag.
    */
-  public Tag getLevel1Tag(Annotation ann) {
+  public Tag getLevel1Tag(FeatureMap annFeats) {
     // build the nominal features value
-    NominalFeatures nomFeats = new NominalFeatures(ann);
+    NominalFeatures nomFeats = new NominalFeatures(annFeats);
     Level2Cache l1tag = level1Cache.get(nomFeats);
     if(l1tag == null) {
       l1CacheMisses++;
@@ -356,9 +356,9 @@ public class AnnotationTemplateCache {
    * - it is the responsibility of the client code to obtain the correct ID and
    * set it on the tag.
    */
-  public Tag getLevel2Tag(Annotation ann, Tag level1Tag) {
+  public Tag getLevel2Tag(FeatureMap annFeats, Tag level1Tag) {
     Level2Cache l1Value = (Level2Cache)level1Tag;
-    NonNominalFeatures nonNonFeats = new NonNominalFeatures(ann);
+    NonNominalFeatures nonNonFeats = new NonNominalFeatures(annFeats);
     LongTag level2Tag = (LongTag)l1Value.level2Cache.get(nonNonFeats);
     if(level2Tag == null) {
       l2CacheMisses++;
