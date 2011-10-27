@@ -136,7 +136,11 @@ Please delete/move it manually and try again!
       <arg value="create-app" />
       <arg value="${grails-demo-webapp.name}" />
     </grails>
-
+    
+  	<grails dir="${grails-demo-webapp.dir}">
+      <arg value="clean" />
+    </grails>
+    
   	<grails dir="${grails-demo-webapp.dir}">
       <arg value="set-version" />
       <arg value="${app.version}" />
