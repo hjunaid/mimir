@@ -128,7 +128,10 @@ class LocalIndexService {
         }
       }
     } else if(index.state == Index.SEARCHING) {
-      getQueryEngine(index).close()
+      QueryEngine engine = queryEngines.remove(index.id)
+      if(engine) {
+        engine.close()
+      }
     }
   }
   
