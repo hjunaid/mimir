@@ -1071,8 +1071,10 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
 	 
     //now close the connection
     try {
-      dbConnection.close();
-      dbConnection = null;
+      if(dbConnection != null) {
+        dbConnection.close();
+        dbConnection = null;
+      }
     } catch(SQLException e) {
       logger.warn("Error while closing DB COnnection", e);
     }
