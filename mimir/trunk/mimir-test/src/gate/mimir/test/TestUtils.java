@@ -20,6 +20,7 @@ package gate.mimir.test;
 import gate.Gate;
 import gate.creole.ANNIEConstants;
 import gate.mimir.index.*;
+import gate.mimir.AbstractSemanticAnnotationHelper;
 import gate.mimir.DocumentMetadataHelper;
 import gate.mimir.IndexConfig;
 import gate.mimir.SemanticAnnotationHelper;
@@ -44,11 +45,11 @@ import java.util.*;
 public class TestUtils {
   
   public static IndexConfig getTestIndexConfig(File indexDir, 
-		  Class<? extends SemanticAnnotationHelper> helperClass) 
+		  Class<? extends AbstractSemanticAnnotationHelper> helperClass) 
   throws IllegalArgumentException, InstantiationException, 
       IllegalAccessException, InvocationTargetException, SecurityException, 
       NoSuchMethodException, ClassNotFoundException {
-	Constructor<? extends SemanticAnnotationHelper> helperMaker = 
+	Constructor<? extends AbstractSemanticAnnotationHelper> helperMaker = 
 		helperClass.getConstructor(String.class, String[].class, String[].class, 
 		    String[].class, String[].class, String[].class);
 	Class<? extends SemanticAnnotationHelper> measurementsHelperClass =
@@ -61,8 +62,7 @@ public class TestUtils {
         new HashSet<String>(Arrays.asList(
             new String[] {
               "b", "i", "li", "ol", "p", "sup", "sub", "u", "ul"})));
-    // index configuration based on the original SAM one but without the
-    // sam-specific classes.
+    // index configuration used for testing.
     return new IndexConfig(
             indexDir,
             "mimir",
@@ -101,14 +101,14 @@ public class TestUtils {
                 new SemanticIndexerConfig(
                         new String[]{"Abstract", "Assignee",
                                 "ClassificationIPCR", "InventionTitle",
-                                "Inventor", "PatentDocument", "PriorityClaim"}, 
+                                "Inventor", "Document", "PriorityClaim"}, 
                         new SemanticAnnotationHelper[] {
                                 helperMaker.newInstance("Abstract", new String[]{"lang"}, null, null, null, null),                                  
                                 helperMaker.newInstance("Assignee", null, null, null, null, null),
                                 helperMaker.newInstance("ClassificationIPCR", new String[]{"status"}, null, null, null, null),                                  
                                 helperMaker.newInstance("InventionTitle", new String[]{"lang", "status"}, null, null, null, null),
                                 helperMaker.newInstance("Inventor", new String[]{"format", "status"}, null, null, null, null),                                  
-                                helperMaker.newInstance("PatentDocument", null, new String[]{"date"}, null, new String[]{"ucid"}, null),
+                                helperMaker.newInstance("Document", null, new String[]{"date"}, null, new String[]{"ucid"}, null).asDocumentHelper(),
                                 helperMaker.newInstance("PriorityClaim", null, null, null, new String[]{"ucid"}, null)})                                  
             },
             new DocumentMetadataHelper[] {docHelper}, 

@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import gate.Document;
 import gate.Gate;
+import gate.mimir.AbstractSemanticAnnotationHelper;
 import gate.mimir.IndexConfig;
 import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.IndexException;
@@ -79,6 +80,7 @@ public class QueryTests {
   @BeforeClass
   public static void oneTimeSetUp() throws Exception {
     Gate.setGateHome(new File("gate-home"));
+    Gate.setUserConfigFile(new File("gate-home/user-gate.xml"));
     Gate.init();
     // load the tokeniser plugin
     Gate.getCreoleRegister().registerDirectories(new File("gate-home/plugins/ANNIE-tokeniser").toURI().toURL());
@@ -93,7 +95,7 @@ public class QueryTests {
     // would use: "gate.mimir.ordi.ORDISemanticAnnotationHelper")
     IndexConfig indexConfig = TestUtils.getTestIndexConfig(indexDir, 
             Class.forName("gate.mimir.db.DBSemanticAnnotationHelper", true, 
-                Gate.getClassLoader()).asSubclass(SemanticAnnotationHelper.class));
+                Gate.getClassLoader()).asSubclass(AbstractSemanticAnnotationHelper.class));
     // now start indexing the documents
     Indexer indexer = new Indexer(indexConfig);
     String pathToZipFile = "data/gatexml-output.zip";
@@ -125,9 +127,9 @@ public class QueryTests {
       engine.close();
       engine = null;
       // recursively delete index dir
-      if(!TestUtils.deleteDir(indexDir)) {
-        System.err.println("Could not delete index directory " + indexDir);
-      }
+//      if(!TestUtils.deleteDir(indexDir)) {
+//        System.err.println("Could not delete index directory " + indexDir);
+//      }
     }
   }
 
