@@ -161,8 +161,7 @@ public class AnnotationQuery implements QueryNode {
       if(underlyingHit == null) return null;
       int doc = underlyingHit.getDocumentId();
       if(isInDocumentMode) {
-        return new Binding(query, doc, 0,
-          engine.getDocumentSizes().getInt(doc),
+        return new Binding(query, doc, 0, engine.getDocumentSizes().getInt(doc),
           underlyingHit.getContainedBindings());        
       } else {
         return new Binding(query, doc,

@@ -332,8 +332,8 @@ public class QueryEngine {
           for(SemanticAnnotationHelper sah : sic.getHelpers()){
             sah.init(this);
             if(sah.isInDocumentMode() && documentSizes == null) {
-              documentSizes =
-                getAnnotationIndex(sic.getAnnotationTypes()[0]).getIndex().sizes;
+              // we need to load the document sizes from a token index
+              documentSizes = getIndexes()[0].getIndex().sizes;
             }            
           }
         }
