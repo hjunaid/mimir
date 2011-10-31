@@ -137,6 +137,9 @@ Please delete/move it manually and try again!
       <arg value="${grails-demo-webapp.name}" />
     </grails>
     
+  	<echo file="${grails-demo-webapp.dir}/grails-app/conf/UrlMappings.groovy"
+  	    >class UrlMappings { static mappings = {} }</echo>
+  	
   	<grails dir="${grails-demo-webapp.dir}">
       <arg value="clean" />
     </grails>
