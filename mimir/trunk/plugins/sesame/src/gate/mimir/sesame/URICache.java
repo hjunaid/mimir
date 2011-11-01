@@ -247,11 +247,10 @@ public class URICache {
 	 * caching.
 	 */
 	protected class NonNominalFeatureValues {
-		public NonNominalFeatureValues(Annotation annotation,
+		public NonNominalFeatureValues(FeatureMap features,
 				ValueFactory factory) {
 			hasNonNominalFeatures = false;
 			numericValues = new double[owner.getFloatFeatureNames().length];
-			FeatureMap features = annotation.getFeatures();
 			for (int i = 0; i < owner.getFloatFeatureNames().length; i++) {
 				Object value = features.get(owner.getFloatFeatureNames()[i]);
 				double valueNum = MIMIR_NULL_DOUBLE;
@@ -711,13 +710,13 @@ public class URICache {
 	 * @return an array of 2 URI values, the first being the top level template,
 	 *         the second being the specialised template.
 	 */
-	public URI[] getMentionURIs(Annotation annotation, int length) {
+	public URI[] getMentionURIs(FeatureMap features, int length) {
 		URI topLevelTemplateInstance = null;
 		URI specialisedInstance = null;
 		// extract the nominal values
 		String[] nominalValues = new String[owner.getNominalFeatureNames().length];
 		for (int i = 0; i < owner.getNominalFeatureNames().length; i++) {
-			Object value = annotation.getFeatures().get(
+			Object value = features.get(
 					owner.getNominalFeatureNames()[i]);
 			if (value == null) {
 				nominalValues[i] = MIMIR_NULL_STRING;
@@ -779,7 +778,7 @@ public class URICache {
 		topLevelTemplateInstance = topLevel.uri;
 		// now see if we need the specialise
 		NonNominalFeatureValues nonNomvalues = new NonNominalFeatureValues(
-				annotation, owner.factory);
+				features, owner.factory);
 		if (nonNomvalues.hasNonNominalFeatures) {
 			specialisedInstance = topLevel.map.get(nonNomvalues);
 			if (specialisedInstance == null) {
