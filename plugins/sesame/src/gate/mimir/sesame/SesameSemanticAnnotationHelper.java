@@ -277,8 +277,9 @@ public class SesameSemanticAnnotationHelper extends
 			String[] nominalFeatureNames, String[] integerFeatureNames,
 			String[] floatFeatureNames, String[] textFeatureNames,
 			String[] uriFeatureNames) {
-		super(annotationType, nominalFeatureNames, integerFeatureNames,
-				floatFeatureNames, textFeatureNames, uriFeatureNames);
+		super(annotationType, nominalFeatureNames, null,
+				concatenateArrays(integerFeatureNames, floatFeatureNames),
+				textFeatureNames, uriFeatureNames);
 		this.nominalFeaturePredicates = new URI[this.nominalFeatureNames.length];
 		this.floatFeaturePredicates = new URI[this.floatFeatureNames.length];
 		this.textFeaturePredicates = new URI[this.textFeatureNames.length];
