@@ -323,7 +323,7 @@ public class QueryEngine {
     try {
       indexConfig =
         IndexConfig.readConfigFromFile(new File(indexDir,
-                Indexer.INDEX_CONFIG_FILENAME));
+                Indexer.INDEX_CONFIG_FILENAME), indexDir);
       initMG4J();
       // initialise the semantic indexers
       if(indexConfig.getSemanticIndexers() != null && 
