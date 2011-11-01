@@ -26,8 +26,10 @@ public class Scratch {
     Gate.getCreoleRegister().registerDirectories(
       new File("gate-home/plugins/ANNIE-tokeniser").toURI().toURL());
     // load the DB plugin
+//    Gate.getCreoleRegister().registerDirectories(
+//      new File("../plugins/db-h2").toURI().toURL());
     Gate.getCreoleRegister().registerDirectories(
-      new File("../plugins/db-h2").toURI().toURL());
+      new File("../plugins/sesame").toURI().toURL());    
     // load the measurements plugin
     Gate.getCreoleRegister().registerDirectories(
       new File("../plugins/measurements").toURI().toURL());
@@ -36,7 +38,7 @@ public class Scratch {
     
     QueryEngine qEngine = new QueryEngine(new File(args[0]));
 //    String query = "the";
-    String query = "{Document}";
+    String query = "{Document date > 20070000}";
     QueryNode qNode = QueryParser.parse(query);
     long start = System.currentTimeMillis();
     NumberFormat nf = NumberFormat.getNumberInstance();
