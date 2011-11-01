@@ -304,7 +304,7 @@ public class QueryTests {
       // "carbon"};
       TermQuery[] termQueries = new TermQuery[terms.length];
       for(int j = 0; j < terms.length; j++) {
-        termQueries[i] = new TermQuery("string", terms[j]);
+        termQueries[j] = new TermQuery("string", terms[j]);
       }
       SequenceQuery.Gap[] gaps = new SequenceQuery.Gap[28];
       gaps[1] = SequenceQuery.getGap(2, 3);
@@ -470,50 +470,41 @@ public class QueryTests {
   
   private int performQuery(String name, QueryNode query, QueryEngine engine) {
     QueryExecutor executor = null;
-    Binding hit = null;
-    FileWriter queryResult = null;
-    BufferedWriter writer = null;
     int hitCount = 0;
+    BufferedWriter writer = null;
     try {
       File resultsDirectory = new File(resultsPath);
-      if (!resultsDirectory.exists())
-        resultsDirectory.mkdirs();
-      
+      if (!resultsDirectory.exists()) resultsDirectory.mkdirs();
       executor = query.getQueryExecutor(engine);
       
+      writer = new BufferedWriter(new FileWriter(resultsPath + "/" + name + "QueryResult.xml"));
+      writer.write("<query query=\"" + query.toString() + "\">");
+      writer.newLine();
+      writer.write("\t<hits>");
+      writer.newLine();
+      
       while (executor.nextDocument(-1) != -1) {
-        if(hitCount == 0) {
-          queryResult = new FileWriter(resultsPath + "/" + name + "QueryResult.xml");
-          writer = new BufferedWriter(queryResult);
-          writer.write("<query query=\"" + query.toString() + "\">");
-          writer.newLine();
-          writer.write("\t<hits>");
-          writer.newLine();
+        Binding hit = executor.nextHit();
+        while(hit != null) {
+          hitCount++;
+          writer.write("\t\t<hit number=\"" + hitCount + "\">");
+          writer.write(getHitString(hit, engine));
+          writer.write("</hit>\n");  
+          hit = executor.nextHit();
         }
-        hit = executor.nextHit();
-        hitCount++;
-        writer.write("\t\t<hit number=\"" + hitCount + "\">");
-        writer.write(getHitString(hit, engine));
-        writer.write("</hit>\n");
       }
-      if(hitCount > 0) {
-        writer.write("\t</hits>");
-        writer.newLine();
-        writer.write("</query>");
-        writer.newLine();
-        writer.flush();
-      }
-
+      writer.write("\t</hits>");
+      writer.newLine();
+      writer.write("</query>");
+      writer.newLine();
+      writer.flush();
     } catch(Exception e) {
+      e.printStackTrace();
       fail(e.getMessage());
     } finally {
       try {
-        if (queryResult != null)
-          queryResult.close();
-        if (writer != null)
-          writer.close();
-        if(executor != null)
-          executor.close();
+        if (writer != null) writer.close();
+        if(executor != null) executor.close();
       } catch(Exception e) {
         fail(e.getMessage());
       }
