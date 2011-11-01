@@ -40,9 +40,14 @@ import gate.mimir.search.query.RepeatsQuery;
 import gate.mimir.search.query.SequenceQuery;
 import gate.mimir.search.query.TermQuery;
 import gate.mimir.search.query.WithinQuery;
+import gate.mimir.search.query.parser.ParseException;
+import gate.mimir.search.query.parser.QueryParser;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
@@ -270,21 +275,27 @@ public class QueryTests {
   }
   
   @Test
-  public void annotationQuery() throws IndexException {
-    for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+  public void annotationQuery() throws IndexException, IOException {
+    String[] qResNames = new String[indexDirs.length]; 
+    for(int  i = 0; i <  indexDirs.length; i++) {
+      QueryEngine engine = new QueryEngine(indexDirs[i]);
       Map<String, String> constraints = new HashMap<String, String>();
       constraints.put("spec", "1 to 32 degF");
       AnnotationQuery annQuery = new AnnotationQuery("Measurement", constraints);
-      performQuery("annotation", annQuery, engine);
+      qResNames[i] = "annotation-" + i;  
+      performQuery(qResNames[i], annQuery, engine);
       engine.close();
+    }
+    if(qResNames.length > 1) {
+      assertTrue("Got different results from different helpers", identical(qResNames));
     }
   }
   
   @Test
-  public void testStringSequenceQuery() throws IndexException {
-    for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+  public void testStringSequenceQuery() throws IndexException, IOException {
+    String[] qResNames = new String[indexDirs.length]; 
+    for(int  i = 0; i <  indexDirs.length; i++) {
+      QueryEngine engine = new QueryEngine(indexDirs[i]);
       String[] terms = new String[] {"up", "to", "the"};
       // String[] terms = new String[]{"ability", "of", /*"the", "agent",*/ "to",
       // "form", "an", "acid", "or", "base", "upon", "heating", "whereby",
@@ -292,90 +303,124 @@ public class QueryTests {
       // "within", "a", "short", "period", "to", "yield", "water", "and",
       // "carbon"};
       TermQuery[] termQueries = new TermQuery[terms.length];
-      for(int i = 0; i < terms.length; i++) {
-        termQueries[i] = new TermQuery("string", terms[i]);
+      for(int j = 0; j < terms.length; j++) {
+        termQueries[i] = new TermQuery("string", terms[j]);
       }
       SequenceQuery.Gap[] gaps = new SequenceQuery.Gap[28];
       gaps[1] = SequenceQuery.getGap(2, 3);
       SequenceQuery sequenceQuery = new SequenceQuery(null/* gaps */, termQueries);
-      performQuery("termSequence", sequenceQuery, engine);
+      qResNames[i] = "termSequence-" + i; 
+      performQuery(qResNames[i], sequenceQuery, engine);
       engine.close();
+    }
+    if(qResNames.length > 1) {
+      assertTrue("Got different results from different helpers", identical(qResNames));
     }
   }
   
   @Test
-  public void testCategorySequenceQuery() throws IndexException {
-    for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+  public void testCategorySequenceQuery() throws IndexException, IOException {
+    String[] qResNames = new String[indexDirs.length]; 
+    for(int  i = 0; i <  indexDirs.length; i++) {
+      QueryEngine engine = new QueryEngine(indexDirs[i]);
       String[] terms = new String[]{"NN", "NN", "NN"};
       TermQuery[] termQueries = new TermQuery[terms.length];
-      for(int i = 0; i < terms.length; i++) {
-        termQueries[i] = new TermQuery("category", terms[i]);
+      for(int j = 0; j < terms.length; j++) {
+        termQueries[j] = new TermQuery("category", terms[j]);
       }
       SequenceQuery.Gap[] gaps = new SequenceQuery.Gap[28];
       gaps[1] = SequenceQuery.getGap(2, 3);
       SequenceQuery sequenceQuery = new SequenceQuery(null/* gaps */, termQueries);
-      performQuery("categorySequence", sequenceQuery, engine);
+      qResNames[i] = "categorySequence-" + i;
+      performQuery(qResNames[i], sequenceQuery, engine);
       engine.close();
+    }
+    if(qResNames.length > 1) {
+      assertTrue("Got different results from different helpers", identical(qResNames));
     }
   }
   
   @Test
-  public void testAnnotationSequenceQuery() throws IndexException {
-    for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+  public void testAnnotationSequenceQuery() throws IndexException, IOException {
+    String[] qResNames = new String[indexDirs.length]; 
+    for(int  i = 0; i <  indexDirs.length; i++) {
+      QueryEngine engine = new QueryEngine(indexDirs[i]);
       Map<String, String> empty = Collections.emptyMap();
       AnnotationQuery annQuery = new AnnotationQuery("Measurement", empty);
       SequenceQuery sequenceQuery = new SequenceQuery(null/* gaps */, annQuery, annQuery, annQuery);
-      performQuery("annotationSequence", sequenceQuery, engine);
+      qResNames[i] = "annotationSequence-" + i;
+      performQuery(qResNames[i], sequenceQuery, engine);
       engine.close();
     }
+    if(qResNames.length > 1) {
+      assertTrue("Got different results from different helpers", identical(qResNames));
+    }    
   }
   
   @Test
-  public void testRepeatsQuery() throws IndexException {
-    for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+  public void testRepeatsQuery() throws IndexException, IOException {
+    String[] qResNames = new String[indexDirs.length];
+    for(int  i = 0; i <  indexDirs.length; i++) {
+      QueryEngine engine = new QueryEngine(indexDirs[i]);
       Map<String, String> empty = Collections.emptyMap();
       AnnotationQuery annQuery = new AnnotationQuery("Measurement", empty);
       RepeatsQuery repeatsQuery = new RepeatsQuery(annQuery, 3, 3);
-      performQuery("repeats", repeatsQuery, engine);
+      qResNames[i] = "repeats-" + i; 
+      performQuery(qResNames[i], repeatsQuery, engine);
       engine.close();
     }
+    if(qResNames.length > 1) {
+      assertTrue("Got different results from different helpers", identical(qResNames));
+    }    
   }
   
   @Test
-  public void testWithinQuery() throws IndexException {
-    for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+  public void testWithinQuery() throws IndexException, IOException {
+    String[] qResNames = new String[indexDirs.length];
+    for(int  i = 0; i <  indexDirs.length; i++) {
+      QueryEngine engine = new QueryEngine(indexDirs[i]);
       AnnotationQuery intervalQuery = new AnnotationQuery("Measurement", Collections.singletonMap("type", "interval"));
       TermQuery toQuery = new TermQuery("string", "to");
       WithinQuery withinQuery = new WithinQuery(toQuery, intervalQuery);
-      performQuery("within", withinQuery, engine);
+      qResNames[i] = "within-" + i; 
+      performQuery(qResNames[i], withinQuery, engine);
       engine.close();
     }
+    if(qResNames.length > 1) {
+      assertTrue("Got different results from different helpers", identical(qResNames));
+    }    
   }
   
   @Test
-  public void testInAndQuery() throws IndexException {
-    for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+  public void testInAndQuery() throws IndexException, IOException {
+    String[] qResNames = new String[indexDirs.length];
+    for(int  i = 0; i <  indexDirs.length; i++) {
+      QueryEngine engine = new QueryEngine(indexDirs[i]);
       QueryNode inAndQuery = new WithinQuery(new AndQuery(new TermQuery(null, "London"),
                 new TermQuery(null, "press")), new AnnotationQuery(
                 "Reference", new HashMap<String, String>()));
-      performQuery("inAnd", inAndQuery, engine);
+      qResNames[i] = "inAnd-" + i; 
+      performQuery(qResNames[i], inAndQuery, engine);
       engine.close();
     }
+    if(qResNames.length > 1) {
+      assertTrue("Got different results from different helpers", identical(qResNames));
+    }        
   }
   
   @Test
-  public void testMeasurementSpecQuery() throws IndexException {
-    for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+  public void testMeasurementSpecQuery() throws IndexException, IOException {
+    String[] qResNames = new String[indexDirs.length];
+    for(int  i = 0; i <  indexDirs.length; i++) {
+      QueryEngine engine = new QueryEngine(indexDirs[i]);
       AnnotationQuery specQuery = new AnnotationQuery("Measurement", Collections.singletonMap("spec", "5 cm"));
-      performQuery("measurementSpec", specQuery, engine);
+      qResNames[i] = "measurementSpec-" + i; 
+      performQuery(qResNames[i], specQuery, engine);
       engine.close();
     }
+    if(qResNames.length > 1) {
+      assertTrue("Got different results from different helpers", identical(qResNames));
+    }            
   }
   
   @Test
@@ -394,16 +439,42 @@ public class QueryTests {
     }
   }
   
-  private void performQuery(String name, QueryNode query, QueryEngine engine) {
-
+  /**
+   * Test the semantic annotation helpers used for indexing document features
+   * @throws IndexException
+   * @throws ParseException 
+   * @throws IOException 
+   */
+  @Test
+  public void testDocumentMode() throws IndexException, ParseException, IOException {
+    String[] qResNames = new String[indexDirs.length];
+    String[] qResNames2 = new String[indexDirs.length];
+    for(int  i = 0; i <  indexDirs.length; i++) {
+      QueryEngine engine = new QueryEngine(indexDirs[i]);
+      QueryNode qNode = QueryParser.parse("{Document}");
+      qResNames[i] = "doc-" + i;
+      int hits = performQuery(qResNames[i], qNode, engine);
+      
+      qNode = QueryParser.parse("{Document date > 20070000}");
+      qResNames2[i] = "docFeats-" + i;
+      int hits2 = performQuery(qResNames2[i], qNode, engine);
+      assertTrue("Feature filtering does not reduce the result set!", 
+        hits2 < hits);
+      engine.close();
+    }
+    if(qResNames.length > 1) {
+      assertTrue("Got different results from different helpers", identical(qResNames));
+      assertTrue("Got different results from different helpers", identical(qResNames2));
+    }
+  } 
+  
+  private int performQuery(String name, QueryNode query, QueryEngine engine) {
     QueryExecutor executor = null;
     Binding hit = null;
     FileWriter queryResult = null;
     BufferedWriter writer = null;
     int hitCount = 0;
-
     try {
-
       File resultsDirectory = new File(resultsPath);
       if (!resultsDirectory.exists())
         resultsDirectory.mkdirs();
@@ -447,8 +518,38 @@ public class QueryTests {
         fail(e.getMessage());
       }
     }
+    return hitCount;
   }
 
+  /**
+   * Compares the files resulting from the execution of two or more queries. 
+   * The queris must have been performed previously, by calling 
+   * {@link #performQuery(String, QueryNode, QueryEngine)}.
+   * @param queryNames the names of the queries to compare.
+   * @return
+   * @throws IOException 
+   */
+  private static boolean identical(String... queryNames) throws IOException {
+    BufferedReader[] readers = new BufferedReader[queryNames.length];
+    for(int i = 0; i < queryNames.length; i++) {
+      readers[i] = new BufferedReader(new FileReader(resultsPath + "/" + 
+          queryNames[i] + "QueryResult.xml"));
+    }
+    String line = null;
+    do {
+      line = readers[0].readLine();
+      for(int  i = 1; i < readers.length; i++) {
+        String anotherLine = readers[i].readLine();
+        if(line != null) {
+          if(anotherLine == null || !line.equals(anotherLine)) return false;
+        } else {
+          if(anotherLine != null) return false;
+        }
+      }
+    } while(line != null);
+    return true;
+  }
+  
   private String getHitString(Binding hit, QueryEngine searcher) throws IndexException
   {
     StringBuilder sb = new StringBuilder();
