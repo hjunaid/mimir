@@ -8,6 +8,9 @@
 	
 	<property name="core-home" location="../${mimir-core.dirname}"/>
 	
+	<property name="helpers.to.test"
+		value="gate.mimir.db.DBSemanticAnnotationHelper" />
+	
   <path id="libs">
     <fileset dir="lib" includes="**/*.jar" />
     <fileset dir="${core-home}/lib" includes="**/*.jar" />
@@ -89,6 +92,7 @@
         <pathelement location="${classes.dir}" />
         <path refid="compile.classpath" />
       </classpath>
+    	<sysproperty key="helpers.to.test" value="${helpers.to.test}" />
       <formatter type="xml" />
       <batchtest>
         <fileset dir="${src.dir}" includes="**/*Tests.java" />
