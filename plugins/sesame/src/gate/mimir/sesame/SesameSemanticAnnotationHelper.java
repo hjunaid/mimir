@@ -83,11 +83,14 @@ import org.openrdf.rio.RDFParser;
 import org.openrdf.rio.Rio;
 
 import gate.Annotation;
+import gate.Document;
+import gate.FeatureMap;
 import gate.Gate;
 import gate.mimir.AbstractSemanticAnnotationHelper;
 import gate.mimir.Constraint;
 import gate.mimir.ConstraintType;
 import gate.mimir.IndexConfig;
+import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.IndexException;
 import gate.mimir.index.Indexer;
 import gate.mimir.index.Mention;
@@ -230,6 +233,14 @@ public class SesameSemanticAnnotationHelper extends
 
 	private static NumberFormat percentFormat;
 
+	
+  /**
+   * When in document mode (see
+   *  {@link SemanticAnnotationHelper#isInDocumentMode()}), stores the features 
+   *  for the current document.
+   */
+  private transient FeatureMap documentFeatures;
+  
 	protected ValueFactory factory;
 
 	private URICache uriCache;
@@ -378,14 +389,35 @@ public class SesameSemanticAnnotationHelper extends
 		}
 	}
 
-	@Override
-	public String[] getMentionUris(Annotation annotation, int length,
+  @Override
+  public void documentStart(Document document) {
+    if(isInDocumentMode()) {
+      documentFeatures = document.getFeatures();
+    }
+  }
+
+  @Override
+  public void documentEnd() {
+    documentFeatures = null;
+  }
+  
+  @Override
+	public String[] getMentionUris(Annotation ann, int length,
 			Indexer indexer) {
 		if (!initDone) {
 			init(indexer);
 		}
+		
+    FeatureMap featuresToIndex;
+    if(isInDocumentMode()) {
+      length = -1;
+      featuresToIndex = documentFeatures;
+    } else {
+      featuresToIndex = ann.getFeatures();
+    }
+		
 		try {
-			URI[] mentionURIs = uriCache.getMentionURIs(annotation, length);
+			URI[] mentionURIs = uriCache.getMentionURIs(featuresToIndex, length);
 			String[] res = new String[mentionURIs.length];
 			for (int i = 0; i < mentionURIs.length; i++) {
 				res[i] = mentionURIs[i].stringValue();
@@ -539,8 +571,9 @@ public class SesameSemanticAnnotationHelper extends
 				BindingSet binding = result.next();
 				String mentionURI = binding.getBinding("mentionInstance")
 						.getValue().stringValue();
-				mentions.add(new Mention(mentionURI, ((Literal) binding
-						.getBinding("length").getValue()).intValue()));
+				int length = isInDocumentMode()? Mention.NO_LENGTH : 
+				    ((Literal) binding.getBinding("length").getValue()).intValue();
+				mentions.add(new Mention(mentionURI, length));
 			}
 			return mentions;
 		} catch (MalformedQueryException e) {
@@ -635,8 +668,7 @@ public class SesameSemanticAnnotationHelper extends
 				.get(SESAME_RMANAGER_KEY);
 		String repositoryName = (String) config.getContext().get(
 				SESAME_REPOSITORY_NAME_KEY);
-		if (repositoryName == null)
-			repositoryName = "owlim";
+		if (repositoryName == null) repositoryName = "owlim";
 		if (manager == null) {
 			// not initialised yet - > we create it and save it ourselves.
 			File topDir = config.getIndexDirectory();
