@@ -86,16 +86,21 @@ public class QueryTests {
     Gate.getCreoleRegister().registerDirectories(new File("gate-home/plugins/ANNIE-tokeniser").toURI().toURL());
     // load the DB plugin
     Gate.getCreoleRegister().registerDirectories(new File("../plugins/db-h2").toURI().toURL());
+//    // load the Sesame plugin
+//    Gate.getCreoleRegister().registerDirectories(new File("../plugins/sesame").toURI().toURL());    
     // load the measurements plugin
     Gate.getCreoleRegister().registerDirectories(new File("../plugins/measurements").toURI().toURL());
     
     File indexDir = File.createTempFile("mimir-index", null);
     indexDir.delete();
     // change this to use a different helper (e.g for the the ORDI one you 
-    // would use: "gate.mimir.ordi.ORDISemanticAnnotationHelper")
     IndexConfig indexConfig = TestUtils.getTestIndexConfig(indexDir, 
             Class.forName("gate.mimir.db.DBSemanticAnnotationHelper", true, 
                 Gate.getClassLoader()).asSubclass(AbstractSemanticAnnotationHelper.class));
+//    IndexConfig indexConfig = TestUtils.getTestIndexConfig(indexDir, 
+//      Class.forName("gate.mimir.sesame.SesameSemanticAnnotationHelper", true, 
+//          Gate.getClassLoader()).asSubclass(AbstractSemanticAnnotationHelper.class));
+    
     // now start indexing the documents
     Indexer indexer = new Indexer(indexConfig);
     String pathToZipFile = "data/gatexml-output.zip";
@@ -127,9 +132,9 @@ public class QueryTests {
       engine.close();
       engine = null;
       // recursively delete index dir
-//      if(!TestUtils.deleteDir(indexDir)) {
-//        System.err.println("Could not delete index directory " + indexDir);
-//      }
+      if(!TestUtils.deleteDir(indexDir)) {
+        System.err.println("Could not delete index directory " + indexDir);
+      }
     }
   }
 
