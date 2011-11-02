@@ -84,21 +84,15 @@ public class SPARQLSemanticAnnotationHelper extends
    */
   public static final String SPARQL_QUERY_FEATURE_NAME = "sparql";
   
-  public static final String SPARQL_ENDPOINT_KEY = "sparqlEndpoint";
-  
-  public static final String SPARQL_ENDPOINT_USER_KEY = "sparqlEndpointUser";
-  
-  public static final String SPARQL_ENDPOINT_PASSWORD_KEY = "sparqlEndpointPassword";
-  
-  public static final String QUERY_PREFIX_KEY = "queryPrefix";
-  
-  public static final String QUERY_SUFFIX_KEY = "querySuffix";
-  
   /**
    * The service endpoint where SPARQL queries are forwarded to.
    */
   private String sparqlEndpoint;
 
+  private transient String sparqlEndpointUser;
+  
+  private transient String sparqlEndpointPassword;
+  
   /**
    * HTTP Header used to authenticate with the remote endpoint. If set to 
    * <code>null</code>, then no authentication is done.
@@ -139,20 +133,38 @@ public class SPARQLSemanticAnnotationHelper extends
     this.querySuffix = querySuffix;
   }
 
-  public SPARQLSemanticAnnotationHelper(String annotationType,
-      String sparqlEndpoint, String username, String password,
-      String[] nominalFeatureNames,
-      String[] integerFeatureNames, String[] floatFeatureNames,
-      String[] textFeatureNames, String[] uriFeatureNames,
-      SemanticAnnotationHelper delegate) {
-    super(annotationType, 
-        concatenateArrays(nominalFeatureNames, 
-            new String[]{SPARQL_QUERY_FEATURE_NAME}), integerFeatureNames,
-        floatFeatureNames, textFeatureNames, uriFeatureNames, delegate);
+  public String getSparqlEndpoint() {
+    return sparqlEndpoint;
+  }
+
+  public void setSparqlEndpoint(String sparqlEndpoint) {
     this.sparqlEndpoint = sparqlEndpoint;
-    if(username != null && username.length() > 0){
+  }
+
+  public String getSparqlEndpointUser() {
+    return sparqlEndpointUser;
+  }
+
+  public void setSparqlEndpointUser(String sparqlEndpointUser) {
+    this.sparqlEndpointUser = sparqlEndpointUser;
+  }
+
+  public String getSparqlEndpointPassword() {
+    return sparqlEndpointPassword;
+  }
+
+  public void setSparqlEndpointPassword(String sparqlEndpointPassword) {
+    this.sparqlEndpointPassword = sparqlEndpointPassword;
+  }
+
+  @Override
+  public void init(Indexer indexer) {
+    super.init(indexer);
+    // calculate authHeader value
+    if(sparqlEndpointUser != null && sparqlEndpointUser.length() > 0){
       try {
-        String userPass = username + ":" + password;
+        if(sparqlEndpointPassword == null) sparqlEndpointPassword = "";
+        String userPass = sparqlEndpointUser + ":" + sparqlEndpointPassword;
         authHeader = "Basic " + DatatypeConverter.printBase64Binary(
             userPass.getBytes("UTF-8"));
       } catch(UnsupportedEncodingException e) {
@@ -161,48 +173,10 @@ public class SPARQLSemanticAnnotationHelper extends
     } else {
       authHeader = null;
     }
-  }
 
-  public SPARQLSemanticAnnotationHelper(Map<String, Object> params) {
-    this(getAnnTypeFromMapOrDelegate(params), 
-        getString(params, SPARQL_ENDPOINT_KEY),
-        getString(params, SPARQL_ENDPOINT_USER_KEY),
-        getString(params, SPARQL_ENDPOINT_PASSWORD_KEY),
-        getNominalFeaturesFromMapOrDelegate(params),
-        getIntegerFeaturesFromMapOrDelegate(params),
-        getFloatFeaturesFromMapOrDelegate(params),
-        getTextFeaturesFromMapOrDelegate(params),
-        getUriFeaturesFromMapOrDelegate(params),
-        (SemanticAnnotationHelper)params.get(DELEGATE_KEY));
-    if(params.containsKey(QUERY_PREFIX_KEY)) {
-      setQueryPrefix(getString(params, QUERY_PREFIX_KEY));
-    }
-    if(params.containsKey(QUERY_SUFFIX_KEY)) {
-      setQuerySuffix(getString(params, QUERY_SUFFIX_KEY));
-    }
-  }
-  
-  public SPARQLSemanticAnnotationHelper(String sparqlEndpoint, String username,
-                                        String password, 
-                                        AbstractSemanticAnnotationHelper delegate) {
-    this(delegate.getAnnotationType(), 
-        sparqlEndpoint, username, password,
-        delegate.getNominalFeatureNames(),
-        delegate.getIntegerFeatureNames(),
-        delegate.getFloatFeatureNames(),
-        delegate.getTextFeatureNames(),
-        delegate.getUriFeatureNames(),
-        delegate);
-  }
-
-  public SPARQLSemanticAnnotationHelper(String sparqlEndpoint, 
-      AbstractSemanticAnnotationHelper delegate){
-    this(sparqlEndpoint, null, null, delegate);
-  }
-  
-  @Override
-  public void init(QueryEngine queryEngine) {
-    super.init(queryEngine);
+    // add virtual "sparql" feature
+    setNominalFeatures(concatenateArrays(getNominalFeatures(), 
+            new String[]{SPARQL_QUERY_FEATURE_NAME}));
   }
 
   @Override

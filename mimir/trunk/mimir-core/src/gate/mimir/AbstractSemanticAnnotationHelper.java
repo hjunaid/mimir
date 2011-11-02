@@ -20,11 +20,11 @@
 package gate.mimir;
 
 import gate.Document;
+import gate.mimir.index.Indexer;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,109 +39,27 @@ import java.util.Map.Entry;
  *   which simply calls {@link #getMentions(String, List, QueryEngine)} after
  *   creating the appropriate constraints.</li>
  * </ul>
- * Subclasses should provide a 6-argument constructor taking the following
- * parameters, in this order:
- * <ul>
- *   <li>String annotationType</li>
- *   <li>five String[] arguments for feature names of all kinds
- *     <ul>
- *     <li>nominal</li>
- *     <li>integer</li>
- *     <li>float</li>
- *     <li>text</li>
- *     <li>uri</li>
- *     </ul>
- * </ul>
+ * 
+ * Subclasses are required to provide a no-argument constructor. When 
+ * implementing the {@link #init(Indexer)} and {@link #init(QueryEngine)} 
+ * methods, they must first call super.init(...). 
+ * 
  * <p>If a particular helper does not support certain feature types it should
  * use the {@link #concatenateArrays} method to combine those features with
- * another kind that it can support.  For example, helpers that do not have
- * access to a full semantic repository may choose to treat URI features as
- * if they were simply text features with no semantics.</p>
- * <p>It is also good manners for subclasses to provide a constructor taking a
- * Map whose keys are the ANN_TYPE and *_FEATURES constants defined in this
- * class.  This constructor can delegate to the 6-argument one using the
- * {@link #getArray} method to convert Collection values into String
- * arrays.  This constructor provides a more user-friendly way to create
- * helper instances from the Groovy DSL used to create new indexes in the
- * web UI:</p>
- * <pre>
- * annotation helper: new MyHelper(annType:"Person", nominalFeatures:["gender"])
- * </pre>
+ * another kind that it can support, during the init(Indexer) call.  For example, 
+ * helpers that do not have access to a full semantic repository may choose to 
+ * treat URI features as if they were simply text features with no semantics.</p>
  */
 public abstract class AbstractSemanticAnnotationHelper implements
                                                       SemanticAnnotationHelper {
 	
 	private static final long serialVersionUID = -5432862771431426914L;
-	
-	public static final String ANN_TYPE_KEY = "annType";
-	public static final String NOMINAL_FEATURES_KEY = "nominalFeatures";
-	public static final String INTEGER_FEATURES_KEY = "integerFeatures";
-	public static final String FLOAT_FEATURES_KEY = "floatFeatures";
-	public static final String TEXT_FEATURES_KEY = "textFeatures";
-	public static final String URI_FEATURES_KEY = "uriFeatures";
-	
-  public AbstractSemanticAnnotationHelper(String annotationType,
-          String[] nominalFeatureNames, String[] integerFeatureNames,
-          String[] floatFeatureNames, String[] textFeatureNames,
-          String[] uriFeatureNames) {
-    this.annotationType = annotationType;
-    this.nominalFeatureNames = 
-        nominalFeatureNames != null ? nominalFeatureNames : new String[]{};
-    this.integerFeatureNames = 
-        integerFeatureNames != null? integerFeatureNames : new String[]{};
-    this.floatFeatureNames = 
-        floatFeatureNames != null ? floatFeatureNames : new String[]{};
-    this.textFeatureNames = 
-        textFeatureNames != null ? textFeatureNames : new String[]{};
-    this.uriFeatureNames = 
-        uriFeatureNames != null ? uriFeatureNames : new String[]{};
-  }
+
+  private transient boolean isInited = false;
   
-  /**
-   * Utility method to assist subclasses in providing a Groovy-friendly
-   * constructor.  Searches for the given key in the given map.  If the
-   * key is not mapped, returns <code>null</code>.  If the key is mapped
-   * to an array or a Collection, returns a String array of the same
-   * size as the original array/Collection containing the
-   * toString values of each item in the original array/Collection in
-   * order.  Note that this method deliberately does not restrict the
-   * map values to arrays or collections of java.lang.String, as when
-   * called from Groovy the values may be GStrings etc.
-   */
-  public static String[] getArray(Map<String, ?> map, String key) {
-    Object feats = map.get(key);
-    if(feats == null || feats instanceof String[]) {
-      return (String[])feats;
-    } else if(feats instanceof Object[]) {
-      String[] featsArray = new String[((Object[])feats).length];
-      for(int i = 0 ; i < featsArray.length; i++) {
-        featsArray[i] = ((Object[])feats)[i].toString();
-      }
-      return featsArray;
-    } else if(feats instanceof Collection) {
-      String[] featsArray = new String[((Collection)feats).size()];
-      int i = 0;
-      for(Object f : (Collection)feats) {
-        featsArray[i++] = (f == null) ? null : f.toString();
-      }
-      return featsArray;
-    } else {
-      throw new IllegalArgumentException(
-          "Error extracting feature names for key " + key +
-          ": value \"" + feats + "\" has type " + feats.getClass().getName() +
-          " but only arrays or Collections are supported.");
-    }
-  }
   
-  /**
-   * Utility method to do a null-safe get from the given map.  If the
-   * given key is not in the map or is mapped to null then null is
-   * returned, otherwise the toString() of the value is returned.
-   */
-  public static String getString(Map<String, ?> map, String key) {
-    Object val = map.get(key);
-    if(val == null) return null;
-    else return val.toString();
+  protected final boolean isInited() {
+    return isInited;
   }
 
   /**
@@ -174,35 +92,80 @@ public abstract class AbstractSemanticAnnotationHelper implements
    */
   protected String annotationType;
 	
-  private boolean isInDocumentMode = false;
+  /**
+   * The working mode for this helper.
+   */
+  protected Mode mode;
   
+  public Mode getMode() {
+    return mode;
+  }
+
+  public void setMode(Mode mode) {
+    this.mode = mode;
+  }
+
   public String getAnnotationType() {
     return annotationType;
   }
 
-  public String[] getNominalFeatureNames() {
+  public void setAnnotationType(String annotationType) {
+    this.annotationType = annotationType;
+  }  
+  
+  public void setAnnType(String annotationType) {
+    setAnnotationType(annotationType);
+  }
+
+  public String[] getNominalFeatures() {
     return nominalFeatureNames;
   }
 
-  public String[] getIntegerFeatureNames() {
+  public void setNominalFeatures(String[] nominalFeatureNames) {
+    this.nominalFeatureNames = nominalFeatureNames;
+  }
+
+  public String[] getIntegerFeatures() {
     return integerFeatureNames;
   }
 
-  public String[] getFloatFeatureNames() {
+
+
+  public void setIntegerFeatures(String[] integerFeatureNames) {
+    this.integerFeatureNames = integerFeatureNames;
+  }
+  
+  public String[] getFloatFeatures() {
     return floatFeatureNames;
   }
 
-  public String[] getTextFeatureNames() {
+  public void setFloatFeatures(String[] floatFeatureNames) {
+    this.floatFeatureNames = floatFeatureNames;
+  }
+
+  
+  public String[] getTextFeatures() {
     return textFeatureNames;
+  }
+
+  public void setTextFeatures(String[] textFeatureNames) {
+    this.textFeatureNames = textFeatureNames;
   }
   
   /**
    * @return the uriFeatureNames
    */
-  public String[] getUriFeatureNames() {
+  public String[] getUriFeatures() {
     return uriFeatureNames;
   }
-	
+
+  public void setUriFeatures(String[] uriFeatureNames) {
+    this.uriFeatureNames = uriFeatureNames;
+  }
+
+
+
+  
   /* (non-Javadoc)
    * @see gate.mimir.SemanticAnnotationHelper#documentEnd()
    */
@@ -249,19 +212,23 @@ public abstract class AbstractSemanticAnnotationHelper implements
     return concat;
   }
 
-  @Override
-  public boolean isInDocumentMode() {
-    return isInDocumentMode;
+  private void checkInit() {
+    if(isInited) throw new IllegalStateException(
+      "This helper has already been initialised!");
+    isInited = true;
   }
+
   
-  /**
-   * Switches this helper in document helper mode. 
-   * @return a reference to this helper, after it has been configured to work
-   * as a document helper. 
-   */
-  public SemanticAnnotationHelper asDocumentHelper() {
-    isInDocumentMode = true;
-    return this;
+  @Override
+  public void init(Indexer indexer) {
+    checkInit();
   }
+
+  @Override
+  public void init(QueryEngine queryEngine) {
+    checkInit();
+  }
+
+  
   
 }

@@ -22,9 +22,11 @@ package gate.mimir.measurements;
 import gate.Gate;
 import gate.creole.measurements.Measurement;
 import gate.creole.measurements.MeasurementsParser;
+import gate.mimir.AbstractSemanticAnnotationHelper;
 import gate.mimir.Constraint;
 import gate.mimir.ConstraintType;
 import gate.mimir.SemanticAnnotationHelper;
+import gate.mimir.index.Indexer;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.util.DelegatingSemanticAnnotationHelper;
@@ -75,16 +77,6 @@ public class MeasurementAnnotationHelper extends
 
   protected static final String SPEC_FAKE_FEATURE = "spec";
   
-  public static final String DELEGATE_HELPER_TYPE_KEY = "delegateHelperType";
-  
-  public static final String UNITS_FILE_LOCATION_KEY = "unitsFile";
-  
-  public static final String COMMON_WORDS_LOCATION_KEY = "commonWords";
-  
-  public static final String ENCODING_KEY = "encoding";
-  
-  public static final String LOCALE_KEY = "locale";
-  
   protected String unitsFileLocation = "resources/units.dat";
   
   protected String commonWordsLocation = "resources/common_words.txt";
@@ -98,105 +90,80 @@ public class MeasurementAnnotationHelper extends
    */
   protected transient MeasurementsParser measurementsParser;
   
-  /**
-   * Has this helper's measurement parser been initialized yet?
-   */
-  protected transient boolean inited = false;
+  protected transient Class<? extends AbstractSemanticAnnotationHelper> delegateHelperType;
   
-  /**
-   * Create a MeasurementAnnotationHelper delegating to an underlying helper
-   * of the class specified by the {@value #DELEGATE_HELPER_TYPE_KEY} entry
-   * in the settings map.
-   * 
-   * This helper relies on a {@link MeasurementsParser} (from the GATE
-   * <code>Tagger_Measurements</code> plugin) to parse the virtual "spec"
-   * feature at search time.  This parser is configured based on other
-   * entries in the settings map:
-   * <ul>
-   *   <li>{@value #UNITS_FILE_LOCATION_KEY} - the location of the
-   *   <code>units.dat</code> file.</li>
-   *   <li>{@value #COMMON_WORDS_LOCATION_KEY} - the location of the
-   *   common words list file.</li>
-   *   <li>{@value #LOCALE_KEY} - the locale used to parse units
-   *   (default en_GB).</li> 
-   *   <li>{@value #ENCODING_KEY} - the encoding of the data files
-   *   (default UTF-8).</li>
-   * </ul>
-   * The file locations can be specified as either absolute URLs or
-   * as paths relative to the measurements plugin directory.  If not
-   * specified, default files supplied with the plugin are used.
-   */
-  public MeasurementAnnotationHelper(
-          Map<String, Object> settings) {
-    super(ANNOTATION_TYPE,
-            new String[] {SPEC_FAKE_FEATURE, TYPE_FEATURE,
-                DIMENSION_FEATURE, NORM_UNIT_FEATURE},
-            null,
-            new String[] {NORM_VALUE_FEATURE, NORM_MIN_VALUE_FEATURE,
-                NORM_MAX_VALUE_FEATURE},
-            null,
-            null,
-            createHelper(
-                  ((Class<? extends SemanticAnnotationHelper>)settings.get(DELEGATE_HELPER_TYPE_KEY)),
-                  ANNOTATION_TYPE, 
-                  new String[] {TYPE_FEATURE, DIMENSION_FEATURE,
-                        NORM_UNIT_FEATURE},
-                  null,
-                  new String[] {NORM_VALUE_FEATURE, NORM_MIN_VALUE_FEATURE,
-                      NORM_MAX_VALUE_FEATURE},
-                  null,
-                  null));
-    if(settings.containsKey(UNITS_FILE_LOCATION_KEY)) {
-      unitsFileLocation = getString(settings, UNITS_FILE_LOCATION_KEY);
-    }
-    if(settings.containsKey(COMMON_WORDS_LOCATION_KEY)) {
-      commonWordsLocation = getString(settings, COMMON_WORDS_LOCATION_KEY);
-    }
-    if(settings.containsKey(LOCALE_KEY)) {
-      locale = getString(settings, LOCALE_KEY);
-    }
-    if(settings.containsKey(ENCODING_KEY)) {
-      encoding = getString(settings, ENCODING_KEY);
-    }
+  public String getUnitsFile() {
+    return unitsFileLocation;
   }
 
-  /**
-   * Given the class value for a {@link SemanticAnnotationHelper} 
-   * implementation, this method locates the constructor that takes one String 
-   * value and 5 String[] values as parameters, and uses it to instantiate one
-   * helper object, which is then returned.
-   * @param helperClass the class of the requested helper.
-   * @return
-   */
-  static protected SemanticAnnotationHelper createHelper(
-          Class<? extends SemanticAnnotationHelper> helperClass,
-          String annotationType, String[] nominalFeatureNames, 
-          String[] integerFeatureNames, String[] floatFeatureNames, 
-          String[] textFeatureNames, String[] uriFeatureNames) {
-    
-    // locate the constructor
-    Constructor<? extends SemanticAnnotationHelper> constructor = null;
-    try {
-      constructor = helperClass.getConstructor(String.class, String[].class, 
-            String[].class, String[].class, String[].class, String[].class);
-    } catch(NoSuchMethodException e) {
-      throw new GateRuntimeException("Class " + helperClass.getName() + 
-          " does not have the standard 6-argument SemanticAnnotationHelper " +
-          "constructor.", e);
-    }
-    // create the new instance
-    try {
-      return constructor.newInstance(annotationType, nominalFeatureNames,
-              integerFeatureNames, floatFeatureNames, textFeatureNames,
-              uriFeatureNames);
-    } catch(Exception e) {
-      throw new GateRuntimeException("Could not create instance of "
-              + helperClass.getName(), e);
-    }
+  public void setUnitsFile(String unitsFile) {
+    this.unitsFileLocation = unitsFile;
   }
-  
-  protected void init() {
-    if(inited) return;
+
+  public String getCommonWords() {
+    return commonWordsLocation;
+  }
+
+  public void setCommonWords(String commonWords) {
+    this.commonWordsLocation = commonWords;
+  }
+
+  public String getLocale() {
+    return locale;
+  }
+
+  public void setLocale(String locale) {
+    this.locale = locale;
+  }
+
+  public String getEncoding() {
+    return encoding;
+  }
+
+  public void setEncoding(String encoding) {
+    this.encoding = encoding;
+  }
+
+  public Class<? extends AbstractSemanticAnnotationHelper> getDelegateHelperType() {
+    return delegateHelperType;
+  }
+
+  public void setDelegateHelperType(Class<? extends AbstractSemanticAnnotationHelper> delegateHelperType) {
+    this.delegateHelperType = delegateHelperType;
+  }
+
+  @Override
+  public void init(Indexer indexer) {
+    // create the delegate - needs to happen before super.init
+    if(delegateHelperType == null) { throw new IllegalArgumentException(
+      "No value provided for delegateHelperType"); }
+    try {
+      AbstractSemanticAnnotationHelper theDelegate =
+        delegateHelperType.newInstance();
+      setAnnotationType(ANNOTATION_TYPE);
+      theDelegate.setAnnotationType(ANNOTATION_TYPE);
+      // nominal features - ours include spec, delegate's don't
+      setNominalFeatures(new String[]{SPEC_FAKE_FEATURE, TYPE_FEATURE,
+        DIMENSION_FEATURE, NORM_UNIT_FEATURE});
+      theDelegate.setNominalFeatures(new String[]{TYPE_FEATURE,
+        DIMENSION_FEATURE, NORM_UNIT_FEATURE});
+      // float features are the same in both cases
+      setFloatFeatures(new String[]{NORM_VALUE_FEATURE, NORM_MIN_VALUE_FEATURE,
+        NORM_MAX_VALUE_FEATURE});
+      theDelegate.setFloatFeatures(new String[]{NORM_VALUE_FEATURE,
+        NORM_MIN_VALUE_FEATURE, NORM_MAX_VALUE_FEATURE});
+      
+      setDelegate(theDelegate);
+    } catch(Exception e) {
+      throw new IllegalArgumentException("The delegate helper class " +
+        delegateHelperType.getName() + " could not be instantiated", e);
+    }
+    super.init(indexer);
+  }
+
+  @Override
+  public void init(QueryEngine queryEngine) {
+    super.init(queryEngine);
     URL commonUrl = resolveUrl(commonWordsLocation);
     URL unitsUrl = resolveUrl(unitsFileLocation);
     try {
@@ -206,7 +173,6 @@ public class MeasurementAnnotationHelper extends
       throw new GateRuntimeException(
               "Could not create measurements parser for MeasurementAnnotationHelper", e);
     }
-    inited = true;
   }
   
   protected URL resolveUrl(String location) {
@@ -363,7 +329,6 @@ public class MeasurementAnnotationHelper extends
   @Override
   public List<Mention> getMentions(String annotationType,
           List<Constraint> constraints, QueryEngine engine) {
-    if(!inited) init();
     List<Constraint> passThroughConstraints = new ArrayList<Constraint>(
             constraints.size());
     Constraint specConstraint = null;

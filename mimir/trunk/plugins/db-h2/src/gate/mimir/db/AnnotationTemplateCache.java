@@ -79,7 +79,7 @@ public class AnnotationTemplateCache {
       features = new short[nominalvalues.length];
       for(int i = 0; i < nominalvalues.length; i++) {
         String value =
-                (String)annFeats.get(owner.getNominalFeatureNames()[i]);
+                (String)annFeats.get(owner.getNominalFeatures()[i]);
         if(value == null) {
           features[i] = NULL;
         } else {
@@ -116,33 +116,33 @@ public class AnnotationTemplateCache {
   protected class NonNominalFeatures {
     public NonNominalFeatures(FeatureMap annFeats) {
       int length = 0;
-      if(owner.getIntegerFeatureNames() != null)
-        length += owner.getIntegerFeatureNames().length;
-      if(owner.getFloatFeatureNames() != null)
-        length += owner.getFloatFeatureNames().length;
-      if(owner.getTextFeatureNames() != null)
-        length += owner.getTextFeatureNames().length;
-      if(owner.getUriFeatureNames() != null)
-        length += owner.getUriFeatureNames().length;
+      if(owner.getIntegerFeatures() != null)
+        length += owner.getIntegerFeatures().length;
+      if(owner.getFloatFeatures() != null)
+        length += owner.getFloatFeatures().length;
+      if(owner.getTextFeatures() != null)
+        length += owner.getTextFeatures().length;
+      if(owner.getUriFeatures() != null)
+        length += owner.getUriFeatures().length;
       values = new Object[length];
       int i = 0;
-      if(owner.getIntegerFeatureNames() != null) {
-        for(String aFeature : owner.getIntegerFeatureNames()) {
+      if(owner.getIntegerFeatures() != null) {
+        for(String aFeature : owner.getIntegerFeatures()) {
           values[i++] = annFeats.get(aFeature);
         }
       }
-      if(owner.getFloatFeatureNames() != null) {
-        for(String aFeature : owner.getFloatFeatureNames()) {
+      if(owner.getFloatFeatures() != null) {
+        for(String aFeature : owner.getFloatFeatures()) {
           values[i++] = annFeats.get(aFeature);
         }
       }
-      if(owner.getTextFeatureNames() != null) {
-        for(String aFeature : owner.getTextFeatureNames()) {
+      if(owner.getTextFeatures() != null) {
+        for(String aFeature : owner.getTextFeatures()) {
           values[i++] = annFeats.get(aFeature);
         }
       }
-      if(owner.getUriFeatureNames() != null) {
-        for(String aFeature : owner.getUriFeatureNames()) {
+      if(owner.getUriFeatures() != null) {
+        for(String aFeature : owner.getUriFeatures()) {
           values[i++] = annFeats.get(aFeature);
         }
       }
@@ -266,8 +266,8 @@ public class AnnotationTemplateCache {
     this.l2CacheSize = DEFAULT_L2_SIZE;
     this.l3CacheSize = DEFAULT_L3_SIZE;
     int length =
-            (owner.getNominalFeatureNames() == null) ? 0 : owner
-                    .getNominalFeatureNames().length;
+            (owner.getNominalFeatures() == null) ? 0 : owner
+                    .getNominalFeatures().length;
     nominalvalues = new Object2ShortMap[length];
     for(int i = 0; i < nominalvalues.length; i++) {
       nominalvalues[i] = new Object2ShortOpenHashMap<String>();

@@ -331,7 +331,8 @@ public class QueryEngine {
         for(SemanticIndexerConfig sic : indexConfig.getSemanticIndexers()){
           for(SemanticAnnotationHelper sah : sic.getHelpers()){
             sah.init(this);
-            if(sah.isInDocumentMode() && documentSizes == null) {
+            if(sah.getMode() == SemanticAnnotationHelper.Mode.DOCUMENT &&
+                documentSizes == null) {
               // we need to load the document sizes from a token index
               documentSizes = getIndexes()[0].getIndex().sizes;
             }            

@@ -192,19 +192,19 @@ class LocalIndexService {
           if(helpers[i] instanceof AbstractSemanticAnnotationHelper){
             AbstractSemanticAnnotationHelper helper = 
             (AbstractSemanticAnnotationHelper)helpers[i];
-            for(String feat : helper.getNominalFeatureNames()){
+            for(String feat : helper.getNominalFeatures()){
               row.add(feat);
             }
-            for(String feat : helper.getIntegerFeatureNames()){
+            for(String feat : helper.getIntegerFeatures()){
               row.add(feat);
             }
-            for(String feat : helper.getFloatFeatureNames()){
+            for(String feat : helper.getFloatFeatures()){
               row.add(feat);
             }
-            for(String feat : helper.getTextFeatureNames()){
+            for(String feat : helper.getTextFeatures()){
               row.add(feat);
             }
-            for(String feat : helper.getUriFeatureNames()){
+            for(String feat : helper.getUriFeatures()){
               row.add(feat);
             }
           }

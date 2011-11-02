@@ -250,9 +250,9 @@ public class URICache {
 		public NonNominalFeatureValues(FeatureMap features,
 				ValueFactory factory) {
 			hasNonNominalFeatures = false;
-			numericValues = new double[owner.getFloatFeatureNames().length];
-			for (int i = 0; i < owner.getFloatFeatureNames().length; i++) {
-				Object value = features.get(owner.getFloatFeatureNames()[i]);
+			numericValues = new double[owner.getFloatFeatures().length];
+			for (int i = 0; i < owner.getFloatFeatures().length; i++) {
+				Object value = features.get(owner.getFloatFeatures()[i]);
 				double valueNum = MIMIR_NULL_DOUBLE;
 				if (value != null) {
 					if (value instanceof Number) {
@@ -263,13 +263,13 @@ public class URICache {
 							valueNum = Double.parseDouble((String) value);
 						} catch (NumberFormatException e) {
 							logger.warn("Value provided for feature \""
-									+ owner.getFloatFeatureNames()[i]
+									+ owner.getFloatFeatures()[i]
 									+ "\" is a String that cannot be parsed to a number. Value ("
 									+ value.toString() + ") will be ignored!");
 						}
 					} else {
 						logger.warn("Value provided for feature \""
-								+ owner.getFloatFeatureNames()[i]
+								+ owner.getFloatFeatures()[i]
 								+ "\" is not a subclass of java.lang.Number. Value ("
 								+ value.toString() + ") will be ignored!");
 					}
@@ -277,9 +277,9 @@ public class URICache {
 				numericValues[i] = valueNum;
 			}
 			// extract all the text feature values
-			textValues = new String[owner.getTextFeatureNames().length];
-			for (int i = 0; i < owner.getTextFeatureNames().length; i++) {
-				Object value = features.get(owner.getTextFeatureNames()[i]);
+			textValues = new String[owner.getTextFeatures().length];
+			for (int i = 0; i < owner.getTextFeatures().length; i++) {
+				Object value = features.get(owner.getTextFeatures()[i]);
 				if (value == null) {
 					textValues[i] = MIMIR_NULL_STRING;
 				} else {
@@ -288,9 +288,9 @@ public class URICache {
 				}
 			}
 			// extract all the URI feature values
-			uriValues = new URI[owner.getUriFeatureNames().length];
-			for (int i = 0; i < owner.getUriFeatureNames().length; i++) {
-				Object oValue = features.get(owner.getUriFeatureNames()[i]);
+			uriValues = new URI[owner.getUriFeatures().length];
+			for (int i = 0; i < owner.getUriFeatures().length; i++) {
+				Object oValue = features.get(owner.getUriFeatures()[i]);
 				String value = (oValue == null ? null : oValue.toString());
 				try {
 					uriValues[i] = value == null || value.length() == 0 ? MIMIR_NULL_URI
@@ -397,8 +397,8 @@ public class URICache {
 		ordiL3CacheHits = 0;
 		ordiL3CacheMisses = 0;
 		nominalValuesToShort = new Object2ShortMap[owner
-				.getNominalFeatureNames().length];
-		for (int i = 0; i < owner.getNominalFeatureNames().length; i++) {
+				.getNominalFeatures().length];
+		for (int i = 0; i < owner.getNominalFeatures().length; i++) {
 			nominalValuesToShort[i] = new Object2ShortOpenHashMap<String>(
 					l2CacheSize);
 			nominalValuesToShort[i].defaultReturnValue(KEY_NOT_FOUND);
@@ -714,10 +714,10 @@ public class URICache {
 		URI topLevelTemplateInstance = null;
 		URI specialisedInstance = null;
 		// extract the nominal values
-		String[] nominalValues = new String[owner.getNominalFeatureNames().length];
-		for (int i = 0; i < owner.getNominalFeatureNames().length; i++) {
+		String[] nominalValues = new String[owner.getNominalFeatures().length];
+		for (int i = 0; i < owner.getNominalFeatures().length; i++) {
 			Object value = features.get(
-					owner.getNominalFeatureNames()[i]);
+					owner.getNominalFeatures()[i]);
 			if (value == null) {
 				nominalValues[i] = MIMIR_NULL_STRING;
 			} else {

@@ -85,7 +85,7 @@ public class AnnotationQuery implements QueryNode {
     protected void buildQuery() throws IOException {
       // find the semantic annotation helper for the right annotation type
       SemanticAnnotationHelper helper = getAnnotationHelper(engine.getIndexConfig());
-      isInDocumentMode = helper.isInDocumentMode();
+      isInDocumentMode = (helper.getMode() == SemanticAnnotationHelper.Mode.DOCUMENT);
       // ask the helper for the mentions that correspond to this query
       long start = System.currentTimeMillis();      
             List<Mention> mentions = helper.getMentions(query.getAnnotationType(),

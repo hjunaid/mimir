@@ -26,6 +26,7 @@ import gate.mimir.IndexConfig;
 import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.IndexConfig.SemanticIndexerConfig;
 import gate.mimir.IndexConfig.TokenIndexerConfig;
+import gate.mimir.SemanticAnnotationHelper.Mode;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.*;
 
@@ -49,19 +50,21 @@ public class TestUtils {
   throws IllegalArgumentException, InstantiationException, 
       IllegalAccessException, InvocationTargetException, SecurityException, 
       NoSuchMethodException, ClassNotFoundException {
-	Constructor<? extends AbstractSemanticAnnotationHelper> helperMaker = 
-		helperClass.getConstructor(String.class, String[].class, String[].class, 
-		    String[].class, String[].class, String[].class);
+    
 	Class<? extends SemanticAnnotationHelper> measurementsHelperClass =
 	  Class.forName("gate.mimir.measurements.MeasurementAnnotationHelper",
 	          true, Gate.getClassLoader()).asSubclass(SemanticAnnotationHelper.class);
-	Constructor<? extends SemanticAnnotationHelper> measurementHelperMaker =
-	  measurementsHelperClass.getConstructor(Map.class);
+	SemanticAnnotationHelper measurementHelper = measurementsHelperClass.newInstance();
+	measurementsHelperClass.getMethod("setDelegateHelperType", Class.class)
+	  .invoke(measurementHelper, helperClass);
+	
     // simple metadata helper for HTML tags
     OriginalMarkupMetadataHelper docHelper = new OriginalMarkupMetadataHelper(
         new HashSet<String>(Arrays.asList(
             new String[] {
               "b", "i", "li", "ol", "p", "sup", "sub", "u", "ul"})));
+    
+    
     // index configuration used for testing.
     return new IndexConfig(
             indexDir,
@@ -82,40 +85,54 @@ public class TestUtils {
             new SemanticIndexerConfig[]{
                 new SemanticIndexerConfig(
                     new String[]{"Measurement"}, 
-                    new SemanticAnnotationHelper[] {
-                      measurementHelperMaker.newInstance(
-                              Collections.singletonMap("delegateHelperType", helperClass))}),
+                    new SemanticAnnotationHelper[] {measurementHelper}),
                 new SemanticIndexerConfig(
                         new String[]{"PublicationAuthor", "PublicationDate",
                                 "PublicationLocation", "PublicationPages",
                                 "Reference", "Section", "Sentence"}, 
                         new SemanticAnnotationHelper[] {
-                            helperMaker.newInstance("PublicationAuthor", null, null, null, null, null),                                  
-                            helperMaker.newInstance("PublicationDate", null, null, null, null, null),
-                            helperMaker.newInstance("PublicationLocation", null, null, null, null, null),                                  
-                            helperMaker.newInstance("PublicationPages", null, null, null, null, null),
-                            helperMaker.newInstance("Reference", new String[]{"type"}, null, null, null, null),                                  
-                            helperMaker.newInstance("Section", new String[]{"type"}, null, null, null, null),
-                            helperMaker.newInstance("Sentence", null, null, null, null, null)}),
+                            createHelper(helperClass, "PublicationAuthor", null, null, null, null, null, Mode.ANNOTATION),
+                            createHelper(helperClass, "PublicationDate", null, null, null, null, null, Mode.ANNOTATION),
+                            createHelper(helperClass, "PublicationLocation", null, null, null, null, null, Mode.ANNOTATION),
+                            createHelper(helperClass, "PublicationPages", null, null, null, null, null, Mode.ANNOTATION),
+                            createHelper(helperClass, "Reference", new String[]{"type"}, null, null, null, null, Mode.ANNOTATION),
+                            createHelper(helperClass, "Section", new String[]{"type"}, null, null, null, null, Mode.ANNOTATION),
+                            createHelper(helperClass, "Sentence", null, null, null, null, null, Mode.ANNOTATION)}),
 
                 new SemanticIndexerConfig(
                         new String[]{"Abstract", "Assignee",
                                 "ClassificationIPCR", "InventionTitle",
                                 "Inventor", "Document", "PriorityClaim"}, 
                         new SemanticAnnotationHelper[] {
-                                helperMaker.newInstance("Abstract", new String[]{"lang"}, null, null, null, null),                                  
-                                helperMaker.newInstance("Assignee", null, null, null, null, null),
-                                helperMaker.newInstance("ClassificationIPCR", new String[]{"status"}, null, null, null, null),                                  
-                                helperMaker.newInstance("InventionTitle", new String[]{"lang", "status"}, null, null, null, null),
-                                helperMaker.newInstance("Inventor", new String[]{"format", "status"}, null, null, null, null),                                  
-                                helperMaker.newInstance("Document", null, new String[]{"date"}, null, new String[]{"ucid"}, null).asDocumentHelper(),
-                                helperMaker.newInstance("PriorityClaim", null, null, null, new String[]{"ucid"}, null)})                                  
+                          createHelper(helperClass, "Abstract", new String[]{"lang"}, null, null, null, null, Mode.ANNOTATION),
+                          createHelper(helperClass, "Assignee", null, null, null, null, null, Mode.ANNOTATION),
+                          createHelper(helperClass, "ClassificationIPCR", new String[]{"status"}, null, null, null, null, Mode.ANNOTATION),
+                          createHelper(helperClass, "InventionTitle", new String[]{"lang", "status"}, null, null, null, null, Mode.ANNOTATION),
+                          createHelper(helperClass, "Inventor", new String[]{"format", "status"}, null, null, null, null, Mode.ANNOTATION),
+                          createHelper(helperClass, "Document", null, new String[]{"date"}, null, new String[]{"ucid"}, null, Mode.DOCUMENT),
+                          createHelper(helperClass, "PriorityClaim", null, null, null, new String[]{"ucid"}, null, Mode.ANNOTATION)})
             },
             new DocumentMetadataHelper[] {docHelper}, 
             docHelper);
   }
 
 
+  public static SemanticAnnotationHelper createHelper(Class<? extends AbstractSemanticAnnotationHelper> helperClass, String annType,
+                                               String[] nominalFeatures, String[] integerFeatures, String[] floatFeatures,
+                                               String[] textFeatures, String[] uriFeatures, SemanticAnnotationHelper.Mode mode) throws InstantiationException, IllegalAccessException {
+    AbstractSemanticAnnotationHelper helper = helperClass.newInstance();
+    helper.setAnnotationType(annType);
+    helper.setNominalFeatures(nominalFeatures);
+    helper.setIntegerFeatures(integerFeatures);
+    helper.setFloatFeatures(floatFeatures);
+    helper.setTextFeatures(textFeatures);
+    helper.setUriFeatures(uriFeatures);
+    helper.setMode(mode);
+    return helper;
+  }
+  
+
+  
   /**
    * Executes two different queries and returns two lists of results: one with
    * hits that only appear in the first query, the other with hits that only 
