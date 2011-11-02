@@ -64,23 +64,46 @@ public abstract class DelegatingSemanticAnnotationHelper extends
 
   protected SemanticAnnotationHelper delegate;
 
-  /**
-   * Create a {@link DelegatingSemanticAnnotationHelper} for the given
-   * annotation type and features, delegating to the given delegate helper.
-   */
-  protected DelegatingSemanticAnnotationHelper(String annotationType,
-          String[] nominalFeatureNames, String[] integerFeatureNames,
-          String[] floatFeatureNames, String[] textFeatureNames,
-          String[] uriFeatureNames, SemanticAnnotationHelper delegate) {
-    super(annotationType, nominalFeatureNames, integerFeatureNames,
-            floatFeatureNames, textFeatureNames, uriFeatureNames);
+
+  
+  public SemanticAnnotationHelper getDelegate() {
+    return delegate;
+  }
+
+  public void setDelegate(SemanticAnnotationHelper delegate) {
     this.delegate = delegate;
   }
 
-
   @Override
   public void init(Indexer indexer) {
+    super.init(indexer);
     delegate.init(indexer);
+    // obtain from delegate all values that have not been expliclty set
+    if(delegate instanceof AbstractSemanticAnnotationHelper) {
+      AbstractSemanticAnnotationHelper absDelegate =
+          (AbstractSemanticAnnotationHelper)delegate;
+      if(annotationType == null) {
+        annotationType = absDelegate.getAnnotationType();
+      }
+      if(nominalFeatureNames == null) {
+        nominalFeatureNames = absDelegate.getNominalFeatures();
+      }
+      if(integerFeatureNames == null) {
+        integerFeatureNames = absDelegate.getIntegerFeatures();
+      }
+      if(floatFeatureNames == null) {
+        floatFeatureNames = absDelegate.getFloatFeatures();
+      }
+      if(textFeatureNames == null) {
+        textFeatureNames = absDelegate.getTextFeatures();
+      }
+      if(uriFeatureNames == null) {
+        uriFeatureNames = absDelegate.getUriFeatures();
+      }
+    }
+    if(mode == null) {
+      mode = delegate.getMode();
+    }
   }
 
   @Override
@@ -110,20 +133,6 @@ public abstract class DelegatingSemanticAnnotationHelper extends
     delegate.documentEnd();
   }
 
-  
-  @Override
-  public boolean isInDocumentMode() {
-    return delegate.isInDocumentMode();
-  }
-
-
-  @Override
-  public SemanticAnnotationHelper asDocumentHelper() {
-    if(delegate.isInDocumentMode()) return this;
-    else throw new UnsupportedOperationException(
-      "The delegate provided is not configured to work as a document helper.");
-  }
-
 
   @Override
   public void close(Indexer indexer) {
@@ -135,58 +144,4 @@ public abstract class DelegatingSemanticAnnotationHelper extends
     delegate.close(qEngine);
   }
   
-  public static String getAnnTypeFromMapOrDelegate(Map<String, ?> params) {
-    String fromMap = getString(params, ANN_TYPE_KEY);
-    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
-      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getAnnotationType();
-    } else {
-      return fromMap;
-    }
-  }
-  
-  public static String[] getNominalFeaturesFromMapOrDelegate(Map<String, ?> params) {
-    String[] fromMap = getArray(params, NOMINAL_FEATURES_KEY);
-    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
-      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getNominalFeatureNames();
-    } else {
-      return fromMap;
-    }
-  }
-
-  public static String[] getIntegerFeaturesFromMapOrDelegate(Map<String, ?> params) {
-    String[] fromMap = getArray(params, INTEGER_FEATURES_KEY);
-    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
-      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getIntegerFeatureNames();
-    } else {
-      return fromMap;
-    }
-  }
-
-  public static String[] getFloatFeaturesFromMapOrDelegate(Map<String, ?> params) {
-    String[] fromMap = getArray(params, FLOAT_FEATURES_KEY);
-    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
-      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getFloatFeatureNames();
-    } else {
-      return fromMap;
-    }
-  }
-
-  public static String[] getTextFeaturesFromMapOrDelegate(Map<String, ?> params) {
-    String[] fromMap = getArray(params, TEXT_FEATURES_KEY);
-    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
-      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getTextFeatureNames();
-    } else {
-      return fromMap;
-    }
-  }
-
-  public static String[] getUriFeaturesFromMapOrDelegate(Map<String, ?> params) {
-    String[] fromMap = getArray(params, URI_FEATURES_KEY);
-    if(fromMap == null && params.get(DELEGATE_KEY) instanceof AbstractSemanticAnnotationHelper) {
-      return ((AbstractSemanticAnnotationHelper)params.get(DELEGATE_KEY)).getUriFeatureNames();
-    } else {
-      return fromMap;
-    }
-  }
-
 }

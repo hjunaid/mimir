@@ -39,6 +39,7 @@ import java.util.Map;
  * {@link #getMentions(String, List, QueryEngine)}, 
  * {@link #getMentions(String, Map, QueryEngine)} methods).
  * 
+ * <br>
  * Each helper can function in annotation mode (the default) or in document 
  * mode. The current functioning mode can be obtained by calling 
  * {@link #isInDocumentMode()}. When in document mode, the helper should behave
@@ -50,6 +51,28 @@ import java.util.Map;
  * document length).     
  */
 public interface SemanticAnnotationHelper extends Serializable{
+  
+  /**
+   * Functioning mode for the annotation helper.
+   */
+  public static enum Mode {
+    /**
+     * The default mode: the helper gets annotation values and produces mention 
+     * URIs associated with them.
+     */
+    ANNOTATION,
+    
+    /**
+     * Mode used when indexing document features. At indexing time, a helper 
+     * configured in this way will only get its 
+     * {@link SemanticAnnotationHelper#getMentionUris(Annotation, int, Indexer)}
+     * method called once, with a <code>null</code> value for the annotation. At
+     * search time, the helper will emulate document-spanning annotations by
+     * obtaining the document length from the 
+     * {@link QueryEngine#getDocumentSizes()} method.  
+     */
+    DOCUMENT
+  }
   
   /**
    * Called by the containing {@link Indexer} when this helper is first created, 
@@ -129,14 +152,9 @@ public interface SemanticAnnotationHelper extends Serializable{
   public void close(QueryEngine qEngine);
 
   /**
-   * Checks whether this helper is configured to work in document helper mode. 
-   * If that's the case, then the indexer will call its 
-   * {@link #getMentionUris(Annotation, int, Indexer)} method only once for 
-   * each input document, with a <code>null</code> value for the annotation.
-   * 
-   * @return Returns <code>true</code> if this helper has been configured to 
-   * work in document helper mode.
+   * Checks whether this helper is configured to work in {@link Mode#ANNOTATION}
+   * or {@link Mode#DOCUMENT} mode. 
    */
-  public boolean isInDocumentMode();
+  public Mode getMode();
   
 }

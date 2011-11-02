@@ -71,7 +71,7 @@ public class MentionsIndexBuilder extends MimirIndexBuilder implements Runnable 
     documentHelpers = new LinkedList<SemanticAnnotationHelper>();
     for(int i = 0; i <  config.getAnnotationTypes().length; i++){
       SemanticAnnotationHelper theHelper = config.getHelpers()[i];
-      if(theHelper.isInDocumentMode()) {
+      if(theHelper.getMode() == SemanticAnnotationHelper.Mode.DOCUMENT) {
         documentHelpers.add(theHelper);
       } else {
         annotationHelpers.put(config.getAnnotationTypes()[i], theHelper);  

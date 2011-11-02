@@ -184,47 +184,17 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
    */
   private transient FeatureMap documentFeatures;
   
-  public DBSemanticAnnotationHelper(String annotationType,
-          String[] nominalFeatureNames, String[] integerFeatureNames,
-          String[] floatFeatureNames, String[] textFeatureNames) {
-    this(annotationType, nominalFeatureNames, integerFeatureNames,
-            floatFeatureNames, textFeatureNames, null);
-  }
-  
-  /**
-   * Standard 6-argument SAH constructor.  This helper type does not support
-   * URI features directly, they will be combined with the text features.
-   */
-  public DBSemanticAnnotationHelper(String annotationType,
-          String[] nominalFeatureNames, String[] integerFeatureNames,
-          String[] floatFeatureNames, String[] textFeatureNames,
-          String[] uriFeatureNames) {
-    super(annotationType, nominalFeatureNames, integerFeatureNames,
-            floatFeatureNames, concatenateArrays(textFeatureNames, uriFeatureNames),
-            null);
-    if(uriFeatureNames != null && uriFeatureNames.length > 0) {
+  @Override
+  public void init(Indexer indexer) {
+    super.init(indexer);
+    if(getUriFeatures() != null && getUriFeatures().length > 0) {
       logger.warn(
               "This helper type does not fully support URI features, "
               + "they will be indexed but only as text literals!");
     }
-    
-  }
-  
-  /**
-   * Groovy-friendly constructor for the index template DSL.
-   * @param params map containing mappings for at least the key
-   *         "annType" (the annotation type), and optionally any
-   *         or all of nominal-, integer-, float-, text- and
-   *         uriFeatures (lists or arrays of feature names)
-   */
-  public DBSemanticAnnotationHelper(Map<String, ?> params) {
-    this(getString(params, ANN_TYPE_KEY), getArray(params, NOMINAL_FEATURES_KEY),
-        getArray(params, INTEGER_FEATURES_KEY), getArray(params, FLOAT_FEATURES_KEY),
-        getArray(params, TEXT_FEATURES_KEY), getArray(params, URI_FEATURES_KEY));
-  }
-  
-  @Override
-  public void init(Indexer indexer) {
+    setTextFeatures(concatenateArrays(getTextFeatures(), getUriFeatures()));
+    setUriFeatures(new String[0]);
+
     cache = new AnnotationTemplateCache(this);
     // calculate the basename
     // to avoid inter-locking between the multiple SB-based indexers, they each 
@@ -263,6 +233,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   
   @Override
   public void init(QueryEngine qEngine) {
+    super.init(qEngine);
     File dbDir = new File(qEngine.getIndexDir(), DB_DIR_NAME);
     if(!dbDir.exists()) { throw new IllegalArgumentException(
             "Target database directory (at " + dbDir.getAbsolutePath()
@@ -531,7 +502,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   public String[] getMentionUris(Annotation ann, int length,
           Indexer indexer) {
     FeatureMap featuresToIndex;
-    if(isInDocumentMode()) {
+    if(getMode() == Mode.DOCUMENT) {
       length = -1;
       featuresToIndex = documentFeatures;
     } else {
@@ -1004,7 +975,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       ResultSet res = dbConnection.createStatement().executeQuery(selectStr.toString());
       while(res.next()) {
         long id = res.getLong(1);
-        int length = isInDocumentMode()? Mention.NO_LENGTH : res.getInt(2);
+        int length = getMode() == Mode.DOCUMENT? Mention.NO_LENGTH : res.getInt(2);
         mentions.add(new Mention(annotationType + ":" + id, length));
       }
     } catch(SQLException e) {
@@ -1018,7 +989,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   
   @Override
   public void documentStart(Document document) {
-    if(isInDocumentMode()) {
+    if(getMode() == Mode.DOCUMENT) {
       documentFeatures = document.getFeatures();
     }
   }
@@ -1137,73 +1108,5 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       }
       System.out.println();
     }
-  }
-  
-  /**
-   * test code: to be removed
-   */
-  private static void buildIndex() throws Exception{
-    // simple metadata helper for HTML tags
-    OriginalMarkupMetadataHelper docHelper = new OriginalMarkupMetadataHelper(
-        new HashSet<String>(Arrays.asList(
-            new String[] {
-              "b", "i", "li", "ol", "p", "sup", "sub", "u", "ul"})));
-    IndexConfig config = new IndexConfig(
-            new File("index"), 
-            "mimir", 
-            ANNIEConstants.TOKEN_ANNOTATION_TYPE, 
-            "mimir", 
-            new TokenIndexerConfig[]{
-              new TokenIndexerConfig(
-                      ANNIEConstants.TOKEN_STRING_FEATURE_NAME, 
-                      DowncaseTermProcessor.getInstance()),
-              new TokenIndexerConfig(
-                      ANNIEConstants.TOKEN_CATEGORY_FEATURE_NAME, 
-                      NullTermProcessor.getInstance()),
-              new TokenIndexerConfig(
-                      "root", 
-                      NullTermProcessor.getInstance())
-            }, 
-            new SemanticIndexerConfig[]{
-              new SemanticIndexerConfig(
-                      new String[]{
-                              "Measurement",
-                              "PublicationAuthor", "PublicationDate",
-                              "PublicationLocation", "PublicationPages",
-                              "Reference", "Section", "Sentence"}, 
-                      new SemanticAnnotationHelper[] {
-                        new DBSemanticAnnotationHelper("Measurement",
-                                      new String[]{"type", "dimension", "normalisedUnit"},
-                                      null,
-                                      new String[]{"normalisedValue", "normalisedMinValue", "normalisedMaxValue"},
-                                      new String[] {"originalText", "originalUnit"}),
-                        new DBSemanticAnnotationHelper("PublicationAuthor", null, null, null, null),                                  
-                        new DBSemanticAnnotationHelper("PublicationDate", null, null, null, null),
-                        new DBSemanticAnnotationHelper("PublicationLocation", null, null, null, null),                                  
-                        new DBSemanticAnnotationHelper("PublicationPages", null, null, null, null),
-                        new DBSemanticAnnotationHelper("Reference", new String[]{"type"}, null, null, null),                                  
-                        new DBSemanticAnnotationHelper("Section", new String[]{"type"}, null, null, null),
-                        new DBSemanticAnnotationHelper("Sentence", null, null, null, null)})
-            }, 
-            new DocumentMetadataHelper[] {docHelper}, 
-            docHelper);
-    Indexer indexer = new Indexer(config);
-    
-    String pathToZipFile = "test/data/gatexml-output.zip";
-    File zipFile = new File(pathToZipFile);
-    String fileURI = zipFile.toURI().toString();
-    ZipFile zip = new ZipFile(pathToZipFile);
-    Enumeration<? extends ZipEntry> entries = zip.entries();
-    while(entries.hasMoreElements()) {
-      ZipEntry entry = entries.nextElement();
-      if(entry.isDirectory()) {
-        continue;
-      }
-      URL url = new URL("jar:" + fileURI + "!/" + entry.getName());
-      Document doc = gate.Factory.newDocument(url, "UTF-8");
-      indexer.indexDocument(doc);
-    }
-    indexer.close();
-    System.out.println("Indexing complete");
   }
 }

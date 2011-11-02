@@ -254,87 +254,14 @@ public class SesameSemanticAnnotationHelper extends
 	protected String sesameConfigLocation = "resources/owlim.ttl";
 
 	protected String absoluteConfigLocation = "";
-
-	/**
-	 * Constructs a new SesameSemanticAnnotationHelper.
-	 * 
-	 * @param annotationType
-	 *            the type of the annotations handled by this helper.
-	 * @param nominalFeatureNames
-	 *            the names of the features to be indexed that have nominal
-	 *            values (i.e. values from a small set of values).
-	 * @param floatFeatureNames
-	 *            the names of the features to be indexed that have numeric
-	 *            values (i.e. values that can be converted to a double).
-	 * @param textFeatureNames
-	 *            the names of the features to be indexed that have arbitrary
-	 *            text values.
-	 * @param uriFeatureNames
-	 *            the names of the features to be indexed that have URIs as
-	 *            values.
-	 */
-	public SesameSemanticAnnotationHelper(String annotationType,
-			String[] nominalFeatureNames, String[] integerFeatureNames,
-			String[] floatFeatureNames, String[] textFeatureNames,
-			String[] uriFeatureNames) {
-		super(annotationType, nominalFeatureNames, null,
-				concatenateArrays(integerFeatureNames, floatFeatureNames),
-				textFeatureNames, uriFeatureNames);
-		this.nominalFeaturePredicates = new URI[this.nominalFeatureNames.length];
-		this.floatFeaturePredicates = new URI[this.floatFeatureNames.length];
-		this.textFeaturePredicates = new URI[this.textFeatureNames.length];
-		this.uriFeaturePredicates = new URI[this.uriFeatureNames.length];
-	}
-
-	/**
-	 * Constructs a new SesameSemanticAnnotationHelper.
-	 * 
-	 * @param annotationType
-	 *            the type of the annotations handled by this helper.
-	 * @param nominalFeatureNames
-	 *            the names of the features to be indexed that have nominal
-	 *            values (i.e. values from a small set of values).
-	 * @param floatFeatureNames
-	 *            the names of the features to be indexed that have numeric
-	 *            values (i.e. values that can be converted to a double).
-	 * @param textFeatureNames
-	 *            the names of the features to be indexed that have arbitrary
-	 *            text values.
-	 * @param uriFeatureNames
-	 *            the names of the features to be indexed that have URIs as
-	 *            values.
-	 * @param settings
-	 *            a Map containing settings for the location of the sesame
-	 *            repository config file. Use "relativePath" or "abstractPath"
-	 *            as keys
-	 */
-	public SesameSemanticAnnotationHelper(String annotationType,
-			String[] nominalFeatureNames, String[] integerFeatureNames,
-			String[] floatFeatureNames, String[] textFeatureNames,
-			String[] uriFeatureNames, Map<String, Object> settings) {
-		this(annotationType, nominalFeatureNames, integerFeatureNames,
-				floatFeatureNames, textFeatureNames, uriFeatureNames);
-		if (settings.containsKey("relativePath"))
-			this.sesameConfigLocation = getString(settings, "relativePath");
-		if (settings.containsKey("absolutePath"))
-			this.absoluteConfigLocation = getString(settings, "absolutePath");
+	
+	public void setRelativePath(String relativePath) {
+	  sesameConfigLocation = relativePath;
 	}
 	
-  /**
-   * Groovy-friendly constructor for the index template DSL.
-   * @param params map containing mappings for at least the key
-   *         "annType" (the annotation type), and optionally any
-   *         or all of nominal-, integer-, float-, text- and
-   *         uriFeatures (lists or arrays of feature names).
-   *         May also contain String values for the keys
-   *         "relativePath" or "absolutePath" giving the path
-   *         to the sesame repository config file.
-   */
-  public SesameSemanticAnnotationHelper(Map<String, Object> params) {
-    this(getString(params, ANN_TYPE_KEY), getArray(params, NOMINAL_FEATURES_KEY),
-        getArray(params, INTEGER_FEATURES_KEY), getArray(params, FLOAT_FEATURES_KEY),
-        getArray(params, TEXT_FEATURES_KEY), getArray(params, URI_FEATURES_KEY), params);
-  }
+	public void setAbsolutePath(String absPath) {
+	  absoluteConfigLocation = absPath;
+	}
 
 	/**
 	 * 
@@ -345,6 +272,18 @@ public class SesameSemanticAnnotationHelper extends
 	public void init(Indexer indexer) {
 		if (initDone)
 			return;
+		super.init(indexer);
+		setFloatFeatures(concatenateArrays(getIntegerFeatures(), getFloatFeatures()));
+		setIntegerFeatures(new String[0]);
+		if(nominalFeatureNames == null) setNominalFeatures(new String[0]);
+		if(floatFeatureNames == null) setFloatFeatures(new String[0]);
+    if(textFeatureNames == null) setTextFeatures(new String[0]);
+    if(uriFeatureNames == null) setUriFeatures(new String[0]);
+    this.nominalFeaturePredicates = new URI[this.nominalFeatureNames.length];
+    this.floatFeaturePredicates = new URI[this.floatFeatureNames.length];
+    this.textFeaturePredicates = new URI[this.textFeatureNames.length];
+    this.uriFeaturePredicates = new URI[this.uriFeatureNames.length];
+
 		try {
 			connection = getRepositoryConnection(indexer.getIndexConfig());
 			connection.setAutoCommit(true);
@@ -370,6 +309,7 @@ public class SesameSemanticAnnotationHelper extends
 	public void init(QueryEngine queryEngine) {
 		if (initDone)
 			return;
+		super.init(queryEngine);
 		try {
 			connection = getRepositoryConnection(queryEngine.getIndexConfig());
 			parser = new SPARQLParser();
@@ -392,7 +332,7 @@ public class SesameSemanticAnnotationHelper extends
 
   @Override
   public void documentStart(Document document) {
-    if(isInDocumentMode()) {
+    if(getMode() == Mode.DOCUMENT) {
       documentFeatures = document.getFeatures();
     }
   }
@@ -410,7 +350,7 @@ public class SesameSemanticAnnotationHelper extends
 		}
 		
     FeatureMap featuresToIndex;
-    if(isInDocumentMode()) {
+    if(getMode() == Mode.DOCUMENT) {
       length = -1;
       featuresToIndex = documentFeatures;
     } else {
@@ -572,7 +512,7 @@ public class SesameSemanticAnnotationHelper extends
 				BindingSet binding = result.next();
 				String mentionURI = binding.getBinding("mentionInstance")
 						.getValue().stringValue();
-				int length = isInDocumentMode()? Mention.NO_LENGTH : 
+				int length = getMode() == Mode.DOCUMENT ? Mention.NO_LENGTH : 
 				    ((Literal) binding.getBinding("length").getValue()).intValue();
 				mentions.add(new Mention(mentionURI, length));
 			}
