@@ -44,7 +44,6 @@ class MimirUrlMappings {
     "/$indexId/manage/$action?"(controller:"indexManagement")
 
     // admin-only actions - CRUD controllers plus index administration
-
     "/admin"(controller:"mimirStaticPages", action:"admin")
     "/admin/$controller/$action?/$id?"{
       constraints {
@@ -52,7 +51,8 @@ class MimirUrlMappings {
           "federatedIndex",
           "localIndex",
           "remoteIndex",
-          "indexTemplate"
+          "indexTemplate",
+          "mimirConfiguration"
         ])
       }
     }
