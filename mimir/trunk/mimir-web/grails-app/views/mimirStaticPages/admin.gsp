@@ -2,6 +2,7 @@
 <%@ page import="gate.mimir.web.LocalIndex" %>
 <%@ page import="gate.mimir.web.RemoteIndex" %>
 <%@ page import="gate.mimir.web.FederatedIndex" %>
+<%@ page import="gate.mimir.web.MimirConfiguration" %>
 
 <g:set var="localIdxCnt" value="${LocalIndex.count()}" />
 <g:set var="remoteIdxCnt" value="${RemoteIndex.count()}" />
@@ -22,7 +23,16 @@
     <g:if test="${flash.message}">
       <div class="message">${flash.message}</div>
     </g:if>
-          
+    
+    <g:if test="${MimirConfiguration.count() == 0}">
+      <h2>Configuration</h2>
+      <p>You need to <g:link controller="mimirConfiguration" action="edit" id="">configure</g:link> your local M&iacute;mir instance.</p>
+    </g:if>
+    <g:else>
+    <h2>Configuration</h2>
+    <p><g:link controller="mimirConfiguration" action="show" id="">Show/edit</g:link> 
+    the configuration for your M&iacute;mir instance.</p>
+    
     <h2>Indexes <span style="font-size:small;" title="Click for more information!">(<mimir:revealAnchor id="help1">?</mimir:revealAnchor>)</span></h2>
     <mimir:revealBlock id="help1">
     <p class="help">There are several types of indexes. On this page you can 
@@ -90,6 +100,8 @@
     <p><g:link controller="indexTemplate" action="list">
               <span title="Click to edit index templates">Click here</span>
             </g:link>to manage the index templates.</p>    
+    </g:else>
+
     </div>    
   </body>
 </html>

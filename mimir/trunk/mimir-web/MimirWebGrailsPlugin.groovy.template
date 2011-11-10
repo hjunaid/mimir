@@ -121,6 +121,7 @@ see http://gate.ac.uk/family/mimir for full details
     }
 
     def doWithApplicationContext = { applicationContext ->
+      // make sure the deafult index template exists
       if(IndexTemplate.count() == 0) {
         log.info("No index templates found in database, adding default one")
 
@@ -176,7 +177,24 @@ documentMetadataHelpers = [documentRenderer]
           }
         }
       }
-
+      
+      // make sure the singleton configuration domain object exists
+      if(MimirConfiguration.count() == 0) {
+        log.info('No configuration object, creating one now.')
+        // if the data exists in config, copy it
+        if(application.config.gate.mimir.indexBaseDirectory) {
+          MimirConfiguration.withTransaction() {
+            MimirConfiguration conf = new MimirConfiguration(indexBaseDirectory:
+              new File(application.config.gate.mimir.indexBaseDirectory).absolutePath)
+            conf.save(flush:true)
+          }
+        }
+      } else if(MimirConfiguration.count() > 1) {
+        // error!
+        throw new IllegalStateException(
+          'Multiple configuration versions found! Aborting.')
+      }
+      
       // initialise the index services, in the right order
       applicationContext.localIndexService.init()
       applicationContext.remoteIndexService.init()
