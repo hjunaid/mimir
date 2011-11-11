@@ -15,11 +15,10 @@
  *
  *  $Id$
  */
-import gate.Gate;
-
-import gate.mimir.util.WebUtilsManager;
+import gate.mimir.util.WebUtilsManager
 import gate.mimir.web.IndexTemplate
 import gate.mimir.web.MimirConfigLoader
+import gate.mimir.web.MimirConfiguration
 import gate.util.spring.ExtraGatePlugin
 
 import java.util.concurrent.Executors
