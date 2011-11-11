@@ -139,6 +139,7 @@ see http://gate.ac.uk/family/mimir for full details
         
         def defaultIndexConfig = """\
 import gate.creole.ANNIEConstants
+import gate.mimir.SemanticAnnotationHelper.Mode
 import gate.mimir.index.OriginalMarkupMetadataHelper
 import ${defaultHelper} as DefaultHelper
 
@@ -160,6 +161,7 @@ semanticAnnotations = {
     annotation helper:new DefaultHelper(annType:'Location', nominalFeatures:["locType"])
     annotation helper:new DefaultHelper(annType:'Organization', nominalFeatures:["orgType"])
     annotation helper:new DefaultHelper(annType:'Date', integerFeatures:["normalized"])
+    annotation helper:new DefaultHelper(annType:'Document', integerFeatures:["date"], mode:Mode.DOCUMENT)
   }
 }
 documentRenderer = new OriginalMarkupMetadataHelper()
