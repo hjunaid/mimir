@@ -180,8 +180,17 @@ class LocalIndexController {
     localIndexInstance.uriIsExternalLink = params.uriIsExternalLink ? true : false
     localIndexInstance.state = Index.INDEXING
     try {
+      def mimirConfigurationInstance = MimirConfiguration.findByIndexBaseDirectoryIsNotNull()
+      if(!mimirConfigurationInstance) {
+        flash.message = "This instance is not fully configured " +
+            "(could not find the configuration data). Please fix this on the " +
+            "admin page and try again."
+        log.error("No instance of ${MimirConfiguration.class.name} could be found!")    
+        redirect(controller:'mimirStaticPages', action: "admin")
+      }
+      
       def tempFile = File.createTempFile('index-', '.mimir',
-            new File(grailsApplication.config.gate.mimir.indexBaseDirectory))
+            new File(mimirConfigurationInstance.indexBaseDirectory))
       tempFile.delete()
       localIndexInstance.indexDirectory = tempFile.absolutePath
     }
