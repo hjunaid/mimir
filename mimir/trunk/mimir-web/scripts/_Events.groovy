@@ -20,8 +20,6 @@ import groovy.xml.MarkupBuilder;
 // Package up any Mimir plugins configured at relative paths to be included in
 // the war file.
 eventCreateWarStart = { warName, stagingDir ->
-  includeTargets << grailsScript("_GrailsPackage")
-  depends('createConfig')
   event('StatusUpdate', ["Bundling Mimir plugins for WAR"])
   // load the mimir configuration (which includes the plugins)
   def MimirConfigLoader = classLoader.loadClass('gate.mimir.web.MimirConfigLoader')
