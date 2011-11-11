@@ -1,5 +1,27 @@
 This appendix details the main changes in each \Mimir\ release.
 
+\section{Version 3.4.0 (November 2011)}
+
+\begin{itemize}
+\item Added support for indexing document metadata, i.e. features (see
+Sections~\ref{sec:indexing:templates}).
+\item \Mimir{} Grails Plugin: moved some configuration options from the external
+file to a database field, so that it can now be changed using the web admin UI.
+\item API: simplified the construction of all default Semantic Annotation
+Helpers. They all get a single no-argument constructor, and set of setter
+method for editing the various properties (Java Bean style). The Groovy
+interface does not change, as Groovy will automatically convert a constructor
+call that takes a Map to a call for the no-argument constructor, followed by all
+the required setPropertyXYZ calls.
+\item Completely removed the (previously deprecated) {\tt ordi} plugin, as it
+relies on software that is no longer supported by the original authors.
+\item Removed the {\tt mimir-demo} example application from the source tree. It
+can now be automatically generated using an Ant call (see 
+Section~\ref{sec:building}).
+\item Licence changed to LGPL.
+ 
+\end{itemize}
+
 \section{Version 3.3.0 (October 2011)}
 
 \begin{itemize}
@@ -28,6 +50,6 @@ details).
 
 \section{Version 3.2.0 (May 2011)}
 
-First public release of \Mimir.
+First public release of \Mimir, under an AGPL licence.
 
 % vim:ft=tex:
