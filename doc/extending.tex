@@ -8,7 +8,7 @@ provides no authentication or security, for example.  To add these kinds of
 features you can install the \Mimir\ plugin into your own custom Grails
 application, as described in section~\ref{sec:extend:customapp}.
 
-\section{Creating new Semantic Annotation Helpers}\label{sec:extend:helpers}
+\section{Creating New Semantic Annotation Helpers}\label{sec:extend:helpers}
 
 {\em Semantic annotation helpers} (SAHs) are the mechanism that \Mimir\ uses to
 store information about annotations and allow this information to be queried at
@@ -36,13 +36,13 @@ storage format.  \Mimir\ provides one example special-purpose SAH for
 Measurement annotations, which can serve as a template for how to implement
 your own helpers for other annotation types.
 
-\subsection{The {\tt SemanticAnnotationHelper} interface}
+\subsection{The {\tt SemanticAnnotationHelper} Interface}
 
 The {\tt gate.mimir.SemanticAnnotationHelper} interface is the contract that
 all helpers must implement.  It specifies three groups of methods that must be
 implemented:
 
-\subsubsection*{Lifecycle methods}
+\subsubsection*{Lifecycle Methods}
 
 The interface includes two pairs of init/close lifecycle methods, one pair
 taking an {\tt Indexer} parameter (used when the helper is indexing
@@ -57,7 +57,7 @@ appropriate {\tt init} method is called by \Mimir\ when the index is opened (in
 whichever mode), before any other requests are passed to the helper, and the
 corresponding {\tt close} method is called when the index is shut down.
 
-\subsubsection*{Indexing methods}
+\subsubsection*{Indexing Methods}
 
 When indexing annotations \Mimir\ calls the following methods:
 
@@ -93,7 +93,7 @@ semantic annotations that partially overlap a token will be considered by
 where tokens are represented by \verb|---|, an annotation that covers just the
 ``87'' would be indexed as if it covered the whole ``1987'' token.
 
-\subsubsection*{Search methods}
+\subsubsection*{Search Methods}
 
 The final method in the interface is {\tt getMentions(annotationType,
 constraints, queryEngine)}.  This method is called by \Mimir\ when searching
@@ -112,7 +112,7 @@ method.
 The {\tt getMentions()} methods may be called from multiple threads at the same
 time, so implementations should be thread-safe.
 
-\subsection{Abstract base classes}
+\subsection{Abstract Base Classes}
 
 \Mimir\ provides an abstract class {\tt AbstractSemanticAnnotationHelper}
 which, as described above, implements the Map version of {\tt getMentions} in
@@ -187,7 +187,7 @@ method, which has been discussed in detail above.
 Finally, when the index is shut down the {\tt close(QueryEngine)} methods of
 the helpers are called in sequence.
 
-\subsection{Packaging new helper types for use with \Mimir}
+\subsection{Packaging New Helper Types for Use with \Mimir}
 
 To create a new helper type and make it available to \Mimir\ you need to first
 write your Java class that implements {\tt SemanticAnnotationHelper}, typically
@@ -208,7 +208,7 @@ example by using the configuration options described in
 Section~\ref{sec:admin:config}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Embedding \Mimir\ in a custom Grails application}
+\section{Embedding \Mimir\ in a Custom Grails application}
 \label{sec:extend:customapp}
 
 The demo Grails application provided with \Mimir\ provides access to the
@@ -217,7 +217,7 @@ does not address concerns such as security and authentication, but these can be
 handled by installing the \Mimir\ plugin into a custom Grails application and
 adding these functions there.
 
-\subsection{Installing the \Mimir\ plugin}
+\subsection{Installing the \Mimir\ Plugin}
 
 The \Mimir\ plugin is installed like any other Grails plugin, by running
 {\tt grails package-plugin} in the {\tt grails-plugin-mimir} directory to
@@ -237,7 +237,7 @@ installation the plugin adds a number of files to the host application:
   required by the template configuration file.
 \ede
 
-\subsection{URL mappings}
+\subsection{URL Mappings}
 
 The standard URL mappings for \Mimir\ adhere to the following conventions:
 \bit
@@ -272,7 +272,7 @@ library, then you must make sure that:
 \item the names of the actions in the controllers above must not be changed.
 \eit 
 
-\subsection{Security considerations}
+\subsection{Security Considerations}
 
 There are a number of established and mature Grails plugins that implement user
 registration, authentication and security in various ways for Grails

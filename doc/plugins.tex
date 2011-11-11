@@ -4,7 +4,7 @@ the \Mimir\ distribution, and those plugins are described in this chapter.
 Information on how to create new plugins to provide user-defined helper classes
 can be found in section~\ref{sec:extend:helpers}.
 
-\section{The {\tt db-h2} plugin}\label{sec:plugins:db}
+\section{The {\tt db-h2} Plugin}\label{sec:plugins:db}
 
 The {\tt db-h2} plugin is one of two plugins (the other being the {\tt sesame}
 plugin) that provides a {\em generic} semantic annotation helper implementation
@@ -58,7 +58,7 @@ to be consistent with the Sesame helper (described below).  When using the
 the Sesame helper or vice versa is simply a matter of changing the name of the
 class being imported.
 
-\section{The {\tt sesame} plugin}\label{sec:plugins:sesame}
+\section{The {\tt sesame} Plugin}\label{sec:plugins:sesame}
 
 The {\tt sesame} plugin provides the other standard generic helper,
 \lstinline!gate.mimir.sesame.SesameSemanticAnnotationHelper!.  This helper
@@ -81,7 +81,7 @@ under the {\tt sesame} plugin.  When specifying a custom repository
 configuration it is important to retain the repositoryID of ``owlim'' as this
 is assumed by the helper code.
 
-\subsection{Searching in the knowledge base}
+\subsection{Searching in the Knowledge Base}
 
 For annotations that have a URI-valued feature named ``inst'', the Sesame
 helper provides an additional ``synthetic'' feature named
@@ -99,7 +99,7 @@ as the \Mimir\ annotation data.  For a more flexible approach to semantic
 queries that can make use of semantic data stored in a remote knowledge base,
 see the {\tt sparql} plugin (section~\ref{sec:plugins:sparql}).
 
-\section{The {\tt measurements} plugin}\label{sec:plugins:measurements}
+\section{The {\tt measurements} Plugin}\label{sec:plugins:measurements}
 
 The GATE {\tt Tagger\_Measurements} plugin, introduced in GATE 6.1, is able to
 recognise many different kinds of measurement expressions in text.  It
@@ -198,7 +198,7 @@ measurements helper serves as an example of how to implement your own
 special-purpose helper based on the delegating base class.  Feel free to use it
 as a template for your own helper implementations.
 
-\section{The {\tt sparql} plugin}\label{sec:plugins:sparql}
+\section{The {\tt sparql} Plugin}\label{sec:plugins:sparql}
 
 The {\tt sparql} plugin provides a semantic annotation helper that wraps
 another helper, adding flexible {\em semantic query} support.  It is intended
@@ -227,7 +227,7 @@ containing the URI of an entity in DBpedia that represents a person born in
 Sheffield.
 
 
-\subsection{Creating a SPARQL helper}
+\subsection{Creating a SPARQL Helper}
 
 The SPARQL semantic annotation helper class is called
 \lstinline!gate.mimir.sparql.SPARQLSemanticAnnotationHelper!.  It has a
@@ -343,7 +343,7 @@ semanticAnnotations = {
 }
 \end{lstlisting}
 
-\subsection{Format of SPARQL queries}
+\subsection{Format of SPARQL Queries}
 
 This section describes in more detail how the SPARQL queries relate to the
 annotations indexed by the underlying semantic annotation helper.  As a simple
