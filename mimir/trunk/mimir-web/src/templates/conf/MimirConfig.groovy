@@ -31,6 +31,10 @@ plugins {
 // you can redefine the queryTokeniser Spring bean in resources.groovy
 queryTokeniserGapp = "WEB-INF/gate-home/default-query-tokeniser.xgapp"
 
-// the base directory in which newly created local indexes will
-// be put.
-indexBaseDirectory = "mimir-indexes"
+// The base directory in which newly created local indexes will be put.
+// This value can be set interactively from the administration pages, so you 
+// don't have to set it here. If you do, the value here will be used to 
+// initialise to configuration databse record. Once a value exists in the DB, 
+// the one set here _is ignored_ (so changes in the admin UI take precedence)!
+
+// indexBaseDirectory = "mimir-indexes"
