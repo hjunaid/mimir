@@ -20,7 +20,12 @@ following directories:
 - mimir-demo (automatically generated using Apache Ant): a very simple Grails
   application demonstrating the use of the Mímir Grails plugin to create a
   fully-working web application. 
-
+- mimir-cloud: the Grails application used for the Mímir installs on 
+  http://GATECloud.net. Unlike mimir-demo, this is a fully-fledged application, 
+  which includes support for security. In most cases, if you need a simple way
+  of deploying Mímir, you should be able to use this application as is. If you 
+  need to integrate with an existing infrastructure (e.g. some already-existing
+  single-sign-on solution), then you may find it easier to extend mimir-demo.
 
 The build.xml file is the ANT build file. See the user guide (inside the doc
 directory) for details of how to use it.
