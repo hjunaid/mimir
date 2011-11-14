@@ -58,7 +58,7 @@ see http://gate.ac.uk/family/mimir for full details
     }
 
     def doWithSpring = {
-      MimirConfigLoader.loadMimirConfig(CH.config)
+      MimirConfigLoader.loadMimirConfig(application.config)
       
       // web utils manager
       webUtilsManager(WebUtilsManager)
