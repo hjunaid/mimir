@@ -19,7 +19,6 @@ import gate.util.spring.ExtraGatePlugin
 import java.util.concurrent.Executors
 
 import org.apache.log4j.Logger
-import org.codehaus.groovy.grails.commons.ConfigurationHolder as CH
 
 class MimirWebGrailsPlugin {
     static Logger log = Logger.getLogger('gate.mimir.mimir-web')
@@ -35,7 +34,10 @@ class MimirWebGrailsPlugin {
             "grails-app/views/error.gsp"
     ]
 
-    // TODO Fill in these fields
+    // group ID for maven deployment
+    def groupId = "uk.ac.gate"
+
+    // documentation details
     def author = "GATE Team"
     def authorEmail = "gate-users@lists.sourceforge.net"
     def title = "Mimir"
@@ -46,13 +48,16 @@ see http://gate.ac.uk/family/mimir for full details
 '''
 
     // URL to the plugin's documentation
-    def documentation = "http://grails.org/plugin/mimir-web"
+    def documentation = "http://gate.ac.uk/family/mimir.html"
 
     def doWithWebDescriptor = { xml ->
-        // TODO Implement additions to web.xml (optional), this event occurs before 
+      // nothing to do
     }
 
+    // Plugin bean definitions
     def doWithSpring = {
+      // get in early with the configuration values, in case they are used
+      // in PropertyPlaceholderConfigurer expressions.
       MimirConfigLoader.loadMimirConfig(application.config)
       
       // web utils manager
@@ -66,13 +71,15 @@ see http://gate.ac.uk/family/mimir for full details
       
       xmlns gate:'http://gate.ac.uk/ns/spring'
       // take <gate:init> attributes from configuration
-      gate.init(CH.config.gate.mimir.gateInit)
+      gate.init(application.config.gate.mimir.gateInit)
       
       // Mimir plugins
       if(application.warDeployed) {
-        // we are in a WAR deployment, load all plugins listed in WEB-INF/mimir-plugins.xml
+        // we are in a WAR deployment, load all plugins listed in
+        // WEB-INF/mimir-plugins.xml
         def pluginsXml = null
-        application.parentContext.getResource("WEB-INF/mimir-plugins.xml")?.inputStream.withStream {
+        application.parentContext.getResource(
+            "WEB-INF/mimir-plugins.xml")?.inputStream.withStream {
           pluginsXml = new XmlSlurper().parse(it)
         }
         if(pluginsXml?.plugin) {
@@ -83,8 +90,8 @@ see http://gate.ac.uk/family/mimir for full details
           }
         }
         // and all other plugins whose locations are absolute URLs
-        if(CH.config.gate.mimir.plugins) {
-          for(loc in CH.config.gate.mimir.plugins.entrySet()) {
+        if(application.config.gate.mimir.plugins) {
+          for(loc in application.config.gate.mimir.plugins.entrySet()) {
             if(loc.value =~ /^[a-z]{2,}:/) {
               "mimirPlugin-${loc.key}"(ExtraGatePlugin) {
                 location = loc.value
@@ -94,9 +101,9 @@ see http://gate.ac.uk/family/mimir for full details
         }
       } else {
         // run-app - load the configured plugins directly
-        if(CH.config.gate.mimir.plugins) {
+        if(application.config.gate.mimir.plugins) {
           URI baseURI = new File(System.getProperty('user.dir')).toURI()
-          for(loc in CH.config.gate.mimir.plugins.entrySet()) {
+          for(loc in application.config.gate.mimir.plugins.entrySet()) {
             "mimirPlugin-${loc.key}"(ExtraGatePlugin) {
               location = baseURI.resolve(loc.value).toString()
             }
@@ -107,7 +114,7 @@ see http://gate.ac.uk/family/mimir for full details
       // the default query tokeniser (can be overridden in the
       // host app's resources.xml/groovy
       gate.'saved-application'(id:"queryTokeniser",
-        location:CH.config.gate.mimir.queryTokeniserGapp.toString())
+        location:application.config.gate.mimir.queryTokeniserGapp.toString())
     }
 
     def doWithDynamicMethods = { ctx ->
