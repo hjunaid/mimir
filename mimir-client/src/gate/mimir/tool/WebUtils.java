@@ -72,14 +72,6 @@ public class WebUtils {
     }
   }
   
-  private static WebUtils staticWebUtils = null;
-  
-  public static WebUtils staticWebUtils() {
-    if(staticWebUtils == null) {
-      staticWebUtils = new WebUtils();
-    }
-    return staticWebUtils;
-  }
   
   /**
    * Constructs a URL from a base URL segment and a set of query parameters.
@@ -138,22 +130,6 @@ public class WebUtils {
     return conn;
   }
   
-  public static void main(String[] args){
-    System.out.println(buildUrl("http://host:8080/appName/service", 
-            "foo1", "bar1",
-            "foo2", "bar2",
-            "foo3", "bar3", 
-            "foo4", "bar4"));
-  }
-  
-  /**
-   * @deprecated use the instance method {@link #getVoid(String, String...)}.
-   */
-  public static void actionReturnsVoid(String baseUrl, String... params)
-          throws IOException {
-    staticWebUtils().getVoid(baseUrl, params);
-  }
-  
   /**
    * Calls a web service action (i.e. it connects to a URL). If the connection 
    * fails, for whatever reason, or the response code is different from 
@@ -194,15 +170,7 @@ public class WebUtils {
     }
   }
   
-  /**
-   * @deprecated use the instance method {@link #getText(Appendable, String, String...)}.
-   */
-  public static void actionReturnsText(Appendable out, String baseUrl, 
-          String... params)
-          throws IOException {
-    staticWebUtils().getText(out, baseUrl, params);
-  }
-  
+
   /**
    * Calls a web service action (i.e. it connects to a URL). If the connection 
    * fails, for whatever reason, or the response code is different from 
@@ -255,13 +223,6 @@ public class WebUtils {
     }
   }
 
-  /**
-   * @deprecated use the instance method {@link #getInt(String, String...)}.
-   */
-  public static int actionReturnsInt(String baseUrl, String... params)
-          throws IOException {
-    return staticWebUtils().getInt(baseUrl, params);
-  }
   
   /**
    * Calls a web service action (i.e. it connects to a URL), and reads a 
@@ -309,13 +270,6 @@ public class WebUtils {
     }
   }
   
-  /**
-   * @deprecated use the instance method {@link #getDouble(String, String...)}.
-   */
-  public static double actionReturnsDouble(String baseUrl, String... params)
-          throws IOException {
-    return staticWebUtils().getDouble(baseUrl, params);
-  }
 
   /**
    * Calls a web service action (i.e. it connects to a URL), and reads a 
@@ -363,13 +317,6 @@ public class WebUtils {
     }
   }
 
-  /**
-   * @deprecated use the instance method {@link #getBoolean(String, String...)}
-   */
-  public static boolean actionReturnsBoolean(String baseUrl, String... params)
-          throws IOException {
-    return staticWebUtils().getBoolean(baseUrl, params);
-  }
   
   /**
    * Calls a web service action (i.e. it connects to a URL), and reads a 
@@ -417,13 +364,6 @@ public class WebUtils {
     }
   }
   
-  /**
-   * @deprecated use the instance method {@link #getObject(String, String...)}.
-   */
-  public static Object actionReturnsObject(String baseUrl, String... params)
-          throws IOException, ClassNotFoundException {
-    return staticWebUtils().getObject(baseUrl, params);
-  }
   
   /**
    * Calls a web service action (i.e. it connects to a URL), and reads a 
@@ -472,14 +412,6 @@ public class WebUtils {
     }
   }
 
-  /**
-   * @deprecated use the instance method {@link #postObject(String, Serializable, String...)}.
-   */
-  public static void actionTakesObject(String baseUrl, Serializable object,
-          String... params) throws IOException {
-    staticWebUtils().postObject(baseUrl, object, params);
-  }
-  
   /**
    * Calls a web service action (i.e. it connects to a URL) using the POST HTTP
    * method, sending the given object in Java serialized format as the request
