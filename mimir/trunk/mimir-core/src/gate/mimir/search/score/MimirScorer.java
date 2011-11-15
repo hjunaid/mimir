@@ -21,12 +21,19 @@ import it.unimi.dsi.mg4j.search.score.DelegatingScorer;
 
 import java.io.IOException;
 
+/**
+ * Base interface for scorers in Mímir.
+ */
 public interface MimirScorer extends DelegatingScorer {
+  
   public abstract Binding nextHit() throws IOException;
 
   
   /**
-   * The DocumentIterator provided <b>must</b> be a {@link QueryExecutor}.
+   * Wraps a {@link QueryExecutor} allowing this scorer to provide scoring 
+   * functionality on top of it. The parameter provided is declared as a 
+   * {@link DocumentIterator} to satisfy the extended interface, but the
+   * value provided <b>must</b> be a {@link QueryExecutor}.
    */
   @Override
   public void wrap(DocumentIterator queryExecutor) throws IOException;

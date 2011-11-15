@@ -119,7 +119,7 @@ public class TermQuery implements QueryNode {
      * @throws IOException if the index files cannot be accessed.
      */
     public TermQueryExecutor(TermQuery node, QueryEngine engine) throws IOException {
-      super(engine);
+      super(engine, node);
       this.query = node;
       switch(this.query.indexType){
         case TOKENS:

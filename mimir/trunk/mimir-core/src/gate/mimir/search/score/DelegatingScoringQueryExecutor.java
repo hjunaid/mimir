@@ -23,7 +23,10 @@ import it.unimi.dsi.mg4j.search.score.DelegatingScorer;
 
 import java.io.IOException;
 
-
+/**
+ * Implementation of {@link MimirScorer} that delegates the scoring work to an 
+ * MG4J {@link DelegatingScorer}.
+ */
 public class DelegatingScoringQueryExecutor implements MimirScorer {
   
   public DelegatingScoringQueryExecutor(DelegatingScorer scorer)
@@ -43,14 +46,10 @@ public class DelegatingScoringQueryExecutor implements MimirScorer {
   public Binding nextHit() throws IOException {
     return underlyingExecutor.nextHit();
   }
-
-  
-  
   
   public double score() throws IOException {
     return underlyingScorer.score();
   }
-
 
   private DelegatingScorer underlyingScorer;
   

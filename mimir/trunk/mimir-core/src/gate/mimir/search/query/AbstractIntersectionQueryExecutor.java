@@ -37,15 +37,15 @@ public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExe
    * Constructor from {@link QueryEngine}.
    * @throws IOException if the index files cannot be accessed.
    */
-  public AbstractIntersectionQueryExecutor(QueryEngine engine, 
-          QueryNode... nodes) throws IOException {
-    super(engine);
-    this.nodes = nodes;
+  public AbstractIntersectionQueryExecutor(QueryEngine engine, QueryNode query,
+          QueryNode... subNodes) throws IOException {
+    super(engine, query);
+    this.nodes = subNodes;
     // prepare all the executors
-    this.executors = new QueryExecutor[nodes.length];
+    this.executors = new QueryExecutor[subNodes.length];
     this.nextDocIDs = new int[executors.length];
-    for(int i = 0; i < nodes.length; i++) {
-      executors[i] = nodes[i].getQueryExecutor(engine);
+    for(int i = 0; i < subNodes.length; i++) {
+      executors[i] = subNodes[i].getQueryExecutor(engine);
       nextDocIDs[i] = executors[i].nextDocument(-1);
       if(nextDocIDs[i] < 0) {
         // no results!

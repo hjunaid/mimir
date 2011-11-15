@@ -51,7 +51,7 @@ public class GapQuery implements QueryNode {
      * @throws IOException 
      */
     public GapQueryExecutor(GapQuery queryNode, QueryEngine engine) throws IOException {
-      super(engine);
+      super(engine, queryNode);
       this.gapQuery = queryNode;
       wrappedExecutor = queryNode.getWrappedQuery().getQueryExecutor(engine);
     }

@@ -140,6 +140,7 @@ public class QueryEngine {
    */
   protected static final long MAX_IN_MEMORY_INDEX = 64 * 1024 * 1024;
 
+  
   /**
    * The top level directory of the Mimir index.
    */
@@ -172,6 +173,11 @@ public class QueryEngine {
   protected Executor executor;
 
   /**
+   * How many documents get ranked in the first instance.
+   */
+  private int rankedDocumentsCount = 1000;
+  
+  /**
    * A list of currently active QueryRunners. This is used to close all active 
    * runners when the query engine itself is closed (thus releasing all open 
    * files).
@@ -203,6 +209,20 @@ public class QueryEngine {
    */
   public void setSubBindingsEnabled(boolean subBindingsEnabled) {
     this.subBindingsEnabled = subBindingsEnabled;
+  }
+
+  /**
+   * Gets the configuration parameter specifying the number of documents that 
+   * get ranked in the first instance. This is used to optimise the search 
+   * process by limiting the nuber of results that get calculated by default.
+   * @return
+   */
+  public int getRankedDocumentsCount() {
+    return rankedDocumentsCount;
+  }
+
+  public void setRankedDocumentsCount(int rankedDocumentsCount) {
+    this.rankedDocumentsCount = rankedDocumentsCount;
   }
 
   /**

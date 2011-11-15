@@ -52,7 +52,7 @@ public class OrQuery implements QueryNode {
      * @throws IOException 
      */
     public OrQueryExecutor(OrQuery query, QueryEngine engine) throws IOException {
-      super(engine);
+      super(engine, query);
       this.query = query;
       //prepare all the executors
       this.executors = new ExecutorsList(engine, query.getNodes());
