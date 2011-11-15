@@ -407,6 +407,15 @@ public class FederatedQueryRunner implements QueryRunner {
     }
   }
 
+  
+  @Override
+  public List<Binding> getHitsForDocument(int documentId)
+    throws IndexOutOfBoundsException {
+    int subQuery = documentId % subRunners.length;
+    int idWithinSubIndex = documentId / subRunners.length;
+    return subRunners[subQuery].getHitsForDocument(idWithinSubIndex);
+  }
+
   public void renderDocument(int documentId, Appendable out)
           throws IOException, IndexException {
     int subQuery = documentId % subRunners.length;

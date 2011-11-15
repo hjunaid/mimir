@@ -153,6 +153,16 @@ public interface QueryRunner {
       throws IndexOutOfBoundsException;
   
   /**
+   * Gets all the hits for a given document.
+   * @param documentId the ID of the document for which the hits are being 
+   * requested.
+   * @return a list of hits
+   * @throws IndexOutOfBoundsException
+   */
+  public List<Binding> getHitsForDocument(int documentId)
+      throws IndexOutOfBoundsException;
+  
+  /**
    * Render the content of the given document, with the hits for this query
    * highlighted.
    * @param documentId
