@@ -187,6 +187,8 @@ public class RemoteQueryRunner implements QueryRunner {
   protected static final String ACTION_HIT_COUNT_BIN = "hitCountBin";
 
   protected static final String ACTION_HITS_BIN = "hitsBin";
+  
+  protected static final String ACTION_HITS_FOR_DOC_BIN = "hitsForDocumentBin";
 
   protected static final String ACTION_IS_ACTIVE_BIN = "isActiveBin";
 
@@ -292,6 +294,24 @@ public class RemoteQueryRunner implements QueryRunner {
       throw new RuntimeException("Was expecting a list of bindings, but got " +
               "an unknown object type!", e);
     }
+  }
+  
+  
+
+  @Override
+  public List<Binding> getHitsForDocument(int documentId)
+    throws IndexOutOfBoundsException {
+    try {
+      return (List<Binding>)webUtils.getObject(
+             getActionBaseUrl(ACTION_HITS_FOR_DOC_BIN),
+             "queryId", queryId, 
+             "documentId", Integer.toString(documentId));
+    } catch(IOException e) {
+      throw new RuntimeException(e);
+    } catch(ClassNotFoundException e) {
+      throw new RuntimeException("Was expecting a list of bindings, but got " +
+              "an unknown object type!", e);
+    }    
   }
 
   public int getHitsCount() {
@@ -408,12 +428,10 @@ public class RemoteQueryRunner implements QueryRunner {
     } catch(ClassNotFoundException e) {
       throw new IndexException("Was expecting a String value, but got an " +
           "unknown object type!", e);
-    }  }
+    }
+  }
 
-
-
-
-
+  
   public void renderDocument(int documentId, Appendable out)
           throws IOException, IndexException {
     webUtils.getText(out, getActionBaseUrl(ACTION_RENDER_DOCUMENT),

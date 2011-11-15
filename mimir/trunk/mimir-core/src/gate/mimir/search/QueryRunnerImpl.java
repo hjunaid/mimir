@@ -300,7 +300,7 @@ public class QueryRunnerImpl implements QueryRunner {
    * @param documentId the ID for the sought document
    * @return a {@link List} of {@link Binding} values.
    */
-  protected List<Binding> getHitsForDocument(int documentId){
+  public List<Binding> getHitsForDocument(int documentId){
     List<Binding> hits = new ArrayList<Binding>();
     int startIndex = 0;
     synchronized(documentStats) {

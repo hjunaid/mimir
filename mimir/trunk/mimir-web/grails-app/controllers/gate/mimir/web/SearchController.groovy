@@ -559,6 +559,40 @@ class SearchController {
   }
   
   /**
+  * Binary version of hits call
+  */
+  def hitsForDocumentBin = {
+    def p = params["request"] ?: params
+    //get the query ID
+    String queryId = p["queryId"]
+    QueryRunner runner = searchService.getQueryRunner(queryId);
+    if(runner){
+      //get the parameters
+      def documentIdParam = p["documentId"]
+      if(documentIdParam){
+        try{
+          int documentId = documentIdParam.toInteger()
+          //we have all required parameters
+          List<Binding> hits = new ArrayList<Binding>(runner.getHitsForDocument(documentId))
+          new ObjectOutputStream (response.outputStream).withStream {stream ->
+            stream.writeObject(hits)
+          }
+        }catch(Exception e){
+          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          "Error while obtaining the hits: \"" + e.getMessage() + "\"!")
+        }
+        
+      }else{
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+            "No value provided for parameter documentId!")
+      }
+    } else{
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
+          "Query ID ${queryId} not known!")
+    }
+  }
+  
+  /**
    * Gets the number of available hits as a binary representation of an int 
    * value.
    */
