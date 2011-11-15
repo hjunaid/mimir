@@ -166,6 +166,12 @@ public class IndexConfig implements Serializable {
    * 
    */
   private static final long serialVersionUID = -8127630936829037489L;
+  
+  /**
+   * The current format version for the XML files containing serialisations of 
+   * IndexConfig instances.
+   */
+  private static final int FORMAT_VERSION = 4;
 
   /**
    * The default feature name for obtaining document URIs (provided as features
@@ -227,6 +233,7 @@ public class IndexConfig implements Serializable {
           DocumentRenderer documentRenderer) {
     
     this.indexDirectory = indexDirectory;
+    this.formatVersion = FORMAT_VERSION;
     this.tokenAnnotationSetName = tokenAnnotationSetName;
     this.tokenAnnotationType = tokenAnnotationType;
     this.tokenIndexers = tokenIndexers;
@@ -411,7 +418,16 @@ public class IndexConfig implements Serializable {
               inputFactory.createXMLStreamReader(configStream);
       HierarchicalStreamReader xmlReader = new StaxReader(new QNameMap(), xsr);
       try {
-        return (IndexConfig)newXStream().unmarshal(xmlReader);
+        IndexConfig theConfig = (IndexConfig)newXStream().unmarshal(xmlReader);
+        // check the version number
+        if(theConfig.formatVersion > FORMAT_VERSION){
+          throw new UnsupportedOperationException(
+            "The version of the IndexConfig at \"" + u.toExternalForm() + 
+            "\" is greater than the maximum supported version by this Mímir " +
+            "implementation (" + theConfig.formatVersion + " > " + FORMAT_VERSION +
+            ").");
+        }
+        return theConfig;
       } finally {
         xmlReader.close();
         configStream.close();
@@ -474,6 +490,11 @@ public class IndexConfig implements Serializable {
    */
   private File indexDirectory;
 
+  /**
+   * The format version for this index config instance.
+   */
+  private int formatVersion;
+  
   /**
    * The annotation type used for tokens.
    */
