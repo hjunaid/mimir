@@ -37,7 +37,7 @@ public class MimirConnector {
   }
   
   public MimirConnector() {
-    this(WebUtils.staticWebUtils());
+    this(new WebUtils());
   }
   
   public static MimirConnector defaultConnector() {
@@ -45,14 +45,6 @@ public class MimirConnector {
       staticConnector = new MimirConnector();
     }
     return staticConnector;
-  }
-
-  /**
-   * @deprecated use the instance method {@link #sendToMimir(Document, String, URL)}.
-   */
-  public static void indexDocument(Document doc, String documentURI,
-          URL indexURL) throws IOException {
-    defaultConnector().sendToMimir(doc, documentURI, indexURL);
   }
   
   /**

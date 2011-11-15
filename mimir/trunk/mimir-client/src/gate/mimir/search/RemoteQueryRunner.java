@@ -213,14 +213,11 @@ public class RemoteQueryRunner implements QueryRunner {
    *          queried. This should include the host name, the port (if needed),
    *          and the web app root name, and the index UUID (e.g.
    *          http://mimirhost:8080/mimir/1234).
-   * @param queryId
+   * @param queryString the query
    * @param threadPool
+   * @param webUtils the {@link WebUtils} instance to be used for remote 
+   * communication.
    */
-  public RemoteQueryRunner(String remoteUrl, String queryString,
-          Executor threadPool) throws IOException {
-    this(remoteUrl, queryString, threadPool, WebUtils.staticWebUtils());
-  }
-  
   public RemoteQueryRunner(String remoteUrl, String queryString,
           Executor threadPool, WebUtils webUtils) throws IOException {
     this.webUtils = webUtils;
