@@ -88,9 +88,9 @@ public abstract class AbstractSemanticAnnotationHelper implements
   protected String annotationType;
 	
   /**
-   * The working mode for this helper.
+   * The working mode for this helper (defaults to {@link Mode#ANNOTATION}).
    */
-  protected Mode mode;
+  protected Mode mode = Mode.ANNOTATION;
   
   public Mode getMode() {
     return mode;
