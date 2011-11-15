@@ -57,7 +57,7 @@ public abstract class AbstractOverlapQuery implements QueryNode{
      */
     public OverlapQueryExecutor(AbstractOverlapQuery query, QueryEngine engine, 
                                 SubQuery target) throws IOException {
-      super(engine);
+      super(engine, query);
       this.targetQuery = target;
       this.query = query;
       

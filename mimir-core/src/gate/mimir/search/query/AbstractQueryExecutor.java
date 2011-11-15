@@ -47,9 +47,15 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
    */
   protected QueryEngine engine;
   
+  /**
+   * The {@link QueryNode} for the query being executed.
+   */
+  protected QueryNode queryNode;
   
-  protected AbstractQueryExecutor(QueryEngine engine){
+  
+  protected AbstractQueryExecutor(QueryEngine engine, QueryNode qNode){
     this.engine = engine;
+    this.queryNode = qNode;
     latestDocument = -2;
   }
   
@@ -69,6 +75,12 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
 
   public QueryEngine getQueryEngine() {
     return engine;
+  }
+
+  
+  @Override
+  public QueryNode getQueryNode() {
+    return queryNode;
   }
 
   // Implementation for the MG4J DocumentIterator interface (only used for ranking)

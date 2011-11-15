@@ -52,7 +52,7 @@ public class AnnotationQuery implements QueryNode {
      * @param query
      */
     public AnnotationQueryExecutor(AnnotationQuery query, QueryEngine engine) throws IOException {
-      super(engine);
+      super(engine, query);
       this.query = query;
       buildQuery();
     }

@@ -18,6 +18,8 @@ package gate.mimir.search;
 import gate.mimir.index.IndexException;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
+import gate.mimir.search.query.QueryNode;
+import gate.mimir.search.score.MimirScorer;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -57,6 +59,10 @@ public class QueryRunnerImpl implements QueryRunner {
         long startTime = System.currentTimeMillis();
         if(currentDocStats == null){
           //this is the first search stage
+          // if we're ranking, we need to do multiple passes
+          if(scorer != null) {
+            
+          }
           currentDocStats = new int[]{nextNonDeleted(), 0};
         }
         int hitsThisStage = 0;
@@ -116,6 +122,8 @@ public class QueryRunnerImpl implements QueryRunner {
       }
       return nextDocId;
     }
+    
+    
   }
   
   protected Thread runningThread;
@@ -142,7 +150,13 @@ public class QueryRunnerImpl implements QueryRunner {
   protected int timeout = DEFAULT_TIMEOUT;
   
   protected QueryExecutor queryExecutor;
-  
+
+  /**
+   * The scorer to be used for ranking the results. Set to <code>null</code> if
+   * ranking is not required.  
+   */
+  protected MimirScorer scorer;
+    
   protected Logger logger =  Logger.getLogger(QueryRunnerImpl.class);
   
   /**
@@ -160,6 +174,17 @@ public class QueryRunnerImpl implements QueryRunner {
    */
   protected boolean closed = false;
   
+  /**
+   * Creates a query runner in ranking mode.
+   * @param qNode the {@link QueryNode} for the query being executed.
+   * @param scorer the {@link MimirScorer} to use for ranking.
+   * @param qEngine the {@link QueryEngine} used for executing the queries.
+   * @throws IOException
+   */
+  public QueryRunnerImpl(QueryExecutor executor, MimirScorer scorer) {
+    this(executor);
+    this.scorer = scorer;
+  }
   
   public QueryRunnerImpl(QueryExecutor executor) {
     this.queryExecutor = executor;

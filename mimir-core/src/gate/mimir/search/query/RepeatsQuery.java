@@ -47,7 +47,7 @@ public class RepeatsQuery implements QueryNode {
      * @throws IOException 
      */
     public RepeatsQueryExecutor(RepeatsQuery query, QueryEngine engine) throws IOException {
-      super(engine);
+      super(engine, query);
       this.query = query;
       this.wrappedExecutor = query.wrappedQuery.getQueryExecutor(engine);
       hitsOnCurrentDocument = new LinkedList<Binding[]>();

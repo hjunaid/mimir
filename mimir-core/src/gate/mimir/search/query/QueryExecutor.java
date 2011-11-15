@@ -81,4 +81,10 @@ public interface QueryExecutor extends DocumentIterator{
    * @return
    */
   public QueryEngine getQueryEngine();
+  
+  /**
+   * Gets that {@link QueryNode} representing the query being executed.
+   * @return
+   */
+  public QueryNode getQueryNode();
 }

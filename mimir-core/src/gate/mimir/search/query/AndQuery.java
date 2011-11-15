@@ -45,7 +45,7 @@ public class AndQuery implements QueryNode {
      */
     public AndQueryExecutor(AndQuery query, QueryEngine engine)
             throws IOException {
-      super(engine, query.nodes);
+      super(engine, query, query.nodes);
       this.query = query;
     }
 

@@ -93,7 +93,7 @@ public class SequenceQuery implements QueryNode {
      */
     public SequenceQueryExecutor(SequenceQuery query, QueryEngine engine) 
         throws IOException {
-      super(engine, query.nodes);
+      super(engine, query, query.nodes);
       this.query = query;
       //initialise the internal data
       hitsOnCurrentDocument = new LinkedList<Binding[]>();
