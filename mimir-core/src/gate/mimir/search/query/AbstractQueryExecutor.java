@@ -17,7 +17,6 @@ package gate.mimir.search.query;
 import gate.mimir.search.QueryEngine;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
-import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import it.unimi.dsi.mg4j.index.Index;
 import it.unimi.dsi.mg4j.search.DocumentIterator;
 import it.unimi.dsi.mg4j.search.IntervalIterator;

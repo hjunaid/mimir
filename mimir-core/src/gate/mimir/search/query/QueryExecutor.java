@@ -15,12 +15,9 @@
 package gate.mimir.search.query;
 
 import gate.mimir.search.QueryEngine;
-import it.unimi.dsi.mg4j.index.Index;
 import it.unimi.dsi.mg4j.search.DocumentIterator;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
 
 
 /**
