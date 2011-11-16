@@ -165,26 +165,30 @@ public class Scratch {
   
   public static void main(String[] args) throws Exception {
     // simulate a stream of documents, in increasing documentId order and random scores
-    int docCount = 10000;
+    int docCount = 1000000;
     int[] inputDocIds = new int[docCount];
-    final double[] inputDocScores = new double[docCount];
+    double[] inputDocScores = new double[docCount];
+    double maxScore = 0;
     for(int i = 0; i < inputDocIds.length; i++) {
-      int prevDocID = i == 0 ? 30 : inputDocIds[i -1];
-      inputDocIds[i] = (int)(prevDocID + (Math.random() * 10));
+      int prevDocID = i == 0 ? 0 : inputDocIds[i -1];
+      inputDocIds[i] = (int)(prevDocID + 1 + (Math.random() * 10));
       inputDocScores[i] = Math.random() * 100;
       if(inputDocIds[i] % 5 == 0) {
         // multiples of 5 are good
         inputDocScores[i] += 100;
       }
+      if(inputDocScores[i] > maxScore) maxScore = inputDocScores[i];
     }
     
     // how many documents are we keeping
-    int maxSize = 5;
+    int maxSize = 10000;
     
     int docIds[] = new int[maxSize];
     final double docScores[] = new double[maxSize];
     int docIdWriteIndex = 0;
     int docsByScore[] = new int[maxSize];
+    Arrays.fill(docIds, -1);
+    Arrays.fill(docScores, 0.0d);
     Arrays.fill(docsByScore, -1);
     
     for(int i = 0; i < inputDocIds.length; i++) {
@@ -200,8 +204,13 @@ public class Scratch {
             docIds[j] = docIds[j + 1];
             docScores[j] = docScores[j + 1];
           }
+          docIds[docIds.length -1] = -1;
+          docScores[docScores.length -1] = -1;
           for(int j = 0; j < docScores.length -1; j++){
-            docsByScore[j] = docsByScore[j + 1];
+            // the smallest scoring document disappears;
+            int newIndex = docsByScore[j + 1];
+            if(newIndex > smallestDoc) newIndex--;
+            docsByScore[j] = newIndex;
           }
           docsByScore[docsByScore.length - 1] = -1;
           docIdWriteIndex--;
@@ -224,9 +233,13 @@ public class Scratch {
     }
     
     // extract the results
-    for(int i = 0; i < docsByScore.length; i++) {
-      System.out.println("Doc id: " + docIds[docsByScore[i]] + ", score: " + docScores[docsByScore[i]]);
+//    System.out.print("Retained document IDs:");
+//    for(int docId : docIds) System.out.print(" " + docId);
+    System.out.println("\nID\tScore");
+    for(int i = docsByScore.length - 1; i >= docsByScore.length - 10 ; i--) {
+      System.out.println(docIds[docsByScore[i]] + "\t" + docScores[docsByScore[i]]);
     }
+    System.out.println("Max score: " + maxScore);
   }
   
 }
