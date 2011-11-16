@@ -14,8 +14,6 @@
  */
 package gate.mimir.search;
 
-
-
 import gate.mimir.DocumentMetadataHelper;
 import gate.mimir.index.IndexException;
 import gate.mimir.search.query.Binding;
@@ -27,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
-
 /**
  * A QueryRunner object can be used to execute a query in a separate thread. The
  * query execution will be performed in stages, each being limited to a given 
@@ -36,6 +32,14 @@ import java.util.Set;
  * statistics are made available about the number of hits currently obtained for
  * each document. The hits already collected can be accessed in a random 
  * fashion.
+ * 
+ * N.B. Documents are referred to in two different manners: 
+ * <ul>
+ *   <li>by documentId: the ID associated with the document at indexing time, 
+ *   which never changes</li>
+ *   <li>by index: the index in the list of documents found to contain hits.</li>
+ * </ul>
+ * You can tell which addressing scheme is used based on the of the parameter.
  * 
  * Implementations of this interface must be thread-safe!
  */
@@ -60,11 +64,14 @@ public interface QueryRunner {
    * 
    * If the query execution is currently in progress (i.e. a previous search 
    * stage has not yet finished), this call will have no effect. If a previous 
-   * query execution has completed, this call will cause it to restart, 
-   * accumulating more hits. 
+   * query execution stage has ended, this call will cause the search to 
+   * restart, accumulating more hits. If the search had finished, this call 
+   * will have no effect.
    *  
    * @see #setMaxHits(int)
    * @see #setTimeout(int)
+   * @see #isActive()
+   * @see #isComplete()
    *  
    * @throws IOException
    */
