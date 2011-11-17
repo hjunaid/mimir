@@ -43,7 +43,7 @@ import org.apache.log4j.Logger;
 /**
  * A QueryRunner implementation that does ranking.
  */
-public class RankingQueryRunnerImpl implements QueryRunner, Runnable {
+public class RankingQueryRunnerImpl implements Runnable {
   
   /**
    * When doing ranking, this class is used to delegate the iteration of 
@@ -112,6 +112,7 @@ public class RankingQueryRunnerImpl implements QueryRunner, Runnable {
    * built, so some elements may be null. 
    */
   protected ObjectList<Binding[]> documentHits;
+  
 
   /**
    * The order the documents should be returned in (elements in this list are 
@@ -150,8 +151,7 @@ public class RankingQueryRunnerImpl implements QueryRunner, Runnable {
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getMoreHits()
    */
-  @Override
-  public synchronized void getMoreHits() throws IOException {
+  protected synchronized void getMoreHits() throws IOException {
     if(runningThread != null){
       //we're already running -> ignore
       return;
@@ -163,163 +163,45 @@ public class RankingQueryRunnerImpl implements QueryRunner, Runnable {
       new Thread(this, getClass().getName()).start();
     }
   }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#setStageMaxHits(int)
+  
+  
+  /**
+   * Gets the number of documents found to contain hits. If the search has not
+   * yet completed, then -1 is returned.
+   * @return
    */
-  @Override
-  public void setStageMaxHits(int maxHits) throws IOException {
-    // TODO Auto-generated method stub
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#setStageTimeout(int)
-   */
-  @Override
-  public void setStageTimeout(int timeout) throws IOException {
-    // TODO Auto-generated method stub
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getHitsCount()
-   */
-  @Override
-  public int getHitsCount() {
-    // TODO Auto-generated method stub
-    return 0;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getDocumentsCount()
-   */
-  @Override
   public int getDocumentsCount() {
-    // TODO Auto-generated method stub
-    return 0;
+    if(queryExecutor == null) return documentIds.size();
+    else return -1;
   }
 
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getDocumentID(int)
+  /**
+   * Gets the number of documents found to contain hits so far. After the search
+   * completes, the result returned by this call is identical to that of 
+   * {@link #getDocumentsCount()}. 
+   * @return
    */
-  @Override
-  public int getDocumentID(int index) throws IndexOutOfBoundsException {
-    // TODO Auto-generated method stub
-    return 0;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getDocumentHitsCount(int)
-   */
-  @Override
-  public int getDocumentHitsCount(int index) throws IndexOutOfBoundsException {
-    // TODO Auto-generated method stub
-    return 0;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getHits(int, int)
-   */
-  @Override
-  public List<Binding> getHits(int startIndex, int hitCount)
-    throws IndexOutOfBoundsException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getHitsForDocument(int)
-   */
-  @Override
-  public List<Binding> getHitsForDocument(int documentId)
-    throws IndexOutOfBoundsException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#renderDocument(int, java.lang.Appendable)
-   */
-  @Override
-  public void renderDocument(int documentId, Appendable out)
-    throws IOException, IndexException {
-    // TODO Auto-generated method stub
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getDocumentURI(int)
-   */
-  @Override
-  public String getDocumentURI(int documentID) throws IndexException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getDocumentTitle(int)
-   */
-  @Override
-  public String getDocumentTitle(int documentID) throws IndexException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getDocumentMetadataField(int, java.lang.String)
-   */
-  @Override
-  public Serializable getDocumentMetadataField(int docID, String fieldName)
-    throws IndexException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getDocumentMetadataFields(int, java.util.Set)
-   */
-  @Override
-  public Map<String, Serializable> getDocumentMetadataFields(int docID,
-                                                             Set<String> fieldNames)
-    throws IndexException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#getDocumentText(int, int, int)
-   */
-  @Override
-  public String[][] getDocumentText(int documentID, int termPosition, int length)
-    throws IndexException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#isActive()
-   */
-  @Override
-  public boolean isActive() {
-    // TODO Auto-generated method stub
-    return false;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#isComplete()
-   */
-  @Override
-  public boolean isComplete() {
-    // TODO Auto-generated method stub
-    return false;
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.QueryRunner#close()
-   */
-  @Override
-  public void close() throws IOException {
-    // TODO Auto-generated method stub
+  public int getCurrentDocumentsCount() {
+    return documentIds.size();
   }
   
+  /**
+   * Gets the ID of a document found to contain hits.
+   * @param index the index of the desired document in the list of documents. 
+   * This should be a value between 0 and {@link #getDocumentsCount()} -1.
+   *  
+   * @return an int value, representing the ID of the requested document.
+   * @throws IndexOutOfBoundsException is the index provided is less than zero, 
+   * or greater than {@link #getDocumentsCount()} -1.
+   */
+  public int getDocumentID(int index) throws IndexOutOfBoundsException {
+    // TODO: check position index has been ranked yet
+    if(documentsOrder != null) {
+      return documentIds.getInt(documentsOrder.getInt(index));
+    } else {
+      return documentIds.getInt(index);  
+    }
+  }
   
   /**
    * Creates an {@link IntIterator} used for enumerating the documents in the
