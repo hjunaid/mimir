@@ -173,9 +173,9 @@ public class QueryEngine {
   protected Executor executor;
 
   /**
-   * How many documents get ranked in the first instance.
+   * How many documents get ranked in one ranking stage.
    */
-  private int rankedDocumentsCount = 1000;
+  private int rankingDocCount = 1000;
   
   /**
    * A list of currently active QueryRunners. This is used to close all active 
@@ -213,16 +213,22 @@ public class QueryEngine {
 
   /**
    * Gets the configuration parameter specifying the number of documents that 
-   * get ranked in the first instance. This is used to optimise the search 
-   * process by limiting the nuber of results that get calculated by default.
+   * get ranked in one ranking stage. This is used to optimise the search 
+   * process by limiting the number of results that get calculated by default.
    * @return
    */
-  public int getRankedDocumentsCount() {
-    return rankedDocumentsCount;
+  public int getRankingDocCount() {
+    return rankingDocCount;
   }
 
-  public void setRankedDocumentsCount(int rankedDocumentsCount) {
-    this.rankedDocumentsCount = rankedDocumentsCount;
+  /**
+   * Sets the configuration parameter specifying the number of documents that 
+   * get ranked in one ranking stage. This is used to optimise the search 
+   * process by limiting the number of results that get calculated by default.
+   * @param rankingDocCount
+   */
+  public void setRankingDocCount(int rankingDocCount) {
+    this.rankingDocCount = rankingDocCount;
   }
 
   /**
