@@ -450,7 +450,7 @@ public class RankingQueryRunnerImpl {
    * @param interval the interval specified by 2 document ranks
    * @return the future that has been queued for collecting the hits.
    */
-  protected Future collectHits(int[] interval) {
+  protected Future<?> collectHits(int[] interval) {
     // expand the interval to block size
     if(interval[1] - interval[0] < docBlockSize) {
       interval[0] -= docBlockSize / 2;
@@ -473,7 +473,7 @@ public class RankingQueryRunnerImpl {
         int start = Math.max(previousInterval[1], interval[0]);
         int end = Math.min(followingInterval[0], interval[1]);
         hitsCollector = new HitsCollector(start, end);
-        future = new FutureTask(hitsCollector, null);
+        future = new FutureTask<Object>(hitsCollector, null);
         hitCollectors.put(new int[]{start, end}, future);
       }
     }
