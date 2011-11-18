@@ -204,7 +204,6 @@ public abstract class AbstractOverlapQuery implements QueryNode{
       final T[] a = visitor.newArray( 1 );
       QueryExecutor executor = targetQuery == SubQuery.INNER ?
           innerExecutor : outerExecutor;
-      System.out.println("True path executor: " + executor.toString());
       if ( a == null ) {
         if ( executor.acceptOnTruePaths( visitor ) == null ) return null;
       }
