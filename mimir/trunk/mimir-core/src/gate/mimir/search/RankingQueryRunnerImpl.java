@@ -20,6 +20,7 @@ import gate.mimir.search.query.QueryExecutor;
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.score.MimirScorer;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrays;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -28,13 +29,16 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.log4j.Logger;
 
@@ -87,12 +91,55 @@ public class RankingQueryRunnerImpl {
     
     @Override
     public void run() {
-      // TODO Auto-generated method stub
-      if(documentScores != null) {
+      final boolean ranking = documentScores != null;
+      int[] documentIndexes = null;
+      if(ranking) {
         // we're ranking -> first calculate the range of documents in ID order
-        
+        documentIndexes = new int[end - start];
+        for(int i = start; i < end; i++) {
+          documentIndexes[i - start] = documentsOrder.getInt(i);
+        }
+        Arrays.sort(documentIndexes);
       }
       
+      try {
+        int docIndex = (documentIndexes != null ? documentIndexes[start] : start);
+        int docId = documentIds.getInt(docIndex);
+        if(queryExecutor.getLatestDocument() >= docId) {
+          // we need to 'scroll back' the executor: get a new executor
+          QueryExecutor oldExecutor = queryExecutor;
+          queryExecutor = queryExecutor.getQueryNode().getQueryExecutor(
+              queryExecutor.getQueryEngine());
+          oldExecutor.close();
+        }
+        for(int i = start; i < end; i++) {
+          docIndex = (documentIndexes != null ? 
+              documentIndexes[i - start] : start);
+          docId = documentIds.getInt(docIndex);
+          int newDoc = queryExecutor.nextDocument(docId - 1);
+          // sanity check
+          if(newDoc == docId) {
+            List<Binding> hits = new ObjectArrayList<Binding>();
+            Binding aHit = queryExecutor.nextHit();
+            while(aHit != null) {
+              hits.add(aHit);
+              aHit = queryExecutor.nextHit();
+            }
+            documentHits.set(docIndex, hits);
+          } else {
+            // we got the wrong document ID
+            logger.error("Unexpected document ID returned by executor " +
+            		"(got " + newDoc + " while expecting " + docId + "!");
+          }
+        }
+      } catch(IOException e) {
+        logger.error("Exception while restarting the query executor.", e);
+        try {
+          close();
+        } catch(IOException e1) {
+          logger.error("Exception while closing the query runner.", e1);
+        }
+      }
     }
   }
   
@@ -201,7 +248,7 @@ public class RankingQueryRunnerImpl {
    * contains the scores for the documents found to contain hits. This list is 
    * aligned to {@link #documentIds}.   
    */
-  protected DoubleList documentScores;
+  protected DoubleArrayList documentScores;
   
   /**
    * The sets of hits for each returned document. This data structure is lazily 
@@ -262,9 +309,17 @@ public class RankingQueryRunnerImpl {
     Runnable backgroundRunner = new BackgroundRunner();
     //get a thread from the executor, if one exists
     if(queryExecutor.getQueryEngine().getExecutor() != null){
-      queryExecutor.getQueryEngine().getExecutor().execute(backgroundRunner);
+      try {
+        queryExecutor.getQueryEngine().getExecutor().execute(backgroundRunner);
+      } catch(RejectedExecutionException e) {
+        logger.warn("Could not allocate a new background thread", e);
+        throw new RejectedExecutionException(
+          "System overloaded, please try again later."); 
+      }
     }else{
-      new Thread(backgroundRunner, getClass().getName()).start();
+      Thread theThread = new Thread(backgroundRunner, getClass().getName());
+      theThread.setDaemon(true);
+      theThread.start();
     }
 
     // queue a job for collecting all document ids
@@ -334,7 +389,7 @@ public class RankingQueryRunnerImpl {
       try {
         // find the Future working on it, or start a new one, 
         // then wait for it to complete
-        collectHits(new int[]{documentIndex, documentIndex}).get();
+        collectHits(new int[]{documentIndex, documentIndex + 1}).get();
         hits = documentHits.get(documentIndex);
       } catch(Exception e) {
         logger.error("Exception while waiting for hits collection", e);
@@ -347,11 +402,14 @@ public class RankingQueryRunnerImpl {
   
   /**
    * Given a document rank, return its index in the {@link #documentIds} list.
+   * If ranking is not being performed, then the rank is interpreted as an index 
+   * against the {@link #documentIds} list and is simply returned. 
    * @param rank
    * @return
    * @throws IOException, IndexOutOfBoundsException 
    */
-  protected int getDocumentIndex(int rank) throws IOException, IndexOutOfBoundsException {
+  protected int getDocumentIndex(int rank) throws IOException, 
+      IndexOutOfBoundsException {
     int maxIndex = documentIds.size();
     if(rank >= maxIndex) throw new IndexOutOfBoundsException(
       "Document index too large (" + rank + " > " + maxIndex + ".");
@@ -378,6 +436,7 @@ public class RankingQueryRunnerImpl {
    * @throws IOException 
    */
   protected void rankDocuments(int index) throws IOException {
+    if(index < documentsOrder.size()) return;
     synchronized(documentsOrder) {
       // rank some documents
       int rankRangeStart = documentsOrder.size();
@@ -397,7 +456,7 @@ public class RankingQueryRunnerImpl {
       // the score for the document above, which is a the upper limit for new scores
       double smallestOldScore = rankRangeStart > 0 ? 
           documentScores.getDouble(documentsOrder.getInt(rankRangeStart -1))
-          : -1;
+          : Double.POSITIVE_INFINITY;
       // now collect some more documents
       for(int i = 0; i < documentIds.size(); i++) {
         int documentId = documentIds.getInt(i);
@@ -414,24 +473,32 @@ public class RankingQueryRunnerImpl {
         // - it has a better score than the smallest score so far, but a 
         // smaller score than the maximum permitted score (i.e. it has not 
         // already been ranked)., or
-        // - it's a new document with the same score as the largest permitted score
+        // - it's a new document (i.e. with an ID strictly larger) with the same 
+        // score as the largest permitted score
         if(documentsOrderWriteIndex < rankRangeEnd 
            || 
-           (documentScore > smallestNewScore && 
-               (smallestOldScore < 0 || documentScore < smallestOldScore)) 
+           (documentScore > smallestNewScore && documentScore < smallestOldScore) 
            ||
-           documentScore == smallestOldScore && documentId != smallestOldScoreDocId) {
-          if(documentsOrderWriteIndex == rankRangeEnd) {
+           (documentScore == smallestOldScore && documentId > smallestOldScoreDocId)
+           ) {
+          if(documentsOrderWriteIndex > rankRangeEnd) {
             // we need to remove the  newly ranked document 
             // with the smallest score
             documentsOrderWriteIndex--;
             documentsOrder.removeInt(documentsOrderWriteIndex);
           }
           // find the rank for the new doc
-          int rank = rankRangeStart;
-          while(rank < documentsOrder.size() && 
-                documentScore < documentScores.getDouble(documentsOrder.getInt(rank))){
-            rank++;
+          // binary search for the insertion location
+          int rank = DoubleArrays.binarySearch(documentScores.elements(), 
+            rankRangeStart, documentsOrderWriteIndex, documentScore);
+          if(rank < 0) {
+            rank = -rank -1;
+          } else {
+            // skip all document with the same score (to keep ordering stable)
+            while(rank < documentsOrder.size() && 
+                documentScore <= documentScores.getDouble(documentsOrder.getInt(rank))){
+              rank++;
+            }            
           }
           documentsOrder.add(rank, i);
           documentsOrderWriteIndex++;
@@ -447,7 +514,9 @@ public class RankingQueryRunnerImpl {
   /**
    * Makes sure all the documents in the specified range are queued for hit 
    * collection. 
-   * @param interval the interval specified by 2 document ranks
+   * @param interval the interval specified by 2 document ranks. The interval is
+   * defined as the elements in {@link #documentsOrder} between ranks 
+   * interval[0] and (interval[1]-1) inclusive. 
    * @return the future that has been queued for collecting the hits.
    */
   protected Future<?> collectHits(int[] interval) {
@@ -457,14 +526,13 @@ public class RankingQueryRunnerImpl {
       interval[1] += docBlockSize / 2;
     }
     HitsCollector hitsCollector = null;
-    Future<?> future;
     synchronized(hitCollectors) {
       SortedMap<int[], Future<?>> headMap = hitCollectors.headMap(interval); 
       int[] previousInterval = headMap.isEmpty() ? new int[]{0,0} : 
           headMap.lastKey();
       if(previousInterval[1] >= interval[1]) {
         // we're part of previous interval
-        future = hitCollectors.get(previousInterval);
+        return hitCollectors.get(previousInterval);
       } else {
         // calculate an appropriate interval to collect hits for
         SortedMap<int[], Future<?>> tailMap = hitCollectors.tailMap(interval);
@@ -473,22 +541,21 @@ public class RankingQueryRunnerImpl {
         int start = Math.max(previousInterval[1], interval[0]);
         int end = Math.min(followingInterval[0], interval[1]);
         hitsCollector = new HitsCollector(start, end);
-        future = new FutureTask<Object>(hitsCollector, null);
+        FutureTask<?> future = new FutureTask<Object>(hitsCollector, null);
         hitCollectors.put(new int[]{start, end}, future);
+        try {
+          backgroundTasks.put(future);
+        } catch(InterruptedException e) {
+          logger.error("Error while queuing background work", e);
+          throw new RuntimeException("Error while queuing background work", e);
+        }
+        return future;
       }
     }
-    if(hitsCollector != null) {
-      try {
-        backgroundTasks.put(hitsCollector);
-      } catch(InterruptedException e) {
-        logger.error("Error while queuing background work", e);
-        throw new RuntimeException("Error while queuing background work", e);
-      }
-    }
-    return future;
   }
   
   public void close() throws IOException {
+    // TODO give back the borrowed thread
     queryExecutor.close();
     scorer = null;
     try {
