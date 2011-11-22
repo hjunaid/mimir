@@ -105,7 +105,8 @@ public class RankingQueryRunnerImpl {
       try {
         int docIndex = (documentIndexes != null ? documentIndexes[start] : start);
         int docId = documentIds.getInt(docIndex);
-        if(queryExecutor.getLatestDocument() >= docId) {
+        if(queryExecutor.getLatestDocument() < 0 ||
+           queryExecutor.getLatestDocument() >= docId) {
           // we need to 'scroll back' the executor: get a new executor
           QueryExecutor oldExecutor = queryExecutor;
           queryExecutor = queryExecutor.getQueryNode().getQueryExecutor(
@@ -296,8 +297,7 @@ public class RankingQueryRunnerImpl {
     documentHits = new ObjectArrayList<List<Binding>>();
     if(scorer != null) {
       documentScores = new DoubleArrayList();
-      documentsOrder = new IntArrayList(
-        queryExecutor.getQueryEngine().getRankingDocCount());
+      documentsOrder = new IntArrayList(docBlockSize);
     }
     hitCollectors = new Object2ObjectAVLTreeMap<int[], Future<?>>(
         new Comparator<int[]>(){
@@ -441,8 +441,8 @@ public class RankingQueryRunnerImpl {
       // rank some documents
       int rankRangeStart = documentsOrder.size();
       int rankRangeEnd = index;
-      if(rankRangeEnd - rankRangeStart < 
-          queryExecutor.getQueryEngine().getRankingDocCount()) {
+      if((rankRangeEnd - rankRangeStart) < 
+          (queryExecutor.getQueryEngine().getRankingDocCount() -1)) {
         // extend the size of the chunk of documents to be ranked
         rankRangeEnd = rankRangeStart + 
             queryExecutor.getQueryEngine().getRankingDocCount(); 
@@ -466,7 +466,7 @@ public class RankingQueryRunnerImpl {
         int smallestDocIndex = rankRangeStart < documentsOrder.size() ?
             documentsOrder.getInt(rankRangeStart) : -1;
         // the smallest score that's been seen in this new round 
-        double smallestNewScore = smallestDocIndex == -1 ? 0.0 : 
+        double smallestNewScore = smallestDocIndex == -1 ? Double.NEGATIVE_INFINITY : 
             documentScores.getDouble(smallestDocIndex);
         // we care about this new document if:
         // - we haven't collected enough documents yet, or
@@ -487,19 +487,10 @@ public class RankingQueryRunnerImpl {
             documentsOrderWriteIndex--;
             documentsOrder.removeInt(documentsOrderWriteIndex);
           }
-          // find the rank for the new doc
-          // binary search for the insertion location
-          int rank = DoubleArrays.binarySearch(documentScores.elements(), 
-            rankRangeStart, documentsOrderWriteIndex, documentScore);
-          if(rank < 0) {
-            rank = -rank -1;
-          } else {
-            // skip all document with the same score (to keep ordering stable)
-            while(rank < documentsOrder.size() && 
-                documentScore <= documentScores.getDouble(documentsOrder.getInt(rank))){
-              rank++;
-            }            
-          }
+          // find the rank for the new doc in the documentsOrder list
+          int rank = findRank(documentScore, rankRangeStart, 
+              documentsOrderWriteIndex);
+          // and insert
           documentsOrder.add(rank, i);
           documentsOrderWriteIndex++;
         }
@@ -509,6 +500,41 @@ public class RankingQueryRunnerImpl {
         collectHits(new int[] {rankRangeStart, documentsOrderWriteIndex});
       }
     }
+  }
+  
+  /**
+   * Given a document score, finds the correct insertion point into the 
+   * {@link #documentsOrder} list, within a given range of ranks.
+   * This method performs binary search followed by a linear scan so that the 
+   * returned insertion point is the largest correct one (i.e. later documents 
+   * with the same score get sorted after earlier ones, thus keeping the sorting
+   * stable).
+   *      
+   * @param documentScore the score for the new document.
+   * @param start the start of the search range within {@link #documentsOrder} 
+   * @param end the end of the search range within {@link #documentsOrder} 
+   * @return the largest correct insertion point
+   */
+  protected int findRank(double documentScore, int start, int end) {
+    // standard binary search
+    double midVal;
+    end--;
+    while (start <= end) {
+     int mid = (start + end) >>> 1;
+     midVal = documentScores.getDouble(documentsOrder.getInt(mid));
+     // note that the documentScores list is in decreasing order!
+     if (midVal > documentScore) start = mid + 1;
+     else if (midVal < documentScore) end = mid - 1;
+     else {
+       // we found a doc with exactly the same score: scan to the right
+       while(documentScores.getDouble(documentsOrder.getInt(mid)) == 
+           documentScore){
+         mid++;
+       }
+       return mid;
+     }
+    }
+    return start;
   }
   
   /**
