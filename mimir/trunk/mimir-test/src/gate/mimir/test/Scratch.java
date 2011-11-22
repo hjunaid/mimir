@@ -22,6 +22,7 @@ import java.util.Arrays;
 
 import gate.Gate;
 import gate.mimir.search.QueryEngine;
+import gate.mimir.search.QueryRunner;
 import gate.mimir.search.RankingQueryRunnerImpl;
 import gate.mimir.search.query.QueryExecutor;
 import gate.mimir.search.query.QueryNode;
@@ -158,7 +159,7 @@ public class Scratch {
     QueryEngine qEngine = new QueryEngine(new File(args[0]));
     QueryNode qNode = QueryParser.parse("invention");
     QueryExecutor qExecutor = qNode.getQueryExecutor(qEngine);
-    RankingQueryRunnerImpl qRunner = 
+    QueryRunner qRunner = 
         new RankingQueryRunnerImpl(qExecutor, 
           new DelegatingScoringQueryExecutor(new CountScorer()));
 //    
