@@ -32,6 +32,8 @@ public class ScratchConsole {
     // load the measurements plugin
     Gate.getCreoleRegister().registerDirectories(
       new File("../plugins/measurements").toURI().toURL());
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/sparql").toURI().toURL());
     QueryEngine qEngine = new QueryEngine(new File(args[0]));
     // Prepare console
     Console console = new Console();
