@@ -20,8 +20,6 @@ import gate.mimir.search.query.QueryExecutor;
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.score.MimirScorer;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.doubles.DoubleArrays;
-import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
@@ -31,7 +29,6 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.concurrent.BlockingQueue;
@@ -207,7 +204,7 @@ public class RankingQueryRunnerImpl {
         if(scoring) {
           // now rank the first batch of documents
           // this will also start a second background job to collect the hits
-          rankDocuments(queryExecutor.getQueryEngine().getRankingDocCount() -1);
+          rankDocuments(docBlockSize -1);
         }
       }catch (IOException e) {
         logger.error("Exception while collecting document IDs", e);
@@ -428,7 +425,9 @@ public class RankingQueryRunnerImpl {
   /**
    * Ranks some more documents (i.e. adds more entries to the 
    * {@link #documentsOrder} list, making sure that the document at provided 
-   * index is included.
+   * index is included (if such a document exists). If the provided index is 
+   * larger than the number of result documents, then all documents will be
+   * ranked before this method returns. 
    * This is the only method that writes to the {@link #documentsOrder} list.
    * This method is executed synchronously in the client thread.
    *  
@@ -441,14 +440,11 @@ public class RankingQueryRunnerImpl {
       // rank some documents
       int rankRangeStart = documentsOrder.size();
       int rankRangeEnd = index;
-      if((rankRangeEnd - rankRangeStart) < 
-          (queryExecutor.getQueryEngine().getRankingDocCount() -1)) {
+      if((rankRangeEnd - rankRangeStart) < (docBlockSize -1)) {
         // extend the size of the chunk of documents to be ranked
         rankRangeEnd = rankRangeStart + 
             queryExecutor.getQueryEngine().getRankingDocCount(); 
       }
-      int documentsOrderWriteIndex = rankRangeStart;
-      
       // the document with the minimum score already ranked.
       int smallestOldScoreDocId = rankRangeStart > 0 ? 
         documentIds.getInt(documentsOrder.getInt(rankRangeStart -1))
@@ -475,29 +471,26 @@ public class RankingQueryRunnerImpl {
         // already been ranked)., or
         // - it's a new document (i.e. with an ID strictly larger) with the same 
         // score as the largest permitted score
-        if(documentsOrderWriteIndex < rankRangeEnd 
+        if(documentsOrder.size() <= rankRangeEnd
            || 
            (documentScore > smallestNewScore && documentScore < smallestOldScore) 
            ||
            (documentScore == smallestOldScore && documentId > smallestOldScoreDocId)
            ) {
-          if(documentsOrderWriteIndex > rankRangeEnd) {
-            // we need to remove the  newly ranked document 
-            // with the smallest score
-            documentsOrderWriteIndex--;
-            documentsOrder.removeInt(documentsOrderWriteIndex);
-          }
           // find the rank for the new doc in the documentsOrder list
           int rank = findRank(documentScore, rankRangeStart, 
-              documentsOrderWriteIndex);
+              documentsOrder.size());
           // and insert
           documentsOrder.add(rank, i);
-          documentsOrderWriteIndex++;
+          // if we have too many documents, drop the lowest scoring one
+          if(documentsOrder.size() > rankRangeEnd + 1) {
+            documentsOrder.removeInt(documentsOrder.size());
+          }          
         }
       }
       // start collecting the hits for the newly ranked documents (in a new thread)
-      if(documentsOrderWriteIndex > rankRangeStart){
-        collectHits(new int[] {rankRangeStart, documentsOrderWriteIndex});
+      if(documentsOrder.size() > rankRangeStart){
+        collectHits(new int[] {rankRangeStart, documentsOrder.size()});
       }
     }
   }
@@ -522,7 +515,7 @@ public class RankingQueryRunnerImpl {
     while (start <= end) {
      int mid = (start + end) >>> 1;
      midVal = documentScores.getDouble(documentsOrder.getInt(mid));
-     // note that the documentScores list is in decreasing order!
+     // note that the documentOrder list is in decreasing score order!
      if (midVal > documentScore) start = mid + 1;
      else if (midVal < documentScore) end = mid - 1;
      else {
@@ -563,7 +556,8 @@ public class RankingQueryRunnerImpl {
         // calculate an appropriate interval to collect hits for
         SortedMap<int[], Future<?>> tailMap = hitCollectors.tailMap(interval);
         int[] followingInterval = tailMap.isEmpty() ? 
-          new int[]{Integer.MAX_VALUE, Integer.MAX_VALUE} : tailMap.firstKey();
+            new int[]{documentsOrder.size(), documentsOrder.size()} : 
+            tailMap.firstKey();
         int start = Math.max(previousInterval[1], interval[0]);
         int end = Math.min(followingInterval[0], interval[1]);
         hitsCollector = new HitsCollector(start, end);
