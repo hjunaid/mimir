@@ -1,0 +1,6 @@
+Mímir is undergoing major re-engineering. The current trunk in not guaranteed to
+work (or even compile!). If you want a stable version, please use one of the 
+release tags, or the 3.4 branch, all of which can be found at:
+
+- https://gate.svn.sourceforge.net/svnroot/gate/mimir/tags
+- https://gate.svn.sourceforge.net/svnroot/gate/mimir/branches
