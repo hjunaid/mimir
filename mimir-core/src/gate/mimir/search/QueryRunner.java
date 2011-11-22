@@ -8,7 +8,7 @@
  *  Version 3, June 2007 (also included with this distribution as file
  *  LICENCE-LGPL3.html).
  *
- *  Valentin tablan, 16 Dec 2009
+ *  Valentin Tablan, 22 Nov 2011
  *  
  *  $Id$
  */
@@ -25,241 +25,157 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
 /**
- * A QueryRunner object can be used to execute a query in a separate thread. The
- * query execution will be performed in stages, each being limited to a given 
- * number of maximum hits or a set timeout. During the query execution 
- * statistics are made available about the number of hits currently obtained for
- * each document. The hits already collected can be accessed in a random 
- * fashion.
+ * A QueryRunner is used to manage the execution of the query (supplied as a
+ * {@link QueryExecutor}). Implementations may use a background thread to 
+ * pre-fetch data which they then make available through the public API. 
  * 
- * N.B. Documents are referred to in two different manners: 
- * <ul>
- *   <li>by documentId: the ID associated with the document at indexing time, 
- *   which never changes</li>
- *   <li>by index: the index in the list of documents found to contain hits.</li>
- * </ul>
- * You can tell which addressing scheme is used based on the of the parameter.
+ * All references to documents are made by rank, i.e. the position of the 
+ * document in the list of results.
  * 
- * Implementations of this interface must be thread-safe!
+ * Unless there is a good reason not to (e.g. results ranking), the documents 
+ * will be returned in increasing documentID order.
+ * 
+ * QueryRunners that perform ranking will re-order the result list so that 
+ * documents are returned in decreasing score order. 
  */
 public interface QueryRunner {
-  
   /**
-   * The default number of hits obtained in one search stage.
-   */
-  public static final int DEFAULT_MAX_HITS = 1000000;
-  
-  
-  /**
-   * The default maximum amount of time (in milliseconds) used for one search 
-   * stage.
-   */
-  public static final int DEFAULT_TIMEOUT = 30000;
-  
-  /**
-   * Starts a new search stage, obtaining more results. Executes the query 
-   * asynchronously until a set number of hits are obtained, or a given 
-   * period is elapsed.
-   * 
-   * If the query execution is currently in progress (i.e. a previous search 
-   * stage has not yet finished), this call will have no effect. If a previous 
-   * query execution stage has ended, this call will cause the search to 
-   * restart, accumulating more hits. If the search had finished, this call 
-   * will have no effect.
-   *  
-   * @see #setMaxHits(int)
-   * @see #setTimeout(int)
-   * @see #isActive()
-   * @see #isComplete()
-   *  
-   * @throws IOException
-   */
-  public void getMoreHits() throws IOException;
-  
-  /**
-   * Sets the maximum number of hits to be obtain in one search stage. If not 
-   * set, the {@link #DEFAULT_MAX_HITS default value} is used.
-   * If the value provided is negative, then no limit is imposed on the number 
-   * of hits obtained.
-   *  
-   * @param the maximum number of hits to be obtained by the next call to 
-   * {@link #getMoreHits()}.
-   * @throws IOException if the communication with the query runner 
-   * implementation fails.
-   */
-  public void setStageMaxHits(int maxHits) throws IOException;
-  
-  /**
-   * Sets the maximum amount of time to be used for one search stage. If not 
-   * set, the {@link #DEFAULT_TIMEOUT default value} is used. If the value 
-   * provided is negative, then no limit is imposed on the amount of time spent.
-   * 
-   * @param timeout the maximum amount of time (in milliseconds) to be used by 
-   * the next call to {@link #getMoreHits()}. 
-   * @throws IOException if the communication with the query runner 
-   * implementation fails.
-   */
-  public void setStageTimeout(int timeout) throws IOException;
-  
-  /**
-   * Gets the number of hits obtained so far.
-   * This number may increase at any time if the query is currently
-   * {@link #isActive() active}.
-   * @return an int value, representing the number of hits.
-   */
-  public int getHitsCount();
-  
-  /**
-   * Gets the number of distinct documents found to contain hits so far.
-   * This number may increase at any time if the query is currently
-   * {@link #isActive() active}.
-   * @return an int value, representing the number of distinct documents.
+   * Gets the number of result documents.
+   * @return <code>-1</code> if the search has not yet completed, the total 
+   * number of result document otherwise. 
    */
   public int getDocumentsCount();
-  
+
   /**
-   * Gets the ID of a document found to contain hits.
-   * @param index the index of the desired document in the list of documents. 
+   * Gets the number of result documents found so far. After the search 
+   * completes, the result returned by this call is identical to that of 
+   * {@link #getDocumentsCount()}. 
+   * @return the number of result documents known so far.
+   */
+  public int getCurrentDocumentsCount();
+
+  /**
+   * Gets the ID of a result document.
+   * @param rank the index of the desired document in the list of documents. 
    * This should be a value between 0 and {@link #getDocumentsCount()} -1.
    *  
+   * If the requested document position has not yet been ranked (i.e. we know 
+   * there is a document at that position, but we don't yet know which one) then 
+   * the necessary ranking is performed before this method returns. 
+   *
    * @return an int value, representing the ID of the requested document.
    * @throws IndexOutOfBoundsException is the index provided is less than zero, 
    * or greater than {@link #getDocumentsCount()} -1.
+   * @throws IOException 
    */
-  public int getDocumentID(int index) throws IndexOutOfBoundsException;
-  
+  public int getDocumentID(int rank) throws IndexOutOfBoundsException,
+          IOException;
+
   /**
-   * Gets the number of hits for one of the documents found to contain hits.
-   * Note that for the <i>last</i> document this number is a lower bound - there
-   * may still be more hits to be found in this document (unless
-   * {@link #isComplete()} returns true).
-   * 
-   * @param index the index of the desired document in the list of documents. 
+   * Retrieves the hits within a given result document.
+   * @param rank the index of the desired document in the list of documents.
    * This should be a value between 0 and {@link #getDocumentsCount()} -1.
-   *  
-   * @return an int value, representing the number of hits on the requested 
-   * document.
-   * @throws IndexOutOfBoundsException is the index provided is less than zero, 
-   * or greater than {@link #getDocumentsCount()} -1.
-   */
-  public int getDocumentHitsCount(int index) throws IndexOutOfBoundsException;
-  
-  /**
-   * Gets a subset of the hits obtained so far.  If the set of hits requested
-   * does not exist (e.g. if the startIndex is too large) then an empty
-   * list will be returned.
    * 
-   * @param startIndex the index of the first requested hit.
-   * @param hitCount the maximum number of hits to be returned (fewer hits will 
-   * be returned if there aren't enough available).
-   * @return a list of maximum hitCount hits.
-   * @throws IndexOutOfBoundsException if startIndex is negative.
+   * This method call waits until the requested data is available before 
+   * returning (document hits are being collected by a background thread).
+   * 
+   * @return
+   * @throws IOException 
+   * @throws IndexOutOfBoundsException 
    */
-  public List<Binding> getHits(int startIndex, int hitCount)
-      throws IndexOutOfBoundsException;
-  
+  public List<Binding> getDocumentHits(int rank)
+          throws IndexOutOfBoundsException, IOException;
+
   /**
-   * Gets all the hits for a given document.
-   * @param documentId the ID of the document for which the hits are being 
-   * requested.
-   * @return a list of hits
+   * Gets a segment of the document text for a given document.
+   * @param rank the rank of the requested document.
+   * @param termPosition the first term requested.
+   * @param length the number of terms requested.
+   * @return two parallel String arrays, one containing term text, the other 
+   * containing the spaces in between. The first term is results[0][0], the 
+   * space following it is results[1][0], etc.
+   * 
+   * @throws IndexException
    * @throws IndexOutOfBoundsException
+   * @throws IOException
    */
-  public List<Binding> getHitsForDocument(int documentId)
-      throws IndexOutOfBoundsException;
-  
+  public String[][] getDocumentText(int rank, int termPosition, int length)
+          throws IndexException, IndexOutOfBoundsException, IOException;
+
   /**
-   * Render the content of the given document, with the hits for this query
-   * highlighted.
-   * @param documentId
-   * @param out
-   * @throws IOException if the output cannot be written to.
-   * @throws IndexException if no document renderer is available.
+   * Obtains the URI for a given document.
+   * @param rank the rank for the requested document.
+   * @return the URI provided at indexing time for the document.
+   * @throws IndexException
+   * @throws IndexOutOfBoundsException
+   * @throws IOException
    */
-  public void renderDocument(int documentId, Appendable out) throws IOException, 
-      IndexException;
-  
-  
+  public String getDocumentURI(int rank) throws IndexException,
+          IndexOutOfBoundsException, IOException;
+
   /**
-   * Obtains the URI for a given document (specified by its ID).
-   * @param documentID
-   * @return
-   * @throws IndexException if the document URI cannot be retrieved from the 
-   * index.
+   * Obtains the title for a given document.
+   * @param rank the rank of the requested document.
+   * @return the document title (provided at indexing time).
+   * @throws IndexException
+   * @throws IndexOutOfBoundsException
+   * @throws IOException
    */
-  public String getDocumentURI(int documentID) throws IndexException;
-  
-  /**
-   * Obtains the title for a given document (specified by its ID).
-   * @param documentID
-   * @return
-   * @throws IndexException if the document title cannot be retrieved from the 
-   * index.
-   */
-  public String getDocumentTitle(int documentID) throws IndexException;
-  
+  public String getDocumentTitle(int rank) throws IndexException,
+          IndexOutOfBoundsException, IOException;
+
   /**
    * Obtains an arbitrary document metadata field from the stored document data.
    * {@link DocumentMetadataHelper}s used at indexing time can add arbitrary 
    * {@link Serializable} values as metadata fields for the documents being
-   * indexed. This method is used at search time to retrieve those values. 
-   *  
-   * @param docID the ID of document for which the metadata is sought.
-   * @param fieldName the name of the metadata fields to be obtained
-   * @return the de-serialised value stored at indexing time for the given 
-   * field name and document.
+   * indexed. This method is used at search time to retrieve those values.
+   * 
+   * @param rank the rank for the requested document.
+   * @param fieldName the field name for which the value is sought.
+   * @return
    * @throws IndexException
-   */  
-  public Serializable getDocumentMetadataField(int docID, String fieldName) 
-      throws IndexException;
-  
+   * @throws IndexOutOfBoundsException
+   * @throws IOException
+   */
+  public Serializable getDocumentMetadataField(int rank, String fieldName)
+          throws IndexException, IndexOutOfBoundsException, IOException;
+
   /**
    * Obtains a set of arbitrary document metadata fields from the stored 
    * document data.
    * {@link DocumentMetadataHelper}s used at indexing time can add arbitrary 
    * {@link Serializable} values as metadata fields for the documents being
-   * indexed. This method is used at search time to retrieve those values. 
-   *  
-   * @param docID the ID of document for which the metadata is sought.
-   * @param fieldNames the names of the metadata fields to be obtained
-   * @return the de-serialised values stored at indexing time for the given 
-   * field names and document (as a Map from field name to filed value).
+   * indexed. This method is used at search time to retrieve those values.
+   * 
+   * @param rank the rank for the requested document.
+   * @param fieldNames the names of the metadata fields for which the values are 
+   * requested.
+   * @return a {@link Map} linking field names with their values.
    * @throws IndexException
-   */  
-  public Map<String, Serializable> getDocumentMetadataFields(int docID, 
-      Set<String> fieldNames) throws IndexException;  
-  
-  /**
-   * Gets a segment of the document text for a given document. 
-   * @param documentID
-   * @param startToken
-   * @param length
-   * @return
-   * @throws IndexException if the document text cannot be retrieved from the 
-   * index.
+   * @throws IndexOutOfBoundsException
+   * @throws IOException
    */
-  public String[][] getDocumentText(int documentID, int termPosition, 
-          int length) throws IndexException;
-  
+  public Map<String, Serializable> getDocumentMetadataFields(int rank,
+          Set<String> fieldNames) throws IndexException,
+          IndexOutOfBoundsException, IOException;
+
   /**
-   * Checks whether a search stage is currently active.
-   * @return <code>true</code> iff more hits are currently being sought (a 
-   * search stage has started and not finished yet)
+   * Render the content of the given document, with the hits for this query
+   * highlighted.
+   * 
+   * @param rank the rank for the requested document.
+   * @param out an {@link Appendable} to which the output is written.
+   * @throws IOException
+   * @throws IndexException
    */
-  public boolean isActive();
-  
-  /**
-   * Checks whether all the available hits have been obtained. When this returns
-   * <code>true</code>, further calls to {@link #getMoreHits()} will have no 
-   * effect. 
-   * @return <code>true</code> after all the possible hits have been obtained.
-   */
-  public boolean isComplete();
-  
+  public void renderDocument(int rank, Appendable out) throws IOException,
+          IndexException;
+
   /**
    * Closes this {@link QueryExecutor} and releases all resources used.
-   * @throws IOException if the index files cannot be accessed.
+   * @throws IOException
    */
   public void close() throws IOException;
 }

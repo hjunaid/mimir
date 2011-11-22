@@ -15,6 +15,8 @@
  */
 package gate.mimir.search;
 
+import gate.mimir.DocumentMetadataHelper;
+import gate.mimir.index.IndexException;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
 import gate.mimir.search.query.QueryNode;
@@ -27,9 +29,13 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
@@ -43,21 +49,32 @@ import org.apache.log4j.Logger;
  * A QueryRunner implementation that can perform ranking.
  * This query runner has two modes of functioning: ranking and non-ranking, 
  * depending on whether a {@link MimirScorer} is provided  during construction
- * or not.  
+ * or not.
+ * All documents are referred to using their rank (i.e. position in the list of 
+ * results). When working in non-ranking mode, ranking order is the same as 
+ * document ID order.
  */
-public class RankingQueryRunnerImpl {
+public class RankingQueryRunnerImpl implements QueryRunner {
   
-  private static final Runnable NO_MORE_JOBS = new Runnable(){ 
+  
+  /**
+   * Constant used as a flag to mark then of a list of tasks.
+   */
+  private static final Runnable NO_MORE_TASKS = new Runnable(){ 
     public void run() {}
   };
   
+  /**
+   * The background thread implementation: simply collects {@link Runnable}s 
+   * from the {@link RankingQueryRunnerImpl#backgroundTasks} queue and runs them. 
+   */
   protected class BackgroundRunner implements Runnable {
     @Override
     public void run() {
       try {
         while(true) {
           Runnable job = backgroundTasks.take();
-          if(job == NO_MORE_JOBS) break;
+          if(job == NO_MORE_TASKS) break;
           else  job.run();
         }
       } catch(InterruptedException e) {
@@ -107,7 +124,7 @@ public class RankingQueryRunnerImpl {
           // we need to 'scroll back' the executor: get a new executor
           QueryExecutor oldExecutor = queryExecutor;
           queryExecutor = queryExecutor.getQueryNode().getQueryExecutor(
-              queryExecutor.getQueryEngine());
+                  queryEngine);
           oldExecutor.close();
         }
         for(int i = start; i < end; i++) {
@@ -217,12 +234,20 @@ public class RankingQueryRunnerImpl {
     }
   }
   
-  protected Logger logger =  Logger.getLogger(RankingQueryRunnerImpl.class);
+  /**
+   * Shared logger instance.
+   */
+  protected static Logger logger =  Logger.getLogger(RankingQueryRunnerImpl.class);
   
   /**
    * The {@link QueryExecutor} for the query being run.
    */
   protected QueryExecutor queryExecutor;
+  
+  /**
+   * The QueryEngine we run inside.
+   */
+  protected QueryEngine queryEngine;
   
   /**
    * The {@link MimirScorer} to be used for ranking documents.
@@ -277,6 +302,9 @@ public class RankingQueryRunnerImpl {
    */
   protected BlockingQueue<Runnable> backgroundTasks;
   
+  /**
+   * Flag used to mark that all results documents have been counted.
+   */
   protected volatile boolean allDocIdsCollected = false;
   
   /**
@@ -289,7 +317,8 @@ public class RankingQueryRunnerImpl {
   public RankingQueryRunnerImpl(QueryExecutor executor, MimirScorer scorer) throws IOException {
     this.queryExecutor = executor;
     this.scorer = scorer;
-    docBlockSize = queryExecutor.getQueryEngine().getRankingDocCount();
+    queryEngine = queryExecutor.getQueryEngine();
+    docBlockSize = queryEngine.getRankingDocCount();
     documentIds = new IntArrayList();
     documentHits = new ObjectArrayList<List<Binding>>();
     if(scorer != null) {
@@ -305,9 +334,9 @@ public class RankingQueryRunnerImpl {
     backgroundTasks = new LinkedBlockingQueue<Runnable>();
     Runnable backgroundRunner = new BackgroundRunner();
     //get a thread from the executor, if one exists
-    if(queryExecutor.getQueryEngine().getExecutor() != null){
+    if(queryEngine.getExecutor() != null){
       try {
-        queryExecutor.getQueryEngine().getExecutor().execute(backgroundRunner);
+        queryEngine.getExecutor().execute(backgroundRunner);
       } catch(RejectedExecutionException e) {
         logger.warn("Could not allocate a new background thread", e);
         throw new RejectedExecutionException(
@@ -328,56 +357,35 @@ public class RankingQueryRunnerImpl {
     }
   }
   
-  /**
-   * Gets the number of result documents. If the search has not yet completed, 
-   * then -1 is returned.
-   * @return
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getDocumentsCount()
    */
+  @Override
   public int getDocumentsCount() {
     if(allDocIdsCollected) return documentIds.size();
     else return -1;
   }
 
-  /**
-   * Gets the number of documents found to contain hits so far. After the search
-   * completes, the result returned by this call is identical to that of 
-   * {@link #getDocumentsCount()}. 
-   * @return
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getCurrentDocumentsCount()
    */
+  @Override
   public int getCurrentDocumentsCount() {
     return documentIds.size();
   }
   
-  /**
-   * Gets the ID of a result document.
-   * @param rank the index of the desired document in the list of documents. 
-   * This should be a value between 0 and {@link #getDocumentsCount()} -1.
-   *  
-   * If the requested document position has not yet been ranked (i.e. we know 
-   * there is a document at that position, but we don't yet know which one) then 
-   * the necessary ranking is performed before this method returns. 
-   *
-   * @return an int value, representing the ID of the requested document.
-   * @throws IndexOutOfBoundsException is the index provided is less than zero, 
-   * or greater than {@link #getDocumentsCount()} -1.
-   * @throws IOException 
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getDocumentID(int)
    */
+  @Override
   public int getDocumentID(int rank) throws IndexOutOfBoundsException, IOException {
     return documentIds.getInt(getDocumentIndex(rank));
   }
   
-  /**
-   * Retrieves the hits withing a given result document.
-   * @param rank the index of the desired document in the list of documents.
-   * This should be a value between 0 and {@link #getDocumentsCount()} -1.
-   * 
-   * This method call waits until the requested data is available before 
-   * returning (document hits are being collected by a background thread).
-   * 
-   * @return
-   * @throws IOException 
-   * @throws IndexOutOfBoundsException 
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getDocumentHits(int)
    */
+  @Override
   public List<Binding> getDocumentHits(int rank) throws IndexOutOfBoundsException, IOException {
     int documentIndex = getDocumentIndex(rank);
     List<Binding> hits = documentHits.get(documentIndex);
@@ -442,8 +450,7 @@ public class RankingQueryRunnerImpl {
       int rankRangeEnd = index;
       if((rankRangeEnd - rankRangeStart) < (docBlockSize -1)) {
         // extend the size of the chunk of documents to be ranked
-        rankRangeEnd = rankRangeStart + 
-            queryExecutor.getQueryEngine().getRankingDocCount(); 
+        rankRangeEnd = rankRangeStart + docBlockSize; 
       }
       // the document with the minimum score already ranked.
       int smallestOldScoreDocId = rankRangeStart > 0 ? 
@@ -520,7 +527,8 @@ public class RankingQueryRunnerImpl {
      else if (midVal < documentScore) end = mid - 1;
      else {
        // we found a doc with exactly the same score: scan to the right
-       while(documentScores.getDouble(documentsOrder.getInt(mid)) == 
+       while(documentsOrder.size() < mid && 
+             documentScores.getDouble(documentsOrder.getInt(mid)) == 
            documentScore){
          mid++;
        }
@@ -574,12 +582,79 @@ public class RankingQueryRunnerImpl {
     }
   }
   
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getDocumentText(int, int, int)
+   */
+  @Override
+  public String[][] getDocumentText(int rank, int termPosition, int length) 
+          throws IndexException, IndexOutOfBoundsException, IOException {
+    return queryEngine.getText(getDocumentID(rank), termPosition, length);
+  }
+
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getDocumentURI(int)
+   */
+  @Override
+  public String getDocumentURI(int rank) throws IndexException, 
+      IndexOutOfBoundsException, IOException {
+    return queryEngine.getDocumentURI(getDocumentID(rank));
+  }
+
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getDocumentTitle(int)
+   */
+  @Override
+  public String getDocumentTitle(int rank) throws IndexException, 
+      IndexOutOfBoundsException, IOException {
+    return queryEngine.getDocumentTitle(getDocumentID(rank));
+  }
+
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getDocumentMetadataField(int, java.lang.String)
+   */
+  @Override
+  public Serializable getDocumentMetadataField(int rank, String fieldName)
+      throws IndexException, IndexOutOfBoundsException, IOException {
+    return queryEngine.getDocumentMetadataField(getDocumentID(rank), fieldName);
+  }
+
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getDocumentMetadataFields(int, java.util.Set)
+   */
+  @Override
+  public Map<String, Serializable> getDocumentMetadataFields(int rank,
+      Set<String> fieldNames) throws IndexException, IndexOutOfBoundsException, 
+      IOException {
+    Map<String, Serializable> res = new HashMap<String, Serializable>();
+    int docId = getDocumentID(rank);
+    for(String fieldName : fieldNames) {
+      Serializable value = getDocumentMetadataField(docId, fieldName);
+      if(value != null) res.put(fieldName, value);
+    }
+    return res;
+  }
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#renderDocument(int, java.lang.Appendable)
+   */
+  @Override
+  public void renderDocument(int rank, Appendable out) throws IOException, 
+      IndexException {
+        queryEngine.renderDocument(getDocumentID(rank), 
+                getDocumentHits(rank), out);
+  }
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#close()
+   */
+  @Override
   public void close() throws IOException {
-    // TODO give back the borrowed thread
     queryExecutor.close();
     scorer = null;
     try {
-      backgroundTasks.put(NO_MORE_JOBS);
+      // stop the background tasks runnable, 
+      // which will return the thread to the pool
+      backgroundTasks.put(NO_MORE_TASKS);
     } catch(InterruptedException e) {
       // ignore
     }
