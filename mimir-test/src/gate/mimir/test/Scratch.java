@@ -14,16 +14,20 @@ import it.unimi.dsi.mg4j.search.score.DelegatingScorer;
 import it.unimi.dsi.mg4j.search.score.Scorer;
 import it.unimi.dsi.mg4j.search.score.TfIdfScorer;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.text.NumberFormat;
 import java.util.Arrays;
 
 import gate.Gate;
 import gate.mimir.search.QueryEngine;
+import gate.mimir.search.RankingQueryRunnerImpl;
 import gate.mimir.search.query.QueryExecutor;
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.QueryParser;
 import gate.mimir.search.score.BindingScorer;
+import gate.mimir.search.score.DelegatingScoringQueryExecutor;
 import gate.mimir.search.score.MimirScorer;
 
 public class Scratch {
@@ -78,7 +82,7 @@ public class Scratch {
    * Version that exercises the scorers 
    * @param args
    */
-  public static void mainScore(String[] args) throws Exception {
+  public static void mainTextConsole(String[] args) throws Exception {
     Gate.setGateHome(new File("gate-home"));
     Gate.setUserConfigFile(new File("gate-home/user-gate.xml"));
     Gate.init();
@@ -91,23 +95,74 @@ public class Scratch {
     // load the measurements plugin
     Gate.getCreoleRegister().registerDirectories(
       new File("../plugins/measurements").toURI().toURL());
-    String query = "{Measurement}";
     QueryEngine qEngine = new QueryEngine(new File(args[0]));
-    QueryNode qNode = QueryParser.parse(query);
-    QueryExecutor qExecutor = qNode.getQueryExecutor(qEngine);
-    // TfIdfScorer scorer = new TfIdfScorer();
-    // BM25Scorer scorer = new BM25Scorer();
-    // CountScorer innerScorer = new CountScorer();
-    // MimirScorer scorer = new DelegatingScoringQueryExecutor(innerScorer);
-    MimirScorer scorer = new BindingScorer(2, 0.9);
-    scorer.wrap(qExecutor);
-    // TestUtils.dumpResultsToFile(qExecutor, new File("results.txt"));
-    int latestDoc = scorer.nextDocument(-1);
-    while(latestDoc >= 0) {
-      System.out.println("Doc " + latestDoc + ", score: " + scorer.score());
-      latestDoc = scorer.nextDocument(-1);
-    }
+    BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
+    String query = null;
+    do {
+      try{
+        System.out.print("? ");
+        query = input.readLine();
+        long start = System.currentTimeMillis();
+        if(query == null || query.trim().length() == 0) break;
+        QueryNode qNode = QueryParser.parse(query);
+        QueryExecutor qExecutor = qNode.getQueryExecutor(qEngine);
+        // MimirScorer scorer = new DelegatingScoringQueryExecutor(new TfIdfScorer());
+        // MimirScorer scorer = new DelegatingScoringQueryExecutor(new CountScorer());
+//         MimirScorer scorer = new DelegatingScoringQueryExecutor(new BM25Scorer());
+        MimirScorer scorer = new BindingScorer(2, 0.9);
+        scorer.wrap(qExecutor);
+        double minScore = Double.MAX_VALUE;
+        double maxScore = Double.MIN_VALUE;
+        int docCount = 0;
+        // TestUtils.dumpResultsToFile(qExecutor, new File("results.txt"));
+        int latestDoc = scorer.nextDocument();
+        while(latestDoc >= 0) {
+          docCount ++;
+          double score = scorer.score();
+          if(score < minScore) minScore = score;
+          if(score > maxScore) maxScore = score;
+          latestDoc = scorer.nextDocument(-1);
+        }
+        
+        System.out.println(String.format(
+          "Matched %d documents, scores %02.4f - %02.4f, in %02.2f seconds", 
+          docCount, minScore, maxScore, 
+          (double)(System.currentTimeMillis() - start)/1000));
+        
+        qExecutor.close();
+      }catch(Exception e) {
+        e.printStackTrace(System.err);
+      }
+    } while (query != null);
     qEngine.close();
+  }  
+  
+  
+  /**
+   * Version that exercises the scorers 
+   * @param args
+   */
+  public static void main(String[] args) throws Exception {
+    Gate.setGateHome(new File("gate-home"));
+    Gate.setUserConfigFile(new File("gate-home/user-gate.xml"));
+    Gate.init();
+    // load the tokeniser plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("gate-home/plugins/ANNIE-tokeniser").toURI().toURL());
+    // load the DB plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/db-h2").toURI().toURL());
+    // load the measurements plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/measurements").toURI().toURL());
+    QueryEngine qEngine = new QueryEngine(new File(args[0]));
+    QueryNode qNode = QueryParser.parse("invention");
+    QueryExecutor qExecutor = qNode.getQueryExecutor(qEngine);
+    RankingQueryRunnerImpl qRunner = 
+        new RankingQueryRunnerImpl(qExecutor, 
+          new DelegatingScoringQueryExecutor(new CountScorer()));
+//    
+//    qEngine.close();
   }  
   
   public static void mainPrioQueue(String[] args) throws Exception {
@@ -163,7 +218,7 @@ public class Scratch {
   }
   
   
-  public static void main(String[] args) throws Exception {
+  public static void mainSorting(String[] args) throws Exception {
     // simulate a stream of documents, in increasing documentId order and random scores
     int docCount = 1000000;
     int[] inputDocIds = new int[docCount];
