@@ -182,7 +182,7 @@ public class QueryEngine {
    * runners when the query engine itself is closed (thus releasing all open 
    * files).
    */
-  private List<QueryRunner> activeQueryRunners;
+  private List<QueryRunnerMk1> activeQueryRunners;
   
   /**
    * @return the indexDir
@@ -363,7 +363,7 @@ public class QueryEngine {
       readDeletedDocs();
       
       activeQueryRunners = Collections.synchronizedList(
-              new ArrayList<QueryRunner>());
+              new ArrayList<QueryRunnerMk1>());
     } catch(FileNotFoundException e) {
       throw new IndexException("File not found!", e);
     } catch(IOException e) {
@@ -383,10 +383,10 @@ public class QueryEngine {
    * @throws IOException
    *           if the index files cannot be accessed.
    */
-  public QueryRunner getQueryRunner(QueryNode query) throws IOException {
+  public QueryRunnerMk1 getQueryRunner(QueryNode query) throws IOException {
     logger.info("Executing query: " + query.toString());
     QueryExecutor qExecutor = query.getQueryExecutor(this);
-    QueryRunner qRunner = new QueryRunnerImpl(qExecutor);
+    QueryRunnerMk1 qRunner = new QueryRunnerImpl(qExecutor);
     activeQueryRunners.add(qRunner);
     return qRunner;
   }
@@ -395,7 +395,7 @@ public class QueryEngine {
    * Notifies the QueryEngine that the given QueryRunner has been closed. 
    * @param qRunner
    */
-  public void releaseQueryRunner(QueryRunner qRunner) {
+  public void releaseQueryRunner(QueryRunnerMk1 qRunner) {
     activeQueryRunners.remove(qRunner);
   }
 
@@ -411,7 +411,7 @@ public class QueryEngine {
    * @throws ParseException
    *           if the string provided for the query cannot be parsed.
    */
-  public QueryRunner getQueryRunner(String query) throws IOException,
+  public QueryRunnerMk1 getQueryRunner(String query) throws IOException,
   ParseException {
     logger.info("Executing query: " + query.toString());
     QueryNode qNode =
@@ -643,8 +643,8 @@ public class QueryEngine {
    */
   public void close() {
     // close all active query runners
-    List<QueryRunner> runnersCopy = new ArrayList<QueryRunner>(activeQueryRunners);
-    for(QueryRunner aRunner : runnersCopy) {
+    List<QueryRunnerMk1> runnersCopy = new ArrayList<QueryRunnerMk1>(activeQueryRunners);
+    for(QueryRunnerMk1 aRunner : runnersCopy) {
       try {
         logger.debug("Closing query runner: " + aRunner.toString());
         aRunner.close();

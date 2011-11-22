@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
  * @author valyt
  *
  */
-public class QueryRunnerImpl implements QueryRunner {
+public class QueryRunnerImpl implements QueryRunnerMk1 {
   
   private class SearchStageRunner implements Runnable{
     

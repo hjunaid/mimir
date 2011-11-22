@@ -31,14 +31,14 @@ import java.util.Set;
 /**
  * QueryRunner implementation for querying federated indexes.
  */
-public class FederatedQueryRunner implements QueryRunner {
+public class FederatedQueryRunner implements QueryRunnerMk1 {
 
   /**
    * The QueryRunners running the sub-queries of this federated
    * query.  Typically this would be one runner for each sub-index,
    * all running the same query string.
    */
-  protected QueryRunner[] subRunners;
+  protected QueryRunnerMk1[] subRunners;
 
   /**
    * A pointer to the most recent DocumentData object in the
@@ -124,7 +124,7 @@ public class FederatedQueryRunner implements QueryRunner {
    * Create a federated query runner that delegates to the specified
    * sub-query runners.
    */
-  public FederatedQueryRunner(QueryRunner[] subRunners) {
+  public FederatedQueryRunner(QueryRunnerMk1[] subRunners) {
     super();
     this.subRunners = subRunners;
     // Java doesn't allow you to create an array of generic elements
@@ -453,7 +453,7 @@ public class FederatedQueryRunner implements QueryRunner {
    * Tell all the sub-query runners to getMoreHits.
    */
   public void getMoreHits() throws IOException {
-    for(QueryRunner r : subRunners) {
+    for(QueryRunnerMk1 r : subRunners) {
       r.getMoreHits();
     }
   }
@@ -495,7 +495,7 @@ public class FederatedQueryRunner implements QueryRunner {
    * Pass on the stage timeout to all the sub-runners.
    */
   public void setStageTimeout(int timeout) throws IOException {
-    for(QueryRunner r : subRunners) {
+    for(QueryRunnerMk1 r : subRunners) {
       r.setStageTimeout(timeout);
     }
   }
@@ -504,7 +504,7 @@ public class FederatedQueryRunner implements QueryRunner {
    * Close all the sub-query runners.
    */
   public void close() throws IOException {
-    for(QueryRunner r : subRunners) {
+    for(QueryRunnerMk1 r : subRunners) {
       r.close();
     }
   }
