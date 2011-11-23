@@ -32,7 +32,7 @@ import java.util.concurrent.Executor;
 import org.apache.log4j.Logger;
 
 
-public class RemoteQueryRunner implements QueryRunner {
+public class RemoteQueryRunner implements QueryRunnerMk1 {
   /**
    * The WebUtils instance we use to communicate with the remote
    * index.
