@@ -318,7 +318,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
     this.queryExecutor = executor;
     this.scorer = scorer;
     queryEngine = queryExecutor.getQueryEngine();
-    docBlockSize = queryEngine.getRankingDocCount();
+    docBlockSize = queryEngine.getDocumentBlockSize();
     documentIds = new IntArrayList();
     documentHits = new ObjectArrayList<List<Binding>>();
     if(scorer != null) {
