@@ -1060,48 +1060,4 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   
     return null;
   }
-  
-  /**
-   * test code: to be removed
-   * @param args
-   * @throws IndexException 
-   */
-  public static void main (String[] args) throws Exception{
-    Gate.init();
-    // load the tokeniser plugin
-    Gate.getCreoleRegister().registerDirectories(new File("test/gate-home/plugins/ANNIE-tokeniser").toURI().toURL());
-//    buildIndex();
-    
-    String queries[] = new String[] {
-      "to {Measurement spec=\"2 to 20 seconds\"}"
-//      ,"{Sentence}"
-    };
-    for(String aQuery : queries) queryIndex(aQuery);
-    
-    System.exit(0);
-  }
-
-  private static transient QueryEngine qEngine;
-  
-  private static void queryIndex(String query) throws Exception {
-    if(qEngine == null)  qEngine = new QueryEngine(new File("index"));
-    
-    QueryRunner qRunner = qEngine.getQueryRunner(query);
-    while(!qRunner.isComplete()) {
-      if(qRunner.isActive()) {
-        Thread.sleep(50);
-      } else {
-        qRunner.getMoreHits();
-      }
-    }
-    System.out.println("Query \"" + query +"\" got " + qRunner.getHitsCount() + " hits:");
-    for(Binding binding : qRunner.getHits(0, qRunner.getHitsCount() -1)){
-      String[][] text = qEngine.getHitText(binding);
-      for(int i = 0; i < text[0].length; i++){
-        System.out.print(text[0][i]);
-        if(text[1].length > i)System.out.print(text[1][i]);
-      }
-      System.out.println();
-    }
-  }
 }
