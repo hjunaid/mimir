@@ -28,6 +28,7 @@ import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.*;
 import gate.mimir.search.query.parser.ParseException;
 import gate.mimir.search.query.parser.QueryParser;
+import gate.mimir.search.score.MimirScorer;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.mg4j.index.DiskBasedIndex;
 import it.unimi.dsi.mg4j.index.Index;
@@ -41,6 +42,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -139,6 +141,12 @@ public class QueryEngine {
    * MB).
    */
   protected static final long MAX_IN_MEMORY_INDEX = 64 * 1024 * 1024;
+  
+  /**
+   * The default value for the document block size.
+   * @see #setDocumentBlockSize(int)
+   */
+  public static final int DEFAULT_DOCUMENT_BLOCK_SIZE = 1000;
 
   
   /**
@@ -156,6 +164,11 @@ public class QueryEngine {
    */
   protected boolean subBindingsEnabled;
 
+  /**
+   * A callable that produces new {@link MimirScorer} instances on request. 
+   */
+  protected Callable<MimirScorer> scorerSource;
+  
   protected Logger logger = Logger.getLogger(QueryEngine.class);
 
   /**
@@ -175,14 +188,14 @@ public class QueryEngine {
   /**
    * How many documents get ranked in one ranking stage.
    */
-  private int rankingDocCount = 1000;
+  private int documentBlockSize = DEFAULT_DOCUMENT_BLOCK_SIZE;
   
   /**
    * A list of currently active QueryRunners. This is used to close all active 
    * runners when the query engine itself is closed (thus releasing all open 
    * files).
    */
-  private List<QueryRunnerMk1> activeQueryRunners;
+  private List<QueryRunner> activeQueryRunners;
   
   /**
    * @return the indexDir
@@ -213,22 +226,42 @@ public class QueryEngine {
 
   /**
    * Gets the configuration parameter specifying the number of documents that 
-   * get ranked in one ranking stage. This is used to optimise the search 
+   * get processed as a block. This is used to optimise the search 
    * process by limiting the number of results that get calculated by default.
    * @return
    */
-  public int getRankingDocCount() {
-    return rankingDocCount;
+  public int getDocumentBlockSize() {
+    return documentBlockSize;
+  }
+  
+  /**
+   * Sets the configuration parameter specifying the number of documents that 
+   * get processed in one go (e.g. the number of documents that get ranked when
+   * enumerating results). This is used to optimise the search 
+   * process by limiting the number of results that get calculated by default.
+   * Defaults to {@link #DEFAULT_DOCUMENT_BLOCK_SIZE}.
+   * @param documentBlockSize
+   */
+  public void setDocumentBlockSize(int documentBlockSize) {
+    this.documentBlockSize = documentBlockSize;
   }
 
   /**
-   * Sets the configuration parameter specifying the number of documents that 
-   * get ranked in one ranking stage. This is used to optimise the search 
-   * process by limiting the number of results that get calculated by default.
-   * @param rankingDocCount
+   * Gets the current source of scorers.
+   * @see #setScorerSource(Callable)
+   * @return
    */
-  public void setRankingDocCount(int rankingDocCount) {
-    this.rankingDocCount = rankingDocCount;
+  public Callable<MimirScorer> getScorerSource() {
+    return scorerSource;
+  }
+
+  /**
+   * Provides a {@link Callable} that the Query Engine can use for obtaining
+   * new instances of {@link MimirScorer} to be used for ranking new queries.
+   * @param scorerSource
+   */
+  public void setScorerSource(Callable<MimirScorer> scorerSource) {
+    this.scorerSource = scorerSource;
   }
 
   /**
@@ -363,7 +396,7 @@ public class QueryEngine {
       readDeletedDocs();
       
       activeQueryRunners = Collections.synchronizedList(
-              new ArrayList<QueryRunnerMk1>());
+              new ArrayList<QueryRunner>());
     } catch(FileNotFoundException e) {
       throw new IndexException("File not found!", e);
     } catch(IOException e) {
@@ -383,10 +416,17 @@ public class QueryEngine {
    * @throws IOException
    *           if the index files cannot be accessed.
    */
-  public QueryRunnerMk1 getQueryRunner(QueryNode query) throws IOException {
+  public QueryRunner getQueryRunner(QueryNode query) throws IOException {
     logger.info("Executing query: " + query.toString());
     QueryExecutor qExecutor = query.getQueryExecutor(this);
-    QueryRunnerMk1 qRunner = new QueryRunnerImpl(qExecutor);
+    QueryRunner qRunner;
+    MimirScorer scorer = null;
+    try {
+      scorer = scorerSource == null ? null : scorerSource.call();
+    } catch(Exception e) {
+      logger.error("Could not obtain a scorer. Running query unranked.", e);
+    }
+    qRunner = new RankingQueryRunnerImpl(qExecutor, scorer);
     activeQueryRunners.add(qRunner);
     return qRunner;
   }
@@ -411,7 +451,7 @@ public class QueryEngine {
    * @throws ParseException
    *           if the string provided for the query cannot be parsed.
    */
-  public QueryRunnerMk1 getQueryRunner(String query) throws IOException,
+  public QueryRunner getQueryRunner(String query) throws IOException,
   ParseException {
     logger.info("Executing query: " + query.toString());
     QueryNode qNode =
@@ -643,8 +683,8 @@ public class QueryEngine {
    */
   public void close() {
     // close all active query runners
-    List<QueryRunnerMk1> runnersCopy = new ArrayList<QueryRunnerMk1>(activeQueryRunners);
-    for(QueryRunnerMk1 aRunner : runnersCopy) {
+    List<QueryRunner> runnersCopy = new ArrayList<QueryRunner>(activeQueryRunners);
+    for(QueryRunner aRunner : runnersCopy) {
       try {
         logger.debug("Closing query runner: " + aRunner.toString());
         aRunner.close();
