@@ -34,6 +34,7 @@ import gate.mimir.search.QueryRunner;
 
 /**
  * A controller for searching mimir indexes known to this instance.
+ * It supports HTML search, XML-over-HTTP, and AJAX-backing RPC actions.
  */
 class SearchController {
   
@@ -85,19 +86,27 @@ class SearchController {
   }
 
   /**
-   * By default just run the help action.
-   */
+  * By default just run the help action.
+  */
   static defaultAction = "info"
 
+ 
+// ==================== HTML-GWT Interface ===================================
+  
+  /**
+   * Action that supports the GWT-based web UI
+   */
+  def index = {
+    // GWT takes care of the rest
+    return [index:request.theIndex]
+  }
+  
+  
+  
+// ==================== XML-over-HTTP Interface ===============================
   
   def info = {
-    def indexInstance = Index.findByIndexId(params.indexId)
-    if(!indexInstance) {
-      flash.message = "Index not found with index id ${params.indexId}"
-      redirect(uri:'/')
-      return
-    }
-    [indexInstance:indexInstance]
+    return [indexInstance:request.theIndex]
   }
 
   /**
@@ -493,7 +502,8 @@ class SearchController {
     return queryIDs
   }
   
-  /////////////////////////// Binary protocol implementation /////////////////
+  
+// ============== Binary protocol (used by remote clients) ===================
   
   /**
    * Binary version of post query 
@@ -1039,9 +1049,6 @@ class SearchController {
       "No value provided for parameter indexId!")
     }
   }
-  
-  ////////////////////////////////////////////////////////////////////////////
-  
 }
 
 
