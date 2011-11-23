@@ -9,7 +9,7 @@
  *  Version 2, June 1991 (in the distribution as file licence.html,
  *  and also available at http://gate.ac.uk/gate/licence.html).
  *
- *  Valentin Tablan, 16 Nov 201119/Jan/00
+ *  Valentin Tablan, 16 Nov 2011
  *
  *  $Id$
  */
