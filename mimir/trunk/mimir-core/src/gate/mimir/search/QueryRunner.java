@@ -74,6 +74,17 @@ public interface QueryRunner {
           IOException;
 
   /**
+   * Get the score for a given result document. The value for the score depends 
+   * on the scorer used by the {@link QueryEngine} (see 
+   * {@link QueryEngine#setScorerSource(java.util.concurrent.Callable)}). 
+   * @param rank the index of the desired document in the list of documents. 
+   * This should be a value between 0 and {@link #getDocumentsCount()} -1.
+   * @return
+   */
+  public double getDocumentScore(int rank)  throws IndexOutOfBoundsException, 
+      IOException ;
+  
+  /**
    * Retrieves the hits within a given result document.
    * @param rank the index of the desired document in the list of documents.
    * This should be a value between 0 and {@link #getDocumentsCount()} -1.
