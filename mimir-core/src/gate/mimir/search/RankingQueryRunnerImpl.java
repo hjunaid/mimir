@@ -382,6 +382,11 @@ public class RankingQueryRunnerImpl implements QueryRunner {
     return documentIds.getInt(getDocumentIndex(rank));
   }
   
+  @Override
+  public double getDocumentScore(int rank) throws IndexOutOfBoundsException, IOException {
+    return documentScores.getDouble(getDocumentIndex(rank));
+  }
+
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getDocumentHits(int)
    */
