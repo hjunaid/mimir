@@ -54,21 +54,25 @@ public class OrQuery implements QueryNode {
     public OrQueryExecutor(OrQuery query, QueryEngine engine) throws IOException {
       super(engine, query);
       this.query = query;
-      //prepare all the executors
-      this.executors = new ExecutorsList(engine, query.getNodes());
-      currentDoc = new int[executors.size()];
-      front = new int[executors.size()];
-      this.hitsOnCurrentDocument = new ObjectArrayList<Binding>();
-      queue = new IntHeapSemiIndirectPriorityQueue(currentDoc);
-      for(int i = 0; i < executors.size(); i++){
-        int doc = executors.nextDocument(i, -1);
-        if (doc >= 0) {
-          currentDoc[i] = doc;
-          queue.enqueue(i);
-        }
+      if(query.getNodes() == null || query.getNodes().length == 0) {
+        // empty OR: we're already exhausted
+        latestDocument = -1;
+      } else {
+        //prepare all the executors
+        this.executors = new ExecutorsList(engine, query.getNodes());
+        currentDoc = new int[executors.size()];
+        front = new int[executors.size()];
+        this.hitsOnCurrentDocument = new ObjectArrayList<Binding>();
+        queue = new IntHeapSemiIndirectPriorityQueue(currentDoc);
+        for(int i = 0; i < executors.size(); i++){
+          int doc = executors.nextDocument(i, -1);
+          if (doc >= 0) {
+            currentDoc[i] = doc;
+            queue.enqueue(i);
+          }
+        }        
       }
     }
-
     
     /**
      * The query being executed.
