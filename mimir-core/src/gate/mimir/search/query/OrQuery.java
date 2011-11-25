@@ -101,7 +101,7 @@ public class OrQuery implements QueryNode {
      */
     public void close() throws IOException {
       super.close();
-      executors.close();
+      if(executors != null) executors.close();
       executors = null;
       hitsOnCurrentDocument.clear();
     }

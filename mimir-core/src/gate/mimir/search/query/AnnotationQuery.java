@@ -135,7 +135,7 @@ public class AnnotationQuery implements QueryNode {
      */
     public void close() throws IOException {
       super.close();
-      underlyingExecutor.close();
+      if(underlyingExecutor != null) underlyingExecutor.close();
     }
 
     /* (non-Javadoc)
@@ -158,7 +158,7 @@ public class AnnotationQuery implements QueryNode {
      * @see gate.mimir.search.query.QueryExecutor#nextHit()
      */
     public Binding nextHit() throws IOException {
-      if(closed) return null;
+      if(closed || latestDocument == -1) return null;
       Binding underlyingHit = underlyingExecutor.nextHit();
       if(underlyingHit == null) return null;
       int doc = underlyingHit.getDocumentId();
