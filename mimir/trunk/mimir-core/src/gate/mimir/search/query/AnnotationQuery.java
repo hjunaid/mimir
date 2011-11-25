@@ -89,17 +89,23 @@ public class AnnotationQuery implements QueryNode {
         (System.currentTimeMillis() - start) + " ms");
       // now create a big OrQuery of all the possible mentions with
       // appropriate gaps
-      QueryNode[] disjuncts = new QueryNode[mentions.size()];
-      int index = 0;
-      for(Mention m : mentions) {
-        // create a term query for the mention URI
-        disjuncts[index] = new TermQuery(query.annotationType, 
-                m.getUri(), m.getLength());
-        index++;
+      if(mentions.size() > 0) {
+        QueryNode[] disjuncts = new QueryNode[mentions.size()];
+        int index = 0;
+        for(Mention m : mentions) {
+          // create a term query for the mention URI
+          disjuncts[index] = new TermQuery(query.annotationType, 
+                  m.getUri(), m.getLength());
+          index++;
+        }
+        
+        QueryNode underlyingQuery = new OrQuery(disjuncts);
+        underlyingExecutor = underlyingQuery.getQueryExecutor(engine);        
+      } else {
+        // no results from the helper => no results from us
+        latestDocument = -1;
       }
-      
-      QueryNode underlyingQuery = new OrQuery(disjuncts);
-      underlyingExecutor = underlyingQuery.getQueryExecutor(engine);
+
     }
 
     /**
@@ -143,8 +149,8 @@ public class AnnotationQuery implements QueryNode {
      * @see gate.mimir.search.query.QueryExecutor#nextDocument(int)
      */
     public int nextDocument(int greaterThan) throws IOException {
-      if(closed) return -1;
-      return underlyingExecutor.nextDocument(greaterThan);
+      if(closed || latestDocument == -1) return -1;
+      return latestDocument = underlyingExecutor.nextDocument(greaterThan);
     }
 
     /* (non-Javadoc)
