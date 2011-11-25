@@ -24,6 +24,7 @@ import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSets;
 import it.unimi.dsi.mg4j.index.Index;
 import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
 
@@ -100,12 +101,11 @@ public class AnnotationQuery implements QueryNode {
         }
         
         QueryNode underlyingQuery = new OrQuery(disjuncts);
-        underlyingExecutor = underlyingQuery.getQueryExecutor(engine);        
+        underlyingExecutor = underlyingQuery.getQueryExecutor(engine);
       } else {
         // no results from the helper => no results from us
         latestDocument = -1;
       }
-
     }
 
     /**
@@ -142,6 +142,7 @@ public class AnnotationQuery implements QueryNode {
      * @see gate.mimir.search.query.QueryExecutor#getLatestDocument()
      */
     public int getLatestDocument() {
+      if(closed || latestDocument == -1) return -1;
       return underlyingExecutor.getLatestDocument();
     }
 
@@ -175,10 +176,15 @@ public class AnnotationQuery implements QueryNode {
    
     @Override
     public ReferenceSet<Index> indices() {
-      return underlyingExecutor.indices();
+      if(underlyingExecutor != null) {
+        return underlyingExecutor.indices();
+      } else {
+        return ReferenceSets.EMPTY_SET;
+      }
     }
     
     public <T> T accept( final DocumentIteratorVisitor<T> visitor ) throws IOException {
+      if(underlyingExecutor == null) return null;
       if ( ! visitor.visitPre( this ) ) return null;
       final T[] a = visitor.newArray( 1 );
       if ( a == null ) {
@@ -191,6 +197,7 @@ public class AnnotationQuery implements QueryNode {
     }
 
     public <T> T acceptOnTruePaths( final DocumentIteratorVisitor<T> visitor ) throws IOException {
+      if(underlyingExecutor == null) return null;
       if ( ! visitor.visitPre( this ) ) return null;
       final T[] a = visitor.newArray( 1 );
       if ( a == null ) {
