@@ -15,6 +15,7 @@ import gate.mimir.web.IndexTemplate
 import gate.mimir.web.MimirConfigLoader
 import gate.mimir.web.MimirConfiguration
 import gate.util.spring.ExtraGatePlugin
+import gate.Gate
 
 import java.util.concurrent.Executors
 
