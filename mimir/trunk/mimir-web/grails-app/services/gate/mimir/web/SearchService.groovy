@@ -60,8 +60,6 @@ class SearchService {
     if(aRunner){
       String runnerId = UUID.randomUUID()
       queryRunners.put(runnerId, aRunner)
-      //as a courtesy to the user, we'll start the search for them
-      aRunner.getMoreHits()
       return runnerId
     }
     throw new RuntimeException("Could not start query")

@@ -14,12 +14,18 @@
 
 package gate.mimir.web.client;
 
+import gate.mimir.gus.client.GusService;
+import gate.mimir.gus.client.GusServiceAsync;
+
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Panel;
@@ -30,15 +36,27 @@ import com.google.gwt.user.client.ui.TextArea;
  */
 public class UI implements EntryPoint {
   
+  
+  private GwtRpcServiceAsync gwtRpcService;
+  
   protected TextArea searchBox;
   
   protected Button searchButton;
   
+  protected String queryId;
   
   /**
    * This is the entry point method.
    */
   public void onModuleLoad() {
+    // connect to the server RPC endpoint
+    gwtRpcService = (GwtRpcServiceAsync) GWT.create(GwtRpcService.class);
+    ServiceDefTarget endpoint = (ServiceDefTarget) gwtRpcService;
+    String rpcUrl = GWT.getHostPageBaseURL() + "gwtRpc";
+    endpoint.setServiceEntryPoint(rpcUrl);
+    
+    queryId = null;
+    
     initGui();
     initListeners();
   }
@@ -66,6 +84,26 @@ public class UI implements EntryPoint {
   }
   
   protected void startSearch() {
-    Window.alert("Search pressed");
+    String query = searchBox.getText();
+    gwtRpcService.search(getIndexId(), query, new AsyncCallback<String>() {
+      @Override
+      public void onFailure(Throwable caught) {
+        // TODO Auto-generated method stub
+        
+      }
+      @Override
+      public void onSuccess(String result) {
+        queryId = result;
+        Window.alert("Search started");    
+      }
+    });
   }
+  
+  private native String getIndexId() /*-{
+    return $wnd.indexId;
+  }-*/;
+
+  private native String getUriIsLink() /*-{
+    return $wnd.uriIsLink;
+  }-*/;
 }
