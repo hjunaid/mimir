@@ -42,7 +42,7 @@ grails.project.dependency.resolution = {
         // runtime 'mysql:mysql-connector-java:5.1.5'
     }
     plugins {
-      compile ':gwt:0.6-SNAPSHOT'
+      compile ':gwt:0.6.1'
       runtime ":webflow:$grailsVersion"
     }
 }
