@@ -17,9 +17,11 @@
   <property name="src.dir" location="src" />
   <property name="doc.dir" location="doc" />
 
-	<property name="grails-plugin.dir" location="../${grails-plugin.dirname}" />
+  <property name="grails-plugin.dir" location="../${grails-plugin.dirname}" />
 	
-  <property name="jar.file" location="${app.name}-${app.version}.jar" />
+  <property name="jar.name" value="${app.name}-${app.version}.jar" />
+  <property name="jar.file" location="${jar.name}" />	
+	
   <path id="compile.classpath">
     <path refid="libs" />
   </path>
@@ -45,6 +47,14 @@
     <jar file="${jar.file}" basedir="${classes.dir}" update="false"/>      
   </target>  
   
+  <target name="creole.xml">
+    <copy overwrite="true" file="creole.xml.template" tofile="creole.xml">
+      <filterset>
+        <filter token="jar" value="${jar.name}" />
+      </filterset>
+    </copy>
+  </target>
+	
   <target name="distro" depends="jar, javadoc" />
   
   <!-- Docs -->
@@ -71,7 +81,7 @@
     <delete dir="${doc.dir}/javadoc" />
   </target>
 
-  <target name="publish" depends="jar">
+  <target name="publish" depends="jar, creole.xml">
     <copy todir="${grails-plugin.dir}/lib" flatten="true">
       <fileset file="${jar.file}" />
     </copy>
