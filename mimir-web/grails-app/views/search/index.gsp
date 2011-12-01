@@ -3,7 +3,7 @@
   <!-- Integrate with Sitemesh layouts           -->
   <meta name="layout" content="mimir" />
 
-  <title>M&icute;mir Index ${index?.name}</title>
+  <title>M&iacute;mir Index ${index?.name}</title>
 
   <!-- Pass some variable to the GWT code -->
   <g:javascript>

@@ -101,6 +101,14 @@ class SearchController {
     return [index:request.theIndex]
   }
   
+  /**
+  * Action that forwards to the real GWT RPC controller.
+  */
+ def gwtRpc = {
+   forward(controller:'gwt', action:'index', 
+     params:[module:'gate.mimir.web.client.UI'])
+ }
+  
   
   
 // ==================== XML-over-HTTP Interface ===============================
