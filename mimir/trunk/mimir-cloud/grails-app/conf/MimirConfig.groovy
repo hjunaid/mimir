@@ -21,10 +21,10 @@ gateInit {
 // specified locations for run-app and will be packaged into the WAR for
 // deployment.
 plugins {
-      dbh2 = "../../mimir/plugins/db-h2"
-      measurements = "../../mimir/plugins/measurements"
-      sesame = "../../mimir/plugins/sesame"
-      sparql = "../../mimir/plugins/sparql"
+      dbh2 = "../plugins/db-h2"
+      measurements = "../plugins/measurements"
+      sesame = "../plugins/sesame"
+      sparql = "../plugins/sparql"
 }
 
 // the xgapp file that defines the query tokeniser.  Alternatively
@@ -34,3 +34,7 @@ queryTokeniserGapp = "WEB-INF/gate-home/default-query-tokeniser.xgapp"
 // the base directory in which newly created local indexes will
 // be put.
 indexBaseDirectory = "/data/home/gate/mimir-indexes"
+
+// this directory is used for storing temporary files (such as index archives
+// prepared for download)
+tempDir="/data/home/gate/mimir-archives"

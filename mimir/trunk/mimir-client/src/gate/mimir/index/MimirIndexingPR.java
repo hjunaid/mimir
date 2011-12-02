@@ -61,8 +61,11 @@ public class MimirIndexingPR extends AbstractLanguageAnalyser {
 
   @CreoleParameter(comment="Username for authenticating to the Mímir server. Leave empty if no authentication is required.")
   @Optional
+  @RunTime
   public void setMimirUsername(String mimirUsername) {
     this.mimirUsername = mimirUsername;
+    // invalidate the connector
+    this.mimirConnector = null;
   }
 
   public String getMimirPassword() {
@@ -71,8 +74,11 @@ public class MimirIndexingPR extends AbstractLanguageAnalyser {
 
   @CreoleParameter(comment="Password for authenticating to the Mímir server. Leave empty if no authentication is required.")
   @Optional
+  @RunTime
   public void setMimirPassword(String mimirPassword) {
     this.mimirPassword = mimirPassword;
+    // invalidate the connector    
+    this.mimirConnector = null;
   }
 
   @Override
@@ -81,22 +87,22 @@ public class MimirIndexingPR extends AbstractLanguageAnalyser {
   }
 
   @Override
-  public Resource init() throws ResourceInstantiationException {
-    super.init();
-    WebUtils webUtils = null;
-    if(mimirUsername != null && mimirUsername.length() > 0) {
-      webUtils = new WebUtils(mimirUsername, mimirPassword);
-    }
-    mimirConnector = webUtils == null ? new MimirConnector() : new MimirConnector(webUtils);
-    return this;
-  }
-
-  @Override
   public void execute() throws ExecutionException {
     try {
+      if(mimirConnector == null) {
+        // first run or config has changed: [re-]create
+        if(mimirUsername != null && mimirUsername.length() > 0) {
+          mimirConnector = new MimirConnector(
+            new WebUtils(mimirUsername, mimirPassword));          
+        } else {
+          mimirConnector = new MimirConnector();  
+        }
+      }
+      
       mimirConnector.sendToMimir(getDocument(), null, mimirIndexUrl);
     } catch(IOException e) {
-      throw new ExecutionException("Error communicating with the Mímir server", e);
+      throw new ExecutionException(
+        "Error communicating with the Mímir server", e);
     }
   }
   
