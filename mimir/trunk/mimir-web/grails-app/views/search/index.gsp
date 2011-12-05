@@ -33,7 +33,7 @@
   
   <h1>Searching Index ${index?.name}</h1>
   <div class="searchbox" id="searchBox"> </div>
-  <div class="bluebar" >Results</div>
+  <div class="bluebar" id="resultsBar"></div>
   <div id="searchResults">
   </div>
 </body>

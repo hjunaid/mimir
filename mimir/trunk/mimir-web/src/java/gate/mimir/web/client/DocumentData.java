@@ -1,5 +1,5 @@
 /**
- *  GwtRpcException.java
+ *  DocumentData.java
  * 
  *  Copyright (c) 1995-2010, The University of Sheffield. See the file
  *  COPYRIGHT.txt in the software or at http://gate.ac.uk/gate/COPYRIGHT.txt
@@ -9,20 +9,24 @@
  *  Version 2, June 1991 (in the distribution as file licence.html,
  *  and also available at http://gate.ac.uk/gate/licence.html).
  *
- *  Valentin Tablan, 01 Dec 2011 
+ *  Valentin Tablan, 05 Dec 2011 
  */
 package gate.mimir.web.client;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.IsSerializable;
 
-public class GwtRpcException extends Exception implements IsSerializable {
-  private static final long serialVersionUID = 1L;
-
-  public GwtRpcException() {
-    super();
-  }
-
-  public GwtRpcException(String message) {
-    super(message);
-  }
+/**
+ * Data about a result document
+ */
+public class DocumentData implements IsSerializable {
+  
+  int documentRank;
+  
+  String documentTitle;
+  
+  String documentUri;
+  
+  List<String[]> snippets;
 }
