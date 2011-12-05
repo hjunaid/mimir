@@ -183,12 +183,23 @@ td.errors input {
 
 .hit {
   font-size: medium;
+  margin: 5px;
+}
+
+.document-title {
+  font-weight: bold;
+  color: #006193;
 }
 
 .snippet {
 	margin-left: 20px;
 	font-size: small;
 }
+
+.snippet-text {
+	font-weight: bold;
+}
+
 
 .snippet .mimir-hit {
     font-weight: bold;

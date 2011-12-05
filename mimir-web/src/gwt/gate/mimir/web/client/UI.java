@@ -14,6 +14,9 @@
 
 package gate.mimir.web.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import gate.mimir.gus.client.GusService;
 import gate.mimir.gus.client.GusServiceAsync;
 
@@ -23,11 +26,14 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.InlineLabel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.TextArea;
 
@@ -35,7 +41,42 @@ import com.google.gwt.user.client.ui.TextArea;
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class UI implements EntryPoint {
-  
+ 
+  /**
+   * A Timer implementation that fetches the latest results information from the 
+   * server and updates the results display accordingly.
+   */
+  protected class StatsUpdater extends Timer {
+
+    @Override
+    public void run() {
+      // calculate which documents we need now
+      int firstDoc = firstDocumentOnPage + documentsData.size();
+      int docCount = maxDocumentsOnPage - documentsData.size(); 
+      if(docCount <= 0) {
+        firstDoc = -1;
+      }
+      gwtRpcService.getResultsData(queryId, firstDoc, docCount, 
+        new AsyncCallback<ResultsData>() {
+        @Override
+        public void onSuccess(ResultsData result) {
+          updatePage(result);
+          if(result.getResultsTotal() < 0) {
+            // more to come
+            schedule(500);
+          }
+        }
+        
+        @Override
+        public void onFailure(Throwable caught) {
+          // ignore and try again later
+          schedule(500);
+          // throw the exception so it's seen
+          throw new RuntimeException(caught);
+        }
+      });
+    }
+  }
   
   private GwtRpcServiceAsync gwtRpcService;
   
@@ -44,6 +85,21 @@ public class UI implements EntryPoint {
   protected Button searchButton;
   
   protected String queryId;
+  
+  protected Label resultStatsLabel;
+  
+  protected HTMLPanel searchResultsPanel;
+  
+  /**
+   * The rank of the first document on page.
+   */
+  protected int firstDocumentOnPage;
+  
+  protected int maxDocumentsOnPage = 20;
+  
+  protected int maxSnippetLength = 100;
+  
+  private List<DocumentData> documentsData;
   
   /**
    * This is the entry point method.
@@ -72,6 +128,13 @@ public class UI implements EntryPoint {
     searchButton = new Button();
     searchButton.setText("Search");
     searchDiv.add(searchButton);
+    
+    HTMLPanel resultsBar = HTMLPanel.wrap(Document.get().getElementById("resultsBar"));
+    resultStatsLabel = new Label("Ready");
+    resultsBar.add(resultStatsLabel);
+
+    searchResultsPanel = HTMLPanel.wrap(Document.get().getElementById("searchResults"));
+    
   }
   
   protected void initListeners() {
@@ -94,9 +157,92 @@ public class UI implements EntryPoint {
       @Override
       public void onSuccess(String result) {
         queryId = result;
-        Window.alert("Search started");    
+        firstDocumentOnPage = 0;
+        documentsData = new ArrayList<DocumentData>(maxDocumentsOnPage);
+        searchResultsPanel.clear();
+        new StatsUpdater().schedule(50);
       }
     });
+  }
+  
+  protected void updatePage(ResultsData resultsData) {
+    int resTotal = resultsData.getResultsTotal();
+    int resPartial = resultsData.getResultsPartial();
+    StringBuilder textBuilder = new StringBuilder("Documents ");
+    textBuilder.append(firstDocumentOnPage);
+    textBuilder.append(" to ");
+    if(firstDocumentOnPage + maxDocumentsOnPage < resPartial) {
+      textBuilder.append(firstDocumentOnPage + maxDocumentsOnPage);
+    } else {
+      textBuilder.append(resPartial - firstDocumentOnPage);
+    }
+    textBuilder.append(" of ");
+    
+    if(resTotal > 0) {
+      // all results obtained
+      textBuilder.append(resultsData.getResultsTotal());
+    } else {
+      // more to come
+      textBuilder.append("at least ");
+      textBuilder.append(resPartial);
+    }
+    textBuilder.append(":");
+    resultStatsLabel.setText(textBuilder.toString());
+
+    if(resultsData.getDocuments() != null){
+      // now update the documents display
+      int docPosition = 0;      
+      for(DocumentData docData : resultsData.getDocuments()) {
+        // skip already populated positions
+        while(docPosition < documentsData.size() && 
+            documentsData.get(docPosition).documentRank < docData.documentRank){
+          docPosition ++;
+        }
+        if(docPosition == documentsData.size()) {
+          documentsData.add(docData);
+          HTMLPanel documentDisplay = buildDocumentDisplay(docData);
+          if(docPosition % 2 == 0) documentDisplay.addStyleName("even");
+          searchResultsPanel.add(documentDisplay);
+        } else {
+          if(documentsData.get(docPosition).documentRank == docData.documentRank) {
+            // we got the same document: skip it
+          } else {
+            // malfunction?
+            // TODO
+          }
+        }
+      }      
+    }
+  }
+  
+  private HTMLPanel buildDocumentDisplay(DocumentData docData) {
+    HTMLPanel documentDisplay = new HTMLPanel("");
+    documentDisplay.setStyleName("hit");
+    HTMLPanel docTitle = new HTMLPanel(docData.documentTitle);
+    docTitle.setStyleName("document-title");
+    documentDisplay.add(docTitle);
+    if(docData.snippets != null) {
+      // each row is left context, snippet, right context
+      for(String[] snippet : docData.snippets) {
+        HTMLPanel snippetPanel = new HTMLPanel("");
+        snippetPanel.setStyleName("snippet");
+        snippetPanel.add(new InlineLabel(snippet[0]));
+        String snipText = snippet[1];
+        int snipLen = snipText.length();
+        if(snipLen > maxSnippetLength) {
+          int toRemove = snipLen - maxSnippetLength;
+          snipText = snipText.substring(0, (snipLen - toRemove) / 2) + 
+              " ... " + 
+              snipText.substring((snipLen + toRemove) / 2);
+        }
+        InlineLabel snippetLabel = new InlineLabel(snipText);
+        snippetLabel.setStyleName("snippet-text");
+        snippetPanel.add(snippetLabel);
+        snippetPanel.add(new InlineLabel(snippet[2]));
+        documentDisplay.add(snippetPanel);
+      }
+    }
+    return documentDisplay;
   }
   
   private native String getIndexId() /*-{
