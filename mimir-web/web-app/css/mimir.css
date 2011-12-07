@@ -32,6 +32,8 @@ h1, .bluebar {
     font-size: 150%;
     padding: 5px;
     background: #006193;
+    margin-top: 1em;
+    margin-bottom: 1em;
 }
 
 /* Override links in a bluebar so they're not the same colour as the
