@@ -568,9 +568,14 @@ public class RankingQueryRunnerImpl implements QueryRunner {
       } else {
         // calculate an appropriate interval to collect hits for
         SortedMap<int[], Future<?>> tailMap = hitCollectors.tailMap(interval);
-        int[] followingInterval = tailMap.isEmpty() ? 
-            new int[]{documentsOrder.size(), documentsOrder.size()} : 
-            tailMap.firstKey();
+        int[] followingInterval;
+        if(tailMap.isEmpty()) {
+          int maxBoundary = (documentsOrder != null) ? 
+              documentsOrder.size() : interval[1] + docBlockSize / 2;
+          followingInterval =  new int[]{maxBoundary, maxBoundary};  
+        } else {
+          followingInterval = tailMap.firstKey();
+        }
         int start = Math.max(previousInterval[1], interval[0]);
         int end = Math.min(followingInterval[0], interval[1]);
         hitsCollector = new HitsCollector(start, end);
