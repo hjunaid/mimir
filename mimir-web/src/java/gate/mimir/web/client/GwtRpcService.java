@@ -17,10 +17,10 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 public interface GwtRpcService extends RemoteService {
   public String search(java.lang.String indexId, java.lang.String query)
-    throws GwtRpcException;
+    throws MimirSearchException;
 
   public ResultsData getResultsData(String queryId, int firstDocumentRank, 
-      int documentsCount) throws GwtRpcException;
+      int documentsCount) throws MimirSearchException;
 
   public void releaseQuery(java.lang.String queryId);
 }

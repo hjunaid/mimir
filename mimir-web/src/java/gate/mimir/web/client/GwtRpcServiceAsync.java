@@ -16,11 +16,13 @@ package gate.mimir.web.client;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public interface GwtRpcServiceAsync {
+  
   public void search(java.lang.String indexId, java.lang.String query,
               AsyncCallback<String> callback);
 
   void getResultsData(String queryId, int firstDocumentRank,
                       int documentsCount, AsyncCallback<ResultsData> callback);
   
-  public void releaseQuery(java.lang.String queryId, AsyncCallback callback);
+  public void releaseQuery(java.lang.String queryId, 
+                           AsyncCallback<Void> callback);
 }
