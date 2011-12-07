@@ -81,7 +81,7 @@ public class UI implements EntryPoint {
       if(docCount <= 0) {
         firstDoc = -1;
       } else {
-        feedbackLabel.setText("Working");
+        feedbackLabel.setText("Working...");
       }
       gwtRpcService.getResultsData(queryId, firstDoc, docCount, 
         new AsyncCallback<ResultsData>() {
