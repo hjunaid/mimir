@@ -100,19 +100,21 @@ class SemanticAnnotationsHandler {
    *   <dt>type</dt><dd>The Class object representing the type
    *     of the helper.  This class must implement
    *     {@link SemanticAnnotationHelper} and must provide a
-   *     constructor taking six arguments - the annotation type
-   *     and five String[] arguments giving the nominal, integer,
-   *     float, text and URI feature names.</dd>
-   *   <dt>nominalFeatures</dt>
-   *   <dt>integerFeatures</dt>
-   *   <dt>floatFeatures</dt>
-   *   <dt>textFeatures</dt>
-   *   <dt>uriFeatures</dt><dd>The features of various kinds that
-   *     should be indexed by the helper.  These entries should be
-   *     String arrays or List<String> (anything that is convertable
-   *     to a String array by Groovy's <code>as String[]</code>
-   *     operator)</dd>
+   *     no-argument constructor and JavaBean property setters for
+   *     at least the property "annType".</dd>
    * </dl>
+   * This method will call the Groovy-style Map constructor, passing a map
+   * containing the key "annType" (mapped to the name of the "missing" method)
+   * along with any other keys in the map that was passed to this method except
+   * the "type" key.  The resulting helper is then passed to the normal
+   * <code>annotation</code> method in the usual way.  For example, a call of
+   * <pre>
+   * Person(type:DefaultHelper, nominalFeatures:["gender"])
+   * </pre>
+   * is converted to a call
+   * <pre>
+   * annotation type:"Person", helper:new DefaultHelper(annType:"Person", nominalFeatures:["gender"])
+   * </pre>
    */
   void methodMissing(String annotationType, args) {
     if(args.size() != 1 || !(args[0] instanceof Map)) {
@@ -128,11 +130,10 @@ class SemanticAnnotationsHandler {
       "type for the semantic annotation helper for annotation type ${annotationType}.")
     }
 
-    annotation(helper:theClass.newInstance(annotationType,
-        defParams?.nominalFeatures as String[],
-        defParams?.integerFeatures as String[],
-        defParams?.floatFeatures as String[],
-        defParams?.textFeatures as String[],
-        defParams?.uriFeatures as String[]))
+    def helperParams = [:]
+    helperParams.addAll(defParams)
+    helperParams.remove('type')
+    helperParams.annType = annotationType
+    annotation(type:annotationType, helper:theClass.newInstance(helperParams))
   }
 }
