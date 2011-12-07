@@ -197,12 +197,15 @@ public class UI implements EntryPoint {
     searchButton.addStyleName("searchButton");
     searchDiv.add(searchButton);
     
-    HTMLPanel resultsBar = HTMLPanel.wrap(Document.get().getElementById("resultsBar"));
-    feedbackLabel = new Label("Ready");
+    HTMLPanel resultsBar = HTMLPanel.wrap(Document.get().getElementById("feedbackBar"));
+    feedbackLabel = new Label(" ");
     resultsBar.add(feedbackLabel);
 
     searchResultsPanel = HTMLPanel.wrap(Document.get().getElementById("searchResults"));
+    for(int  i = 0; i < 20; i++) searchResultsPanel.add(new Label(" "));
+    
     pageLinksPanel = HTMLPanel.wrap(Document.get().getElementById("pageLinks"));
+    pageLinksPanel.add(new InlineLabel(" "));
   }
   
   protected void initListeners() {
