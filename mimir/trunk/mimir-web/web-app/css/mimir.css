@@ -24,7 +24,7 @@ a:link, a:visited, a:hover {
     color: #006193;
     font-weight: bold;
     text-decoration: none;
-} 
+}
 
 h1, .bluebar {
     color: #fff;
@@ -181,19 +181,41 @@ td.errors input {
     background: #e3ecf3;
 }
 
+.searchBox {
+	margin: 10px;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.searchButton {
+  margin-left: 5px;
+}
+
+.searchResults {
+	width: 80%;
+}
+
 .hit {
   font-size: medium;
-  margin: 5px;
+  margin-top: 20px;
+}
+
+.hit a {
+	font-weight: normal;
 }
 
 .document-title {
-  font-weight: bold;
+	font-weight:bold;
   color: #006193;
 }
 
+.snippets {
+  /* margin-left: 20px; */
+}
+
 .snippet {
-	margin-left: 20px;
 	font-size: small;
+	margin-right: 10px;
 }
 
 .snippet-text {
@@ -204,6 +226,27 @@ td.errors input {
 .snippet .mimir-hit {
     font-weight: bold;
     color: black;
+}
+
+.pageLinks {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  text-align: center;
+}
+
+.pageLink {
+	margin-left: 5px;
+	color: white;
+	padding-left: 2px;
+	padding-right: 2px;
+}
+
+a.pageLink {
+  color: white;
+  font-weight: normal;
+  border: thin solid white;
 }
 
 /* LIST */

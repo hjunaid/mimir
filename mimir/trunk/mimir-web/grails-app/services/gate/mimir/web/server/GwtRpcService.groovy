@@ -1,16 +1,16 @@
 /**
-*  GwtRpcService.java
-*
-*  Copyright (c) 1995-2010, The University of Sheffield. See the file
-*  COPYRIGHT.txt in the software or at http://gate.ac.uk/gate/COPYRIGHT.txt
-*
-*  This file is part of GATE (see http://gate.ac.uk/), and is free
-*  software, licenced under the GNU Library General Public License,
-*  Version 2, June 1991 (in the distribution as file licence.html,
-*  and also available at http://gate.ac.uk/gate/licence.html).
-*
-*  Valentin Tablan, 01 Dec 2011
-*/
+ *  GwtRpcService.java
+ *
+ *  Copyright (c) 1995-2010, The University of Sheffield. See the file
+ *  COPYRIGHT.txt in the software or at http://gate.ac.uk/gate/COPYRIGHT.txt
+ *
+ *  This file is part of GATE (see http://gate.ac.uk/), and is free
+ *  software, licenced under the GNU Library General Public License,
+ *  Version 2, June 1991 (in the distribution as file licence.html,
+ *  and also available at http://gate.ac.uk/gate/licence.html).
+ *
+ *  Valentin Tablan, 01 Dec 2011
+ */
 package gate.mimir.web.server
 
 import gate.mimir.gus.client.SearchException;
@@ -26,7 +26,7 @@ import gate.mimir.search.QueryRunner;
 import gate.mimir.search.query.Binding;
 import gate.mimir.web.Index;
 import gate.mimir.web.client.DocumentData;
-import gate.mimir.web.client.GwtRpcException
+import gate.mimir.web.client.MimirSearchException
 import gate.mimir.web.client.ResultsData;
 import gate.mimir.web.client.DocumentData;
 
@@ -69,22 +69,22 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
       try {
         def index = Index.findByIndexId(indexId)
         if(!index) {
-          throw new GwtRpcException("Invalid index ID ${indexId}")
+          throw new MimirSearchException("Invalid index ID ${indexId}")
         }
         else if(index.state != Index.SEARCHING) {
-          throw new GwtRpcException("Index ${indexId} is not open for searching")
+          throw new MimirSearchException("Index ${indexId} is not open for searching")
         }
         else {
           String queryId = searchService.postQuery(index, query)
           runningQueries.add(queryId)
           return queryId
         }
-      } catch(GwtRpcException e) {
+      } catch(MimirSearchException e) {
         log.warn("Exception starting search", e)
         throw e
       } catch(Exception e) {
         log.warn("Exception starting search", e)
-        throw new GwtRpcException("Could not start search. Error was:\n${e.message}");
+        throw new MimirSearchException("Could not start search. Error was:\n${e.message}");
       }
     }
   }
@@ -101,9 +101,9 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
   }
 
   /**
-  * Obtains the types of annotation known to the index, and their features.
+   * Obtains the types of annotation known to the index, and their features.
    * This method supports auto-completion in the GWT UI.
-  */
+   */
   String[][] getAnnotationsConfig(String indexId){
     Index.withTransaction {
       Index index = Index.findByIndexId(indexId)
@@ -111,60 +111,60 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
         return index.annotationsConfig()
       }
       else {
-        return ([] as String[][])
+        return ([]as String[][])
       }
     }
   }
 
   @Override
-  public ResultsData getResultsData(String queryId, 
-        int firstDocumentRank, int documentsCount) throws GwtRpcException {
+  public ResultsData getResultsData(String queryId,
+  int firstDocumentRank, int documentsCount) throws MimirSearchException {
     QueryRunner qRunner = searchService.getQueryRunner(queryId);
     if(qRunner) {
       ResultsData rData = new ResultsData(
-        resultsTotal:qRunner.getDocumentsCount(),
-        resultsPartial: qRunner.getCurrentDocumentsCount())
+          resultsTotal:qRunner.getDocumentsCount(),
+          resultsPartial: qRunner.getCurrentDocumentsCount())
       if(firstDocumentRank >= 0) {
         // also obtain some documents data
         List<DocumentData> documents = []
-        for(int docRank = firstDocumentRank; 
-            docRank < firstDocumentRank + documentsCount; 
-            docRank++) {
+        for(int docRank = firstDocumentRank;
+        docRank < firstDocumentRank + documentsCount;
+        docRank++) {
           DocumentData docData = new DocumentData(
-            documentRank:docRank,
-            documentTitle:qRunner.getDocumentTitle(docRank),
-            documentUri:qRunner.getDocumentURI(docRank))
+              documentRank:docRank,
+              documentTitle:qRunner.getDocumentTitle(docRank),
+              documentUri:qRunner.getDocumentURI(docRank))
           // create the snippets
           List<String[]> snippets = new ArrayList<String[]>();
           List<Binding> hits = qRunner.getDocumentHits(docRank).collect{it};
-          StringBuilder str = new StringBuilder()
           3.times {
             if(hits) {
               String[] snippet = new String[3];
               Binding aHit = hits.remove(0)
               int termPos = Math.max(0, aHit.termPosition - 3)
               if(termPos < aHit.termPosition) {
-                String[][] left =  qRunner.getDocumentText(docRank, termPos,
-                  aHit.termPosition - termPos)
-                left[0].each { str << (it + ' ') }
-                snippet[0] = str.toString()
+                snippet[0] = qRunner.getDocumentText(docRank, termPos, 
+                  aHit.termPosition - termPos).toList().transpose().inject('') { 
+                    acc, val -> acc + val[0] + (val[1] ? ' ' : '')
+                } 
               } else {
-                snippet[0] = "";
+                snippet[0] = '';
               }
-              str = new StringBuilder()
-              qRunner.getDocumentText(docRank, aHit.termPosition, 
-                aHit.length)[0].each{ str << (it + ' ')}
-              snippet[1] = str.toString()
-              str = new StringBuilder()
-              qRunner.getDocumentText(docRank, 
-                aHit.termPosition + aHit.length, 3)[0].each{str << (it?:'' + ' ')}
-              snippet[2] = str.toString()
-              snippets << snippet  
+              snippet[1] = qRunner.getDocumentText(docRank, aHit.termPosition,
+                aHit.length).toList().transpose().inject('') { 
+                  acc, val -> acc + val[0] + (val[1] ? ' ' : '')
+                }
+              snippet[2] = qRunner.getDocumentText(docRank,
+                aHit.termPosition + aHit.length, 3).toList().
+                transpose().inject('') { 
+                  acc, val -> acc + val[0] + (val[1] ? ' ' : '')
+                }
+              snippets << snippet
             }
           }
           if(hits) {
             // more than 3 hits: show ellipsis
-            snippets.add(["   ", "...", "   "] as String[])
+            snippets.add(["   ", "...", "   "]as String[])
           }
           docData.snippets = snippets
           documents.add(docData)
@@ -173,12 +173,11 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
       }
       return rData
     } else {
-      throw new GwtRpcException("Could not find your query. " + 
+      throw new MimirSearchException(MimirSearchException.QUERY_ID_NOT_KNOWN,
+          "Could not find your query. " +
           "Your search session may have expired, in which case you will need " +
           "to start your search again.")
     }
   }
 
-  
-  
 }

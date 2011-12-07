@@ -102,6 +102,29 @@ class SearchController {
   }
   
   /**
+  * Render the content of the given document.  Most of the magic happens in
+  * the documentContent tag of the GusTagLib.
+  */
+ def document = {
+   QueryRunner runner = searchService.getQueryRunner(params.queryId)
+   if(runner){
+     Index index = Index.findByIndexId(params.indexId)
+     return [
+         indexId:params.indexId,
+         documentRank: params.documentRank,
+         queryId:params.queryId,
+         documentTitle:runner.getDocumentTitle(params.documentRank as int),
+         baseHref:index?.isUriIsExternalLink() ? runner.getDocumentURI(params.documentRank as int) : null
+         ]
+   } else {
+     //query has expired
+     return [
+       queryId:params.queryId
+     ]
+   }
+ }
+  
+  /**
   * Action that forwards to the real GWT RPC controller.
   */
  def gwtRpc = {

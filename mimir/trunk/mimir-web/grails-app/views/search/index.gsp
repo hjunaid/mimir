@@ -32,9 +32,9 @@
   <!-- blank for a completely dynamic interface.  -->
   
   <h1>Searching Index ${index?.name}</h1>
-  <div class="searchbox" id="searchBox"> </div>
+  <div class="searchBox" id="searchBox"> </div>
   <div class="bluebar" id="resultsBar"></div>
-  <div id="searchResults">
-  </div>
+  <div id="searchResults" class="searchResults"></div>
+  <div id="pageLinks" class="pageLinks bluebar"></div>
 </body>
 </html>

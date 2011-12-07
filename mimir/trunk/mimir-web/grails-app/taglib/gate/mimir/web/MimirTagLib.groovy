@@ -12,11 +12,23 @@
  */
 package gate.mimir.web;
 
+import gate.mimir.search.QueryRunner;
+
 import java.util.Locale;
 
 import java.text.NumberFormat;
 
-class MimirTagLib {
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+
+class MimirTagLib implements ApplicationContextAware {
+  
+  /* This is slightly messy - I want to autowire the gusService but taglibs are
+  * singletons and the gusService is session-scoped.  So instead I inject the
+  * applicationContext and then fetch the gusService bean from the context at
+  * call time to get the right instance for the current session.
+  */
+  ApplicationContext applicationContext
   
   static namespace = "mimir"
 
@@ -201,6 +213,22 @@ class MimirTagLib {
       out << "</table>\n";
     } else {
       out << "<p><i>Information not available</i></p>\n"
+    }
+  }
+  
+  def documentContent = { attrs, body ->
+    def queryId = attrs.queryId
+    def documentRank = attrs.documentRank as int
+    try {
+      QueryRunner qRunner =  applicationContext.searchService.getQueryRunner(queryId)
+      if(qRunner) {
+        qRunner.renderDocument(documentRank, out)
+      } else {
+        out << g.message(code:"gus.bad.query.id", args:[queryId])
+      }
+    } catch(Exception ex) {
+      log.error("Exception rendering document ${documentRank}", ex)
+      out << g.message(code:"gus.renderDocument.exception", args:[ex.message])
     }
   }
 }
