@@ -14,6 +14,7 @@
 
 package gate.mimir.web.client;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -21,6 +22,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
@@ -37,8 +45,14 @@ import com.google.gwt.user.client.ui.InlineHTML;
 import com.google.gwt.user.client.ui.InlineHyperlink;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SuggestBox;
+import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
+import com.google.gwt.user.client.ui.SuggestOracle.Callback;
+import com.google.gwt.user.client.ui.SuggestOracle.Request;
+import com.google.gwt.user.client.ui.SuggestOracle.Response;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -102,6 +116,209 @@ public class UI implements EntryPoint {
     }
   }
   
+  
+  private class MimirOracle extends SuggestOracle{
+
+    
+    public MimirOracle() {
+      super();
+      gwtRpcService.getAnnotationsConfig(getIndexId(), 
+          new AsyncCallback<String[][]>() {
+        public void onFailure(Throwable caught) {
+          //we could not get the data from the server
+          annotationsConfig = new String[][]{ new String[]{} };
+        }
+        public void onSuccess(String[][] result) { annotationsConfig = result; }
+      });
+    }
+
+    /* (non-Javadoc)
+     * @see com.google.gwt.user.client.ui.SuggestOracle#requestSuggestions(com.google.gwt.user.client.ui.SuggestOracle.Request, com.google.gwt.user.client.ui.SuggestOracle.Callback)
+     */
+    @Override
+    public void requestSuggestions(Request request, Callback callback) {
+      ArrayList<MultiWordSuggestion> suggestions =
+        new ArrayList<MultiWordSuggestion>();
+      String query = request.getQuery();
+      int caretIndex = searchBox.getTextBox().getCursorPos();
+      int startIndex = query.lastIndexOf('{', caretIndex - 1);
+      int endIndex = query.indexOf('{', caretIndex);
+      if (endIndex == -1) { endIndex = caretIndex; }
+      int lastClose = query.lastIndexOf("}", caretIndex);
+      if (startIndex != -1 && lastClose < startIndex) {
+        // an open bracket '{' is present, and not followed by } yet
+        //check if we have the annotation type already
+        String annType = null;
+        boolean nonSpaceSeen = false;
+        int charIdx = startIndex + 1;
+        for(; charIdx < endIndex; charIdx++){
+          // this method is deprecated, but the replacement (isWhitespace())
+          // is not implemented in GWT
+          if(Character.isSpace(query.charAt(charIdx))){
+            if(nonSpaceSeen){
+              //we found some space, after some actual content was seen
+              annType = query.substring(startIndex + 1, charIdx);
+              break;
+            }
+          }else{
+            nonSpaceSeen = true;
+          }
+        }
+        if(annType == null){
+          //we have not found an ann type -> suggest some
+          //the string before the last open {, before the caret
+          String before = query.substring(0, startIndex);
+          //the string after the next {
+          String after = query.substring(endIndex);
+          //the string from the current open {, to the caret, or the next {
+          String middle = (startIndex >= 0 && startIndex < endIndex) ?
+            query.substring(startIndex+1, endIndex): "";
+          for(int annTypeId = 0; annTypeId < annotationsConfig.length; annTypeId++){
+            if(annotationsConfig[annTypeId][0].startsWith(middle)){
+              //we have identified the annotation type
+              String suggestion = "{" + annotationsConfig[annTypeId][0];
+              suggestions.add(new MultiWordSuggestion(
+                      before + suggestion + after, suggestion));
+//              Window.alert("Suggestion is: \"" + before + suggestion + after + "\"!");
+            }
+          }
+        }else{
+          //we know the ann type -> consume everything until the last word
+          int lastSpace = charIdx;
+          int wordCount = 0;
+          boolean inSpace = true;
+          boolean inQuote = false;
+          for(; charIdx < endIndex; charIdx++){
+            if(inQuote){
+              //while in quote, consume everything until the closing quote
+              if(query.charAt(charIdx) == '"' && charIdx > 0 &&
+                      query.charAt(charIdx -1) != '\\'){
+                inQuote = false;
+//                wordCount++;
+              }
+            }else{
+              if(Character.isSpace(query.charAt(charIdx))){
+                lastSpace = charIdx;
+                if(!inSpace){
+                  //we're starting a new space (so we just finished a word)
+                  wordCount++;
+                  inSpace = true;
+                }
+              }else if(query.charAt(charIdx) == ')'){
+                //closing of REGEX
+                wordCount = 0;
+                inSpace = false;
+              } else if(query.charAt(charIdx) == '"' && charIdx > 0 &&
+                      query.charAt(charIdx -1 ) != '\\'){
+                inQuote = true;
+                inSpace = false;
+              } else{
+                //some other non-space char
+                if(inSpace){
+                  //we're starting a new word
+                  inSpace = false;
+                }
+              }
+            }
+          }
+          if(inQuote){
+            //suggest nothing
+          }else{
+            String before = query.substring(0, lastSpace + 1);
+            String after = query.substring(endIndex);
+            String middle = lastSpace < endIndex ? 
+                    query.substring(lastSpace + 1, endIndex) : "";
+            //we are still typing the feature name or operator
+            //words appear in this sequence: <feature> <operator> <value>
+            if(wordCount % 3 == 0){
+              //feature
+              //find the ann type
+              for(int annTypeId = 0; annTypeId < annotationsConfig.length; annTypeId++){
+                if(annotationsConfig[annTypeId][0].equalsIgnoreCase(annType)){
+                  //suggest some feature names
+                  for(int featId = 1; featId < annotationsConfig[annTypeId].length; 
+                      featId++){
+                    if(annotationsConfig[annTypeId][featId].startsWith(middle)){
+                      String suggestion = annotationsConfig[annTypeId][featId];
+                      suggestions.add(new MultiWordSuggestion(
+                              before + suggestion + after, suggestion));
+                    }
+                  }
+                  //also offer to close the annotation
+                  String suggestion = "}";
+                  suggestions.add(new MultiWordSuggestion(
+                          before + suggestion + after, suggestion));
+                  //only one ann type can match
+                  break;
+                }
+              }              
+            } else if(wordCount % 3 == 1){
+              //operator
+              String[] strArray = new String[]{"= \"\"", "<", "<=", ">", ">=", ".REGEX()"};
+              for(String suggestion : strArray){
+                suggestions.add(new MultiWordSuggestion(
+                        before + suggestion + after, suggestion));
+              }
+            }else{
+              //value -> no suggestions
+            }
+          }
+        }
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX        
+        
+//        //the string before the last open {, before the caret
+//        String before = query.substring(0, startIndex);
+//        //the string after the next {
+//        String after = query.substring(endIndex);
+//        //the string from the current open {, to the caret, or the next {
+//        String middle = (startIndex >= 0 && startIndex < endIndex) ?
+//          query.substring(startIndex+1, endIndex): "";
+//        //find the annotation type
+//        String[] inputs = middle.split("\\s");
+//        if(inputs.length == 1){
+//          //we're searching only for annotation type
+//          for(int annTypeId = 0; annTypeId < indexConfig.length; annTypeId++){
+//            if(indexConfig[annTypeId][0].startsWith(inputs[0])){
+//              //we have identified the annotation type
+//              String suggestion = "{" + indexConfig[annTypeId][0];
+//              suggestions.add(new MultiWordSuggestion(
+//                      before + suggestion + after, suggestion));
+//            }
+//          }
+//        } else if(inputs.length > 1){
+//          //we already have the ann type, we need to suggest feature names
+//          for(int annTypeId = 0; annTypeId < indexConfig.length; annTypeId++){
+//            if(indexConfig[annTypeId][0].equalsIgnoreCase(inputs[0])){
+//              //now we need to suggest a feature name
+//              //the before string must contain everything up to the current feature
+//              
+//              String lastPrefix = inputs[inputs.length -1];
+//              if(lastPrefix.indexOf('=') <0){
+//                //we are still typing the feature name
+//                for(int featId = 1; featId < indexConfig[annTypeId].length; 
+//                    featId++){
+//                  if(indexConfig[annTypeId][featId].startsWith(lastPrefix)){
+//                    String suggestion = indexConfig[annTypeId][featId] + " = ";
+//                    suggestions.add(new MultiWordSuggestion(
+//                            before + suggestion + after, suggestion));
+//                  }
+//                }
+//              }
+//              //we only match one annotation type, so we break now
+//              break;
+//            }
+//          }
+//        }//if(inputs.length > 1)
+      }
+      
+      Response response = new Response(suggestions);
+      callback.onSuggestionsReady(request, response);
+    }
+    
+    private String[][] annotationsConfig = new String[][]{new String[]{}};
+
+  }
+  
   /**
    * Gets the Javascript variable value from the GSP view. 
    * @return
@@ -126,7 +343,7 @@ public class UI implements EntryPoint {
   /**
    * The TextArea where the query string is typed by the user.
    */
-  protected TextArea searchBox;
+  protected SuggestBox searchBox;
   
   /**
    * The Search button.
@@ -222,9 +439,13 @@ public class UI implements EntryPoint {
   protected void initGui() {
     HTMLPanel searchDiv = HTMLPanel.wrap(Document.get().getElementById("searchBox"));
     
-    searchBox = new TextArea();
-    searchBox.setCharacterWidth(60);
-    searchBox.setVisibleLines(10);
+    
+    TextArea searchTextArea =  new TextArea(); 
+    searchTextArea.setCharacterWidth(60);
+    searchTextArea.setVisibleLines(10);
+    searchBox = new SuggestBox(new MimirOracle(), searchTextArea);
+    searchBox.setTitle("Press Escape to hide suggestions list; " +
+    		"press Ctrl+Space to show it again.");
     searchDiv.add(searchBox);
     
     searchButton = new Button();
@@ -245,6 +466,67 @@ public class UI implements EntryPoint {
   }
   
   protected void initListeners() {
+    searchBox.addKeyUpHandler(new KeyUpHandler() {
+      @Override
+      public void onKeyUp(KeyUpEvent event) {
+        int keyCode = event.getNativeKeyCode();
+        if(keyCode == KeyCodes.KEY_ENTER && event.isControlKeyDown()){
+          // CTRL-ENTER -> fire the query
+          startSearch();
+        } else if(keyCode == KeyCodes.KEY_ESCAPE) {
+          ((SuggestBox.DefaultSuggestionDisplay)
+              searchBox.getSuggestionDisplay()).hideSuggestions();
+        } else if(keyCode == ' ' && event.isControlKeyDown()) {
+          // CTRL-Space: show suggestions
+          searchBox.showSuggestionList();
+        }
+        if(((SuggestBox.DefaultSuggestionDisplay)
+            searchBox.getSuggestionDisplay()).isSuggestionListShowing()) {
+          // gobble up navigation keys
+          if(keyCode == KeyCodes.KEY_UP ||
+             keyCode == KeyCodes.KEY_DOWN ||
+             keyCode == KeyCodes.KEY_ENTER) {
+            event.stopPropagation();
+            event.preventDefault();
+          }
+        }
+      }
+    });
+    
+    searchBox.addKeyDownHandler(new KeyDownHandler() {
+      @Override
+      public void onKeyDown(KeyDownEvent event) {
+        int keyCode = event.getNativeKeyCode();
+        if(((SuggestBox.DefaultSuggestionDisplay)
+            searchBox.getSuggestionDisplay()).isSuggestionListShowing()) {
+          // gobble up navigation keys
+          if(keyCode == KeyCodes.KEY_UP ||
+             keyCode == KeyCodes.KEY_DOWN ||
+             keyCode == KeyCodes.KEY_ENTER) {
+            event.stopPropagation();
+            event.preventDefault();
+          }
+        }
+      }
+    });
+    
+    searchBox.addKeyPressHandler(new KeyPressHandler() {
+      @Override
+      public void onKeyPress(KeyPressEvent event) {
+        int keyCode = event.getNativeEvent().getKeyCode();
+        if(((SuggestBox.DefaultSuggestionDisplay)
+            searchBox.getSuggestionDisplay()).isSuggestionListShowing()) {
+          // gobble up navigation keys
+          if(keyCode == KeyCodes.KEY_UP ||
+             keyCode == KeyCodes.KEY_DOWN ||
+             keyCode == KeyCodes.KEY_ENTER) {
+            event.stopPropagation();
+            event.preventDefault();
+          }
+        }
+      }
+    });
+    
     searchButton.addClickHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent event) {

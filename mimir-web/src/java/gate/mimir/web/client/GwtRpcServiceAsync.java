@@ -25,4 +25,6 @@ public interface GwtRpcServiceAsync {
   
   public void releaseQuery(java.lang.String queryId, 
                            AsyncCallback<Void> callback);
+
+  void getAnnotationsConfig(String indexId, AsyncCallback<String[][]> callback);
 }

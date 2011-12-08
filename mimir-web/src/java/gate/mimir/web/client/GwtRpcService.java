@@ -16,11 +16,14 @@ package gate.mimir.web.client;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 public interface GwtRpcService extends RemoteService {
-  public String search(java.lang.String indexId, java.lang.String query)
+  public String search(String indexId, String query)
     throws MimirSearchException;
 
   public ResultsData getResultsData(String queryId, int firstDocumentRank, 
       int documentsCount) throws MimirSearchException;
 
-  public void releaseQuery(java.lang.String queryId);
+  public void releaseQuery(String queryId);
+  
+  public String[][] getAnnotationsConfig(String indexId);
+  
 }
