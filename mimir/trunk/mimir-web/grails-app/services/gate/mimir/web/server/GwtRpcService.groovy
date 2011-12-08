@@ -127,9 +127,9 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
       if(firstDocumentRank >= 0) {
         // also obtain some documents data
         List<DocumentData> documents = []
-        for(int docRank = firstDocumentRank;
-        docRank < firstDocumentRank + documentsCount;
-        docRank++) {
+        int maxRank = Math.min(firstDocumentRank + documentsCount, 
+          qRunner.getDocumentsCount());
+        for(int docRank = firstDocumentRank; docRank < maxRank; docRank++) {
           DocumentData docData = new DocumentData(
               documentRank:docRank,
               documentTitle:qRunner.getDocumentTitle(docRank),
@@ -169,7 +169,7 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
           docData.snippets = snippets
           documents.add(docData)
         }
-        rData.setDocuments(documents)
+        if(documents) rData.setDocuments(documents)
       }
       return rData
     } else {

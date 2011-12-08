@@ -3,7 +3,7 @@
   <!-- Integrate with Sitemesh layouts           -->
   <meta name="layout" content="mimir" />
 
-  <title>M&iacute;mir Index ${index?.name}</title>
+  <title>M&iacute;mir Index &quot;${index?.name}&quot;</title>
 
   <!-- Pass some variable to the GWT code -->
   <g:javascript>
@@ -31,7 +31,7 @@
   <!-- Add the rest of the page here, or leave it -->
   <!-- blank for a completely dynamic interface.  -->
   
-  <h1>Searching Index ${index?.name}</h1>
+  <h1>Searching Index &quot;${index?.name}&quot;</h1>
   <div class="searchBox" id="searchBox"></div>
   <div class="bluebar" id="feedbackBar"></div>
   <div class="searchResults" id="searchResults"></div>

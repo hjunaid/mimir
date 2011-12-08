@@ -14,8 +14,7 @@
       </g:if>
       <h1>Mimir index &quot;${indexInstance.name}&quot;</h1>
       <g:if test="${indexInstance.state == Index.SEARCHING}">
-        <p><g:link controller="gus" action="gus"
-              params="[indexId:indexInstance.indexId]"
+        <p><g:link action="index" params="[indexId:indexInstance.indexId]"
               title="Search this index">Search this index using the web UI.</g:link> </br>
 						<g:link controller="search" action="help"
               params="[indexId:indexInstance.indexId]"
