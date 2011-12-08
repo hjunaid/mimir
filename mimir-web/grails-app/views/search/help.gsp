@@ -15,7 +15,7 @@
 
 			<p>This is the M&iacute;mir search Web Service on 
 			<mimir:createRootUrl />, searching index <b>&quot;${index.name}&quot;</b>.</p>
-	<p>You can also <g:link controller="gus" action="search" 
+	<p>You can also <g:link controller="search" action="index" 
 	  params="[indexId:index.indexId]" 
 	  title="Search this index">search this index using the web interface</g:link>.</p>
 	<p>A call to this service consists of a normal HTTP connection to a URL like:
