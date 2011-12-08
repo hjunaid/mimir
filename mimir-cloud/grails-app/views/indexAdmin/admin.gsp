@@ -85,7 +85,7 @@
 						<g:if test="${indexInstance.state == Index.SEARCHING}">
 							<tr >
 								<td colspan="2">
-									<g:link controller="gus" action="gus"
+									<g:link controller="search" action="index"
 										params="[indexId:indexInstance.indexId]" title="Search this index">Search this
 										index using the web interface.</g:link><br />
 										<g:link controller="search" action="help"
