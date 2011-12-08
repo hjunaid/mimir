@@ -110,20 +110,18 @@ public class OrQuery implements QueryNode {
     public int nextDocument(int greaterThan) throws IOException {
       if(closed) return latestDocument = -1;
       if(latestDocument == -1) return latestDocument;
-      if(latestDocument != -2) {
-        // advance
-        int first = queue.first();
-        while(currentDoc[first] == latestDocument || 
-              currentDoc[first] <= greaterThan) {
-          currentDoc[first] = executors.nextDocument(first, greaterThan);
-          if(currentDoc[first] < 0) {
-            queue.dequeue();
-            if(queue.isEmpty()) return latestDocument = -1;
-          } else {
-            queue.changed();            
-          }
-          first = queue.first();
+      // advance
+      int first = queue.first();
+      while(currentDoc[first] == latestDocument || 
+            currentDoc[first] <= greaterThan) {
+        currentDoc[first] = executors.nextDocument(first, greaterThan);
+        if(currentDoc[first] < 0) {
+          queue.dequeue();
+          if(queue.isEmpty()) return latestDocument = -1;
+        } else {
+          queue.changed();            
         }
+        first = queue.first();
       }
       latestDocument = currentDoc[queue.first()];
       // collect all the hits from the current document
