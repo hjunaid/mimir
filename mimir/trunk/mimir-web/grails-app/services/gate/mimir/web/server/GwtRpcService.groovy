@@ -13,7 +13,6 @@
  */
 package gate.mimir.web.server
 
-import gate.mimir.gus.client.SearchException;
 import grails.converters.JSON;
 
 import java.util.Set;
