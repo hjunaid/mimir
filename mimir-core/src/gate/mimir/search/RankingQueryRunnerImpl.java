@@ -117,7 +117,8 @@ public class RankingQueryRunnerImpl implements QueryRunner {
       }
       
       try {
-        int docIndex = (documentIndexes != null ? documentIndexes[start] : start);
+        // see if we can get at the first document
+        int docIndex = (documentIndexes != null ? documentIndexes[0] : start);
         int docId = documentIds.getInt(docIndex);
         if(queryExecutor.getLatestDocument() < 0 ||
            queryExecutor.getLatestDocument() >= docId) {
@@ -128,8 +129,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
           oldExecutor.close();
         }
         for(int i = start; i < end; i++) {
-          docIndex = (documentIndexes != null ? 
-              documentIndexes[i - start] : start);
+          docIndex = (documentIndexes != null ? documentIndexes[i - start] : i);
           docId = documentIds.getInt(docIndex);
           int newDoc = queryExecutor.nextDocument(docId - 1);
           // sanity check
@@ -197,7 +197,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
           }
         }
         while(docId >= 0) {
-          documentIds.add(docId);
+          // enlarge the hits list
           if(scoring){
             documentScores.add(scorer.score());
             documentHits.add(null);
@@ -215,6 +215,8 @@ public class RankingQueryRunnerImpl implements QueryRunner {
               documentHits.add(null);
             }
           }
+          // and store the new doc ID
+          documentIds.add(docId);
           docId = scoring ? scorer.nextDocument(-1) : queryExecutor.nextDocument(-1);
         }
         allDocIdsCollected = true;
