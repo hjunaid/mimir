@@ -14,17 +14,11 @@
 
 package gate.mimir.web.client;
 
-import java.util.ArrayList;
 import java.util.List;
-import sun.awt.motif.MInputMethod;
-
-import gate.mimir.gus.client.GusService;
-import gate.mimir.gus.client.GusServiceAsync;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -32,7 +26,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Anchor;
@@ -40,12 +33,10 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.InlineHTML;
 import com.google.gwt.user.client.ui.InlineHyperlink;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -57,11 +48,18 @@ public class UI implements EntryPoint {
   /**
    * A Timer implementation that fetches the latest results information from the 
    * server and updates the results display accordingly.
+   * It will re-schedule itself until all required data is made available by 
+   * the server. 
    */
   protected class ResultsUpdater extends Timer {
     
     private int newFirstDocument;
     
+    /**
+     * Creates a new results updater.
+     * @param newFirstDocument the first document to be displayed on the page. 
+     * This can be used for navigating between pages.
+     */
     public ResultsUpdater(int newFirstDocument) {
       super();
       this.newFirstDocument = newFirstDocument;
@@ -71,27 +69,16 @@ public class UI implements EntryPoint {
     public void run() {
       if(newFirstDocument != firstDocumentOnPage) {
         // new page: clear data and old display
-        documentsData.clear();
-        searchResultsPanel.clear();
         firstDocumentOnPage = newFirstDocument;
+        updateResultsDisplay(null);
       }
-      // calculate which documents we need now
-      int firstDoc = firstDocumentOnPage + documentsData.size();
-      int docCount = maxDocumentsOnPage - documentsData.size(); 
-      if(docCount <= 0) {
-        firstDoc = -1;
-      } else {
-        feedbackLabel.setText("Working...");
-      }
-      gwtRpcService.getResultsData(queryId, firstDoc, docCount, 
+      feedbackLabel.setText("Working...");
+      gwtRpcService.getResultsData(queryId, firstDocumentOnPage, maxDocumentsOnPage, 
         new AsyncCallback<ResultsData>() {
         @Override
         public void onSuccess(ResultsData result) {
           updatePage(result);
-          boolean allDone = (result.getResultsTotal() >= 0) &&
-                ((documentsData.size() == maxDocumentsOnPage) ||
-                  firstDocumentOnPage + documentsData.size() == result.getResultsTotal());
-          if(!allDone) schedule(500);
+          if(result.getResultsTotal() < 0) schedule(500);
         }
         
         @Override
@@ -115,32 +102,76 @@ public class UI implements EntryPoint {
     }
   }
   
+  /**
+   * Gets the Javascript variable value from the GSP view. 
+   * @return
+   */
   private native String getIndexId() /*-{
     return $wnd.indexId;
   }-*/;
 
+  /**
+   * Gets the Javascript variable value from the GSP view. 
+   * @return
+   */
   private native String getUriIsLink() /*-{
     return $wnd.uriIsLink;
   }-*/;
 
+  /**
+   * The remote service used to communicate with the server.
+   */
   private GwtRpcServiceAsync gwtRpcService;
   
+  /**
+   * The TextArea where the query string is typed by the user.
+   */
   protected TextArea searchBox;
   
+  /**
+   * The Search button.
+   */
   protected Button searchButton;
   
+  /**
+   * The current query ID (used when communicating with the server).
+   */
   protected String queryId;
   
+  /**
+   * The current query string (used to re-post the query if the session expired
+   * (e.g. the link was bookmarked).
+   */
   protected String queryString;
   
+  /**
+   * Cached value for the current index ID (obtained once from 
+   * {@link #getIndexId()}, then cached).
+   */
   protected String indexId;
   
+  /**
+   * Cached value for the Javascript var (obtained once from 
+   * {@link #getUriIsLink()}, then cached).
+   */  
   protected boolean uriIsLink;
   
+  /**
+   * The label displaying feedback to the user (e.g. how many documents were 
+   * found, or the current error message).
+   */
   protected Label feedbackLabel;
   
+  /**
+   * The panel covering the centre of the page, where the results documents are
+   * listed.
+   */
   protected HTMLPanel searchResultsPanel;
   
+  /**
+   * The panel at the bottom of the page, containing links to other result 
+   * pages. 
+   */
   protected HTMLPanel pageLinksPanel;
   
   /**
@@ -148,13 +179,22 @@ public class UI implements EntryPoint {
    */
   protected int firstDocumentOnPage;
   
+  /**
+   * How many documents should be shown on each result page.
+   */
   protected int maxDocumentsOnPage = 20;
   
+  /**
+   * How many page links should be included at the bottom. The current page
+   * would normally appear in the middle.
+   */
   protected int maxPages = 20;
   
+  /**
+   * How many characters are displayed for each snippet (for longer snippets,
+   * the middle content is truncated and replaced by an ellipsis).  
+   */
   protected int maxSnippetLength = 100;
-  
-  private List<DocumentData> documentsData;
   
   /**
    * This is the entry point method.
@@ -177,11 +217,6 @@ public class UI implements EntryPoint {
   protected void initLocalData() {
     queryId = null;
     firstDocumentOnPage = 0;
-    if(documentsData == null){
-      documentsData = new ArrayList<DocumentData>(maxDocumentsOnPage);
-    } else {
-      documentsData.clear();
-    }
   }
   
   protected void initGui() {
@@ -198,14 +233,15 @@ public class UI implements EntryPoint {
     searchDiv.add(searchButton);
     
     HTMLPanel resultsBar = HTMLPanel.wrap(Document.get().getElementById("feedbackBar"));
-    feedbackLabel = new Label(" ");
+    feedbackLabel = new InlineLabel();
     resultsBar.add(feedbackLabel);
+    resultsBar.add(new InlineHTML("&nbsp;"));
 
     searchResultsPanel = HTMLPanel.wrap(Document.get().getElementById("searchResults"));
-    for(int  i = 0; i < 20; i++) searchResultsPanel.add(new Label(" "));
+    updateResultsDisplay(null);
     
     pageLinksPanel = HTMLPanel.wrap(Document.get().getElementById("pageLinks"));
-    pageLinksPanel.add(new InlineLabel(" "));
+    pageLinksPanel.add(new InlineHTML("&nbsp;"));
   }
   
   protected void initListeners() {
@@ -262,6 +298,17 @@ public class UI implements EntryPoint {
     }
   }
   
+  protected void updateResultsDisplay (List<DocumentData> documentsData) {
+    searchResultsPanel.clear();
+    if(documentsData == null || documentsData.isEmpty()) {
+      for(int  i = 0; i < 20; i++) searchResultsPanel.add(new HTML("&nbsp;"));
+    } else {
+      for(DocumentData docData : documentsData) {
+        searchResultsPanel.add(buildDocumentDisplay(docData));
+      }      
+    }
+  }
+  
   protected void startSearch() {
     // clean up old state
     if(queryId != null) {
@@ -281,8 +328,7 @@ public class UI implements EntryPoint {
   
   protected void postQuery(final String newQueryString) {
     feedbackLabel.setText("Working...");
-    // clear the old display
-    searchResultsPanel.clear();
+    updateResultsDisplay(null);
     gwtRpcService.search(getIndexId(), newQueryString, new AsyncCallback<String>() {
       @Override
       public void onFailure(Throwable caught) {
@@ -330,30 +376,9 @@ public class UI implements EntryPoint {
     }
     textBuilder.append(":");
     feedbackLabel.setText(textBuilder.toString());
-
+    // now update the documents display
     if(resultsData.getDocuments() != null){
-      // now update the documents display
-      int docPosition = 0;      
-      for(DocumentData docData : resultsData.getDocuments()) {
-        // skip already populated positions
-        while(docPosition < documentsData.size() && 
-            documentsData.get(docPosition).documentRank < docData.documentRank){
-          docPosition ++;
-        }
-        if(docPosition == documentsData.size()) {
-          documentsData.add(docData);
-          HTMLPanel documentDisplay = buildDocumentDisplay(docData);
-//          if(docPosition % 2 == 0) documentDisplay.addStyleName("even");
-          searchResultsPanel.add(documentDisplay);
-        } else {
-          if(documentsData.get(docPosition).documentRank == docData.documentRank) {
-            // we got the same document: skip it
-          } else {
-            // malfunction?
-            // TODO
-          }
-        }
-      }      
+      updateResultsDisplay(resultsData.getDocuments());
     }
     
     // page links
