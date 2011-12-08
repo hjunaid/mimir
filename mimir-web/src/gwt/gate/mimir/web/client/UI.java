@@ -84,9 +84,9 @@ public class UI implements EntryPoint {
       if(newFirstDocument != firstDocumentOnPage) {
         // new page: clear data and old display
         firstDocumentOnPage = newFirstDocument;
+        feedbackLabel.setText("Working...");
         updateResultsDisplay(null);
       }
-      feedbackLabel.setText("Working...");
       gwtRpcService.getResultsData(queryId, firstDocumentOnPage, maxDocumentsOnPage, 
         new AsyncCallback<ResultsData>() {
         @Override
