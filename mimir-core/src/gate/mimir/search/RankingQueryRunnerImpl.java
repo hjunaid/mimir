@@ -372,7 +372,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getCurrentDocumentsCount()
    */
   @Override
-  public int getCurrentDocumentsCount() {
+  public int getDocumentsCurrentCount() {
     return documentIds.size();
   }
   
@@ -386,7 +386,9 @@ public class RankingQueryRunnerImpl implements QueryRunner {
   
   @Override
   public double getDocumentScore(int rank) throws IndexOutOfBoundsException, IOException {
-    return documentScores.getDouble(getDocumentIndex(rank));
+    return (documentScores != null) ? 
+        documentScores.getDouble(getDocumentIndex(rank)) : 
+        DEFAULT_SCORE;
   }
 
   /* (non-Javadoc)
