@@ -20,7 +20,7 @@ import java.util.HashMap;
 /**
  * A container for the document data that gets stored in the zip collection.
  */
-public class DocumentData implements Serializable{
+public class DocumentData implements Serializable {
   
   /**
    * Constructs a new DocumentData object.
@@ -75,6 +75,28 @@ public class DocumentData implements Serializable{
     return nonTokens;
   }
 
+  public String[][] getText(int termPosition, int length) {
+    if(length < 0) {
+      length = tokens.length - termPosition;
+      if(length < 0) {
+        // still less than 0 means termPosition was beyond the end of the doc,
+        // so return no tokens.
+        length = 0;
+      }
+    }
+    String[][] result = new String[2][];
+    result[0] = new String[length];
+    result[1] = new String[length];
+    for(int i = 0; i < length; i++) {
+      int docIdx = i + termPosition;
+      result[0][i] = docIdx < 0 ? null : 
+          (docIdx < tokens.length ? tokens[docIdx] : null);
+      result[1][i] = docIdx < 0 ? null : 
+          (docIdx < nonTokens.length ? nonTokens[docIdx] : null);
+    }
+    return result;
+  }
+  
   /**
    * @return the documentURI
    */
