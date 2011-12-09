@@ -224,7 +224,7 @@ public class RemoteQueryRunner implements QueryRunner {
     }
     
     //an example URL looks like this:
-    //http://localhost:8080/mimir/remote/bf25398f-f087-4224-bfa6-c2ef00399c04/search/hitCountBin?queryId=c4da799e-9ca2-46ae-8ded-30bdc37ad607
+    //http://localhost:8080/mimir/bf25398f-f087-4224-bfa6-c2ef00399c04/search/hitCountBin?queryId=c4da799e-9ca2-46ae-8ded-30bdc37ad607
     StringBuilder str = new StringBuilder(remoteUrl);
     str.append(SERVICE_SEARCH);
     str.append('/');
@@ -249,7 +249,7 @@ public class RemoteQueryRunner implements QueryRunner {
       try {
         docData = (DocumentData)webUtils.getObject(
             getActionBaseUrl(ACTION_DOC_DATA_BIN),
-            "queryId", queryId,
+            "queryId",  URLEncoder.encode(queryId, "UTF-8"),
             "documentRank", Integer.toString(rank));
         documentCache.putAndMoveToFirst(rank, docData);
         if(documentCache.size() > DOCUMENT_CACHE_SIZE) {
@@ -288,8 +288,9 @@ public class RemoteQueryRunner implements QueryRunner {
   @Override
   public int getDocumentID(int rank) throws IndexOutOfBoundsException,
           IOException {
-    return webUtils.getInt(getActionBaseUrl(ACTION_DOC_ID_BIN), "queryId", 
-      URLEncoder.encode(queryId, "UTF-8"));
+    return webUtils.getInt(getActionBaseUrl(ACTION_DOC_ID_BIN), 
+            "queryId", URLEncoder.encode(queryId, "UTF-8"), 
+            "documentRank", Integer.toString(rank));
   }
 
   /* (non-Javadoc)
