@@ -14,6 +14,7 @@
  */
 package gate.mimir.web;
 
+import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.QueryRunner;
 import gate.mimir.search.RemoteQueryRunner;
 import gate.mimir.tool.WebUtils;
@@ -78,6 +79,18 @@ class RemoteIndex extends Index {
     return new RemoteQueryRunner(remoteUrl, query, searchThreadPool, webUtilsManager.currentWebUtils(this))
   }
 
+  /**
+   * Gets the {@link DocumentData} value for a given document ID.
+   * @param documentID
+   * @return
+   */
+  DocumentData getDocumentData(int documentID) {
+    String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) +
+        "/search/documentDataBin";
+    return (DocumentData)webUtilsManager.currentWebUtils(this).getObject(
+          urlStr,  "documentId", Integer.toString(documentID));
+  }
+ 
   /**
    * Obtains the annotations config from the remote controller.
    */

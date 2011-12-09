@@ -14,6 +14,7 @@
  */
 package gate.mimir.web
 
+import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.web.FederatedIndex;
 import gate.mimir.web.Index;
 
@@ -106,7 +107,13 @@ class FederatedIndexService {
 
   public void undeleteDocuments(FederatedIndex index, Collection<Integer> documentIds) {
     deleteOrUndelete("undelete", index, documentIds)
-  } 
+  }
+  
+  public DocumentData getDocumentData(FederatedIndex fedIndex, int documentId) {
+    Index subIndex = fedIndex.indexes[documentId % fedIndex.indexes.size()]
+    int idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
+    return subIndex.getDocumentData(idWithinSubIndex)
+  }
 }
 
 class FederatedIndexProxy implements Runnable{

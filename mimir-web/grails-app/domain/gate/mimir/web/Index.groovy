@@ -13,6 +13,7 @@
 package gate.mimir.web;
 
 import gate.mimir.search.QueryRunner
+import gate.mimir.index.mg4j.zipcollection.DocumentData
 
 /**
  * Top level class representing a single index (local or remote) in mimir.
@@ -100,6 +101,15 @@ class Index implements Serializable {
     throw new UnsupportedOperationException() 
   }
 
+  /**
+   * Gets the {@link DocumentData} value for a given document ID.
+   * @param documentID
+   * @return
+   */
+  DocumentData getDocumentData(int documentID) {
+    throw new UnsupportedOperationException()
+  }
+  
   /**
    * Mark the given document IDs in this index as having been deleted,
    * preventing them from being subsequently returned by any queries.

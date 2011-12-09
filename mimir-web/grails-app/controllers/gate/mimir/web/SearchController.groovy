@@ -18,6 +18,7 @@ import java.io.OutputStreamWriter;
 import gate.mimir.web.Index;
 import gate.mimir.web.SearchService;
 import groovy.xml.StreamingMarkupBuilder;
+import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.Binding;
 
 import java.io.ObjectOutputStream;
@@ -541,80 +542,128 @@ class SearchController {
    */
   def postQueryBin = {
     def p = params["request"] ?: params
-    
     //get the query string
     String queryString = p["queryString"]
-    try{
+    try {
       String runnerId = searchService.postQuery(request.theIndex, queryString)
       //save the query ID in the session, so we can close it on expiry
       getSessionQueryIDs().add(runnerId)
       new ObjectOutputStream (response.outputStream).withStream {stream -> 
         stream.writeObject(runnerId)
       }
-    }catch(Exception e){
+    } catch(Exception e) {
       log.error("Exception posting query", e)
       response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
       "Problem posting query: \"" + e.getMessage() + "\"")
     }
   }
-  
-  
+
   /**
-   * Binary version of hits call
+   * Gets the number of result documents found so far. After the search 
+   * completes, the result returned by this call is identical to that of 
+   * {@link #documentsCountBin}. The result is returned as a binary 
+   * representation of an int value.
    */
-  def hitsBin = {
+  def documentsCurrentCountBin = {
     def p = params["request"] ?: params
     //get the query ID
     String queryId = p["queryId"]
     QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the parameters
-      def startIndexParam = p["startIndex"]
-      if(startIndexParam){
-        def hitCountParam = p["count"]
-        if(hitCountParam){
-          try{
-            int startIndex = startIndexParam.toInteger()
-            int hitCount = hitCountParam.toInteger()
-            //we have all required parameters
-            List<Binding> hits = new ArrayList<Binding>(runner.getHits(startIndex, hitCount))
-            new ObjectOutputStream (response.outputStream).withStream {stream -> 
-              stream.writeObject(hits)
-            }
-          }catch(Exception e){
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-            "Error while obtaining the hits: \"" + e.getMessage() + "\"!")
-          }
-        }else{
-          response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-              "No value provided for parameter maxHits!")
+    if(runner) {
+      try {
+        // we have all required parameters
+        int docCount = runner.getDocumentsCurrentCount()
+        new ObjectOutputStream (response.outputStream).withStream {stream ->
+          stream.writeInt(docCount)
         }
-      }else{
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-            "No value provided for parameter firstHit!")
+      } catch(Exception e) {
+        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            "Error while obtaining the documents count: \"" + e.getMessage() + "\"!")
       }
-    } else{
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
+    } else {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
+          "Query ID ${queryId} not known!")
+      }
+  }
+ 
+  /**
+   * Gets the number of result documents found.  Returns <code>-1</code> if the
+   * search has not yet completed, the total number of result document 
+   * otherwise. The result is returned as a binary representation of an int 
+   * value.
+   */
+  def documentsCountBin = {
+    def p = params["request"] ?: params
+    //get the query ID
+    String queryId = p["queryId"]
+    QueryRunner runner = searchService.getQueryRunner(queryId);
+    if(runner) {
+      try {
+        // we have all required parameters
+        int docCount = runner.getDocumentsCount()
+        new ObjectOutputStream (response.outputStream).withStream {stream ->
+          stream.writeInt(docCount)
+        }
+      } catch(Exception e) {
+        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            "Error while obtaining the documents count: \"" + e.getMessage() + "\"!")
+      }
+    } else {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
           "Query ID ${queryId} not known!")
     }
   }
   
   /**
-  * Binary version of hits call
-  */
-  def hitsForDocumentBin = {
+   * Gets the ID of a document as a serialised String value.
+   */
+  def documentIdBin = {
+    def p = params["request"] ?: params
+    //get the query ID
+    String queryId = p["queryId"]
+    QueryRunner runner = searchService.getQueryRunner(queryId);
+    if(runner){
+      //get the parameters: int documentRank
+      def documentRankParam = p["documentRank"]
+      if (documentRankParam) {
+        try {
+          //we have all required parameters
+          int documentRank = documentRankParam.toInteger()
+          int docId = runner.getDocumentID(documentRank)
+          new ObjectOutputStream (response.outputStream).withStream {stream ->
+            stream.writeObject(Integer.toString(docId))
+          }
+        } catch(Exception e){
+          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+              "Error while obtaining the document ID: \"" +
+              e.getMessage() + "\"!")
+        }
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+            "No value provided for parameter documentRank!")
+      }
+    } else {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
+          "Query ID ${queryId} not known!")
+    }
+  }
+  
+  /**
+   * Retrieves the hits within a given result document.
+   */
+  def documentHitsBin = {
     def p = params["request"] ?: params
     //get the query ID
     String queryId = p["queryId"]
     QueryRunner runner = searchService.getQueryRunner(queryId);
     if(runner){
       //get the parameters
-      def documentIdParam = p["documentId"]
-      if(documentIdParam){
+      def documentRankParam = p["documentRank"]
+      if(documentRankParam){
         try{
-          int documentId = documentIdParam.toInteger()
+          int documentRank = documentRankParam.toInteger()
           //we have all required parameters
-          List<Binding> hits = new ArrayList<Binding>(runner.getHitsForDocument(documentId))
+          List<Binding> hits = runner.getDocumentHits(documentRank)
           new ObjectOutputStream (response.outputStream).withStream {stream ->
             stream.writeObject(hits)
           }
@@ -625,7 +674,7 @@ class SearchController {
         
       }else{
         response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-            "No value provided for parameter documentId!")
+            "No value provided for parameter documentRank!")
       }
     } else{
       response.sendError(HttpServletResponse.SC_NOT_FOUND,
@@ -634,215 +683,88 @@ class SearchController {
   }
   
   /**
-   * Gets the number of available hits as a binary representation of an int 
-   * value.
-   */
-  def hitCountBin = {
+  * Retrieves all the document scores
+  */
+  def documentsScoresBin = {
     def p = params["request"] ?: params
     //get the query ID
     String queryId = p["queryId"]
     QueryRunner runner = searchService.getQueryRunner(queryId);
     if(runner){
       try{
-        //we have all required parameters
-        int hitCount = runner.getHitsCount()
-        new ObjectOutputStream (response.outputStream).withStream {stream -> 
-          stream.writeInt(hitCount)
+       int docCount = runner.getDocumentsCount()
+        double[] scores = new double[docCount]
+        for(int i = 0; i < docCount; i++) {
+          docCount[i] = runner.getDocumentScore(i)
+        }
+        new ObjectOutputStream (response.outputStream).withStream {stream ->
+         stream.writeObject(scores)
         }
       }catch(Exception e){
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-            "Error while obtaining the hits count: \"" + e.getMessage() + "\"!")
+        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+        "Error while obtaining the scores: \"" + e.getMessage() + "\"!")
       }
     } else{
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
           "Query ID ${queryId} not known!")
     }
   }
   
+  //
+  //  protected static final String ACTION_DOC_DATA_BIN = "documentDataBin";
   /**
-   * Gets the number of distinct documents in the current hit list as a binary
-   * representation of an int value.
+   * Gets the document data (title, URI, text) for a given document. The 
+   * requested document should be specified by providing paramter values for
+   * either documentId or both queryId and documentRank. The result is a 
+   * serialised {@link DocumentData} value.
    */
-  def docCountBin = {
+  def documentDataBin = {
     def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      try{
-        //we have all required parameters
-        int docCount = runner.getDocumentsCount()
-        new ObjectOutputStream (response.outputStream).withStream {stream -> 
-          stream.writeInt(docCount)
-        }
-      }catch(Exception e){
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-            "Error while obtaining the documents count: \"" + e.getMessage() + "\"!")
-      }
-    } else{
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-          "Query ID ${queryId} not known!")
-    }
-  }
-  
-  /**
-   * Gets the document statistics for a set of documents. The returned value is
-   * the binary representation of a two-rows int array where:
-   * <ul>
-   *   <li>result[0][i] is the ID for the i<sup>th</sup> document</li>
-   *   <li>result[1][i] is the hits count for the i<sup>th</sup> document</li>
-   * </ul>
-   */
-  def docStatsBin = {
-    def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the parameters
-      def startIndexParam = p["startIndex"]
-      if(startIndexParam){
-        def docCountParam = p["count"]
-        if(docCountParam){
-          try{
-            //we have all required parameters
-            int startIndex = startIndexParam.toInteger()
-            int docCount = docCountParam.toInteger()
-            int[][] docStats = new int[docCount][2];
-            for(int i = 0; i < docCount; i++){
-              docStats[i][0] = runner.getDocumentID(i + startIndex)
-              docStats[i][1] = runner.getDocumentHitsCount(i + startIndex)
-            }
-            new ObjectOutputStream (response.outputStream).withStream {stream -> 
-              stream.writeObject(docStats)
-            }
-          }catch(Exception e){
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                "Error while obtaining the document statistics: \"" + 
-                e.getMessage() + "\"!")
+    Index index = request.theIndex
+    // get the document ID
+    int documentId = -1;
+    String documentIdParam = p["documentId"]
+    if(documentIdParam) {
+      documentId = documentIdParam.toInteger()
+    } else {
+      // we didn't get the explicit ID; try queryId and rank instead
+      String queryId = p["queryId"]
+      if(queryId) {
+        QueryRunner runner = searchService.getQueryRunner(queryId);
+        if(runner){
+          String documentRankParam = p["documentRank"]
+          if (documentRankParam) {
+            int documentRank = documentRankParam.toInteger()
+            int docId = runner.getDocumentID(documentRank)
+          } else {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+              "Neither documentId nor documentRank parameters were provided!")
           }
-        }else{
-          response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-          "No value provided for parameter maxHits!")
+        } else {
+          response.sendError(HttpServletResponse.SC_NOT_FOUND,
+            "Query ID ${queryId} not known!")
         }
-      }else{
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-        "No value provided for parameter firstHit!")
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+            "Neither documentId nor queryId parameters were provided!")
       }
-    } else{
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-      "Query ID ${queryId} not known!")
     }
-  }
-  
-  
-  /**
-   * Sets the maximum number of hits desired in one search stage.
-   */
-  def setStageMaxHitsBin = {
-    def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      String maxHits = p["maxHits"]
-      if(maxHits){
-        //we have all required parameters
-        try{
-          runner.setStageMaxHits(maxHits as int)
-          render(text:"OK", contentType:"text/plain", encoding:"UTF-8")
-        }catch(Exception e){
-          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-              "Error while configuring the query runner: \"" + 
-              e.getMessage() + "\"!")
-        }        
-      }
-    } else{
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-          "Query ID ${queryId} not known!")
-    }
-  }
-  
-  
-  /**
-   * Sets the maximum number of hits desired in one search stage.
-   */
-  def setStageTimeoutBin = {
-    def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      String timeout = p["timeout"]
-      if(timeout){
-        //we have all required parameters
-        try{
-          runner.setStageTimeout(timeout as int)
-          render(text:"OK", contentType:"text/plain", encoding:"UTF-8")
-        }catch(Exception e){
-          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-              "Error while configuring the query runner: \"" + 
-              e.getMessage() + "\"!")
-        }        
-      }
-    } else{
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-          "Query ID ${queryId} not known!")
-    }
-  }
-  
-  /**
-   * Gets the active flag, as a serialise boolean value.
-   */
-  def isActiveBin = {
-    def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      try{
-        //we have all required parameters
-        boolean active = runner.isActive()
-        new ObjectOutputStream (response.outputStream).withStream {stream -> 
-          stream.writeBoolean(active)
+    // by this point we need to have the documentID
+    if(documentId >= 0) {
+      try {
+        new ObjectOutputStream (response.outputStream).withStream {stream ->
+          stream.writeObject(index.getDocumentData(documentId))
         }
-      }catch(Exception e){
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-            "Error while obtaining the query state: \"" + 
+      } catch(Exception e) {
+        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            "Error while obtaining the document ID: \"" +
             e.getMessage() + "\"!")
       }
-    } else{
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-          "Query ID ${queryId} not known!")
+    } else {
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+        "Could not find a valid documentId with the provided parameters!")
     }
   }
-  
-  /**
-   * Gets the complete flag, as a serialise boolean value.
-   */
-  def isCompleteBin = {
-    def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      try{
-        //we have all required parameters
-        boolean complete = runner.isComplete()
-        new ObjectOutputStream (response.outputStream).withStream {stream -> 
-          stream.writeBoolean(complete)
-        }
-      }catch(Exception e){
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-            "Error while obtaining the query state: \"" + 
-            e.getMessage() + "\"!")
-      }        
-    } else{
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-          "Query ID ${queryId} not known!")
-    }
-  }
-  
   
   /**
    * Calls the render document method on the corresponding query runner, piping
@@ -856,14 +778,14 @@ class SearchController {
     QueryRunner runner = searchService.getQueryRunner(queryId);
     if(runner){
       //get the parameters
-      def documentIdParam = p["documentId"]
-      if(documentIdParam){
+      def documentRankParam = p["documentRank"]
+      if(documentRankParam){
         try{
           //we have all the required parameters
-          int documentId = documentIdParam.toInteger()
+          int documentRank = documentRankParam.toInteger()
           response.characterEncoding = "UTF-8"
           response.writer.withWriter{ writer ->
-            runner.renderDocument(documentId, writer)
+            runner.renderDocument(documentRank, writer)
           }
         }catch(Exception e){
           response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
@@ -876,175 +798,6 @@ class SearchController {
       }
     }else{
       response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-          "Query ID ${queryId} not known!")
-    }
-  }
-  
-  
-  /**
-   * Gets [a segment of] the document text. The returned value is a 
-   * Java-serialised array of String arrays. Each element in the main array 
-   * corresponds to a token, and consists of an array of two strings: the token 
-   * string and the token non-string (i.e. all the whitespace that follows the 
-   * token).  
-   */
-  def docTextBin = {
-    def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the parameters: int documentID, int termPosition, int length
-      def documentIdParam = p["documentId"]
-      if(documentIdParam){
-        def termPositionParam = p["termPosition"]
-        if(termPositionParam){
-          def lengthParam = p["length"]
-          if(lengthParam){
-            try{
-              //we have all required parameters
-              int documentId = documentIdParam.toInteger()
-              int termPosition = termPositionParam.toInteger()
-              int length = lengthParam.toInteger()
-              String[][] docText = runner.getDocumentText(documentId, termPosition, length)
-              new ObjectOutputStream (response.outputStream).withStream {stream -> 
-                stream.writeObject(docText)
-              }
-            }catch(Exception e){
-              response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                  "Error while obtaining the document text: \"" + 
-                  e.getMessage() + "\"!")
-            }              
-          } else {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-            "No value provided for parameter length!")
-          }
-        } else {
-          response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-          "No value provided for parameter termPosition!")
-        }
-      } else {
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-        "No value provided for parameter documentID!")
-      }
-    } else {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-          "Query ID ${queryId} not known!")
-    }
-  }
-  
-  
-  /**
-   * Gets the URI of a document as a serialises String value.
-   */
-  def docURIBin = {
-    def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the parameters: int documentID
-      def documentIdParam = p["documentId"]
-      if(documentIdParam){
-        try{
-          //we have all required parameters
-          int documentId = documentIdParam.toInteger()
-          String docUri = runner.getDocumentURI(documentId)
-          new ObjectOutputStream (response.outputStream).withStream {stream -> 
-            stream.writeObject(docUri)
-          }
-        }catch(Exception e){
-          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-              "Error while obtaining the document URI: \"" + 
-              e.getMessage() + "\"!")
-        }          
-      } else {
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-            "No value provided for parameter documentId!")
-      }
-    } else {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-          "Query ID ${queryId} not known!")
-    }
-  }
-  
-  /**
-   * Gets the title of a document as a serialised String value.
-   */
-  def docTitleBin = {
-    def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the parameters: int documentID
-      def documentIdParam = p["documentId"]
-      if(documentIdParam){
-        try{
-          //we have all required parameters
-          int documentId = documentIdParam.toInteger()
-          String docTitle = runner.getDocumentTitle(documentId)
-          new ObjectOutputStream (response.outputStream).withStream {stream -> 
-            stream.writeObject(docTitle)
-          }
-        }catch(Exception e){
-          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-              "Error while obtaining the document title: \"" + 
-              e.getMessage() + "\"!")
-        }          
-      } else {
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-            "No value provided for parameter documentId!")
-      }
-    } else {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-          "Query ID ${queryId} not known!")
-    }
-  }
-  
-  /**
-   * Gets a set of arbitrary document metadata fields
-   */
-  def docMetadataFieldsBin = {
-    def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the parameters: int documentID
-      def documentIdParam = p["documentId"]
-      if(documentIdParam){
-        def fieldNamesStr = p["fieldNames"]
-        if(fieldNamesStr) {
-          try{
-            //we have all required parameters
-            int documentId = documentIdParam.toInteger()
-            Set<String> fieldNames = new HashSet<String>()
-            // split on each comma (not preceded by a backslash)
-            fieldNamesStr.split(/\s*(?<!\\),\s*/).collect{
-              // un-escape commas
-              it.replace('\\,', ',')
-            }.each{fieldNames.add(it)}
-            Map<String, Serializable> medatada = 
-                runner.getDocumentMetadataFields(documentId, fieldNames)
-            new ObjectOutputStream (response.outputStream).withStream {stream ->
-              stream.writeObject(medatada)
-            }
-          }catch(Exception e){
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                "Error while obtaining the document title: \"" +
-                e.getMessage() + "\"!")
-          }
-        } else {
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-          "No value provided for parameter fieldNames!")
-        }
-      } else {
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-            "No value provided for parameter documentId!")
-      }
-    } else {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND,
           "Query ID ${queryId} not known!")
     }
   }
@@ -1081,8 +834,6 @@ class SearchController {
     }
   }
 }
-
-
 
 /**
  * An extension of HashSet, that listens to session binding events and releases
