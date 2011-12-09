@@ -74,6 +74,7 @@
 
   <target name="grails-plugin" depends="grails.command">
   	<!-- Update the version for the mimir-web plugin -->
+  	<delete file="${grails-plugin.dir}/plugin.xml" />
     <copy file="${grails-plugin.dir}/MimirWebGrailsPlugin.groovy.template" 
     	    tofile="${grails-plugin.dir}/MimirWebGrailsPlugin.groovy"
           overwrite="true" >
@@ -81,29 +82,11 @@
         <filter token="version" value="${app.version}" />
       </filterset>
     </copy>
-  	
-  	
-  	
-    <!-- The first compile always fails due to GWT classes being added to the
-    classpath too late. When that happens, we need to run compile a second time.
-    -->
-    <trycatch>
-      <try>
-        <grails dir="${grails-plugin.dir}">
-          <arg value="compile" />
-        </grails>      
-      </try>
-      <catch>
-        <echo>First Grails compilation failed (GWT not on the classpath?); re-trying...</echo>
-        <grails dir="${grails-plugin.dir}">
-          <arg value="compile" />
-        </grails>      
-      </catch>
-    </trycatch>
     
     <grails dir="${grails-plugin.dir}">
-      <arg value="compile-gwt-modules" />
+      <arg value="package-plugin" />
     </grails>
+    
   </target>
 
   <target name="check-demo-app">
