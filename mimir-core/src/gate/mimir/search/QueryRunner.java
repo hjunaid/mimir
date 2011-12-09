@@ -41,6 +41,13 @@ import java.util.Set;
  * documents are returned in decreasing score order. 
  */
 public interface QueryRunner {
+  
+  /**
+   * The default score given to all documents when actual scoring is not being 
+   * performed.  
+   */
+  public final double DEFAULT_SCORE = 1.0;
+  
   /**
    * Gets the number of result documents.
    * @return <code>-1</code> if the search has not yet completed, the total 
@@ -54,7 +61,7 @@ public interface QueryRunner {
    * {@link #getDocumentsCount()}. 
    * @return the number of result documents known so far.
    */
-  public int getCurrentDocumentsCount();
+  public int getDocumentsCurrentCount();
 
   /**
    * Gets the ID of a result document.
@@ -101,7 +108,8 @@ public interface QueryRunner {
 
   /**
    * Gets a segment of the document text for a given document.
-   * @param rank the rank of the requested document.
+   * @param rank the rank of the requested document. This should be a value 
+   * between 0 and {@link #getDocumentsCount()} -1.
    * @param termPosition the first term requested.
    * @param length the number of terms requested.
    * @return two parallel String arrays, one containing term text, the other 
@@ -117,7 +125,8 @@ public interface QueryRunner {
 
   /**
    * Obtains the URI for a given document.
-   * @param rank the rank for the requested document.
+   * @param rank the rank for the requested document. This should be a value 
+   * between 0 and {@link #getDocumentsCount()} -1.
    * @return the URI provided at indexing time for the document.
    * @throws IndexException
    * @throws IndexOutOfBoundsException
@@ -128,7 +137,8 @@ public interface QueryRunner {
 
   /**
    * Obtains the title for a given document.
-   * @param rank the rank of the requested document.
+   * @param rank the rank of the requested document. This should be a value 
+   * between 0 and {@link #getDocumentsCount()} -1.
    * @return the document title (provided at indexing time).
    * @throws IndexException
    * @throws IndexOutOfBoundsException
@@ -143,7 +153,8 @@ public interface QueryRunner {
    * {@link Serializable} values as metadata fields for the documents being
    * indexed. This method is used at search time to retrieve those values.
    * 
-   * @param rank the rank for the requested document.
+   * @param rank the rank for the requested document. This should be a value 
+   * between 0 and {@link #getDocumentsCount()} -1.
    * @param fieldName the field name for which the value is sought.
    * @return
    * @throws IndexException
@@ -160,7 +171,8 @@ public interface QueryRunner {
    * {@link Serializable} values as metadata fields for the documents being
    * indexed. This method is used at search time to retrieve those values.
    * 
-   * @param rank the rank for the requested document.
+   * @param rank the rank for the requested document. This should be a value 
+   * between 0 and {@link #getDocumentsCount()} -1.
    * @param fieldNames the names of the metadata fields for which the values are 
    * requested.
    * @return a {@link Map} linking field names with their values.
@@ -176,7 +188,8 @@ public interface QueryRunner {
    * Render the content of the given document, with the hits for this query
    * highlighted.
    * 
-   * @param rank the rank for the requested document.
+   * @param rank the rank for the requested document. This should be a value 
+   * between 0 and {@link #getDocumentsCount()} -1.
    * @param out an {@link Appendable} to which the output is written.
    * @throws IOException
    * @throws IndexException
