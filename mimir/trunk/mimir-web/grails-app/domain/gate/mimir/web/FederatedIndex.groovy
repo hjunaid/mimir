@@ -14,6 +14,7 @@ package gate.mimir.web;
 
 import org.hibernate.proxy.HibernateProxy;
 
+import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.FederatedQueryRunner
 
@@ -76,6 +77,15 @@ class FederatedIndex extends Index {
       subRunners[i] = subIndex.startQuery(query)
     }
     return new FederatedQueryRunner(subRunners)
+  }
+  
+  /**
+   * Gets the {@link DocumentData} value for a given document ID.
+   * @param documentID
+   * @return
+   */
+  DocumentData getDocumentData(int documentID) {
+    return federatedIndexService.getDocumentData(this, documentID)
   }
   
   /**

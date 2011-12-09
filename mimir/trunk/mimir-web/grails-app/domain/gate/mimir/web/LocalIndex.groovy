@@ -13,6 +13,7 @@
 package gate.mimir.web;
 
 
+import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.Document
 import gate.Gate
@@ -89,6 +90,15 @@ class LocalIndex extends Index implements Serializable {
 
   QueryRunner startQuery(String queryString) {
     return localIndexService.getQueryRunner(this, queryString)
+  }
+  
+  /**
+  * Gets the {@link DocumentData} value for a given document ID.
+  * @param documentID
+  * @return
+  */
+  DocumentData getDocumentData(int documentID) {
+    return localIndexService.getDocumentData(this, documentID)
   }
 
   void deleteDocuments(Collection<Integer> documentIds) {

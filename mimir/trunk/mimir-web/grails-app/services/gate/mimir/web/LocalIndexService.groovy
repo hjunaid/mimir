@@ -27,6 +27,7 @@ import gate.mimir.AbstractSemanticAnnotationHelper;
 import gate.mimir.IndexConfig
 import gate.mimir.index.IndexException;
 import gate.mimir.index.Indexer
+import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.IndexConfig.SemanticIndexerConfig;
 import gate.mimir.util.*
@@ -140,6 +141,10 @@ class LocalIndexService {
   
   public synchronized QueryRunner getQueryRunner(LocalIndex index, String query) {
     return getQueryEngine(index).getQueryRunner(query)
+  }
+  
+  public synchronized DocumentData getDocumentData(LocalIndex index, int documentId) {
+    return getQueryEngine(index).getDocumentData(documentId)
   }
   
   public synchronized void deleteDocuments(LocalIndex index, Collection<Integer> documentIds) {
