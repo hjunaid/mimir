@@ -559,7 +559,7 @@ public class QueryEngine {
    */
   public String[][] getRightContext(Binding hit, int numTokens)
   throws IndexException {
-    DocumentData docData = getDocument(hit.getDocumentId());
+    DocumentData docData = getDocumentData(hit.getDocumentId());
     int startOffset = hit.getTermPosition() + hit.getLength();
     if(startOffset >= docData.getTokens().length) {
       // hit is at the end of the document
@@ -598,7 +598,7 @@ public class QueryEngine {
    */
   public String[][] getText(int documentID, int termPosition, int length)
   throws IndexException {
-    return getDocument(documentID).getText(termPosition, length);
+    return getDocumentData(documentID).getText(termPosition, length);
   }
 
   /**
@@ -620,15 +620,15 @@ public class QueryEngine {
     DocumentRenderer docRenderer = indexConfig.getDocumentRenderer();
     if(docRenderer == null) { throw new IndexException(
     "No document renderer is configured for this index!"); }
-    docRenderer.render(getDocument(docID), hits, output);
+    docRenderer.render(getDocumentData(docID), hits, output);
   }
 
   public String getDocumentTitle(int docID) throws IndexException {
-    return getDocument(docID).getDocumentTitle();
+    return getDocumentData(docID).getDocumentTitle();
   }
 
   public String getDocumentURI(int docID) throws IndexException {
-    return getDocument(docID).getDocumentURI();
+    return getDocumentData(docID).getDocumentURI();
   }
 
   /**
@@ -645,20 +645,19 @@ public class QueryEngine {
    */
   public Serializable getDocumentMetadataField(int docID, String fieldName) 
       throws IndexException {
-    return getDocument(docID).getMetadataField(fieldName);
+    return getDocumentData(docID).getMetadataField(fieldName);
   }
   
   /**
-   * Obtains the document content of an MG4J document from the document
-   * collection, using the in-memory cache.
-   * 
+   * Gets the {@link DocumentData} for a given document ID, from the on disk 
+   * document collection. In memory caching is performed to reduce the cost of 
+   * this call. 
    * @param documentID
    *          the ID of the document to be obtained.
-   * @return an array of {@link String}s, the first element containing the
-   *         words, the second containing the non-words.
+   * @return the {@link DocumentData} associated with the given document ID.
    * @throws IndexException
    */
-  protected synchronized DocumentData getDocument(int documentID)
+  public synchronized DocumentData getDocumentData(int documentID)
   throws IndexException {
     if(isDeleted(documentID)) {
       throw new IndexException("Invalid document ID " + documentID);
