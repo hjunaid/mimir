@@ -18,30 +18,48 @@ import gate.LanguageAnalyser;
 import gate.mimir.DocumentMetadataHelper;
 import gate.mimir.DocumentRenderer;
 import gate.mimir.IndexConfig;
-import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.IndexConfig.SemanticIndexerConfig;
-import gate.mimir.index.*;
+import gate.mimir.SemanticAnnotationHelper;
+import gate.mimir.index.IndexException;
+import gate.mimir.index.Indexer;
 import gate.mimir.index.mg4j.MentionsIndexBuilder;
 import gate.mimir.index.mg4j.TokenIndexBuilder;
 import gate.mimir.index.mg4j.zipcollection.DocumentCollection;
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
-import gate.mimir.search.query.*;
+import gate.mimir.search.query.Binding;
+import gate.mimir.search.query.QueryExecutor;
+import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException;
 import gate.mimir.search.query.parser.QueryParser;
 import gate.mimir.search.score.MimirScorer;
+import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.mg4j.index.DiskBasedIndex;
 import it.unimi.dsi.mg4j.index.Index;
 import it.unimi.dsi.mg4j.index.Index.UriKeys;
-import it.unimi.dsi.mg4j.search.score.CountScorer;
-import it.unimi.dsi.mg4j.util.SemiExternalOffsetList;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.zip.GZIPInputStream;
@@ -96,9 +114,10 @@ public class QueryEngine {
   protected DocumentCollection documentCollection;
 
   /**
-   * A cache of MG4J {@link Document}s used for returning the hit text.
+   * A cache of {@link DocumentData} values used for returning the various
+   * document details (title, URI, text).
    */
-  protected HashMap<Integer, DocumentData> documentCache;
+  protected Int2ObjectLinkedOpenHashMap<DocumentData> documentCache;
 
   /**
    * The maximum number of documents to be stored in the document cache.
@@ -579,32 +598,7 @@ public class QueryEngine {
    */
   public String[][] getText(int documentID, int termPosition, int length)
   throws IndexException {
-    DocumentData documentData = getDocument(documentID);
-    // negative length means return all tokens from termPosition to the end of
-    // the document
-    if(length < 0) {
-      length = documentData.getTokens().length - termPosition;
-      if(length < 0) {
-        // still less than 0 means termPosition was beyond the end of the doc,
-        // so return no tokens.
-        length = 0;
-      }
-    }
-    String[][] result = new String[2][];
-    result[0] = new String[length];
-    result[1] = new String[length];
-    for(int i = 0; i < length; i++) {
-      int docIdx = i + termPosition;
-      result[0][i] =
-        docIdx < 0 ? null : (docIdx < documentData.getTokens().length
-                ? documentData.getTokens()[docIdx]
-                                           : null);
-      result[1][i] =
-        docIdx < 0 ? null : (docIdx < documentData.getNonTokens().length
-                ? documentData.getNonTokens()[docIdx]
-                                              : null);
-    }
-    return result;
+    return getDocument(documentID).getText(termPosition, length);
   }
 
   /**
@@ -669,11 +663,14 @@ public class QueryEngine {
     if(isDeleted(documentID)) {
       throw new IndexException("Invalid document ID " + documentID);
     }
-    DocumentData documentData = documentCache.get(documentID);
+    DocumentData documentData = documentCache.getAndMoveToFirst(documentID);
     if(documentData == null) {
       // cache miss
       documentData = documentCollection.getDocumentData(documentID);
-      documentCache.put(documentID, documentData);
+      documentCache.putAndMoveToFirst(documentID, documentData);
+      if(documentCache.size() > DOCUMENT_CACHE_SIZE) {
+        documentCache.removeLast();
+      }
     }
     return documentData;
   }
@@ -761,17 +758,7 @@ public class QueryEngine {
       // open the zipped document collection
       documentCollection = new DocumentCollection(indexDir);
       // prepare the document cache
-      documentCache = new LinkedHashMap<Integer, DocumentData>() {
-        /**
-         * Serialisation ID
-         */
-        private static final long serialVersionUID = -4516970508992483332L;
-
-        @Override
-        protected boolean removeEldestEntry(Entry<Integer, DocumentData> eldest) {
-          return size() > DOCUMENT_CACHE_SIZE;
-        }
-      };
+      documentCache = new Int2ObjectLinkedOpenHashMap<DocumentData>();
     } catch(IOException e) {
       // IOException gets thrown upward
       throw e;
@@ -920,6 +907,7 @@ public class QueryEngine {
   /**
    * Reads the list of deleted documents from disk. 
    */
+  @SuppressWarnings("unchecked")
   protected synchronized void readDeletedDocs() throws IOException{
     deletedDocumentIds = Collections.synchronizedSortedSet(
             new TreeSet<Integer>());
