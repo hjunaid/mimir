@@ -18,6 +18,9 @@ import gate.mimir.tool.WebUtils
 import gate.mimir.web.RemoteIndex;
 
 class WebUtilsManager {
+  
+  static WebUtils staticWebUtils = new WebUtils();
+  
   public WebUtils currentWebUtils(RemoteIndex remoteIndex) {
     if(RCH.requestAttributes) {
       WebUtils utils = RCH.requestAttributes.session.webUtilsInstance
@@ -34,7 +37,7 @@ class WebUtilsManager {
         return new WebUtils(remoteIndex.remoteUsername, 
             remoteIndex.remotePassword)   
       } else {
-        return WebUtils.staticWebUtils()
+        return staticWebUtils
       }
     }
   }

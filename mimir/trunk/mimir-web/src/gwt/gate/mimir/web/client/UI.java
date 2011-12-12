@@ -70,6 +70,13 @@ public class UI implements EntryPoint {
     private int newFirstDocument;
     
     /**
+     * Flag used to indicate if we previously encountered an error 
+     * communicating with the remote endpoint. This flag gets cleared on every 
+     * successful access.  
+     */
+    boolean remoteError = false;
+    
+    /**
      * Creates a new results updater.
      * @param newFirstDocument the first document to be displayed on the page. 
      * This can be used for navigating between pages.
@@ -79,6 +86,10 @@ public class UI implements EntryPoint {
       this.newFirstDocument = newFirstDocument;
     }
 
+    public void setFirstDocument(int newFirstDocument) {
+      this.newFirstDocument = newFirstDocument;
+    }
+    
     @Override
     public void run() {
       if(newFirstDocument != firstDocumentOnPage) {
@@ -91,26 +102,54 @@ public class UI implements EntryPoint {
         new AsyncCallback<ResultsData>() {
         @Override
         public void onSuccess(ResultsData result) {
+          remoteError = false;
           updatePage(result);
           if(result.getResultsTotal() < 0) schedule(500);
         }
         
         @Override
         public void onFailure(Throwable caught) {
-          if(caught instanceof MimirSearchException &&
-             ((MimirSearchException)caught).getErrorCode() ==
-             MimirSearchException.QUERY_ID_NOT_KNOWN) {
-            // query ID not known -> re-post the query
-            if(queryString != null && queryString.length() > 0){
-              queryId = null;
-              postQuery(queryString);
-            }
-          } else {
-            // ignore and try again later
-            schedule(500);
+          if(remoteError) {
+            // this is the second failure: bail out
             // re-throw the exception so it's seen (useful when debugging)
-            throw new RuntimeException(caught);
+            throw new RuntimeException(caught);            
+          } else {
+            // update the flag so we get out next time
+            remoteError = true;
           }
+          if(caught instanceof MimirSearchException) {
+            if(((MimirSearchException)caught).getErrorCode() ==
+                MimirSearchException.QUERY_ID_NOT_KNOWN) {
+              // query ID not known -> re-post the query
+              if(queryString != null && queryString.length() > 0){
+                queryId = null;
+                postQuery(queryString);
+                return;
+              }
+            } else if(((MimirSearchException)caught).getErrorCode() ==
+                MimirSearchException.INTERNAL_SERVER_ERROR) {
+              // server side error: try reposting the query once
+              // clean up old state
+              if(queryId != null) {
+                // release old query
+                gwtRpcService.releaseQuery(queryId, new AsyncCallback<Void>() {
+                  @Override
+                  public void onSuccess(Void result) {}
+                  @Override
+                  public void onFailure(Throwable caught) {}
+                });
+              }
+              if(queryString != null && queryString.length() > 0){
+                queryId = null;
+                postQuery(queryString);
+                return;
+              }
+            }
+          }
+          // ignore and try again later
+          schedule(500);
+          // re-throw the exception so it's seen (useful when debugging)
+          throw new RuntimeException(caught);          
         }
       });
     }
@@ -391,6 +430,8 @@ public class UI implements EntryPoint {
    */
   protected HTMLPanel pageLinksPanel;
   
+  protected ResultsUpdater resultsUpdater;
+  
   /**
    * The rank of the first document on page.
    */
@@ -426,6 +467,7 @@ public class UI implements EntryPoint {
     indexId = getIndexId();
     uriIsLink = Boolean.parseBoolean(getUriIsLink());
     
+    resultsUpdater = new ResultsUpdater(0);
     initLocalData();
     initGui();
     initListeners();
@@ -438,7 +480,6 @@ public class UI implements EntryPoint {
   
   protected void initGui() {
     HTMLPanel searchDiv = HTMLPanel.wrap(Document.get().getElementById("searchBox"));
-    
     
     TextArea searchTextArea =  new TextArea(); 
     searchTextArea.setCharacterWidth(60);
@@ -568,7 +609,8 @@ public class UI implements EntryPoint {
               newQueryString.trim())){
               searchBox.setText(newQueryString);
             }
-            new ResultsUpdater(newFirstDoc).schedule(10);
+            resultsUpdater.setFirstDocument(newFirstDoc);
+            resultsUpdater.schedule(10);
           }
         }
       }
