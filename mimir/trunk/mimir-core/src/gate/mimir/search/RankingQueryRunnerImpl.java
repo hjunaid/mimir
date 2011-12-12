@@ -500,7 +500,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
           documentsOrder.add(rank, i);
           // if we have too many documents, drop the lowest scoring one
           if(documentsOrder.size() > rankRangeEnd + 1) {
-            documentsOrder.removeInt(documentsOrder.size());
+            documentsOrder.removeInt(documentsOrder.size() - 1);
           }          
         }
       }
