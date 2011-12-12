@@ -71,6 +71,7 @@ public class RemoteQueryRunner implements QueryRunner {
   protected class DocumentDataUpdater implements Runnable {
     @Override
     public void run() {
+      int failuresAllowed = 10;
       // wait for the first pass to complete
       while(documentsCount < 0) {
         if(closed) return;
@@ -110,11 +111,33 @@ public class RemoteQueryRunner implements QueryRunner {
             documentsCount = newDocumentsCount;
           }
         } catch(IOException e) {
-          exceptionInBackgroundThread = e;
-          logger.error("Exception while obtaining remote document data", e);
+          if(failuresAllowed > 0) {
+            failuresAllowed --;
+            logger.error("Exception while obtaining remote document data (will retry)", e);
+            try {
+              Thread.sleep(100);
+            } catch(InterruptedException e1) {
+              Thread.currentThread().interrupt();
+            }
+          } else {
+            logger.error("Exception while obtaining remote document data.", e);
+            exceptionInBackgroundThread = e;
+            return;
+          }
         } catch(ClassNotFoundException e) {
-          exceptionInBackgroundThread = e;
-          logger.error("Exception while obtaining remote document data", e);
+          if(failuresAllowed > 0) {
+            failuresAllowed --;
+            logger.error("Exception while obtaining remote document data (will retry)", e);
+            try {
+              Thread.sleep(100);
+            } catch(InterruptedException e1) {
+              Thread.currentThread().interrupt();
+            }
+          } else {
+            logger.error("Exception while obtaining remote document data.", e);
+            exceptionInBackgroundThread = e;
+            return;
+          }
         } catch(InterruptedException e) {
           Thread.currentThread().interrupt();
           logger.warn("Interrupted while waiting", e);
@@ -220,7 +243,7 @@ public class RemoteQueryRunner implements QueryRunner {
       Exception e = exceptionInBackgroundThread;
       exceptionInBackgroundThread = null;
       throw (IOException)new IOException(
-          "Problem communicating with the remote index").initCause(e);
+          "Problem communicating with the remote index", e);
     }
     
     //an example URL looks like this:
