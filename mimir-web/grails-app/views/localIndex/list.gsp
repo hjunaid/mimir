@@ -22,10 +22,9 @@
                     <thead>
                         <tr>
                    	        <g:sortableColumn property="name" title="Name" />
-                        
                    	        <g:sortableColumn property="state" title="State" />
-                        
                    	        <g:sortableColumn property="indexDirectory" title="Index Directory" />
+                            <g:sortableColumn property="scorer" title="Scorer" />                   	        
                             <th>&nbsp;</th>
                         </tr>
                     </thead>
@@ -35,6 +34,7 @@
                             <td><g:link action="show" id="${localIndexInstance.id}">${fieldValue(bean:localIndexInstance, field:'name')}</g:link></td>
                             <td>${fieldValue(bean:localIndexInstance, field:'state')}</td>
                             <td>${fieldValue(bean:localIndexInstance, field:'indexDirectory')}</td>
+                            <td>${fieldValue(bean:localIndexInstance, field:'scorer')}</td>
                         		<td>
 						                  <g:if test='${localIndexInstance.state == Index.SEARCHING}'>
 						                    <g:link controller="gus" action="search"

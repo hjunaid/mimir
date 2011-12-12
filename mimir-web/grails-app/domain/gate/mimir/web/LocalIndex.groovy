@@ -35,6 +35,17 @@ class LocalIndex extends Index implements Serializable {
   String indexDirectory
 
 
+  /**
+   * The scorer to be used during searching.
+   */
+  String scorer
+  
+  
+  static constraints = {
+    indexDirectory (nullable:false, blank:false)
+    scorer (nullable:true, blank:true)
+  }
+  
   // behaviour
 
   /**
