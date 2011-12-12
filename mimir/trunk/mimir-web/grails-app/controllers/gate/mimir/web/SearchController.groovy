@@ -577,6 +577,7 @@ class SearchController {
           stream.writeInt(docCount)
         }
       } catch(Exception e) {
+        log.warn("Error while sending document current count", e)
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             "Error while obtaining the documents count: \"" + e.getMessage() + "\"!")
       }
@@ -605,6 +606,7 @@ class SearchController {
           stream.writeInt(docCount)
         }
       } catch(Exception e) {
+        log.warn("Error while sending document count", e)
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             "Error while obtaining the documents count: \"" + e.getMessage() + "\"!")
       }
@@ -634,6 +636,7 @@ class SearchController {
             stream.writeObject(Integer.toString(docId))
           }
         } catch(Exception e){
+          log.warn("Error while sending document ID", e)
           response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
               "Error while obtaining the document ID: \"" +
               e.getMessage() + "\"!")
@@ -668,6 +671,7 @@ class SearchController {
             stream.writeObject(hits)
           }
         }catch(Exception e){
+          log.warn("Error while sending document hits", e)
           response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
           "Error while obtaining the hits: \"" + e.getMessage() + "\"!")
         }
@@ -695,12 +699,13 @@ class SearchController {
        int docCount = runner.getDocumentsCount()
         double[] scores = new double[docCount]
         for(int i = 0; i < docCount; i++) {
-          docCount[i] = runner.getDocumentScore(i)
+          scores[i] = runner.getDocumentScore(i)
         }
         new ObjectOutputStream (response.outputStream).withStream {stream ->
          stream.writeObject(scores)
         }
       }catch(Exception e){
+        log.warn("Error while sending document scores", e)
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
         "Error while obtaining the scores: \"" + e.getMessage() + "\"!")
       }
@@ -735,16 +740,22 @@ class SearchController {
           String documentRankParam = p["documentRank"]
           if (documentRankParam) {
             int documentRank = documentRankParam.toInteger()
-            int docId = runner.getDocumentID(documentRank)
+            documentId = runner.getDocumentID(documentRank)
           } else {
+            log.warn("Error while sending document data: " +
+              "Neither documentId nor documentRank parameters were provided!")
             response.sendError(HttpServletResponse.SC_BAD_REQUEST,
               "Neither documentId nor documentRank parameters were provided!")
           }
         } else {
+          log.warn("Error while sending document data: " +
+              "Query ID ${queryId} not known!")
           response.sendError(HttpServletResponse.SC_NOT_FOUND,
             "Query ID ${queryId} not known!")
         }
       } else {
+        log.warn("Error while sending document data: " +
+            "Neither documentId nor queryId parameters were provided!")
         response.sendError(HttpServletResponse.SC_BAD_REQUEST,
             "Neither documentId nor queryId parameters were provided!")
       }
@@ -756,13 +767,16 @@ class SearchController {
           stream.writeObject(index.getDocumentData(documentId))
         }
       } catch(Exception e) {
+        log.warn("Error while sending document data", e)
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             "Error while obtaining the document ID: \"" +
             e.getMessage() + "\"!")
       }
     } else {
+      log.warn("Error while sending document data: " +
+          "Could not find a valid documentId with the provided parameters!")
       response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-        "Could not find a valid documentId with the provided parameters!")
+          "Could not find a valid documentId with the provided parameters!")
     }
   }
   
