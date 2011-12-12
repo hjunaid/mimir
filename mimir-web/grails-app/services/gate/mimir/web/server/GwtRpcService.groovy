@@ -120,57 +120,65 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
   int firstDocumentRank, int documentsCount) throws MimirSearchException {
     QueryRunner qRunner = searchService.getQueryRunner(queryId);
     if(qRunner) {
-      ResultsData rData = new ResultsData(
+      try {
+        ResultsData rData = new ResultsData(
           resultsTotal:qRunner.getDocumentsCount(),
-          resultsPartial: qRunner.getCurrentDocumentsCount())
-      if(firstDocumentRank >= 0) {
-        // also obtain some documents data
-        List<DocumentData> documents = []
-        int maxRank = Math.min(firstDocumentRank + documentsCount, 
-          qRunner.getDocumentsCount());
-        for(int docRank = firstDocumentRank; docRank < maxRank; docRank++) {
-          DocumentData docData = new DocumentData(
-              documentRank:docRank,
-              documentTitle:qRunner.getDocumentTitle(docRank),
-              documentUri:qRunner.getDocumentURI(docRank))
-          // create the snippets
-          List<String[]> snippets = new ArrayList<String[]>();
-          List<Binding> hits = qRunner.getDocumentHits(docRank).collect{it};
-          3.times {
-            if(hits) {
-              String[] snippet = new String[3];
-              Binding aHit = hits.remove(0)
-              int termPos = Math.max(0, aHit.termPosition - 3)
-              if(termPos < aHit.termPosition) {
-                snippet[0] = qRunner.getDocumentText(docRank, termPos, 
-                  aHit.termPosition - termPos).toList().transpose().inject('') { 
+          resultsPartial: qRunner.getDocumentsCurrentCount())
+        if(firstDocumentRank >= 0) {
+          // also obtain some documents data
+          List<DocumentData> documents = []
+          int maxRank = Math.min(firstDocumentRank + documentsCount,
+            qRunner.getDocumentsCount());
+          for(int docRank = firstDocumentRank; docRank < maxRank; docRank++) {
+            DocumentData docData = new DocumentData(
+                documentRank:docRank,
+                documentTitle:qRunner.getDocumentTitle(docRank),
+                documentUri:qRunner.getDocumentURI(docRank))
+            // create the snippets
+            List<String[]> snippets = new ArrayList<String[]>();
+            List<Binding> hits = qRunner.getDocumentHits(docRank).collect{it};
+            3.times {
+              if(hits) {
+                String[] snippet = new String[3];
+                Binding aHit = hits.remove(0)
+                int termPos = Math.max(0, aHit.termPosition - 3)
+                if(termPos < aHit.termPosition) {
+                  snippet[0] = qRunner.getDocumentText(docRank, termPos,
+                    aHit.termPosition - termPos).toList().transpose().inject('') {
+                      acc, val -> acc + val[0] + (val[1] ? ' ' : '')
+                  }
+                } else {
+                  snippet[0] = '';
+                }
+                snippet[1] = qRunner.getDocumentText(docRank, aHit.termPosition,
+                  aHit.length).toList().transpose().inject('') {
                     acc, val -> acc + val[0] + (val[1] ? ' ' : '')
-                } 
-              } else {
-                snippet[0] = '';
+                  }
+                snippet[2] = qRunner.getDocumentText(docRank,
+                  aHit.termPosition + aHit.length, 3).toList().
+                  transpose().inject('') {
+                    acc, val -> acc + val[0] + (val[1] ? ' ' : '')
+                  }
+                snippets << snippet
               }
-              snippet[1] = qRunner.getDocumentText(docRank, aHit.termPosition,
-                aHit.length).toList().transpose().inject('') { 
-                  acc, val -> acc + val[0] + (val[1] ? ' ' : '')
-                }
-              snippet[2] = qRunner.getDocumentText(docRank,
-                aHit.termPosition + aHit.length, 3).toList().
-                transpose().inject('') { 
-                  acc, val -> acc + val[0] + (val[1] ? ' ' : '')
-                }
-              snippets << snippet
             }
+            if(hits) {
+              // more than 3 hits: show ellipsis
+              snippets.add(["   ", "...", "   "]as String[])
+            }
+            docData.snippets = snippets
+            documents.add(docData)
           }
-          if(hits) {
-            // more than 3 hits: show ellipsis
-            snippets.add(["   ", "...", "   "]as String[])
-          }
-          docData.snippets = snippets
-          documents.add(docData)
+          if(documents) rData.setDocuments(documents)
         }
-        if(documents) rData.setDocuments(documents)
+        return rData
+      } catch (Exception e) {
+        // we had a problem accessing the data inside the query runner. We'll 
+        // just assume the runner is not valid any more
+        throw new MimirSearchException(MimirSearchException.INTERNAL_SERVER_ERROR,
+            "Error extracting data from the query runner - " +
+            "your session may have expired.");
       }
-      return rData
     } else {
       throw new MimirSearchException(MimirSearchException.QUERY_ID_NOT_KNOWN,
           "Could not find your query. " +

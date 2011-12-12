@@ -25,6 +25,8 @@ public class MimirSearchException extends Exception implements IsSerializable {
 
   public static final int QUERY_ID_NOT_KNOWN = 1;
   
+  public static final int INTERNAL_SERVER_ERROR = 1;
+  
   public static final int OTHER = 0;
   
   private int errorCode;
