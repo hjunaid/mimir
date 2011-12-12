@@ -68,6 +68,16 @@
 					value="${fieldValue(bean:localIndexInstance,field:'indexDirectory')}" />
 				</td>
 			</tr>
+
+      <tr class="prop">
+        <td valign="top" class="name"><label for="scorer">Scorer:</label></td>
+        <td valign="top"
+          class="value ${hasErrors(bean:localIndexInstance,field:'scorer','errors')}">
+        <g:select from="${grailsApplication.config.gate.mimir.scorers.keySet()}"
+            value="${fieldValue(bean:localIndexInstance,field:'scorer')}" 
+            noSelection="${[null:'No Scoring']}" 
+            name="scorer"/>
+      </tr>
 			
       <tr class="prop">
         <td valign="top" class="name"><label for="uriIsExternalLink">Document

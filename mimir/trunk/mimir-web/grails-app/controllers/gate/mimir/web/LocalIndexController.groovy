@@ -136,6 +136,7 @@ class LocalIndexController {
         }
       }
       localIndexInstance.properties = params
+      if(localIndexInstance.scorer == 'null') localIndexInstance.scorer = null
       if(!localIndexInstance.hasErrors() && localIndexInstance.save()) {
         flash.message = "LocalIndex ${params.id} updated"
         redirect(action:show,id:localIndexInstance.id)
@@ -156,6 +157,7 @@ class LocalIndexController {
   def create = {
     def localIndexInstance = new LocalIndex()
     localIndexInstance.properties = params
+    if(localIndexInstance.scorer == 'null') localIndexInstance.scorer = null
     return ['localIndexInstance':localIndexInstance]
   }
   
@@ -188,13 +190,13 @@ class LocalIndexController {
             new File(mimirConfigurationInstance.indexBaseDirectory))
       tempFile.delete()
       localIndexInstance.indexDirectory = tempFile.absolutePath
-    }
-    catch(IOException e) {
+    } catch(IOException e) {
       flash.message = "Couldn't create directory for new index: ${e}"
       log.info("Couldn't create directory for new index", e)
       redirect(uri:"/")
       return
     }
+    
     if(!localIndexInstance.hasErrors() && localIndexInstance.save()) {
       try{
         localIndexService.createIndex(localIndexInstance,

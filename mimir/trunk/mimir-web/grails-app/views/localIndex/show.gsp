@@ -79,8 +79,18 @@
 			${fieldValue(bean:localIndexInstance,
 								field:'indexDirectory')}
 			</td>
-
 		</tr>
+
+    <tr class="prop">
+      <td valign="top" class="name">Scorer:</td>
+
+      <td valign="top" class="value">
+        <g:if test="${localIndexInstance?.scorer}">
+          ${fieldValue(bean:localIndexInstance, field:'scorer')}
+        </g:if>
+        <g:else>No Scoring</g:else>
+      </td>
+    </tr>
 
 		<tr class="prop">
 			<td valign="top" class="name"><label for="uriIsExternalLink">Document
