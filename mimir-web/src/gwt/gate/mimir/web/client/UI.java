@@ -112,7 +112,13 @@ public class UI implements EntryPoint {
           if(remoteError) {
             // this is the second failure: bail out
             // re-throw the exception so it's seen (useful when debugging)
-            throw new RuntimeException(caught);            
+            String message = caught.getLocalizedMessage();
+            if(message == null || message.length() == 0) {
+              message = "Error connecting to index.";
+            }
+            feedbackLabel.setText(message);
+            updateResultsDisplay(null);
+            throw new RuntimeException(caught);
           } else {
             // update the flag so we get out next time
             remoteError = true;
