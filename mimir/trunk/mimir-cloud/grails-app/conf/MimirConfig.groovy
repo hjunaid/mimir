@@ -1,3 +1,9 @@
+import it.unimi.dsi.mg4j.search.score.BM25Scorer
+import it.unimi.dsi.mg4j.search.score.CountScorer
+import it.unimi.dsi.mg4j.search.score.TfIdfScorer
+import gate.mimir.search.score.BindingScorer
+import gate.mimir.search.score.DelegatingScoringQueryExecutor
+
 // Mimir configuration.  Values in this file get merged into the main
 // GrailsApplication.config under gate.mimir, with values specified directly in
 // Config.groovy overriding those specified here (and values in external
@@ -38,3 +44,25 @@ indexBaseDirectory = "/data/home/gate/mimir-indexes"
 // this directory is used for storing temporary files (such as index archives
 // prepared for download)
 tempDir="/data/home/gate/mimir-archives"
+
+// The set of scorers available. Each scorer has a name and is defined by a
+// closure that returns a fully configured instance of
+// gate.mimir.search.score.MimirScorer.
+
+scorers {
+  counting = {
+    new DelegatingScoringQueryExecutor(new CountScorer())
+  }
+  
+  tfidf = {
+    new DelegatingScoringQueryExecutor(new TfIdfScorer())
+  }
+  
+  bm25 = {
+    new DelegatingScoringQueryExecutor(new BM25Scorer())
+  }
+  
+  mimir = {
+    new BindingScorer()
+  }
+}

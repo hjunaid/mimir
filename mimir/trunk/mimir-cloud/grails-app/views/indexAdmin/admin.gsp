@@ -7,6 +7,7 @@
 		<meta name="layout" content="mimir" />
 		<link rel="stylesheet" href="${resource(dir:'css',file:'progressbar.css')}" />
 		<g:javascript library="prototype" />
+		<mimir:load/>
 		<title>Mimir index &quot;${indexInstance.name}&quot;</title>
 
 		<g:javascript>
@@ -81,9 +82,22 @@
 							<td valign="top" class="name">State:</td>
 							<td valign="top" class="value">${indexInstance.state}</td>
 						</tr>
+	          <tr class="${row++ % 2 == 0 ? 'even' :'odd'}">
+	            <td>Annotations indexed:</td>
+	            <td><mimir:revealAnchor id="annotsConf">Detail...</mimir:revealAnchor>
+	            <mimir:revealBlock id="annotsConf"><mimir:indexAnnotationsConfig index="${indexInstance}"/></mimir:revealBlock>
+	            </td>
+	          </tr>
+	          <g:if test="${indexInstance instanceof LocalIndex}" >
+	            <tr class="${row++ % 2 == 0 ? 'even' :'odd'}">
+	              <td valign="top" class="name">Scorer:</td>
+	              <td valign="top" class="value">
+	               ${indexInstance.scorer?:'No Scoring'}</td>
+	            </tr>          
+	          </g:if>
 
 						<g:if test="${indexInstance.state == Index.SEARCHING}">
-							<tr >
+							<tr class="${row++ % 2 == 0 ? 'even' :'odd'}">
 								<td colspan="2">
 									<g:link controller="search" action="index"
 										params="[indexId:indexInstance.indexId]" title="Search this index">Search this
@@ -95,7 +109,7 @@
 							</tr>
 						</g:if>
 						<g:elseif test="${indexInstance.state == Index.CLOSING}">
-							<tr>
+							<tr class="${row++ % 2 == 0 ? 'even' :'odd'}">
 								<td>Index Closing Progress:</td>
 								<td id="closeProgress"></td>
 							</tr>
