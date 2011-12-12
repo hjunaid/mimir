@@ -172,10 +172,13 @@ class LocalIndexService {
       engine = new QueryEngine(new File(index.indexDirectory))
       engine.queryTokeniser = queryTokeniser
       engine.executor = searchThreadPool
-      if(index.scorer) {
-        engine.setScorerSource(grailsApplication.config.gate.mimir.scorers[index.scorer] as Callable<MimirScorer>)
-      }
       queryEngines[index.id] = engine
+    }
+    // the scorer may have changed, so we update it every time
+    if(index.scorer) {
+      engine.setScorerSource(grailsApplication.config.gate.mimir.scorers[index.scorer] as Callable<MimirScorer>)
+    } else {
+      engine.setScorerSource(null)
     }
     return engine    
   }
