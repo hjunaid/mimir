@@ -14,6 +14,8 @@
  */
 package gate.mimir.web;
 
+import java.util.concurrent.Callable;
+
 import gate.mimir.web.Index;
 import gate.mimir.web.IndexTemplate;
 import gate.mimir.web.LocalIndex;
@@ -30,12 +32,16 @@ import gate.mimir.index.Indexer
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.IndexConfig.SemanticIndexerConfig;
+import gate.mimir.search.score.MimirScorer
 import gate.mimir.util.*
 
 /**
  * Service for working with local indexes.
  */
 class LocalIndexService {
+  
+  def grailsApplication 
+  
   /**
    * We don't use transactions, as we don't access the database from this 
    * service.
@@ -166,6 +172,9 @@ class LocalIndexService {
       engine = new QueryEngine(new File(index.indexDirectory))
       engine.queryTokeniser = queryTokeniser
       engine.executor = searchThreadPool
+      if(index.scorer) {
+        engine.setScorerSource(grailsApplication.config.gate.mimir.scorers[index.scorer] as Callable<MimirScorer>)
+      }
       queryEngines[index.id] = engine
     }
     return engine    
