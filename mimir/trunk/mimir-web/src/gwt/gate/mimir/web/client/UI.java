@@ -709,26 +709,25 @@ public class UI implements EntryPoint {
     // now update the documents display
     if(resultsData.getDocuments() != null){
       updateResultsDisplay(resultsData.getDocuments());
-    }
-    
-    // page links
-    pageLinksPanel.clear();
-    int currentPage = firstDocumentOnPage / maxDocumentsOnPage;
-    int firstPage = Math.max(0, currentPage - (maxPages / 2));
-    int maxPage = resultsData.getResultsPartial() / maxDocumentsOnPage;
-    if(resultsData.getResultsPartial() % maxDocumentsOnPage > 0) maxPage++;
-    maxPage = Math.min(maxPage, firstPage + maxPages);
-    for(int pageNo = firstPage; pageNo < maxPage; pageNo++) {
-      Widget pageLink;
-      if(pageNo != currentPage) {
-        pageLink = new InlineHyperlink("" + (pageNo + 1), 
-          createHistoryToken(queryId, queryString, 
-            pageNo * maxDocumentsOnPage));
-      } else {
-        pageLink = new InlineLabel("" + (pageNo + 1));
-      }
-      pageLink.addStyleName("pageLink");
-      pageLinksPanel.add(pageLink);
+      // page links
+      pageLinksPanel.clear();
+      int currentPage = firstDocumentOnPage / maxDocumentsOnPage;
+      int firstPage = Math.max(0, currentPage - (maxPages / 2));
+      int maxPage = resultsData.getResultsPartial() / maxDocumentsOnPage;
+      if(resultsData.getResultsPartial() % maxDocumentsOnPage > 0) maxPage++;
+      maxPage = Math.min(maxPage, firstPage + maxPages);
+      for(int pageNo = firstPage; pageNo < maxPage; pageNo++) {
+        Widget pageLink;
+        if(pageNo != currentPage) {
+          pageLink = new InlineHyperlink("" + (pageNo + 1), 
+            createHistoryToken(queryId, queryString, 
+              pageNo * maxDocumentsOnPage));
+        } else {
+          pageLink = new InlineLabel("" + (pageNo + 1));
+        }
+        pageLink.addStyleName("pageLink");
+        pageLinksPanel.add(pageLink);
+      }      
     }
   }
   
