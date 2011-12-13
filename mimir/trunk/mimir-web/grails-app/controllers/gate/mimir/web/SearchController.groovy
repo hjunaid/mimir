@@ -616,34 +616,104 @@ class SearchController {
     }
   }
   
+  // protected static final String ACTION_DOC_IDS_BIN = "documentIdsBin";
   /**
-   * Gets the ID of a document as a serialised String value.
+   * Gets the IDs of a range of documents, in ranking order.
    */
-  def documentIdBin = {
+  def documentIdsBin = {
+    def p = params["request"] ?: params
+    //get the query ID
+    String queryId = p["queryId"]
+    QueryRunner runner = searchService.getQueryRunner(queryId);
+    if(runner){
+      if(runner.getDocumentsCount() < 0) {
+        // premature call
+        response.sendError(HttpServletResponse.SC_NOT_FOUND,
+          "Query ID ${queryId} has not completed collecting hits; please try later")
+      }
+      //get the parameters: int documentRank
+      def firstRankParam = p["firstRank"]
+      if (firstRankParam) {
+        def sizeParam = p["size"]
+        if(sizeParam) {
+          //we have all required parameters
+          try {
+            int from = firstRankParam.toInteger()
+            int resultSize = sizeParam.toInteger()
+            int to = from + resultSize
+            if(to > runner.getDocumentsCount()) {
+              to = runner.getDocumentsCount()
+            }
+            int[] docIds = new int[(to - from)]
+            for(int rank = from; rank < to; rank++) {
+              docIds[rank] = runner.getDocumentID(rank)
+            }
+            new ObjectOutputStream (response.outputStream).withStream {stream ->
+              stream.writeObject(docIds)
+            }
+          } catch(Exception e){
+            log.warn("Error while sending document ID", e)
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                "Error while obtaining the document ID: \"" +
+                e.getMessage() + "\"!")
+          }
+        } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+          "No value provided for parameter size!")
+        }
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+            "No value provided for parameter firstRank!")
+      }
+    } else {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
+          "Query ID ${queryId} not known!")
+    }
+  }
+
+  // protected static final String ACTION_DOC_SCORES_BIN = "documentsScoresBin";  
+  /**
+   * Retrieves the scores for a range of documents
+   */
+  def documentsScoresBin = {
     def p = params["request"] ?: params
     //get the query ID
     String queryId = p["queryId"]
     QueryRunner runner = searchService.getQueryRunner(queryId);
     if(runner){
       //get the parameters: int documentRank
-      def documentRankParam = p["documentRank"]
-      if (documentRankParam) {
-        try {
+      def firstRankParam = p["firstRank"]
+      if (firstRankParam) {
+        def sizeParam = p["size"]
+        if(sizeParam) {
           //we have all required parameters
-          int documentRank = documentRankParam.toInteger()
-          int docId = runner.getDocumentID(documentRank)
-          new ObjectOutputStream (response.outputStream).withStream {stream ->
-            stream.writeObject(Integer.toString(docId))
+          try {
+            int from = firstRankParam.toInteger()
+            int resultSize = sizeParam.toInteger()
+            int to = from + resultSize
+            if(to > runner.getDocumentsCount()) {
+              to = runner.getDocumentsCount()
+            }
+            double[] docScores = new double[(to - from)]
+            for(int rank = from; rank < to; rank++) {
+              docScores[rank] = runner.getDocumentScore(rank)
+            }
+            new ObjectOutputStream (response.outputStream).withStream {stream ->
+              stream.writeObject(docScores)
+            }
+          } catch(Exception e){
+            log.warn("Error while sending document ID", e)
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                "Error while obtaining the document ID: \"" +
+                e.getMessage() + "\"!")
           }
-        } catch(Exception e){
-          log.warn("Error while sending document ID", e)
-          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-              "Error while obtaining the document ID: \"" +
-              e.getMessage() + "\"!")
+        } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+          "No value provided for parameter size!")
         }
       } else {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-            "No value provided for parameter documentRank!")
+            "No value provided for parameter firstRank!")
       }
     } else {
       response.sendError(HttpServletResponse.SC_NOT_FOUND,
@@ -686,36 +756,6 @@ class SearchController {
     }
   }
   
-  /**
-  * Retrieves all the document scores
-  */
-  def documentsScoresBin = {
-    def p = params["request"] ?: params
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      try{
-       int docCount = runner.getDocumentsCount()
-        double[] scores = new double[docCount]
-        for(int i = 0; i < docCount; i++) {
-          scores[i] = runner.getDocumentScore(i)
-        }
-        new ObjectOutputStream (response.outputStream).withStream {stream ->
-         stream.writeObject(scores)
-        }
-      }catch(Exception e){
-        log.warn("Error while sending document scores", e)
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-        "Error while obtaining the scores: \"" + e.getMessage() + "\"!")
-      }
-    } else{
-      response.sendError(HttpServletResponse.SC_NOT_FOUND,
-          "Query ID ${queryId} not known!")
-    }
-  }
-  
-  //
   //  protected static final String ACTION_DOC_DATA_BIN = "documentDataBin";
   /**
    * Gets the document data (title, URI, text) for a given document. The 
