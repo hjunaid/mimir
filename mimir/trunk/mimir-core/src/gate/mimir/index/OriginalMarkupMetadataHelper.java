@@ -337,7 +337,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
     tagDesc.append(tagNameForAnnotation(ann));
     List<String> featNames = new ArrayList<String>();
     for(Map.Entry<Object, Object> entry : ann.getFeatures().entrySet()){
-      if(entry.getKey() instanceof String){
+      if((entry.getKey() instanceof String) && (entry.getValue() != null)){
         featNames.add((String)entry.getKey());
       }
     }
