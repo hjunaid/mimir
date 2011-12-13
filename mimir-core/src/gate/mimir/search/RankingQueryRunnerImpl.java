@@ -95,7 +95,14 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * This is the only actor that writes to the {@link #documentHits} list.
    */  
   protected class HitsCollector implements Runnable {
+    /**
+     * The starting rank
+     */
     int start;
+    
+    /**
+     * The ending rank
+     */
     int end;
     
     public HitsCollector(int rangeStart, int rangeEnd) {
@@ -277,7 +284,8 @@ public class RankingQueryRunnerImpl implements QueryRunner {
   
   /**
    * The sets of hits for each returned document. This data structure is lazily 
-   * built, so some elements may be null. 
+   * built, so some elements may be null. This list is aligned to 
+   * {@link #documentIds}.   
    */
   protected ObjectList<List<Binding>> documentHits;
 
@@ -403,7 +411,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
       try {
         // find the Future working on it, or start a new one, 
         // then wait for it to complete
-        collectHits(new int[]{documentIndex, documentIndex + 1}).get();
+        collectHits(new int[]{rank, rank + 1}).get();
         hits = documentHits.get(documentIndex);
       } catch(Exception e) {
         logger.error("Exception while waiting for hits collection", e);
@@ -559,28 +567,24 @@ public class RankingQueryRunnerImpl implements QueryRunner {
     // expand the interval to block size
     if(interval[1] - interval[0] < docBlockSize) {
       interval[0] -= docBlockSize / 2;
-      interval[1] += docBlockSize / 2;
+      if(interval[0] < 0)interval[0] = 0;
+      interval[1] = interval[0] + docBlockSize;
     }
     HitsCollector hitsCollector = null;
     synchronized(hitCollectors) {
       SortedMap<int[], Future<?>> headMap = hitCollectors.headMap(interval); 
-      int[] previousInterval = headMap.isEmpty() ? new int[]{0,0} : 
+      int[] previousInterval = headMap.isEmpty() ? new int[]{0, 0} : 
           headMap.lastKey();
       if(previousInterval[1] >= interval[1]) {
         // we're part of previous interval
         return hitCollectors.get(previousInterval);
       } else {
         // calculate an appropriate interval to collect hits for
-        SortedMap<int[], Future<?>> tailMap = hitCollectors.tailMap(interval);
-        int[] followingInterval;
-        if(tailMap.isEmpty()) {
-          int maxBoundary = (documentsOrder != null) ? 
-              documentsOrder.size() : interval[1] + docBlockSize / 2;
-          followingInterval =  new int[]{maxBoundary, maxBoundary};  
-        } else {
-          followingInterval = tailMap.firstKey();
-        }
-        int start = Math.max(previousInterval[1], interval[0]);
+        SortedMap<int[], Future<?>> tailMap = hitCollectors.tailMap(
+          new int[]{interval[1], interval[1]});
+        int[] followingInterval = tailMap.isEmpty() ? 
+            new int[]{interval[1], interval[1]} : tailMap.firstKey();
+        int start = Math.max(previousInterval[1] - 1, interval[0]);
         int end = Math.min(followingInterval[0], interval[1]);
         hitsCollector = new HitsCollector(start, end);
         FutureTask<?> future = new FutureTask<Object>(hitsCollector, null);
