@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-import org.apache.log4j.Logger;
-
 /**
  * A {@link QueryRunner} that presents a set of sub-indexes (represented by 
  * their own QueryRunners) as a single index.
