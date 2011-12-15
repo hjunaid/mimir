@@ -17,6 +17,7 @@ package gate.mimir.search;
 import gate.mimir.index.IndexException;
 import gate.mimir.search.query.Binding;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.io.IOException;
@@ -62,6 +63,8 @@ public class FederatedQueryRunner implements QueryRunner {
   public FederatedQueryRunner(QueryRunner[] subrunners) {
     this.subRunners = subrunners;
     this.nextSubRunnerRank = null;
+    this.rank2runnerIndex = new IntArrayList();
+    this.rank2subRank = new IntArrayList();
   }
 
   /* (non-Javadoc)
