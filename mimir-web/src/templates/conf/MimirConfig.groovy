@@ -49,20 +49,18 @@ queryTokeniserGapp = "WEB-INF/gate-home/default-query-tokeniser.xgapp"
 // closure that returns a fully configured instance of 
 // gate.mimir.search.score.MimirScorer.
 
-scorers = {
-  counting = {
-    new DelegatingScoringQueryExecutor(new CountScorer())
-  }
+scorers.'Count Scoring' = {
+  new DelegatingScoringQueryExecutor(new CountScorer())
+}
   
-  tfidf = {
-    new DelegatingScoringQueryExecutor(new TfIdfScorer())
-  }
-  
-  bm25 = {
-    new DelegatingScoringQueryExecutor(new BM25Scorer())
-  }
-  
-  mimir = {
-    new BindingScorer()
-  }  
+scorers.'TF.IDF' = {
+  new DelegatingScoringQueryExecutor(new TfIdfScorer())
+}
+
+scorers.'BM25' = {
+  new DelegatingScoringQueryExecutor(new BM25Scorer())
+}
+
+scorers.'Hit Length Scoring' = {
+  new BindingScorer()
 }
