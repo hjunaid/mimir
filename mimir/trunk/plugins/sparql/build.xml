@@ -5,6 +5,7 @@
   <!-- Common Properties -->
   <property environment="env" />
   <property file="../../build.properties" />
+  <property name="generated-header.xml" location="../../etc/generated-header.xml" />
 
   <property name="core-home" location="../../${mimir-core.dirname}"/>
 	
@@ -47,12 +48,18 @@
   </target>  
   
   <target name="creole.xml">
-  	<copy overwrite="true" file="creole.xml.template" tofile="creole.xml">
-        <filterset>
-          <filter token="jar" value="${jar.name}" />
-        </filterset>
-      </copy>
-    </target>  
+    <copy overwrite="true" file="creole.xml.template" tofile="creole.xml">
+      <filterset>
+        <filter token="jar" value="${jar.name}" />
+      </filterset>
+      <filterchain>
+        <linecontainsregexp negate="true">
+          <regexp pattern="^&lt;\?xml" />
+        </linecontainsregexp>
+        <concatfilter prepend="${generated-header.xml}" />
+      </filterchain>
+    </copy>
+  </target>  
   
   <target name="distro" depends="jar, javadoc" />
   
