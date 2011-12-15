@@ -175,6 +175,7 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
       } catch (Exception e) {
         // we had a problem accessing the data inside the query runner. We'll 
         // just assume the runner is not valid any more
+        log.error("Internal error", e)
         throw new MimirSearchException(MimirSearchException.INTERNAL_SERVER_ERROR,
             "Error extracting data from the query runner - " +
             "your session may have expired.");
