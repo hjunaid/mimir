@@ -59,11 +59,13 @@ class RemoteIndexController {
               remoteIndexInstance.delete(flush:true)
               remoteIndexService.indexDeleted( hibernateId )
               flash.message = "Remote Index \"${name}\" deleted"
-              redirect(uri:"/")
+              redirect(controller:'mimirStaticPages', action:'admin')
           }
           catch(org.springframework.dao.DataIntegrityViolationException e) {
-              flash.message = "Remote Index ${params.id} could not be deleted"
-              redirect(action:show, id:params.id)
+              flash.message = "Remote Index ${params.id} could not be deleted. " +
+              "Reason was:\n${e.message}"
+              redirect(controller:"indexAdmin", action:"admin", 
+            params:[indexId:remoteIndexInstance.indexId])
           }
       }
       else {
@@ -99,7 +101,8 @@ class RemoteIndexController {
       remoteIndexInstance.properties = params
       if(!remoteIndexInstance.hasErrors() && remoteIndexInstance.save()) {
         flash.message = "Remote Index ${params.id} updated"
-        redirect(action:show,id:remoteIndexInstance.id)
+        redirect(controller:"indexAdmin", action:"admin", 
+            params:[indexId:remoteIndexInstance.indexId])
       }
       else {
         render(view:'edit',model:[remoteIndexInstance:remoteIndexInstance])
@@ -107,7 +110,7 @@ class RemoteIndexController {
     }
     else {
       flash.message = "Remote Index not found with id ${params.id}"
-      redirect(uri:"/")
+      redirect(controller:'mimirStaticPages', action: 'admin')
     }
   }
   
@@ -134,8 +137,7 @@ class RemoteIndexController {
       //make sure the proxy object is created
       remoteIndexService.findProxy(remoteIndexInstance)
       flash.message = "Remote Index \"${remoteIndexInstance.name}\" created"
-      redirect(controller:"indexAdmin", action:"admin", 
-        params:[indexId:remoteIndexInstance.indexId])
+      redirect(controller:'mimirStaticPages', action: 'admin')
     }
     else {
       render(view:'create',model:[remoteIndexInstance:remoteIndexInstance])

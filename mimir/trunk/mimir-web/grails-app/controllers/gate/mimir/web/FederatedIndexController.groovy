@@ -50,16 +50,18 @@ class FederatedIndexController {
                 federatedIndexInstance.delete(flush:true)
                 federatedIndexService.indexDeleted(hibernateId)
                 flash.message = "FederatedIndex \"${name}\" deleted"
-                redirect(uri:"/")
+                redirect(controller:'mimirStaticPages', action:'admin')
             }
             catch(org.springframework.dao.DataIntegrityViolationException e) {
-                flash.message = "FederatedIndex ${params.id} could not be deleted"
-                redirect(action:show,id:params.id)
+                flash.message = "FederatedIndex ${params.id} could not be deleted." +
+                " Reason was:\n ${e.message}"
+                redirect(controller:"indexAdmin", action:"admin", 
+                    params:[indexId:federatedIndexInstance.indexId])
             }
         }
         else {
             flash.message = "FederatedIndex not found with id ${params.id}"
-            redirect(uri:"/")
+            redirect(controller:'mimirStaticPages', action: 'admin')
         }
     }
 
@@ -81,7 +83,6 @@ class FederatedIndexController {
             if(params.version) {
                 def version = params.version.toLong()
                 if(federatedIndexInstance.version > version) {
-                    
                     federatedIndexInstance.errors.rejectValue("version", "federatedIndex.optimistic.locking.failure", "Another user has updated this FederatedIndex while you were editing.")
                     render(view:'edit',model:[federatedIndexInstance:federatedIndexInstance])
                     return
@@ -96,7 +97,8 @@ class FederatedIndexController {
             }
             if(!federatedIndexInstance.hasErrors() && federatedIndexInstance.save()) {
                 flash.message = "FederatedIndex ${params.id} updated"
-                redirect(action:show,id:federatedIndexInstance.id)
+                redirect(controller:"indexAdmin", action:"admin",
+                    params:[indexId:federatedIndexInstance.indexId])
             }
             else {
                 render(view:'edit',model:[federatedIndexInstance:federatedIndexInstance])
@@ -104,7 +106,7 @@ class FederatedIndexController {
         }
         else {
             flash.message = "FederatedIndex not found with id ${params.id}"
-            redirect(uri:"/")
+            redirect(controller:'mimirStaticPages', action: 'admin')
         }
     }
 
@@ -131,7 +133,7 @@ class FederatedIndexController {
           if(federatedIndexInstance.state == Index.INDEXING) {
             federatedIndexService.registerIndex(federatedIndexInstance)
           }
-          redirect(action:show,id:federatedIndexInstance.id)
+          redirect(controller:'mimirStaticPages', action: 'admin')
         }
         else {
             render(view:'create',model:[federatedIndexInstance:federatedIndexInstance])
