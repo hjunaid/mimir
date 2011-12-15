@@ -7,8 +7,12 @@
   <property name="grails-plugin.dir" location="${grails-plugin.dirname}" />
   <property name="grails-demo-webapp.dir"
             location="${grails-demo-webapp.dirname}" />
+  <property name="grails-cloud-webapp.dir"
+            location="${grails-cloud-webapp.dirname}" />
   
   <property file="mimir-web/application.properties"  prefix="mimir.web." />
+
+  <property name="generated-header.java" location="etc/generated-header.java" />
 
   <!-- Load the AntContrib tasks -->
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
@@ -60,6 +64,23 @@
 
   <target name="grails.command" depends="detect.os, grails.command.win, grails.command.notwin" />
 
+  <macrodef name="resolve-groovy-templates">
+    <attribute name="dir" />
+    <sequential>
+      <copy todir="@{dir}" overwrite="true">
+        <fileset dir="@{dir}" includes="**/*.groovy.template" />
+        <globmapper from="*.template" to="*" />
+        <filterset>
+          <filter token="version" value="${app.version}" />
+          <filter token="gwtversion" value="${gwt.version}" />
+        </filterset>
+        <filterchain>
+          <concatfilter prepend="${generated-header.java}" />
+        </filterchain>
+      </copy>
+    </sequential>
+  </macrodef>
+
   <target name="core">
     <ant dir="${mimir-core.dir}" target="publish" />
     <ant dir="${mimir-client.dir}" target="publish" />
@@ -73,20 +94,19 @@
   </target>
 
   <target name="grails-plugin" depends="grails.command">
-  	<!-- Update the version for the mimir-web plugin -->
-  	<delete file="${grails-plugin.dir}/plugin.xml" />
-    <copy file="${grails-plugin.dir}/MimirWebGrailsPlugin.groovy.template" 
-    	    tofile="${grails-plugin.dir}/MimirWebGrailsPlugin.groovy"
-          overwrite="true" >
-      <filterset>
-        <filter token="version" value="${app.version}" />
-      </filterset>
-    </copy>
+    <!-- Update the version for the mimir-web plugin -->
+    <delete file="${grails-plugin.dir}/plugin.xml" />
+
+    <resolve-groovy-templates dir="${grails-plugin.dir}" />
     
     <grails dir="${grails-plugin.dir}">
       <arg value="package-plugin" />
     </grails>
     
+  </target>
+
+  <target name="prepare-cloud-app">
+    <resolve-groovy-templates dir="${grails-cloud-webapp.dir}" />
   </target>
 
   <target name="check-demo-app">
@@ -119,10 +139,16 @@ Please delete/move it manually and try again!
       <arg value="${grails-demo-webapp.name}" />
     </grails>
     
-  	<echo file="${grails-demo-webapp.dir}/grails-app/conf/UrlMappings.groovy"
-  	    >class UrlMappings { static mappings = {} }</echo>
+    <echo file="${grails-demo-webapp.dir}/grails-app/conf/UrlMappings.groovy"
+      >class UrlMappings { static mappings = {} }</echo>
+    <echo file="${grails-demo-webapp.dir}/grails-app/conf/BuildConfig.groovy"
+      append="true">
+
+// version of GWT to use - this will be downloaded automatically using ivy
+gwt.version = "${gwt.version}"
+</echo>
   	
-  	<grails dir="${grails-demo-webapp.dir}">
+    <grails dir="${grails-demo-webapp.dir}">
       <arg value="clean" />
     </grails>
     
@@ -161,7 +187,7 @@ Please delete/move it manually and try again!
     mean.</echo>
   </target>  
   
-  <target name="all" depends="core, plugins, grails-plugin" />
+  <target name="all" depends="core, plugins, grails-plugin, prepare-cloud-app" />
 
   <target name="clean" depends="grails.command">
     <ant dir="${mimir-core.dir}" target="clean" />
