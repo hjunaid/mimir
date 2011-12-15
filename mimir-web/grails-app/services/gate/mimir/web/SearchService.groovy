@@ -33,7 +33,7 @@ class SearchService {
   /**
    * A map holding the currently active query runners. 
    */
-  Map<String, QueryRunner> queryRunners = [:]
+  Map<String, QueryRunner> queryRunners = [:].asSynchronized()
   
   public QueryRunner getQueryRunner(String id){
     return queryRunners[id]
