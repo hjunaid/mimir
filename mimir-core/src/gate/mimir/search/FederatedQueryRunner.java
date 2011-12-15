@@ -24,7 +24,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 /**
  * A {@link QueryRunner} that presents a set of sub-indexes (represented by 
@@ -60,7 +59,7 @@ public class FederatedQueryRunner implements QueryRunner {
    */  
   protected IntList rank2subRank;
   
-  public FederatedQueryRunner(QueryRunner[] subrunners, Executor threadSource) {
+  public FederatedQueryRunner(QueryRunner[] subrunners) {
     this.subRunners = subrunners;
     this.nextSubRunnerRank = null;
   }
