@@ -11,7 +11,7 @@ import="gate.mimir.web.Index" %>
 	<body>
 		<div class="nav">
 			<span class="menuButton">
-				<g:link class="home" controller="mimirStaticPages" action="index">Home</g:link>
+				<g:link class="home" controller="mimirStaticPages" action="admin">Admin Home</g:link>
 			</span>
 			<span class="menuButton">
 				<g:link class="create" action="create">Connect to New Remote Index</g:link>

@@ -139,7 +139,8 @@ class LocalIndexController {
       if(localIndexInstance.scorer == 'null') localIndexInstance.scorer = null
       if(!localIndexInstance.hasErrors() && localIndexInstance.save()) {
         flash.message = "LocalIndex ${params.id} updated"
-        redirect(action:show,id:localIndexInstance.id)
+        redirect(controller:"indexAdmin", action:"admin", 
+          params:[indexId:localIndexInstance.indexId])
       }
       else {
         render(view:'edit',model:[localIndexInstance:localIndexInstance])
@@ -147,7 +148,7 @@ class LocalIndexController {
     }
     else {
       flash.message = "LocalIndex not found with id ${params.id}"
-      redirect(uri:"/")
+      redirect(controller:'mimirStaticPages', action: 'admin')
     }
   }
   
@@ -168,7 +169,7 @@ class LocalIndexController {
     def indexTemplateInstance = IndexTemplate.get(params.indexTemplateId)
     if(!indexTemplateInstance) {
       flash.message = "Index template not found with ID ${params.indexTemplateId}"
-      redirect(uri:"/")
+      redirect(controller:'mimirStaticPages', action:'admin')
       return
     }
     
@@ -193,7 +194,7 @@ class LocalIndexController {
     } catch(IOException e) {
       flash.message = "Couldn't create directory for new index: ${e}"
       log.info("Couldn't create directory for new index", e)
-      redirect(uri:"/")
+      redirect(controller:'mimirStaticPages', action: "admin")
       return
     }
     
@@ -202,14 +203,13 @@ class LocalIndexController {
         localIndexService.createIndex(localIndexInstance,
             indexTemplateInstance)
         flash.message = "LocalIndex \"${localIndexInstance.name}\" created"
-        redirect(controller:"indexAdmin", action:"admin",
-            params:[indexId:localIndexInstance.indexId])
+        redirect(controller:'mimirStaticPages', action: "admin")
         return
       }catch (Exception e) {
         flash.message = "Could not create local index. Problem was: \"${e.message}\"."
         log.debug("Error creating local index", e)
         localIndexInstance.delete()
-        redirect(uri:"/")
+        redirect(controller:'mimirStaticPages', action: "admin")
         return
       }
     }
@@ -249,8 +249,7 @@ class LocalIndexController {
       localIndexInstance.indexId = UUID.randomUUID().toString()
       if(localIndexInstance.save()) {
         flash.message = "Local Index \"${localIndexInstance.name}\" imported"
-        redirect(controller:"indexAdmin", action:"admin", 
-                 params:[indexId:localIndexInstance.indexId])
+        redirect(controller:'mimirStaticPages', action: "admin")
       }
       else {
         render(view:'importIndex', model:[localIndexInstance:localIndexInstance])

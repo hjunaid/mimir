@@ -1,4 +1,5 @@
 <% 
     flash.message = "Error: ${rootCauseException.message}. Local index ${localIndexInstance.name} not deleted"
-    response.sendRedirect(g.createLink(action:'show', id:localIndexInstance.id).toString())
+    response.sendRedirect(g.createLink(controller:"indexAdmin", action:"admin", 
+            params:[indexId:localIndexInstance.indexId]).toString())
 %>

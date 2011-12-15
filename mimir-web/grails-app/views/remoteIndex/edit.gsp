@@ -6,15 +6,11 @@
 <title>Edit Remote Index</title>
 </head>
 <body>
-<div class="nav"><span class="menuButton"> <g:link class="home"
-	controller="mimirStaticPages" action="index">Home</g:link> </span> <%--			
-			<span class="menuButton">
-				<g:link class="list" action="list">Remote Index List</g:link>
-			</span>
-			<span class="menuButton">
-				<g:link class="create" action="create">Connect to New Remote Index</g:link>
-			</span>
---%></div>
+<div class="nav">
+  <span class="menuButton"> <g:link class="home"
+        controller="mimirStaticPages" action="admin">Admin Home</g:link>
+  </span>
+</div>
 <div class="body">
 <h1>Edit Remote Index</h1>
 <g:if test="${flash.message}">
@@ -32,13 +28,16 @@
 	<table>
 		<tbody>
 
-			<tr class="prop">
-				<td valign="top" class="name"><label for="indexId">Index ID:</label></td>
-				<td valign="top"
-					class="value ${hasErrors(bean:remoteIndexInstance,field:'indexId','errors')}">
-				<label for="indexId">
-				${fieldValue(bean:remoteIndexInstance,field:'indexId')} </label></td>
-			</tr>
+      <tr class="prop">
+        <td valign="top" class="name"><label for="indexId">Index ID:</label></td>
+        <td valign="top"
+          class="value ${hasErrors(bean:remoteIndexInstance,field:'indexId','errors')}">
+        <input type="text" id="indexId" name="indexId"
+          value="${fieldValue(bean:remoteIndexInstance,field:'indexId')}" />
+        </td>
+      </tr>
+      
+
 
 			<tr class="prop">
 				<td valign="top" class="name"><label for="name">Name:</label></td>

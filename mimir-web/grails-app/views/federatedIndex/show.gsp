@@ -7,15 +7,11 @@
 <title>Show FederatedIndex</title>
 </head>
 <body>
-<div class="nav"><span class="menuButton"> <g:link class="home"
-	controller="mimirStaticPages" action="index">Home</g:link> </span> <%--
-			<span class="menuButton">
-				<g:link class="list" action="list">FederatedIndex List</g:link>
-			</span>
-			<span class="menuButton">
-				<g:link class="create" action="create">New FederatedIndex</g:link>
-			</span>
-			--%></div>
+<div class="nav">
+  <span class="menuButton"> <g:link class="home"
+        controller="mimirStaticPages" action="admin">Admin Home</g:link>
+  </span>
+</div>
 <div class="body">
 <h1>Show FederatedIndex</h1>
 <g:if test="${flash.message}">
