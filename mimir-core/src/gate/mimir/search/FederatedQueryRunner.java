@@ -17,7 +17,6 @@ package gate.mimir.search;
 import gate.mimir.index.IndexException;
 import gate.mimir.search.query.Binding;
 
-import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.io.IOException;
@@ -39,13 +38,6 @@ public class FederatedQueryRunner implements QueryRunner {
    * The total number of result documents (or -1 if not yet known).
    */
   private int documentsCount = -1;
-  
-  private boolean closed;
-  
-  /**
-   * Shared Logger
-   */
-  private static Logger logger = Logger.getLogger(FederatedQueryRunner.class);
   
   /**
    * The query runners for the sub-indexes.
