@@ -59,8 +59,8 @@
   </div>
 
   <div class="action-box">
-    <span class="action-name">hitCount</span>
-    <span class="action-desc">Action for obtaining the number of available hits for a given query.</span>
+    <span class="action-name">documentsCount</span>
+    <span class="action-desc">Gets the number of result documents.</span>
     <div class="list"><b>Parameters:</b>
       <table>
         <tr>
@@ -69,12 +69,13 @@
         </tr>
       </table>
     </div>
-    <b>Returns:</b> the number of hits retrieved so far for the given query.
+    <b>Returns:</b> <code>-1</code> if the search has not yet completed, or the 
+    total number of result documents otherwise. 
   </div>
 
   <div class="action-box">
-    <span class="action-name">docCount</span>
-    <span class="action-desc">Action for obtaining the number of distinct documents that have hits for a given query.</span>
+    <span class="action-name">documentsCurrentCount</span>
+    <span class="action-desc">Gets the number of result documents found so far.</span>
     <div class="list"><b>Parameters:</b>
       <table>
         <tr>
@@ -83,13 +84,15 @@
         </tr>
       </table>
     </div>
-    <b>Returns:</b> the number of distinct documents that have been found so far
-     to include hits for the given query. 
+    <b>Returns:</b> the number of result documents found so far. After the search 
+   completes, the result returned by this call is identical to that of 
+   <code>documentsCount</code>.
   </div>
 
   <div class="action-box">
-    <span class="action-name">docStats</span>
-    <span class="action-desc">Action for obtaining the number of available hits for a given query, for each of the documents.</span>
+    <span class="action-name">documentID</span>
+    <span class="action-desc">Obtains the document ID for the document at a
+    given rank (position in the results list).</span>
     <div class="list"><b>Parameters:</b>
       <table>
         <tr>
@@ -97,105 +100,111 @@
         <td>the ID of the requested query.</td>
         </tr>
         <tr>
-        <td>startIndex</td>
-        <td>the index of the first desired document. This value should greater 
-        or equal to zero, and smaller than the value returned by the last call
-        to <b>docCount</b>!</td>
-        </tr>
-        <tr>
-        <td>count</td>
-        <td>the number of desired documents. This value should be greater than 
-        zero, and smaller than <b>docCount - startIndex</b>!</td>
+        <td>rank</td>
+        <td>the rank (position in the results list) for the requested document.</td>
         </tr>        
       </table>
     </div>
-    <b>Returns:</b> for each requested document, its ID and the number of hits. 
+    <b>Returns:</b> ID of the requested document (an integer value).
   </div>
-  
-  <div class="action-box">
-    <span class="action-name">hits</span>
-    <span class="action-desc">Action for obtaining a set of hits.</span>
-    <div class="list"><b>Parameters:</b>
-      <table>
-        <tr>
-        <td>queryId</td>
-        <td>the ID of the requested query.</td>
-        </tr>
-        <tr>
-        <td>startIndex</td>
-        <td>the index of the first desired hit.</td>
-        </tr>
-        <tr>
-        <td>count</td>
-        <td>the number of desired hits.</td>
-        </tr>
-      </table>
-    </div>
-    <p><b>Returns:</b> a list of hits, which may be:
-      <ul>
-        <li><b>null</b>, if no more hits exist,</li>
-        <li><b>empty</b>, if no more hits have been found so far. In this case, 
-        you should call <b>getMoreHits</b> to trigger a new search stage, in 
-        order to obtain more hits. A future call to this action may return 
-        more hits (if more were obtained in the mean time).</li>
-        <li><b>shorter than the value of maxHits</b>, if not enough hits have 
-        been retrieved so far.</li>
-      </ul>
-      </p>
-  </div>
-  
 
   <div class="action-box">
-    <span class="action-name">getMoreHits</span>
-    <span class="action-desc">Asks the query executor to restart the search 
-    process and try to get more hits.</span>
+    <span class="action-name">documentScore</span>
+    <span class="action-desc">Obtains the score for the document at a
+    given rank (position in the results list).</span>
     <div class="list"><b>Parameters:</b>
       <table>
         <tr>
         <td>queryId</td>
         <td>the ID of the requested query.</td>
         </tr>
+        <tr>
+        <td>rank</td>
+        <td>the rank (position in the results list) for the requested document.</td>
+        </tr>
       </table>
     </div>
-    <p><b>Returns:</b> the exit state (success or error).
-      </p>
+    <b>Returns:</b> the score for the requested document, a floating point 
+    (double precision) value.
   </div>
   
   <div class="action-box">
-    <span class="action-name">isActive</span>
-    <span class="action-desc">Finds out whether a specified query is currently 
-    active. If the query is not currently active (which means that the latest
-    search stage has completed, due to either heaving found enough hits, or the
-    specified timeout having lapsed), it can be re-started by calling 
-    <b>getMoreHits</b>.</span>
+    <span class="action-name">documentHits</span>
+    <span class="action-desc">Action for obtaining the hits for a given 
+    document.</span>
     <div class="list"><b>Parameters:</b>
       <table>
         <tr>
         <td>queryId</td>
         <td>the ID of the requested query.</td>
         </tr>
-      </table>
-    </div>
-    <b>Returns:</b> a boolean value representing the state of the query.
-  </div>  
-  
-    <div class="action-box">
-    <span class="action-name">isComplete</span>
-    <span class="action-desc">Finds out whether a specified query has completed
-    its execution (it has found all the possible hits in the index). A query 
-    that completed cannot be restarted (as it has already found everything) but
-    can still be queried to obtain the document statistics, the hits, etc. 
-    Remember to <b>close</b> the query when it is not needed any more!</span>
-    <div class="list"><b>Parameters:</b>
-      <table>
         <tr>
-        <td>queryId</td>
-        <td>the ID of the requested query.</td>
+        <td>rank</td>
+        <td>the rank (position in the results list) for the requested document.</td>
         </tr>
       </table>
     </div>
-    <b>Returns:</b> a boolean value representing the state of the query.
+    <p><b>Returns:</b> a list of hits, each defined by a document ID, a 
+    termPosition, and a length.</p>
   </div>
+  
+  <div class="action-box">
+    <span class="action-name">documentText</span>
+    <span class="action-desc">Action for obtaining [a segment of] the text of a document.</span>
+    <div class="list"><b>Parameters:</b>
+      <table>
+        <tr>
+        <td>queryId</td>
+        <td>the ID of an active query, to be used as a context for this call.</td>
+        </tr>
+        <tr>
+        <td>rank</td>
+        <td>the rank (position in the results list) for the requested document.</td>
+        </tr>
+        <tr>
+        <td>termPosition</td>
+        <td>(optional) the index of the first token to be returned,
+      defaults to 0 if omitted, i.e. start from the beginning of the
+      document.</td>
+        </tr>
+        <tr>
+        <td>length</td>
+        <td>(optional) the number of tokens (and spaces) to be returned.
+      If omitted, all tokens from position to the end of the document will
+      be returned.</td>
+        </tr>          
+      </table>
+      <p><b>Returns:</b> the text of the document [segment] requested, as a 
+      list of tokens and space pairs.</p>
+    </div>
+  </div>
+
+  <div class="action-box">
+    <span class="action-name">documentMetadata</span>
+    <span class="action-desc">Action for obtaining the document metadata.</span>
+    <div class="list"><b>Parameters:</b>
+      <table>
+        <tr>
+        <td>queryId</td>
+        <td>the ID of an active query, to be used as a context for this call.</td>
+        </tr>
+        <tr>
+        <td>rank</td>
+        <td>the rank (position in the results list) for the requested document.</td>
+        </tr>
+        <tr>
+        <td>fieldNames</td>
+        <td>(optional) a comma-separated list of other field names to be returned.</td>
+        </tr>        
+      </table>
+      <p><b>Returns:</b></p> 
+      <ul>
+        <li>the document URI</li>
+        <li>the document title</li>
+        <li>the values for the other field names, if requested and present</li>
+      </ul>
+    </div>
+  </div>  
   
   <div class="action-box">
     <span class="action-name">renderDocument</span>
@@ -209,68 +218,12 @@
         <td>the ID of the requested query.</td>
         </tr>
         <tr>
-        <td>documentId</td>
-        <td>the ID of the requested document (as obtained from the <tt>documentMetadata</tt> call).</td>
-        </tr>        
+        <td>rank</td>
+        <td>the rank (position in the results list) for the requested document.</td>
+        </tr>
       </table>
     </div>
     <b>Returns:</b> the HTML source of the rendered document.
-  </div>
-
-  <div class="action-box">
-    <span class="action-name">documentMetadata</span>
-    <span class="action-desc">Action for obtaining the document metadata.</span>
-    <div class="list"><b>Parameters:</b>
-      <table>
-        <tr>
-        <td>queryId</td>
-        <td>the ID of an active query, to be used as a context for this call.</td>
-        </tr>
-        <tr>
-        <td>documentId</td>
-        <td>the ID of the desired document</td>
-        </tr>
-      </table>
-      <p><b>Returns:</b> 
-      <ul>
-        <li>the document URI</li>
-        <li>the document title</li>
-      </ul></p>
-    </div>
-  </div>
-
-  <div class="action-box">
-    <span class="action-name">documentText</span>
-    <span class="action-desc">Action for obtaining [a segment of] the text of a document.</span>
-    <div class="list"><b>Parameters:</b>
-      <table>
-        <tr>
-        <td>queryId</td>
-        <td>the ID of an active query, to be used as a context for this call.</td>
-        </tr>
-        <tr>
-        <td>documentId</td>
-        <td>the ID of the desired document</td>
-        </tr>
-        <tr>
-        <td>position</td>
-        <td>(optional) the index of the first token to be returned,
-      defaults to 0 if omitted, i.e. start from the beginning of the
-      document.</td>
-        </tr>
-        <tr>
-        <td>length</td>
-        <td>(optional) the number of tokens (and spaces) to be returned.
-      If omitted, all tokens from position to the end of the document will
-      be returned.</td>
-        </tr>          
-      </table>
-      <p><b>Returns:</b> 
-      <ul>
-        <li>the document URI</li>
-        <li>the document title</li>
-      </ul></p>
-    </div>
   </div>
 
   <div class="action-box">

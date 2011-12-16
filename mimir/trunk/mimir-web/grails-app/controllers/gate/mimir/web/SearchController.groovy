@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
+import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryRunner;
 
 
@@ -152,7 +153,6 @@ class SearchController {
   
   def postQuery = {
     def p = params["request"] ?: params
-    
     //get the query string
     String queryString = p["queryString"]
     try{
@@ -168,230 +168,12 @@ class SearchController {
     }
   }
   
-  def isActive = {
-  	def p = params["request"] ?: params
-  	
-  	//get the query ID
-  	String queryId = p["queryId"]
-	  QueryRunner runner = searchService.getQueryRunner(queryId);
-	  if(runner){
-      render(buildMessage(SUCCESS, null){
-        value(runner.isActive())
-      }, contentType:"text/xml")
-	  } else{
-	    render(buildMessage(ERROR, "Query ID ${queryId} not known!", null), 
-		    contentType:"text/xml")
-	  }
-  }
-
-  def isComplete = {
-    def p = params["request"] ?: params
-    
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      render(buildMessage(SUCCESS, null){
-        value(runner.isComplete())
-      }, contentType:"text/xml")
-    } else{
-      render(buildMessage(ERROR, "Query ID ${queryId} not known!", null), 
-        contentType:"text/xml")
-    }
-  }
-
-  def hitCount = {
-    def p = params["request"] ?: params
-    
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      render(buildMessage(SUCCESS, null){
-        value(runner.getHitsCount())
-      }, contentType:"text/xml")
-    } else{
-      render(buildMessage(ERROR, "Query ID ${queryId} not known!", null), 
-        contentType:"text/xml")
-    }
-  }
-
-
   /**
-   * Gets the document statistics for a set of documents. The returned value is
-   * the XML representation of a two-rows int array where:
-   * <ul>
-   *   <li>result[0][i] is the ID for the i<sup>th</sup> document</li>
-   *   <li>result[1][i] is the hits count for the i<sup>th</sup> document</li>
-   * </ul>
+   * Gets the number of result documents.
+   * @return <code>-1</code> if the search has not yet completed, the total 
+   * number of result document otherwise. 
    */
-  def docStats = {
-    def p = params["request"] ?: params
-    //a closure representing the return message
-    def message;
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the parameters
-      def startIndexParam = p["startIndex"]
-      if(startIndexParam){
-        def docCountParam = p["count"]
-        if(docCountParam){
-          try{
-            //we have all required parameters
-            int startIndex = startIndexParam.toInteger()
-            int docCount = docCountParam.toInteger()
-            int[][] docStats = new int[docCount][2];
-            for(int i = 0; i < docCount; i++){
-              docStats[i][0] = runner.getDocumentID(i + startIndex)
-              docStats[i][1] = runner.getDocumentHitsCount(i + startIndex)
-            }
-            
-            message = buildMessage(SUCCESS, null){
-              for(int i = 0; i < docCount; i++){
-                delegate.document(id:docStats[i][0], hitCount:docStats[i][1])
-              }
-            }
-          }catch(Exception e){
-            message = buildMessage(ERROR, "Error while obtaining the document statistics: \"" + 
-            e.getMessage() + "\"!", null)
-          }
-        }else{
-          message = buildMessage(ERROR, "No value provided for parameter count!", 
-                  null)
-        }
-      }else{
-        message= buildMessage(ERROR, 
-                "No value provided for parameter startIndex!", null)
-      }
-    } else{
-      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
-    }
-    //return the results
-    render(contentType:"text/xml", builder: new StreamingMarkupBuilder(),
-        message)
-  }
-
-
-  /**
-   * Action for obtaining the document metadata.
-   * Parameters:
-   *   - documentId: the ID of the desired document
-   * Returns:
-   *   - the document URI
-   *   - the document title
-   */
-  def documentMetadata = {
-    def p = params["request"] ?: params
-    //a closure representing the return message
-    def message;
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the parameters
-      String docIdStr = p["documentId"]
-      if(docIdStr){
-        int docId = docIdStr as int
-        // see if any fields were requested
-        Map<String, Serializable> metadata = null;
-        def fieldNamesStr = p["fieldNames"]
-        if(fieldNamesStr) {
-          Set<String> fieldNames = new HashSet<String>()
-          // split on each comma (not preceded by a backslash)
-          fieldNamesStr.split(/\s*(?<!\\),\s*/).collect{
-            // un-escape commas
-            it.replace('\\,', ',')
-          }.each{fieldNames.add(it)}
-          metadata = runner.getDocumentMetadataFields(docId, fieldNames)
-        }
-        try{
-          //we have all required parameters
-          String documentURI = runner.getDocumentURI(docId)
-          String documentTitle = runner.getDocumentTitle(docId)
-          message = buildMessage(SUCCESS, null){
-            delegate.documentTitle(documentTitle)
-            delegate.documentURI(documentURI)
-            metadata?.each{String key, Serializable value -> 
-              delegate.metadataField(name:key, value:value.toString())
-            }
-          }
-        }catch(Exception e){
-          message = buildMessage(ERROR, "Error while obtaining the document statistics: \"" + 
-          e.getMessage() + "\"!", null)
-        }
-      }else{
-        message= buildMessage(ERROR, 
-        "No value provided for parameter documentId!", null)
-      }
-    } else{
-      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
-    }
-    //return the results
-    render(contentType:"text/xml", builder: new StreamingMarkupBuilder(),
-    message)
-  }
-
-
-  /**
-   * Action for obtaining [a segment of] the text of a document.
-   * Parameters:
-   *   - documentId: the ID of the requested document
-   *   - position: (optional) the index of the first token to be returned,
-   *     defaults to 0 if omitted.
-   *   - length: (optional) the number of tokens (and spaces) to be returned.
-   *     If omitted, all tokens from position to the end of the document will
-   *     be returned.
-   *
-   * The effect of the default values for position and length is that if both
-   * are omitted the text for the whole of the given document is returned.
-   */
-  def documentText = {
-    def p = params["request"] ?: params
-    def paramName = null;
-    def message
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the other params
-      String docIdStr = p["documentId"]
-      String positionStr = p["position"] ?: "0"
-      String lengthStr = p["length"] ?: "-1"
-      if(docIdStr){
-        try {
-          paramName = "docId"
-          int docId = Integer.parseInt(docIdStr)
-          paramName = "position"
-          int position = Integer.parseInt(positionStr)
-          paramName = "length"
-          int length = Integer.parseInt(lengthStr)
-          message = buildMessage(SUCCESS, null){
-            String[][] docText = runner.getDocumentText(docId, position, length)
-            for(int i = 0; i < docText[0].length; i++){
-              String token = docText[0][i]
-              String space = docText[1][i]
-              delegate.text(position: position+i, token)
-              if(space) delegate.space(space)
-            }
-          }
-        } catch(NumberFormatException e) {
-          message = buildMessage(ERROR, "Non-integer value provided for parameter ${paramName}", null);
-        }
-      }else{
-        message = buildMessage(ERROR, "No value provided for parameter documentId", null)
-      }      
-    } else{
-      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
-    }
-    render(contentType:"text/xml", message)
-  }  
-  
-  /**
-   * Gets the number of distinct documents in the current hit list.
-   */
-  def docCount = {
+  def documentsCount = {
     def p = params["request"] ?: params
     //a closure representing the return message
     def message;
@@ -406,9 +188,9 @@ class SearchController {
           value(docCount)
         }
       }catch(Exception e){
-        message = buildMessage(ERROR, 
-                "Error while obtaining the documents count: \"" + 
-                e.getMessage() + "\"!", null)      
+        message = buildMessage(ERROR,
+                "Error while obtaining the documents count: \"" +
+                e.getMessage() + "\"!", null)
       }
     } else{
       message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
@@ -418,24 +200,234 @@ class SearchController {
         message)
   }
   
-  def getMoreHits = {
+  /**
+   * Gets the number of result documents found so far. After the search 
+   * completes, the result returned by this call is identical to that of 
+   * {@link #documentsCount}.
+   * @return the number of result documents known so far.   */
+  def documentsCurrentCount = {
     def p = params["request"] ?: params
-    
+    //a closure representing the return message
+    def message;
     //get the query ID
     String queryId = p["queryId"]
     QueryRunner runner = searchService.getQueryRunner(queryId);
     if(runner){
-      runner.getMoreHits()
-      render(buildMessage(SUCCESS, null, null), contentType:"text/xml")
+      try{
+        //we have all required parameters
+        int docCount = runner.getDocumentsCurrentCount()
+        message = buildMessage(SUCCESS, null){
+          value(docCount)
+        }
+      }catch(Exception e){
+        message = buildMessage(ERROR,
+                "Error while obtaining the documents count: \"" +
+                e.getMessage() + "\"!", null)
+      }
     } else{
-      render(buildMessage(ERROR, "Query ID ${queryId} not known!", null), 
-        contentType:"text/xml")
+      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
     }
+    //return the results
+    render(contentType:"text/xml", builder: new StreamingMarkupBuilder(),
+        message)
   }
-
-
   
-  def hits = {
+  /**
+   * Gets the ID of a result document.
+   * @param rank the index of the desired document in the list of documents. 
+   * This should be a value between 0 and {@link #documentsCount} -1.
+   *  
+   * If the requested document position has not yet been ranked (i.e. we know 
+   * there is a document at that position, but we don't yet know which one) then 
+   * the necessary ranking is performed before this method returns. 
+   *
+   * @return an int value, representing the ID of the requested document.   */
+  def documentID = {
+    def p = params["request"] ?: params
+    def message
+    //get the query ID
+    String queryId = p["queryId"]
+    QueryRunner runner = searchService.getQueryRunner(queryId);
+    if(runner){
+      //get the other params
+      String rankStr = p["rank"]
+      if(rankStr){
+        try {
+          int rank = Integer.parseInt(rankStr)
+          int docId = runner.getDocumentID(rank)
+          message = buildMessage(SUCCESS, null){
+            value(docId)
+          }
+        } catch(NumberFormatException e) {
+          message = buildMessage(ERROR, 
+            "Non-integer value provided for parameter rank", null);
+        }
+      }else{
+        message = buildMessage(ERROR, "No value provided for parameter rank", 
+            null)
+      }
+    } else{
+      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
+    }
+    render(contentType:"text/xml", message)
+  }
+  
+  /**
+   * Get the score for a given result document. The value for the score depends 
+   * on the scorer used by the {@link QueryEngine} (see 
+   * {@link QueryEngine#setScorerSource(java.util.concurrent.Callable)}). 
+   * @param rank the index of the desired document in the list of documents. 
+   * This should be a value between 0 and {@link #documentsCount} -1.   
+   */
+  def documentScore = {
+    def p = params["request"] ?: params
+    def message
+    //get the query ID
+    String queryId = p["queryId"]
+    QueryRunner runner = searchService.getQueryRunner(queryId);
+    if(runner){
+      //get the other params
+      String rankStr = p["rank"]
+      if(rankStr){
+        try {
+          int rank = Integer.parseInt(rankStr)
+          double score = runner.getDocumentScore(rank)
+          message = buildMessage(SUCCESS, null){
+            value(score)
+          }
+        } catch(NumberFormatException e) {
+          message = buildMessage(ERROR,
+            "Non-integer value provided for parameter rank", null);
+        }
+      } else {
+        message = buildMessage(ERROR,  "No value provided for parameter rank", 
+          null)
+      }
+    } else{
+      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
+    }
+    render(contentType:"text/xml", message)
+  }
+  
+  /**
+   * Retrieves the hits within a given result document.
+   * @param rank the index of the desired document in the list of documents.
+   * This should be a value between 0 and {@link #documentsCount} -1.
+   * 
+   * This method call waits until the requested data is available before 
+   * returning (document hits are being collected by a background thread).   
+   */
+  def documentHits = {
+    def p = params["request"] ?: params
+    //a closure representing the return message
+    def message;
+    //get the query ID
+    String queryId = p["queryId"]
+    QueryRunner runner = searchService.getQueryRunner(queryId);
+    if(runner){
+      //get the other params
+      String rankStr = p["rank"]
+      if(rankStr){
+        try {
+          int rank = Integer.parseInt(rankStr)
+          //we have all required parameters
+          List<Binding> hits = runner.getDocumentHits(rank)
+          message = buildMessage(SUCCESS, null){
+            if(hits) {
+              delegate.hits {
+                for(Binding hit : hits){
+                  delegate.hit (documentId: hit.getDocumentId(),
+                      termPosition: hit.getTermPosition(),
+                      length: hit.getLength())
+                }
+              }
+            }
+          }
+        } catch(NumberFormatException e) {
+          message = buildMessage(ERROR,
+            "Non-integer value provided for parameter rank", null);
+        }
+      } else {
+        message = buildMessage(ERROR,  "No value provided for parameter rank",
+          null)
+      }
+    } else{
+      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
+    }
+    //return the results
+    render(contentType:"text/xml",
+        builder: new StreamingMarkupBuilder(),
+        message)
+  }
+  
+  
+  /**
+   * Gets a segment of the document text for a given document.
+   * @param rank the rank of the requested document. This should be a value 
+   * between 0 and {@link #getDocumentsCount()} -1.
+   * @param termPosition the first term requested.
+   * @param length the number of terms requested.
+   * @return two parallel String arrays, one containing term text, the other 
+   * containing the spaces in between. The first term is results[0][0], the 
+   * space following it is results[1][0], etc.
+   *
+   * The effect of the default values for termPosition and length is that if
+   * both are omitted the text for the whole of the given document is returned.
+   */
+  def documentText = {
+    def p = params["request"] ?: params
+    def paramName = null;
+    def message
+    //get the query ID
+    String queryId = p["queryId"]
+    QueryRunner runner = searchService.getQueryRunner(queryId);
+    if(runner){
+      //get the other params
+      String rankStr = p["rank"]
+      String positionStr = p["termPosition"] ?: "0"
+      String lengthStr = p["length"] ?: "-1"
+      if(rankStr){
+        try {
+          paramName = "rank"
+          int rank = Integer.parseInt(rankStr)
+          paramName = "termPosition"
+          int position = Integer.parseInt(positionStr)
+          paramName = "length"
+          int length = Integer.parseInt(lengthStr)
+          message = buildMessage(SUCCESS, null){
+            String[][] docText = runner.getDocumentText(rank, position, length)
+            for(int i = 0; i < docText[0].length; i++){
+              String token = docText[0][i]
+              String space = docText[1][i]
+              delegate.text(position: position+i, token)
+              if(space) delegate.space(space)
+            }
+          }
+        } catch(NumberFormatException e) {
+          message = buildMessage(ERROR, "Non-integer value provided for parameter ${paramName}", null);
+        }
+      }else{
+        message = buildMessage(ERROR, "No value provided for parameter rank", 
+            null)
+      }
+    } else{
+      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
+    }
+    render(contentType:"text/xml", message)
+  }
+  
+  /**
+   * Action for obtaining the document metadata.
+   * Parameters:
+   *   - rank: the rank of the desired document
+   *   - fieldNames (optional): a comma-separated list of other field names to 
+   *   be returned. 
+   * Returns:
+   *   - the document URI
+   *   - the document title
+   *   - the values for the other field names, if requested and present.
+   */
+  def documentMetadata = {
     def p = params["request"] ?: params
     //a closure representing the return message
     def message;
@@ -444,41 +436,50 @@ class SearchController {
     QueryRunner runner = searchService.getQueryRunner(queryId);
     if(runner){
       //get the parameters
-      def startIndex = p["startIndex"]
-      if(startIndex){
-        def hitCount = p["count"]
-        if(hitCount){
+      String rankStr = p["rank"]
+      if(rankStr){
+        int rank = rankStr as int
+        // see if any fields were requested
+        Map<String, Serializable> metadata = null;
+        def fieldNamesStr = p["fieldNames"]
+        if(fieldNamesStr) {
+          Set<String> fieldNames = new HashSet<String>()
+          // split on each comma (not preceded by a backslash)
+          fieldNamesStr.split(/\s*(?<!\\),\s*/).collect{
+            // un-escape commas
+            it.replace('\\,', ',')
+          }.each{fieldNames.add(it)}
+          metadata = runner.getDocumentMetadataFields(rank, fieldNames)
+        }
+        try{
           //we have all required parameters
-          List<Binding> hits = runner.getHits(startIndex as int, hitCount as int)
+          String documentURI = runner.getDocumentURI(rank)
+          String documentTitle = runner.getDocumentTitle(rank)
           message = buildMessage(SUCCESS, null){
-            if(hits) {
-              delegate.hits {
-                for(Binding hit : hits){
-                  delegate.hit (documentId: hit.getDocumentId(),
-                      position: hit.getTermPosition(), 
-                      length: hit.getLength())
-                }
-              }
+            delegate.documentTitle(documentTitle)
+            delegate.documentURI(documentURI)
+            metadata?.each{String key, Serializable value -> 
+              delegate.metadataField(name:key, value:value.toString())
             }
           }
-        }else{
-          message = buildMessage(ERROR,  
-                    "No value provided for parameter count!",
-                    null)  
+        }catch(Exception e){
+          message = buildMessage(ERROR, 
+            'Error while obtaining the document metadata: "' + 
+            e.getMessage() + "\"!", null)
         }
       }else{
-        message = buildMessage(ERROR,  
-                "No value provided for parameter startIndex!", null)   
+        message= buildMessage(ERROR, 
+        "No value provided for parameter rank!", null)
       }
     } else{
       message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
     }
     //return the results
-    render(contentType:"text/xml", 
-        builder: new StreamingMarkupBuilder(),
-        message)
+    render(contentType:"text/xml", builder: new StreamingMarkupBuilder(),
+    message)
   }
-  
+
+    
   def close = {
     def p = params["request"] ?: params
     
@@ -832,7 +833,7 @@ class SearchController {
     QueryRunner runner = searchService.getQueryRunner(queryId);
     if(runner){
       //get the parameters
-      def documentRankParam = p["documentRank"]
+      def documentRankParam = p["rank"]
       if(documentRankParam){
         try{
           //we have all the required parameters
