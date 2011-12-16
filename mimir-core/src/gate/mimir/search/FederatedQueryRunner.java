@@ -53,6 +53,12 @@ public class FederatedQueryRunner implements QueryRunner {
    */
   protected IntList rank2runnerIndex;
   
+  /**
+   * Which of the sub-runners has provided the previous document. This is an 
+   * instance field so that we can rotate the sub-runners (when the scores are 
+   * equal)  
+   */
+  private int bestSubRunnerIndex = -1;
   
   /**
    * For each result document rank, this list supplies the rank of the document
@@ -121,22 +127,43 @@ public class FederatedQueryRunner implements QueryRunner {
     if(rank < rank2runnerIndex.size()) {
       return;
     }
-    
     for(int nextRank = rank2runnerIndex.size(); nextRank <= rank; nextRank++) {
-      int subRunnerWithMin = 0;
-      for(int i = 1; i < subRunners.length; i++) {
-        if((nextSubRunnerRank[i] >= 0) &&
-            (subRunners[i].getDocumentScore(nextSubRunnerRank[i]) <
-            subRunners[subRunnerWithMin].getDocumentScore(nextSubRunnerRank[subRunnerWithMin]))) {
-          subRunnerWithMin = i;
+      boolean allOut = true;
+      // start with the runner next the previously chosen one
+      bestSubRunnerIndex = (bestSubRunnerIndex + 1) % subRunners.length;
+      double maxScore = Double.NEGATIVE_INFINITY;
+      if(nextSubRunnerRank[bestSubRunnerIndex] >= 0) {
+        maxScore = subRunners[bestSubRunnerIndex].getDocumentScore(
+            nextSubRunnerRank[bestSubRunnerIndex]);
+        allOut = false;
+      }
+      // now check all remaining runners, in round-robin fashion
+      final int from = bestSubRunnerIndex + 1;
+      final int to = bestSubRunnerIndex + subRunners.length;
+      for(int bigI = from; bigI < to; bigI++) {
+        int i = bigI % subRunners.length;
+        if(nextSubRunnerRank[i] >= 0) {
+          allOut = false;
+          if(subRunners[i].getDocumentScore(nextSubRunnerRank[i]) > maxScore) {
+            bestSubRunnerIndex = i;
+            maxScore = subRunners[i].getDocumentScore(nextSubRunnerRank[i]);          
+          }          
         }
       }
+      if(allOut) {
+        // we ran out of docs
+        throw new IndexOutOfBoundsException("Requested rank was " + rank + 
+          " but ran out of documents at " + nextRank + "!");
+      }
       // consume the next doc from subRunnerWithMin
-      rank2runnerIndex.add(subRunnerWithMin);
-      rank2subRank.add(nextSubRunnerRank[subRunnerWithMin]++);
-      if(nextSubRunnerRank[subRunnerWithMin] >= subRunners[subRunnerWithMin].getDocumentsCount()) {
+      rank2runnerIndex.add(bestSubRunnerIndex);
+      rank2subRank.add(nextSubRunnerRank[bestSubRunnerIndex]);
+      if(nextSubRunnerRank[bestSubRunnerIndex] < 
+          subRunners[bestSubRunnerIndex].getDocumentsCount() -1) {
+        nextSubRunnerRank[bestSubRunnerIndex]++;
+      } else {
         // this runner has run out of documents
-        nextSubRunnerRank[subRunnerWithMin] = -1;
+        nextSubRunnerRank[bestSubRunnerIndex] = -1;
       }
     }
   }
