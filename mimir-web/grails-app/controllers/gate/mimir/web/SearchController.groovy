@@ -242,7 +242,7 @@ class SearchController {
    * the necessary ranking is performed before this method returns. 
    *
    * @return an int value, representing the ID of the requested document.   */
-  def documentID = {
+  def documentId = {
     def p = params["request"] ?: params
     def message
     //get the query ID

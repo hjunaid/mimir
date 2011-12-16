@@ -90,7 +90,7 @@
   </div>
 
   <div class="action-box">
-    <span class="action-name">documentID</span>
+    <span class="action-name">documentId</span>
     <span class="action-desc">Obtains the document ID for the document at a
     given rank (position in the results list).</span>
     <div class="list"><b>Parameters:</b>
