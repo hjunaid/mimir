@@ -450,22 +450,23 @@ public class RankingQueryRunnerImpl implements QueryRunner {
   /**
    * Ranks some more documents (i.e. adds more entries to the 
    * {@link #documentsOrder} list, making sure that the document at provided 
-   * index is included (if such a document exists). If the provided index is 
+   * rank is included (if such a document exists). If the provided rank is 
    * larger than the number of result documents, then all documents will be
    * ranked before this method returns. 
    * This is the only method that writes to the {@link #documentsOrder} list.
    * This method is executed synchronously in the client thread.
    *  
-   * @param index
+   * @param rank
    * @throws IOException 
    */
-  protected void rankDocuments(int index) throws IOException {
-    if(index < documentsOrder.size()) return;
+  protected void rankDocuments(int rank) throws IOException {
+    if(rank < documentsOrder.size()) return;
     synchronized(documentsOrder) {
       // rank some documents
       int rankRangeStart = documentsOrder.size();
-      int rankRangeEnd = index;
-      if((rankRangeEnd - rankRangeStart) < (docBlockSize -1)) {
+      // right boundary is exclusive
+      int rankRangeEnd = rank + 1;
+      if((rankRangeEnd - rankRangeStart) < (docBlockSize)) {
         // extend the size of the chunk of documents to be ranked
         rankRangeEnd = rankRangeStart + docBlockSize; 
       }
@@ -495,19 +496,17 @@ public class RankingQueryRunnerImpl implements QueryRunner {
         // already been ranked)., or
         // - it's a new document (i.e. with an ID strictly larger) with the same 
         // score as the largest permitted score
-        if(documentsOrder.size() <= rankRangeEnd
+        if(documentsOrder.size() < rankRangeEnd
            || 
            (documentScore > smallestNewScore && documentScore < smallestOldScore) 
            ||
            (documentScore == smallestOldScore && documentId > smallestOldScoreDocId)
            ) {
-          // find the rank for the new doc in the documentsOrder list
-          int rank = findRank(documentScore, rankRangeStart, 
-              documentsOrder.size());
-          // and insert
-          documentsOrder.add(rank, i);
+          // find the rank for the new doc in the documentsOrder list, and insert
+          documentsOrder.add(findRank(documentScore, rankRangeStart, 
+              documentsOrder.size()), i);
           // if we have too many documents, drop the lowest scoring one
-          if(documentsOrder.size() > rankRangeEnd + 1) {
+          if(documentsOrder.size() > rankRangeEnd) {
             documentsOrder.removeInt(documentsOrder.size() - 1);
           }          
         }
@@ -564,11 +563,12 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @return the future that has been queued for collecting the hits.
    */
   protected Future<?> collectHits(int[] interval) {
-    // expand the interval to block size
+    // expand the interval to block size (or size of documentsOrder)
     if(interval[1] - interval[0] < docBlockSize) {
-      interval[0] -= docBlockSize / 2;
-      if(interval[0] < 0)interval[0] = 0;
-      interval[1] = interval[0] + docBlockSize;
+      final int expansion = docBlockSize - (interval[1] - interval[0]);
+      // expand up to (expansion / 2) to the left
+      interval[0] = Math.max(0, interval[0] - (expansion / 2));
+      interval[1] = Math.min(documentsOrder.size(), interval[0] + docBlockSize);
     }
     HitsCollector hitsCollector = null;
     synchronized(hitCollectors) {
