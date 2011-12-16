@@ -45,24 +45,22 @@ indexBaseDirectory = "/data/home/gate/mimir-indexes"
 // prepared for download)
 tempDir="/data/home/gate/mimir-archives"
 
-// The set of scorers available. Each scorer has a name and is defined by a
-// closure that returns a fully configured instance of
+// The set of scorers available. Each scorer has a name and is defined by a 
+// closure that returns a fully configured instance of 
 // gate.mimir.search.score.MimirScorer.
 
-scorers {
-  counting = {
-    new DelegatingScoringQueryExecutor(new CountScorer())
-  }
-  
-  tfidf = {
-    new DelegatingScoringQueryExecutor(new TfIdfScorer())
-  }
-  
-  bm25 = {
-    new DelegatingScoringQueryExecutor(new BM25Scorer())
-  }
-  
-  mimir = {
-    new BindingScorer()
-  }
+scorers.'Count Scoring' = {
+  new DelegatingScoringQueryExecutor(new CountScorer())
+}
+
+scorers.'TF.IDF' = {
+  new DelegatingScoringQueryExecutor(new TfIdfScorer())
+}
+
+scorers.'BM25' = {
+  new DelegatingScoringQueryExecutor(new BM25Scorer())
+}
+
+scorers.'Hit Length Scoring' = {
+  new BindingScorer()
 }
