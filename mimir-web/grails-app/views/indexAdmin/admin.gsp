@@ -73,13 +73,12 @@
             </td>
           </tr>
           <g:if test="${indexInstance instanceof LocalIndex}" >
-	          <tr class="prop">
-	            <td valign="top" class="name">Scorer:</td>
-	            <td valign="top" class="value">
-	              ${indexInstance.scorer}
-	            </td>
-	          </tr>          
-          </g:if>
+            <tr class="prop">
+              <td valign="top" class="name">Scorer:</td>
+              <td valign="top" class="value">
+               ${indexInstance.scorer?:'No Scoring'}</td>
+            </tr>          
+          </g:if>          
           <g:if test="${indexInstance.state == Index.SEARCHING}">
             <tr class="prop">
               <td colspan="2">
