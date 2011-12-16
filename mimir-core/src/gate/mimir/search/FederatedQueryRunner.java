@@ -3,7 +3,7 @@
  *
  *  Copyright (c) 2007-2011, The University of Sheffield.
  *
- *  This file is part of GATE Mímir (see http://gate.ac.uk/family/mimir.html), 
+ *  This file is part of GATE Mímir (see http://gate.ac.uk/family/mimir.html),
  *  and is free software, licenced under the GNU Lesser General Public License,
  *  Version 3, June 2007 (also included with this distribution as file
  *  LICENCE-LGPL3.html).
@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A {@link QueryRunner} that presents a set of sub-indexes (represented by 
+ * A {@link QueryRunner} that presents a set of sub-indexes (represented by
  * their own QueryRunners) as a single index.
  */
 public class FederatedQueryRunner implements QueryRunner {
@@ -48,22 +48,22 @@ public class FederatedQueryRunner implements QueryRunner {
   protected int[] nextSubRunnerRank;
   
   /**
-   * For each result document rank, this list supplies the index for the 
-   * sub-runner that supplied the document.  
+   * For each result document rank, this list supplies the index for the
+   * sub-runner that supplied the document.
    */
   protected IntList rank2runnerIndex;
   
   /**
-   * Which of the sub-runners has provided the previous document. This is an 
-   * instance field so that we can rotate the sub-runners (when the scores are 
-   * equal)  
+   * Which of the sub-runners has provided the previous document. This is an
+   * instance field so that we can rotate the sub-runners (when the scores are
+   * equal)
    */
   private int bestSubRunnerIndex = -1;
   
   /**
    * For each result document rank, this list supplies the rank of the document
-   * in sub-runner that supplied it.  
-   */  
+   * in sub-runner that supplied it.
+   */
   protected IntList rank2subRank;
   
   public FederatedQueryRunner(QueryRunner[] subrunners) {
@@ -146,19 +146,19 @@ public class FederatedQueryRunner implements QueryRunner {
           allOut = false;
           if(subRunners[i].getDocumentScore(nextSubRunnerRank[i]) > maxScore) {
             bestSubRunnerIndex = i;
-            maxScore = subRunners[i].getDocumentScore(nextSubRunnerRank[i]);          
-          }          
+            maxScore = subRunners[i].getDocumentScore(nextSubRunnerRank[i]);
+          }
         }
       }
       if(allOut) {
         // we ran out of docs
-        throw new IndexOutOfBoundsException("Requested rank was " + rank + 
+        throw new IndexOutOfBoundsException("Requested rank was " + rank +
           " but ran out of documents at " + nextRank + "!");
       }
-      // consume the next doc from subRunnerWithMin
+      // consume the next doc from bestSubRunnerIndex
       rank2runnerIndex.add(bestSubRunnerIndex);
       rank2subRank.add(nextSubRunnerRank[bestSubRunnerIndex]);
-      if(nextSubRunnerRank[bestSubRunnerIndex] < 
+      if(nextSubRunnerRank[bestSubRunnerIndex] <
           subRunners[bestSubRunnerIndex].getDocumentsCount() -1) {
         nextSubRunnerRank[bestSubRunnerIndex]++;
       } else {
