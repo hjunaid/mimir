@@ -241,7 +241,7 @@ infrastructure to implement other interfaces as required.  An XML-based service
 interface allows other applications to submit queries to the indexes hosted by
 a \Mimir\ web application by POSTing requests over HTTP (described in
 section~\ref{sec:search:service}).  There is also an example user-facing search
-interface called {\em GUS}, intended primarily for testing and demonstration
+interface called {\em Web UI}, intended primarily for testing and demonstration
 purposes (described in section~\ref{sec:search:gus}).  Both of these interfaces
 interact with the underlying indexes through the {\tt SearchService} Grails
 service provided by the plugin.  When embedding the \Mimir\ Grails plugin in
@@ -333,11 +333,9 @@ Example response:
 \end{longtable}
 
 \begin{longtable}{|p{1.8cm}|p{10.2cm}|}
-\multicolumn{2}{l}{\tt \bf hitCount} \\
+\multicolumn{2}{l}{\tt \bf documentsCount} \\
 \hline
-Function & Obtains the number of hits collected so far. If a query is not
-complete, more hits may be available at later time. If a query has stopped being
-active before completing, it can be restarted by calling {\tt getMoreHits}.\\
+Function & Gets the number of result documents.\\
 \hline
 Parameters & \begin{minipage}[t]{10.2cm}
 \begin{description}
@@ -347,18 +345,19 @@ Parameters & \begin{minipage}[t]{10.2cm}
 \hline
 Returns & \begin{minipage}[t]{10.2cm}
 An XML message encapsulating a numeric value, or an error message if there were 
-any problems.
+any problems. The value returned is {\tt -1} if the search has not yet
+completed, or the total number of result documents otherwise.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/hitCount?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
+\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentsCount?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
 
 Example response:
 \begin{lstlisting}[language=XML]
 <?xml version="1.0"?>
-<message xmlns='http://gate.ac.uk/ns/mimir'>
+<message xmlns="http://gate.ac.uk/ns/mimir">
   <state>SUCCESS</state>
   <data>
-    <value>6257</value>
+    <value>8209</value>
   </data>
 </message>
 \end{lstlisting}
@@ -376,10 +375,9 @@ Example error response:
 \end{longtable}
 
 \begin{longtable}{|p{1.8cm}|p{10.2cm}|}
-\multicolumn{2}{l}{\tt \bf docCount} \\
+\multicolumn{2}{l}{\tt \bf documentsCurrentCount} \\
 \hline
-Function & Obtains the number distinct documents that have been found so far
-to contain hits.\\
+Function & Gets the number of result documents found so far.\\
 \hline
 Parameters & \begin{minipage}[t]{10.2cm}
 \begin{description}
@@ -389,10 +387,55 @@ Parameters & \begin{minipage}[t]{10.2cm}
 \hline
 Returns & \begin{minipage}[t]{10.2cm}
 An XML message encapsulating a numeric value, or an error message if there were 
+any problems. After the search compeltes, the value returned is identical to
+that returned by calling {\tt documentsCount}.
+
+Example request:\\
+\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentsCurrentCount?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
+
+Example response:
+\begin{lstlisting}[language=XML]
+<?xml version="1.0"?>
+<message xmlns="http://gate.ac.uk/ns/mimir">
+  <state>SUCCESS</state>
+  <data>
+    <value>142</value>
+  </data>
+</message>
+\end{lstlisting}
+
+Example error response:
+\begin{lstlisting}[language=XML]
+<?xml version="1.0"?>
+<message xmlns='http://gate.ac.uk/ns/mimir'>
+  <state>ERROR</state>
+  <error>Query ID a28656e2-18f4-4b58-b9d3-9a9378eb14d1 not known!</error>
+</message>
+\end{lstlisting}
+\end{minipage}\\
+\hline
+\end{longtable}
+
+
+\begin{longtable}{|p{1.8cm}|p{10.2cm}|}
+\multicolumn{2}{l}{\tt \bf documentId} \\
+\hline
+Function & Obtains the document ID for the document at a given rank (position in
+the results list).\\
+\hline
+Parameters & \begin{minipage}[t]{10.2cm}
+\begin{description}
+\item[queryId:]the ID for the query, as returned by the {\tt postQuery} action.
+\item[rank:]the rank (position on the results list) for the requested document.
+\end{description}
+\end{minipage}\\
+\hline
+Returns & \begin{minipage}[t]{10.2cm}
+An XML message encapsulating a numeric value, or an error message if there were 
 any problems.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/docCount?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
+\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentId?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=3!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -408,58 +451,43 @@ Example response:
 \hline
 \end{longtable}
 
+
 \begin{longtable}{|p{1.8cm}|p{10.2cm}|}
-\multicolumn{2}{l}{\tt \bf docStats} \\
+\multicolumn{2}{l}{\tt \bf documentScore} \\
 \hline
-Function & Obtains the statistics for the documents that have been found so far
-to contain hits. These include the document IDs and the number of hits for
-each individual document.\\
+Function & Obtains the score for the document at a given rank (position in
+the results list).\\
 \hline
 Parameters & \begin{minipage}[t]{10.2cm}
 \begin{description}
 \item[queryId:]the ID for the query, as returned by the {\tt postQuery} action.
-\item[startIndex]the first requested document. A value of $0$ requests the
-details for the first document found to contain hits.
-\item[count]the number of documents for which the details are requested.  
+\item[rank:]the rank (position on the results list) for the requested document.
 \end{description}
 \end{minipage}\\
 \hline
 Returns & \begin{minipage}[t]{10.2cm}
-An XML message encapsulating a set of {\tt <document>} elements, one for
-each individual document.
+An XML message encapsulating a numeric value, or an error message if there were 
+any problems.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/docStats?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&startIndex=0&count=11!
+\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentScore?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=3!
 
 Example response:
 \begin{lstlisting}[language=XML]
 <?xml version="1.0"?>
-<message xmlns='http://gate.ac.uk/ns/mimir'>
+<message xmlns="http://gate.ac.uk/ns/mimir">
   <state>SUCCESS</state>
   <data>
-    <document id='0' hitCount='622'/>
-    <document id='1' hitCount='300'/>
-    <document id='2' hitCount='448'/>
-    <document id='3' hitCount='273'/>
-    <document id='4' hitCount='1053'/>
-    <document id='5' hitCount='677'/>
-    <document id='6' hitCount='86'/>
-    <document id='7' hitCount='1399'/>
-    <document id='8' hitCount='356'/>
-    <document id='9' hitCount='841'/>
-    <document id='10' hitCount='202'/>
+    <value>12.330469310919446</value>
   </data>
 </message>
 \end{lstlisting}
-Note that as our query was simply {\it ``the''}, we have found hits on every
-document. In a more typical case, not all document IDs will be represented in
-the results.
 \end{minipage}\\
 \hline
 \end{longtable}
 
 \begin{longtable}{|p{1.8cm}|p{10.2cm}|}
-\newpage\multicolumn{2}{l}{\tt \bf hits} \\
+\newpage\multicolumn{2}{l}{\tt \bf documentHits} \\
 \hline 
 Function & Obtains a set of hits. Each hit is defined by a document
 ID, a position and a length, both of which are defined in terms of tokens, not
@@ -468,9 +496,7 @@ characters (see Section~\ref{sec:indexing:tokens} for details).\\
 Parameters & \begin{minipage}[t]{10.2cm}
 \begin{description}
 \item[queryId:]the ID for the query, as returned by the {\tt postQuery} action.
-\item[startIndex]the first requested hit. A value of $0$ requests the
-details for the first hit found.
-\item[count]the number of hits for which the details are requested.  
+\item[rank:]the rank (position on the results list) for the requested document.
 \end{description}
 \end{minipage}\\
 \hline
@@ -479,7 +505,7 @@ An XML message encapsulating a set of {\tt <hit>} elements, one for
 each individual hit.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/hits?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&startIndex=0&count=11!
+\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentHits?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=3!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -488,17 +514,17 @@ Example response:
   <state>SUCCESS</state>
   <data>
     <hits>
-      <hit documentId='0' position='257' length='1'/>
-      <hit documentId='0' position='266' length='1'/>
-      <hit documentId='0' position='290' length='1'/>
-      <hit documentId='0' position='303' length='1'/>
-      <hit documentId='0' position='309' length='1'/>
-      <hit documentId='0' position='316' length='1'/>
-      <hit documentId='0' position='320' length='1'/>
-      <hit documentId='0' position='332' length='1'/>
-      <hit documentId='0' position='335' length='1'/>
-      <hit documentId='0' position='342' length='1'/>
-      <hit documentId='0' position='348' length='1'/>
+      <hit documentId='11' position='257' length='1'/>
+      <hit documentId='11' position='266' length='1'/>
+      <hit documentId='11' position='290' length='1'/>
+      <hit documentId='11' position='303' length='1'/>
+      <hit documentId='11' position='309' length='1'/>
+      <hit documentId='11' position='316' length='1'/>
+      <hit documentId='11' position='320' length='1'/>
+      <hit documentId='11' position='332' length='1'/>
+      <hit documentId='11' position='335' length='1'/>
+      <hit documentId='11' position='342' length='1'/>
+      <hit documentId='11' position='348' length='1'/>
     </hits>
   </data>
 </message>
@@ -506,174 +532,6 @@ Example response:
 \end{minipage}\\
 \hline
 \end{longtable}
-
-\begin{longtable}{|p{1.8cm}|p{10.2cm}|}
-\multicolumn{2}{l}{\tt \bf getMoreHits} \\
-\hline
-Function & Requests a query that has stopped collecting hits before
-completing to restart collecting hits. If the query has already completed, or
-is already active, this call will simply be ignored (it will not cause an
-error).\\
-\hline
-Parameters & \begin{minipage}[t]{10.2cm}
-\begin{description}
-\item[queryId:]the ID for the query, as returned by the {\tt postQuery} action.
-\end{description}
-\end{minipage}\\
-\hline
-Returns & \begin{minipage}[t]{10.2cm}
-An XML message reporting success or failure.
-
-Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/getMoreHits?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
-
-Example response:
-\begin{lstlisting}[language=XML]
-<?xml version="1.0"?>
-<message xmlns='http://gate.ac.uk/ns/mimir'>
-  <state>SUCCESS</state>
-</message>
-\end{lstlisting}
-\end{minipage}\\
-\hline
-\end{longtable}
-
-\begin{longtable}{|p{1.8cm}|p{10.2cm}|}
-\multicolumn{2}{l}{\tt \bf isActive} \\
-\hline
-Function & Checks if a query is still working on collecting hits.\\
-\hline
-Parameters & \begin{minipage}[t]{10.2cm}
-\begin{description}
-\item[queryId:]the ID for the query, as returned by the {\tt postQuery} action.
-\end{description}
-\end{minipage}\\
-\hline
-Returns & \begin{minipage}[t]{10.2cm}
-An XML message encapsulating a Boolean value, or an error message if there were 
-any problems.
-
-Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/isActive?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
-
-Example response:
-\begin{lstlisting}[language=XML]
-<?xml version="1.0"?>
-<message xmlns='http://gate.ac.uk/ns/mimir'>
-  <state>SUCCESS</state>
-  <data>
-    <value>false</value>
-  </data>
-</message>
-\end{lstlisting}
-\end{minipage}\\
-\hline
-\end{longtable}
-
-\begin{longtable}{|p{1.8cm}|p{10.2cm}|}
-\multicolumn{2}{l}{\tt \bf isComplete} \\
-\hline
-Function & Checks if a query has finished collecting all the hits. If a query
-is not complete, more hits may be available at a later time. If a query has
-stopped being active before completing, it can be restarted by calling {\tt
-getMoreHits}.\\
-\hline
-Parameters & \begin{minipage}[t]{10.2cm}
-\begin{description}
-\item[queryId:]the ID for the query, as returned by the {\tt postQuery} action.
-\end{description}
-\end{minipage}\\
-\hline
-Returns & \begin{minipage}[t]{10.2cm}
-An XML message encapsulating a Boolean value, or an error message if there were 
-any problems.
-
-Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/isComplete?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
-
-Example response:
-\begin{lstlisting}[language=XML]
-<?xml version="1.0"?>
-<message xmlns='http://gate.ac.uk/ns/mimir'>
-  <state>SUCCESS</state>
-  <data>
-    <value>true</value>
-  </data>
-</message>
-\end{lstlisting}
-\end{minipage}\\
-\hline
-\end{longtable}
-
-\begin{longtable}{|p{1.8cm}|p{10.2cm}|}
-\multicolumn{2}{l}{\tt \bf renderDocument} \\
-\hline
-Function & Renders the document text and hits for a given document, in the
-context of a given query. The HTML of the document is rendered directly to the
-response stream of the connection.\\
-\hline
-Parameters & \begin{minipage}[t]{10.2cm}
-\begin{description}
-\item[queryId:]the ID for the query, as returned by the {\tt postQuery} action.
-\item[documentId]the ID for the requested document, as returned by e.g. a call
-to the {\tt docStats} action.
-\end{description}
-\end{minipage}\\
-\hline
-Returns & \begin{minipage}[t]{10.2cm}
-HTML content. The hits are rendered as 
-\lstinline[language=HTML]!<span class="mimir-hit">...</span>!.
-
-Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/renderDocument?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&documentId=1!
-
-Example response fragment:
-\begin{lstlisting}[language=HTML, breaklines]
-...
-<p num="p0002">Moreover, <span class="mimir-hit">the</span> present invention further relates to a method of higher purification effective in <span class="mimir-hit">the</span> higher purification of metal which reduces <span class="mimir-hit">the</span> oxygen content caused by organic matter.</p>
-...
-\end{lstlisting}
-\end{minipage}\\
-\hline
-\end{longtable}
-
-\begin{longtable}{|p{1.8cm}|p{10.2cm}|}
-\multicolumn{2}{l}{\tt \bf documentMetadata} \\
-\hline
-Function & Returns the title and URI associated with a document. These values
-were provided at indexing time.\\
-\hline
-Parameters & \begin{minipage}[t]{10.2cm}
-\begin{description}
-\item[queryId:]the ID for the query that has returned the document ID being
-used, as returned by the {\tt postQuery} action.
-\item[documentId]the ID for the requested document, as returned by e.g. a call
-to the {\tt docStats} action.
-\end{description}
-\end{minipage}\\
-\hline
-Returns & \begin{minipage}[t]{10.2cm}
-An XML message encapsulating the two string values, or an error message if there
-were any problems.
-
-Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentMetadata?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&documentId=1!
-
-Example response:
-\begin{lstlisting}[language=XML]
-<?xml version="1.0"?>
-<message xmlns='http://gate.ac.uk/ns/mimir'>
-  <state>SUCCESS</state>
-  <data>
-    <documentTitle>EP-1288339-A9</documentTitle>
-    <documentURI>urn:matrixware.com:alexandria:EP-1288339-A9</documentURI>
-  </data>
-</message>
-\end{lstlisting}
-\end{minipage}\\
-\hline
-\end{longtable}
-
 
 \begin{longtable}{|p{1.8cm}|p{10.2cm}|}
 \multicolumn{2}{l}{\tt \bf documentText} \\
@@ -684,9 +542,8 @@ Parameters & \begin{minipage}[t]{10.2cm}
 \begin{description}
 \item[queryId:]the ID for the query that has returned the document ID being
 used, as returned by the {\tt postQuery} action.
-\item[documentId]the ID for the requested document, as returned by e.g. a call
-to the {\tt docStats} action.
-\item[position]the position of the first returned token. This parameter is
+\item[rank:]the rank (position on the results list) for the requested document.
+\item[termPosition]the position of the first returned token. This parameter is
 optional; defaults to $0$ is not provided, which means the first token of the
 document.
 \item[length]the number of tokens to be returned. This parameter is optional,
@@ -698,12 +555,11 @@ Returns & \begin{minipage}[t]{10.2cm}
 An XML message containing the text of all the individual tokens and, if
 available, the spaces between them.
 
-
 This action could be used, for example, to obtain text snippets around a query
 hit.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentText?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&documentId=1&position=100&length=10!
+\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentText?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=1&termPosition=100&length=10!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -727,6 +583,72 @@ Example response:
   </data>
 </message>
 \end{lstlisting}
+\end{minipage}\\
+\hline
+\end{longtable}
+
+\begin{longtable}{|p{1.8cm}|p{10.2cm}|}
+\multicolumn{2}{l}{\tt \bf documentMetadata} \\
+\hline
+Function & Returns the title and URI associated with a document. Optionally,
+other metadata fields can also be obtained. All these values were provided at
+indexing time.\\
+\hline
+Parameters & \begin{minipage}[t]{10.2cm}
+\begin{description}
+\item[queryId:]the ID for the query that has returned the document ID being
+used, as returned by the {\tt postQuery} action.
+\item[rank:]the rank (position on the results list) for the requested document.
+\item[fieldNames:](optional) a comma-separated list of other field names to be
+returned.
+\end{description}
+\end{minipage}\\
+\hline
+Returns & \begin{minipage}[t]{10.2cm}
+An XML message encapsulating the several string values, or an error message if
+there were any problems.
+
+Example request:\\
+\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentMetadata?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&documentId=1!
+
+Example response:
+\begin{lstlisting}[language=XML]
+<?xml version="1.0"?>
+<message xmlns="http://gate.ac.uk/ns/mimir">
+  <state>SUCCESS</state>
+  <data>
+    <documentTitle>
+      Virtual job-hunting: Technology fills situations vacant
+    </documentTitle>
+    <documentURI>http://www.bbc.co.uk/news/business-12194581</documentURI>
+  </data>
+</message>
+\end{lstlisting}
+\end{minipage}\\
+\hline
+\end{longtable}
+
+\begin{longtable}{|p{1.8cm}|p{10.2cm}|}
+\multicolumn{2}{l}{\tt \bf renderDocument} \\
+\hline
+Function & Renders the document text and hits for a given document, in the
+context of a given query. The HTML of the document is rendered directly to the
+response stream of the connection.\\
+\hline
+Parameters & \begin{minipage}[t]{10.2cm}
+\begin{description}
+\item[queryId:]the ID for the query, as returned by the {\tt postQuery} action.
+\item[rank:]the rank (position on the results list) for the requested document.
+\end{description}
+\end{minipage}\\
+\hline
+Returns & \begin{minipage}[t]{10.2cm}
+HTML content. The hits are rendered as 
+\lstinline[language=HTML]!<span class="mimir-hit">...</span>!.
+
+Example request:\\
+\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/renderDocument?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=1!
+
 \end{minipage}\\
 \hline
 \end{longtable}
@@ -780,37 +702,33 @@ Example failure (using the ID for an already closed query):
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{GUS Example User Interface}\label{sec:search:gus}
+\subsection{The Web UI Example User Interface}\label{sec:search:gus}
 
-The GUS search tool is a browser-based search interface intended to serve as a
-platform for experimentation with a \Mimir\ index, and as a demonstration of
+The Web UI search tool is a browser-based search interface intended to serve as
+a platform for experimentation with a \Mimir\ index, and as a demonstration of
 the capabilities of the \Mimir\ framework and API.  It is written using the
 Google Web Toolkit, and the source code is included in the \Mimir\ Grails
 plugin.
 
-In the demo web application with its default URL mappings, the GUS interface
-for an index in searching mode is available at 
-{\tt http://localhost:8080/mimir-demo/\{index ID\}/gus/search}.  The initial
+In the demo web application with its default URL mappings, the Web UI interface
+for an index in searching mode is available at\\
+\verb!http://localhost:8080/mimir-demo/{index ID}/search/index!.  The initial
 page, shown in figure~\ref{fig:gus:front-page}, provides a text area into which
 you can type queries in the \Mimir\ query language.  It provides
 auto-completion for annotation types and features (by asking the index what
-types it was configured with when it was created).
+types it was configured with when it was created). Clicking the Search button
+starts a search on the server.
 
 \begin{figure}[tbp]
 \begin{center}
-\includegraphics[scale=0.5]{img/gus-front-page}
-\caption{Front page of the GUS user interface}
+\includegraphics[scale=0.5]{img/web-ui-frontpage}
+\caption{Front page of the Web UI user interface}
 \label{fig:gus:front-page}
 \end{center}
 \end{figure}
 
-Clicking the Search button starts a search on the server.  The query runs
-asynchronously, collecting hits in the background until either 30 seconds have
-passed or 1 million hits have been collected, at which point it stops.  To
-restart the search, click the ``$>>$ keep searching'' link.
-
 Hits are shown below the search box, as shown in figure~\ref{fig:gus:results},
-with the hit text highlighted in bold and with five tokens of left and right
+with the hit text highlighted in bold and with three tokens of left and right
 context.  The document title is a link, in this example to the original
 document as the index was created with the ``Document URIs are external links''
 option.  The ``cached'' link shows \Mimir's cached copy of the document, with
@@ -820,21 +738,19 @@ the cached version and there would be no separate ``cached'' link.
 
 \begin{figure}[tbp]
 \begin{center}
-\includegraphics[scale=0.5]{img/gus-search-results}
-\caption{GUS search results page}
+\includegraphics[scale=0.5]{img/web-ui-results}
+\caption{Web UI search results page}
 \label{fig:gus:results}
 \end{center}
 \end{figure}
 
 At the bottom of the page is a row of pagination links
-(figure~\ref{fig:gus:pagination}).  Since, on a large index, there can be many
-hundreds of thousands or even millions of hits to navigate, GUS provides links
-where necessary to skip over large numbers of pages in one click.
+(figure~\ref{fig:gus:pagination}).
 
 \begin{figure}[tbp]
 \begin{center}
-\includegraphics[scale=0.5]{img/gus-pagination-links}
-\caption{GUS pagination links for a large search}
+\includegraphics[scale=0.5]{img/web-ui-pagination}
+\caption{Web UI pagination links for a large search}
 \label{fig:gus:pagination}
 \end{center}
 \end{figure}
@@ -874,56 +790,39 @@ Once a query has been started, its {\tt QueryRunner} provides access to the
 statistics, the hits themselves, and the text in the matched documents.  The
 most important methods are summarised below, but for full details you should
 look at the interface definition itself, in the {\tt gate.mimir.search} package
-of {\tt mimir-core}.  Note that the search itself is performed in a background
-thread so many of the methods of {\tt QueryRunner} will return different values
-over time as the search progresses.
+of {\tt mimir-core}.
 
 \bde
-\item[isComplete()] Checks whether the search has completely finished and there
-  are definitely no more hits to be found.
-\item[isActive()] Checks whether the runner is currently actively searching.
-  By default a query runner keeps searching until it has either exhausted all
-  the possible hits, has found a million hits since it was last restarted, or
-  has been running for 30 seconds without hitting this limit.  If isActive()
-  and isComplete() both return false, it means that the search hit one of these
-  limits and was suspended, it can be restarted by calling getMoreHits().
-\item[getHitsCount()] Gets the number of hits obtained so far. This number may
-  increase at any time if the query is currently active.
-\item[getDocumentsCount()] Gets the number of distinct documents that have so
-  far been found to contain hits.  This number may increase at any time if the
-  query is currently active.
-\item[getHits(start, max)] Gets the details of some hits found by the query.
-  Conceptually, a {\tt QueryRunner} can be thought of as holding a flat list of
-  hits numbered from zero upwards, containing all the hits from the first
-  matched document, followed by all the hits from the second matched document,
-  etc.  This method retrieves a sub-list from that list, starting at the
-  (zero-based) index {\em start} and containing a maximum of {\em max} entries
-  (it may contain fewer if not enough hits have yet been found).  The return
-  value from this method is a list of {\tt Binding} objects, each representing
-  one hit.
-\item[getDocumentHitsCount(documentIndex)] Gets the number of hits in the $n$th
-  document that matched this query (zero-based index).  To retrieve the hits
-  for a particular document you would need to sum up all the
-  getDocumentHitsCount values for the preceding documents and pass that sum as
-  the {\em start} parameter to getHits.
-\item[getDocumentID(documentIndex)] Gets the ID in the underlying index of the
-  $n$th document that matched this query.  This ID is needed to get the
-  document text and metadata.
-\item[getDocumentTitle/URI(id)] Gets metadata about the document with the given
-  ID.
-\item[getDocumentText(id, start, length)] Gets the text of the document with
-  the given ID, starting at the {\em start}th token and extending for
+\item[getDocumentsCount()] Gets the number of result documents that have been 
+  found. While the query has not yet finished running, this method returns
+  $-1$.
+\item[getDocumentsCurrentCount()] Gets the number of distinct documents that
+  have so far been found to contain hits. This number may increase at any time
+  while the query is currently active. Once the query completes, this method
+  returns the same value as {\tt getDocumentsCount}.
+\item[getDocumentHits(rank)] Gets the details for the hits found inside a given
+  document. The document is pecified by its rank (the position in the list of
+  result documents). The value supplied for the {\tt rank} paramter must be
+  between $0$ (inclusive) and the value returned by {\tt getDocumentsCount()}
+  (exclusive). The return value from this method is a list of {\tt Binding}
+  objects, each representing one hit.
+\item[getDocumentID(rank)] Gets the ID in the underlying index of the
+  $n$th document that matched this query. This ID is needed when deleting
+  documents from the index.
+\item[getDocumentTitle/URI(rank)] Gets metadata about the document with the
+  given rank.
+\item[getDocumentText(rank, start, length)] Gets the text of the document with
+  the given rank, starting at the {\em start}th token and extending for
   {\em length} tokens.  The return value is a pair of parallel string arrays,
   one containing the text of the tokens and the other containing the text
   between each token and the following one.
-\item[renderDocument(id, Appendable)] Render the document content, with hits
+\item[renderDocument(rank, Appendable)] Render the document content, with hits
   highlighted, using the document renderer configured for the index.  The
   content is written to the specified Appendable (a StringBuilder, Writer,
   etc.).
 \ede
 
-The getHits method returns a list of {\tt Binding} objects, which provide
-several methods, the most important ones being {\tt getDocumentId} (the
-document that contains the hit), {\tt getTermPosition} (the offset of the first
-token covered by the hit) and {\tt getLength} (the number of tokens it
-covers).
+The {\tt getDocumentHits()} method returns a list of {\tt Binding} objects,
+which provide several methods, the most important ones being 
+{\tt getTermPosition()} (the offset of the first token covered by the hit) and 
+{\tt getLength} (the number of tokens it covers).
