@@ -99,9 +99,21 @@
 
     <resolve-groovy-templates dir="${grails-plugin.dir}" />
     
-    <grails dir="${grails-plugin.dir}">
-      <arg value="package-plugin" />
-    </grails>
+    <trycatch>
+      <try>
+        <grails dir="${grails-plugin.dir}">
+          <arg value="package-plugin" />
+        </grails>
+      </try>
+      <catch>
+        <echo>First attempt at package-plugin failed.  This often happens</echo>
+        <echo>the first time you build, or after deleting directories</echo>
+        <echo>under ~/.grails.  Re-trying...</echo>
+        <grails dir="${grails-plugin.dir}">
+          <arg value="package-plugin" />
+        </grails>
+      </catch>
+    </trycatch>
     
   </target>
 
