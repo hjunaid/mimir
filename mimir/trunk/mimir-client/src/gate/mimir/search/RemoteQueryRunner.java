@@ -392,7 +392,7 @@ public class RemoteQueryRunner implements QueryRunner {
           IndexException {
     webUtils.getText(out, getActionBaseUrl(ACTION_RENDER_DOCUMENT),
             "queryId", queryId,
-            "documentRank", Integer.toString(rank));
+            "rank", Integer.toString(rank));
   }
 
   /* (non-Javadoc)
