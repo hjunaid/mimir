@@ -117,7 +117,7 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
 
   @Override
   public ResultsData getResultsData(String queryId,
-  int firstDocumentRank, int documentsCount) throws MimirSearchException {
+      int firstDocumentRank, int documentsCount) throws MimirSearchException {
     QueryRunner qRunner = searchService.getQueryRunner(queryId);
     if(qRunner) {
       try {
