@@ -454,7 +454,7 @@ public class QueryEngine {
    * Notifies the QueryEngine that the given QueryRunner has been closed. 
    * @param qRunner
    */
-  public void releaseQueryRunner(QueryRunnerMk1 qRunner) {
+  public void releaseQueryRunner(QueryRunner qRunner) {
     activeQueryRunners.remove(qRunner);
   }
 
