@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry exported="true" kind="lib" path="lib/gate.jar" sourcepath="/GATE"/>
-	<classpathentry exported="true" kind="lib" path="lib/xstream-1.3.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/xstream-1.4.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/log4j-1.2.15.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-configuration-1.5.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-lang-2.4.jar"/>
