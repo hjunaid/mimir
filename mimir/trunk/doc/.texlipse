@@ -1,5 +1,6 @@
 #TeXlipse project settings
-#Mon Apr 04 14:58:26 BST 2011
+#Wed Jan 04 17:11:58 GMT 2012
+markTmpDer=true
 builderNum=2
 outputDir=
 makeIndSty=
