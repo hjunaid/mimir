@@ -828,5 +828,28 @@ which provide several methods, the most important ones being
 {\tt getLength} (the number of tokens it covers).
 
 \section{Ranking of Results}
+\label{sec:search:rank}
 
-Starting with version $4.0$, \Mimir{} support the ranking of results. 
+Starting with version $4.0$, \Mimir{} supports the ranking of results. This
+means that a scoring algorithm is applied to assess the relevance of each
+returned document and that documents are returned in decreasing order of their
+scores. To support this, \Mimir{} will need to execute the query twice: once to
+calculate the scores, and a second time to collect the actual hits.
+Consequently, the query execution will be a bit slower when using ranking.
+ 
+\subsection{Configuring Ranking}
+
+Each searchable index can be configured to use a scorer. When initially created,
+all indexes have scoring disabled. This can be changed from the admin interface,
+by editing the index configuration, as shown in Figure~\ref{fig:config-scorer}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.4]{img/index-config-scorer}
+\caption{Configuring a Scorer}
+\label{fig:config-scorer}
+\end{center}
+\end{figure}
+
+If the provided scoring algorithms are not suitable for your needs, you can add
+new ones as discussed in Section~\ref{sec:extend:scorers}.

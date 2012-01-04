@@ -188,6 +188,7 @@ Finally, when the index is shut down the {\tt close(QueryEngine)} methods of
 the helpers are called in sequence.
 
 \subsection{Packaging New Helper Types for Use with \Mimir}
+\label{sec:extend-package-plugins}
 
 To create a new helper type and make it available to \Mimir\ you need to first
 write your Java class that implements {\tt SemanticAnnotationHelper}, typically
@@ -206,9 +207,47 @@ file which is placed in a directory containing a simple {\tt creole.xml} file.
 This directory is now a CREOLE plugin that can be loaded into \Mimir, for
 example by using the configuration options described in
 Section~\ref{sec:admin:config}.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Embedding \Mimir\ in a Custom Grails application}
+\section{Registering new Scorers}
+\label{sec:extend:scorers}
+
+The set of scoring algorithms made available in the admin interface is specified
+in the application configuration file (described in
+Section~\ref{sec:admin:config}). The default configuration includes the
+following options:
+\begin{lstlisting}[language=Java]
+scorers.'Count Scoring' = {
+  new DelegatingScoringQueryExecutor(new CountScorer())
+}
+scorers.'TF.IDF' = {
+  new DelegatingScoringQueryExecutor(new TfIdfScorer())
+}
+scorers.'BM25' = {
+  new DelegatingScoringQueryExecutor(new BM25Scorer())
+}
+scorers.'Hit Length Scoring' = {
+  new BindingScorer()
+}
+\end{lstlisting}
+
+Each declaration maps a Groovy closure to the name of a scorer. The closure must
+return an object implementing the
+\lstinline!gate.mimir.search.score.MimirScorer! interface, which itself extends
+the MG4J interface \lstinline!it.unimi.dsi.mg4j.search.score.DelegatingScorer!.
+
+\Mimir{} provides the
+\lstinline!gate.mimir.search.score.DelegatingScoringQueryExecutor! class which
+can be used to wrap one of the scorer implementations provided by MG4J. If none
+of those are suitable, you can write your own custom implementations and make
+them avaialble to \Mimir{} in the form of a GATE CREOLE plugin. This will ensure
+the new classes are added to the classpath and can be found by the system. See
+Section~\ref{sec:extend-package-plugins} for a description of how to declare new
+plugins, and Section~\ref{sec:admin:config} for information about loading
+additional plugins.
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Embedding \Mimir\ in a Custom Grails Application}
 \label{sec:extend:customapp}
 
 The demo Grails application provided with \Mimir\ provides access to the

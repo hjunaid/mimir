@@ -9,9 +9,11 @@ This appendix details the main changes in each \Mimir\ release.
   points identified.
   \item Simplified all the query APIs by making them almost completely
   synchronous.
-  \item Added support for ranking the results.
-  \item Brand new implementations for all the query runners.
-  \item Replaced the old GWT based UI with a completely new implementation (see
+  \item Added support for ranking the results (see
+  Sections~\ref{sec:search:rank}  and \ref{sec:extend:scorers}).
+  \item New implementations for all the query runners (used when searching
+  local, remote and federated indexes).
+  \item Replaced the old GWT based UI with a new implementation (see
   Section~\ref{sec:search:gus}.
   \item Added the mimir-cloud web application to the source tree, see
   Section~\ref{sec:mimir-cloud}.
