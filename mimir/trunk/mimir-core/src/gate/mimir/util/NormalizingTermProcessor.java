@@ -25,51 +25,44 @@ import java.text.Normalizer;
 
 public class NormalizingTermProcessor implements TermProcessor
 {
-	private final static NormalizingTermProcessor INSTANCE = new NormalizingTermProcessor();
+  private final static NormalizingTermProcessor INSTANCE = new NormalizingTermProcessor();
 
-	public final static TermProcessor getInstance()
-	{
-		return INSTANCE;
-	}
+  public final static TermProcessor getInstance() {
+    return INSTANCE;
+  }
 
-	private NormalizingTermProcessor()
-	{
-		//nothing to do but this method forces people to use the getInstance() method;
-	}
+  private NormalizingTermProcessor() {
+    //nothing to do but this method forces people to use the getInstance() method;
+  }
 
-	@Override
-	public boolean processTerm(final MutableString term)
-	{
-		if (term == null) return false;
+  @Override
+  public boolean processTerm(final MutableString term) {
+    if (term == null) return false;
 
-		term.toLowerCase();
+    term.toLowerCase();
 
-		//http://glaforge.appspot.com/article/how-to-remove-accents-from-a-string
-		term.replace(Normalizer.normalize(term, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", ""));
+    //http://glaforge.appspot.com/article/how-to-remove-accents-from-a-string
+    term.replace(Normalizer.normalize(term, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", ""));
 
-		return true;
-	}
+    return true;
+  }
 
-	@Override
-	public boolean processPrefix(final MutableString prefix)
-	{
-		return processTerm(prefix);
-	}
+  @Override
+  public boolean processPrefix(final MutableString prefix) {
+    return processTerm(prefix);
+  }
 
-	private Object readResolve()
-	{
-		return INSTANCE;
-	}
+  private Object readResolve() {
+    return INSTANCE;
+  }
 
-	@Override
-	public String toString()
-	{
-		return this.getClass().getName();
-	}
+  @Override
+  public String toString() {
+    return this.getClass().getName();
+  }
 
-	@Override
-	public NormalizingTermProcessor copy()
-	{
-		return this;
-	}
+  @Override
+  public NormalizingTermProcessor copy() {
+    return this;
+  }
 }
