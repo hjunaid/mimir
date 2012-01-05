@@ -131,7 +131,7 @@ class SemanticAnnotationsHandler {
     }
 
     def helperParams = [:]
-    helperParams.addAll(defParams)
+    helperParams.putAll(defParams)
     helperParams.remove('type')
     helperParams.annType = annotationType
     annotation(type:annotationType, helper:theClass.newInstance(helperParams))
