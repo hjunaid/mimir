@@ -1,7 +1,7 @@
 This chapter is aimed at the impatient reader who wants a working system as
 quickly as possible. The technical detail is deliberately kept at a minimum so,
 while you will hopefully end up with something that works, you will not
-necessarilly understand how it all fits together. For that, please read the
+necessarily understand how it all fits together. For that, please read the
 remainder of this guide.
 
 \section{Set Up Your Environment}
@@ -26,8 +26,8 @@ of software installed on your system:
   environment variable points to the top-level directory of your installation.
   \item[Working Internet Connection] The next step, described below, is the
   building of the \Mimir{} library. This starts by automatically downloading all
-  the required dependencies, so it requires a working internet connection. Once
-  the software is built, it can work without an remote conenction.
+  the required dependencies, so it requires a working Internet connection. Once
+  the software is built, it can work without an remote connection.
   \item[GATE Developer] \Mimir{} is an indexer for GATE Documents. The simplest
   way of generating some GATE documents to be indexed is by using the GATE
   Developer tool\footnote{GATE Developer is available at
@@ -80,7 +80,7 @@ Commands that you have to execute are formatted in a distinctive font
 \setcounter{enumi}{4}
   \item {\bf Set-up your new \Mimir{} application:}
   navigate to the administration page. You will be prompted to configure your \Mimir{} instance.
-  After clicking the link, enter the path to a local writeable directory
+  After clicking the link, enter the path to a local writable directory
   where new indexes will be created, and click the {\em Update}.button.
   \item \label{step:create} {\bf Create a new index:} navigate back to the
   administration page (by clicking the link at the top of the page). Under the {\em Local Indexes}
@@ -98,14 +98,14 @@ Commands that you have to execute are formatted in a distinctive font
     $\rightarrow$ Manage CREOLE Plugins), and add a new plugin directory
     pointing at the {\tt mimir-client} directory inside the \Mimir{}
     distribution. Make sure the new plugin is loaded by checking the
-    appropriate checkbox.
+    appropriate check-box.
     \item Load a new instance of {\em \Mimir{} Indexing PR} (Main Menu
     $\rightarrow$ File $\rightarrow$ New Processing Resource $\rightarrow$
     \Mimir{} Indexing PR), and add it to the end of the ANNIE application.
     \item Make sure that the {\tt mimirIndexUrl} parameter for the new PR is set
     to the {\em Index URL} value obtained at Step~\ref{step:create}.
     \item Load some test documents (e.g. some web pages from news web sites),
-    create a GATE Corpus, aadd all the documents to the corpus, and set the
+    create a GATE Corpus, add all the documents to the corpus, and set the
     newly corpus as the target for the ANNIE application.
     \item Run the ANNIE application. This will annotate the documents created
     during the previous step. The \Mimir{} Indexing PR instance will make
@@ -115,5 +115,14 @@ Commands that you have to execute are formatted in a distinctive font
   button, and wait for the index to finish closing. When done, go back to the
   main administration page. 
   \item {\bf You can now search the new index} by clicking the {\em search} link
-  next to your index name.
+  next to the name of your new index.
 \end{enumerate}
+
+To shut down the running web application, create a file named {\tt
+.kill-run-app} in the {\em mimir-demo} directory, and wait for the application
+to shut itself down.
+
+To deploy the \Mimir{} web application to an application server (such as Apache
+Tomcat) run the \cmd{grails prod war} command in the mimir-demo directory. A
+{\tt mimir-demo-\{version\}.war} file will be created for you in the {\tt
+target} sub-directory.
