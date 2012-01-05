@@ -47,6 +47,7 @@
 \usepackage{fancyhdr}
 \usepackage{listings}
 \usepackage{longtable}
+\usepackage{txfonts}
 \usepackage[text={5in,8.5in}, hmarginratio=1:1, vmarginratio=1:1]{geometry}
 % packages with mode detection 
 \ifpdf
@@ -89,13 +90,10 @@
   \fi
 \fi
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % HTML support commands
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % some utility definitions of HTML commands using the hyperref package 
-
 % \htlink{target URL}{link text} - hypertext link
 \newcommand{\htlink}[2]{\href{#1}{#2}}
 \newcommand{\htlinkplain}[1]{\href{#1}{#1}}
@@ -202,6 +200,8 @@
 \newcommand{\omitted}[1]{{\small \sf =OMITTED=}}
 \newcommand{\thing}{book}
 
+\definecolor{cmdcol}{RGB}{0, 0, 128}
+\newcommand{\cmd}[1]{\textcolor{cmdcol}{\textbf{\texttt{#1}}}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % sectioning commands 
