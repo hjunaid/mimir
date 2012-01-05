@@ -146,7 +146,7 @@ import gate.mimir.SemanticAnnotationHelper.Mode
 import gate.mimir.index.OriginalMarkupMetadataHelper
 import ${defaultHelper} as DefaultHelper
 
-tokenASName = "mimir"
+tokenASName = ""
 tokenAnnotationType = ANNIEConstants.TOKEN_ANNOTATION_TYPE
 tokenFeatures = {
   string()
@@ -154,7 +154,7 @@ tokenFeatures = {
   root()
 }
 
-semanticASName = "mimir"
+semanticASName = ""
 semanticAnnotations = {
   index {
     annotation helper:new DefaultHelper(annType:'Sentence')
