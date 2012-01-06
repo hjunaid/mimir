@@ -103,20 +103,20 @@ see the {\tt sparql} plugin (section~\ref{sec:plugins:sparql}).
 
 The GATE {\tt Tagger\_Measurements} plugin, introduced in GATE 6.1, is able to
 recognise many different kinds of measurement expressions in text.  It
-normalizes the value and unit of each measurement into the SI system of
+normalises the value and unit of each measurement into the SI system of
 measurements and stores these values as features of the Measurement annotation.
-For example, the text ``45 cm'' would be annotated with a normalized unit of
-metres and a normalized value of 0.45, the text ``18 in'' would also be
-normalized to metres, in this case with a normalized value of 0.4572.
+For example, the text ``45 cm'' would be annotated with a normalised unit of
+metres and a normalised value of 0.45, the text ``18 in'' would also be
+normalised to metres, in this case with a normalised value of 0.4572.
 
 The \Mimir\ {\tt measurements} plugin provides a SAH that implements the same
-normalization on queries.  It processes queries for a ``synthetic'' feature
+normalisation on queries.  It processes queries for a ``synthetic'' feature
 called ``spec'' which represents a measurement specification in a controlled
 language and converts constraints on this feature into the corresponding
-constraints on the real normalized value and unit features that have been
+constraints on the real normalised value and unit features that have been
 indexed.  For example, a search for \{Measurement spec="1 to 3 feet"\} would be
-treated as a query for measurements whose normalized unit is metres and whose
-normalized value is between 0.3048 and 0.9144, which would match both the ``45
+treated as a query for measurements whose normalised unit is metres and whose
+normalised value is between 0.3048 and 0.9144, which would match both the ``45
 cm'' and ``18 in'' examples above.
 
 \subsection{Configuring the Measurements SAH}
@@ -185,7 +185,7 @@ through directly to its delegate.  However it overrides the {\tt getMentions}
 search method to support the ``spec'' feature.
 
 When a query including a spec feature constraint is received, the helper parses
-this spec using the measurements parser to obtain a normalized unit and value
+this spec using the measurements parser to obtain a normalised unit and value
 or values for the measurement sought.  It then constructs a number of new
 constraint sets that match annotations compatible with the spec and then for
 each of these alternatives, runs these constraints in combination with the
@@ -215,7 +215,7 @@ underlying helper.  Any annotations that match any of these new queries will be
 treated as a match for the {\tt sparql} constraint.  This process is described
 in detail below.
 
-For example, given a helper configured for the public DBpedia endpoint
+For example, given a helper configured for the public DBPedia endpoint
 {\tt http://dbpedia.org/sparql}, the following \Mimir\ query:
 \begin{verbatim}
 {Person sparql = "SELECT DISTINCT ?inst WHERE {

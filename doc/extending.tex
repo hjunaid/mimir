@@ -104,7 +104,7 @@ the annotations were indexed.
 
 There is a second overloading of this method specified in the interface which
 is a convenience for callers when all the constraints are simple feature value
-equality constraints, but generally implementors of new SAH types can ignore
+equality constraints, but generally implementers of new SAH types can ignore
 this as \Mimir\ provides an abstract base class that converts the Map form of
 constraints into the more general List$<$Constraint$>$ form and calls the other
 method.
@@ -169,15 +169,15 @@ When indexing is complete the helpers' {\tt close(Indexer)} methods are called
 (again, in sequence in one thread).  The index is now closed and the SAH
 objects can be garbage collected.
 
-The index configuration, including all the SAH objects, is serialized to XML
+The index configuration, including all the SAH objects, is serialised to XML
 using XStream (\url{http://xstream.codehaus.org}). Therefore it is important to
 mark as \lstinline!transient! any fields of your helper class that should not be
-serialized (e.g. temporary in-memory caches, etc.).
+serialised (e.g. temporary in-memory caches, etc.).
 
-When an index is opened for searching the XML configuration is deserialized to
+When an index is opened for searching the XML configuration is deserialised to
 re-create the helper objects, and their {\tt init(QueryEngine)} methods are
-called.  Note that as with Java object serialization XStream does {\em not}
-call object constructors when deserializing, so any initialization must happen
+called.  Note that as with Java object serialisation XStream does {\em not}
+call object constructors when de-serialising, so any initialisation must happen
 in the init method or in a {\tt readResolve} method, and not in the
 constructor.
 
@@ -239,7 +239,7 @@ the MG4J interface \lstinline!it.unimi.dsi.mg4j.search.score.DelegatingScorer!.
 \lstinline!gate.mimir.search.score.DelegatingScoringQueryExecutor! class which
 can be used to wrap one of the scorer implementations provided by MG4J. If none
 of those are suitable, you can write your own custom implementations and make
-them avaialble to \Mimir{} in the form of a GATE CREOLE plugin. This will ensure
+them available to \Mimir{} in the form of a GATE CREOLE plugin. This will ensure
 the new classes are added to the classpath and can be found by the system. See
 Section~\ref{sec:extend-package-plugins} for a description of how to declare new
 plugins, and Section~\ref{sec:admin:config} for information about loading
@@ -289,7 +289,7 @@ The standard URL mappings for \Mimir\ adhere to the following conventions:
   through the {\tt mimir-client} library, which relies on a base URL to which it
   adds known suffixes to access given functionality (e.g. the search actions
   are all found under {\tt /\{indexId\}/search/\{actionName\}}). The
-  mimir-client library is used, for example, in the implemenation of remote
+  mimir-client library is used, for example, in the implementation of remote
   indexes.
 \eit
 
@@ -325,7 +325,7 @@ any or all of the following.
   /images, /plugins, /\{yourindex\}/search, etc.)
 \item Install a security plugin such as spring-security-core or nimble, and
   restrict the \Mimir\ pages to certain users.  For example the /admin pages
-  could be restricted to administrative users, the gus pages to registered
+  could be restricted to administrative users, the Web UI pages to registered
   searchers, etc.  This is how the {\tt mimir-cloud} application is set up.
 \item If your \Mimir\ instance is a slave in a federated index, use firewall
   rules or a Grails filter to restrict access to the */search URLs to only the

@@ -105,16 +105,11 @@ To build the \Mimir\ demo app you will need:
   JVMs on Linux and the Apple JVM on Mac OS X.
 \item Apache Ant 1.8.1 or later.
 \item Grails (\url{http://grails.org}).  The \Mimir\ plugin was developed with
-version 1.3.7 but later 1.3.x versions should also work (you will need to run
-{\tt grails upgrade} in the {\tt mimir-web} directory if you use a version other
-than 1.3.7).  You need to set the JAVA\_HOME environment variable to point to
-your JDK, the GRAILS\_HOME environment variable to point to your Grails
-installation and put \$GRAILS\_HOME/bin on your PATH. 
-\item Google Web Toolkit (\url{http://code.google.com/webtoolkit}).  The GUS
-  web interface is implemented in GWT, using the Grails gwt plugin, but a
-  standalone installation of GWT is required to build the app.  Version 2.4.0
-  or later is required, and you need to set the GWT\_HOME environment
-  variable to point to your GWT installation.
+  version 1.3.7 but later 1.3.x versions should also work (you will need to run
+  {\tt grails upgrade} in the {\tt mimir-web} directory if you use a version
+  other than 1.3.7).  You need to set the JAVA\_HOME environment variable to
+  point to your JDK, the GRAILS\_HOME environment variable to point to your
+  Grails installation and put \$GRAILS\_HOME/bin on your PATH.
 \end{itemize}
 
 While not strictly a pre-requisite, \Mimir\ performs much better on 64-bit
@@ -207,7 +202,7 @@ Grails application base directory.  Absolute URLs will be loaded as such both
 in {\tt run-app} and in WAR deployments, but plugins specified as relative
 paths are treated slightly differently.  They will be loaded directly from the
 specified paths in {\tt run-app}, but when building a WAR file the referenced
-plugins will be packaged inside the WAR file and loaded from there at runtime.
+plugins will be packaged inside the WAR file and loaded from there at run-time.
 
 \begin{lstlisting}
 queryTokeniserGapp = 
@@ -235,10 +230,10 @@ annotation set.
 
 Note that because of the special handling at build time of plugins referenced
 as relative paths (see above), if you want to load additional plugins into a
-WAR-packaged \Mimir\ using runtime settings in an external configuration file,
+WAR-packaged \Mimir\ using run-time settings in an external configuration file,
 then the plugins must be specified using absolute URLs, i.e.
 {\tt gate.mimir.plugins.custom = "file:/opt/mimir/plugins/custom"}.  Relative
-plugin paths are ignored at runtime by \Mimir\ when running from a WAR
+plugin paths are ignored at run-time by \Mimir\ when running from a WAR
 deployment.  However, since \Mimir\ plugins are simply standard GATE CREOLE
 plugins and the \Mimir\ Grails plugin initialises GATE Embedded using Spring
 you can load extra plugins relative to your web app by using Spring
@@ -282,7 +277,7 @@ installing the Tomcat available through {\tt apt-get} as the latter is
 configured by default with a security manager that interferes with \Mimir.
 
 When deployed to a servlet container the demo application reads configuration
-at runtime from two locations using the Grails standard ``externalised
+at run-time from two locations using the Grails standard ``externalised
 configuration'' mechanism:
 \begin{itemize}
 \item {\tt WEB-INF/classes/mimir-app-config.groovy} inside the web application.
@@ -559,8 +554,5 @@ those document IDs).
 
 Note that the IDs required here are not the URIs that were provided with the
 documents when they were indexed, but the internal \Mimir\ document IDs which
-are numbers starting from 0, as returned in the hit lists and ``docStats'' by
-the \Mimir\ query APIs (see section~\ref{sec:search:service}).  In the GUS
-interface (section~\ref{sec:search:gus}) the document ID is part of the URL to
-the ``cached'' document text,
-{\tt .../search/gusDocument/{\it $<$documentID$>$}?queryId=...}.
+are numbers starting from 0, as returned in the hit lists and ``getDocumentId''
+by the \Mimir\ query APIs (see section~\ref{sec:search:service}).
