@@ -50,15 +50,52 @@ processes on the cloud.}. This application should be suitable without any
 modifications for most users.
 \end{description}
 
-\section{Building and Running the mimir-demo Web
+\section{Building and Running a \Mimir{} Web
 Application}\label{sec:building}
 
-The {\tt mimir-demo} module is intended to be the simplest possible
-demonstration of how to use the \Mimir\ grails plugin ({\tt mimir-web})) in a
-Grails application. This application is suitable for experimentation and local
-use, but as it includes no security or authentication support it may not be
-appropriate for production deployment.  These concerns are addressed further in
-section~\ref{sec:extend:customapp}.
+\subsection{Which \Mimir{} Web Application}
+\label{sec:webapps}
+
+The {\tt mimir-core} Java library provides support for indexes that are
+represented as an on-disk directory -- named {\em Local Indexes} in the rest of
+this document (see the discussion about index types in
+Section~\ref{sec:admin:index-types}). To get the full functionality of \Mimir{}
+(including support for {\em Remote} and {\em Federated} indexes, as well as user
+interfaces for system administration and searching indexes) you will need to
+build and run a web application. All the web elements of \Mimir{} are
+implemented as the {\tt mimir-web} Grails plugin, which can easily be included
+in any Grails-based web application. The standard \Mimir{} distribution provides
+two such web applications:
+\begin{description}
+\item[mimir-demo] The {\tt mimir-demo} module is intended to be the simplest
+  possible  demonstration of how to use the {\tt mimir-web} Grails plugin in a
+  Grails application. This application is suitable for experimentation and
+  local use, but as it includes no security or authentication support it may not
+  be appropriate for production deployment. These concerns are addressed further
+  in Section~\ref{sec:extend:customapp}.
+  
+  If you are just starting with \Mimir{}, or you are only experimenting with
+  \Mimir{} indexes that you do not intend to open to remote users, then this is
+  the recommended web application to use.
+  
+  You should also use {\tt mimir-demo} (as a starting point) if you are an
+  experienced Grails developer and need a basic application to which you intend
+  to add your own security solution.
+\item[mimir-cloud] The {\tt mimir-cloud} application is the actual software
+  implementation behind the {\Mimir} servers deployed on the GATE Cloud
+  platform\footnote{\url{https://gatecloud.net}}. In addition to the \Mimir{}
+  plugin, it also includes some basic support for user authentication (using
+  the Spring Security Grails plugin), and support for packaging and downloading
+  local indexes. This is probably the most suitable choice if you just need a
+  stand-alone web application with \Mimir{} functionality, and you do not intend
+  to develop your own security solution.
+\end{description}
+
+The rest of this chapter talks about the {\tt mimir-demo} application, as the
+simpler of the two. However, everything said also applies to the {\tt
+mimir-cloud} application.
+
+
 
 \subsection{Prerequisites}
 
@@ -263,8 +300,8 @@ grails.serverURL = "http://example.com/mimir"
 // as the ROOT web application
 \end{lstlisting}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Indexes in \Mimir}
 
 \subsection{Types of Index}\label{sec:admin:index-types}
