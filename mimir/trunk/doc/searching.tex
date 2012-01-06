@@ -299,11 +299,8 @@ Returns & A help message describing how to use the service.\\
 \begin{longtable}{|p{1.8cm}|p{10.2cm}|}
 \multicolumn{2}{l}{\tt \bf postQuery} \\
 \hline
-Function & Starts a new query.  The query will execute asynchronously in a
-background thread, and will initially run until it has found a maximum of 1
-million hits or has been running for 30 seconds, whichever comes first.  If the
-query runner hits one of these limits before the search is complete it can be
-restarted by calling the {\tt getMoreHits} action. \\
+Function & Starts a new query. This call returns immediately, as the query will
+execute asynchronously in a background thread.\\
 \hline
 Parameters & \begin{minipage}[t]{10.2cm}
 \begin{description}
@@ -387,7 +384,7 @@ Parameters & \begin{minipage}[t]{10.2cm}
 \hline
 Returns & \begin{minipage}[t]{10.2cm}
 An XML message encapsulating a numeric value, or an error message if there were 
-any problems. After the search compeltes, the value returned is identical to
+any problems. After the search completes, the value returned is identical to
 that returned by calling {\tt documentsCount}.
 
 Example request:\\
@@ -761,9 +758,9 @@ At the bottom of the page is a row of pagination links
 \subsection{Embedding \Mimir\ in a Grails Application}
 \label{sec:search:grails}
 
-Both the XML web service and the GUS interface ultimately use a Grails service
-provided by the \Mimir\ plugin to search their indexes.  If you install the
-\Mimir\ plugin into your own Grails application this service will be your
+Both the XML web service and the Web UI interface ultimately use a Grails
+service provided by the \Mimir\ plugin to search their indexes.  If you install
+the \Mimir\ plugin into your own Grails application this service will be your
 primary entry point to make use of \Mimir\ functionality, so this section
 explains what you need to know to use it effectively.
 
@@ -801,8 +798,8 @@ of {\tt mimir-core}.
   while the query is currently active. Once the query completes, this method
   returns the same value as {\tt getDocumentsCount}.
 \item[getDocumentHits(rank)] Gets the details for the hits found inside a given
-  document. The document is pecified by its rank (the position in the list of
-  result documents). The value supplied for the {\tt rank} paramter must be
+  document. The document is specified by its rank (the position in the list of
+  result documents). The value supplied for the {\tt rank} parameter must be
   between $0$ (inclusive) and the value returned by {\tt getDocumentsCount()}
   (exclusive). The return value from this method is a list of {\tt Binding}
   objects, each representing one hit.
