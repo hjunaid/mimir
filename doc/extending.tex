@@ -259,7 +259,7 @@ adding these functions there.
 \subsection{Installing the \Mimir\ Plugin}
 
 The \Mimir\ plugin is installed like any other Grails plugin, by running
-{\tt grails package-plugin} in the {\tt grails-plugin-mimir} directory to
+{\tt grails package-plugin} in the {\tt mimir-web} directory to
 create a plugin zip file and then
 {\tt grails install-plugin grails-mimir-web-\{version\}.zip} in your
 application's base directory to install the plugin into your application.  On
@@ -326,7 +326,7 @@ any or all of the following.
 \item Install a security plugin such as spring-security-core or nimble, and
   restrict the \Mimir\ pages to certain users.  For example the /admin pages
   could be restricted to administrative users, the gus pages to registered
-  searchers, etc.
+  searchers, etc.  This is how the {\tt mimir-cloud} application is set up.
 \item If your \Mimir\ instance is a slave in a federated index, use firewall
   rules or a Grails filter to restrict access to the */search URLs to only the
   master \Mimir\ server.
