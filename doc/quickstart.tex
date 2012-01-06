@@ -134,7 +134,13 @@ Commands that you have to execute are formatted in a distinctive font
 
 To shut down the running web application, create a file named {\tt
 .kill-run-app} in the {\em mimir-demo} directory, and wait for the application
-to shut itself down.
+to shut itself down. If that does not work (creating files with `.' at the start
+of their names is sometimes difficult on Windows), then you can just focus the
+command prompt window where you started the application and interrupt it by
+pressing the {\tt Ctrl-C} key combination. This might, on rare occasions,
+invalidate the database of the \Mimir{} web application, but it would not affect
+any indexes you have created (they would simply disappear from the list and
+you would need to re-import them).
 
 To deploy the \Mimir{} web application to an application server (such as Apache
 Tomcat) run the \cmd{grails prod war} command in the mimir-demo directory. A
