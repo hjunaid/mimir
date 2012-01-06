@@ -58,9 +58,10 @@ the annotations.
 The following options can be configured:
 \begin{description}
 \item[tokenASName] The name of the annotation set in which the token
-  annotations can be found.  This may be left unspecified (or explicitly set to
-  \lstinline!null!, without quotes) to use the default annotation set, which
-  has no name.
+  annotations can be found (for example \lstinline!tokenASName = "mimir"!). To
+  use the default annotation set, which has no name, this may be left
+  unspecified, or explicitly set to the empty string: \lstinline!""!, or to
+  \lstinline!null! (without quotes).
 \item[tokenAnnotationType] The annotation type that should be used as tokens.
   This entry is required, and can generally be simply set to the default
   \lstinline!ANNIEConstants.TOKEN_ANNOTATION_TYPE! (with a suitable
