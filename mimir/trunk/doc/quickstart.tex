@@ -48,13 +48,26 @@ The following steps will help you build the {\tt mimir-demo} application.
 Commands that you have to execute are formatted in a distinctive font
 \cmd{like this}.
 \begin{enumerate}
-  \item {\bf Download the \Mimir{} sources}, if you have not done so already,
-  from \url{http://gate.svn.sourceforge.net/viewvc/gate/mimir/tags/}. Pick the
-  required version, then click on the {\em Download GNU tarball} link. Unpack
-  the downloaded file to a location on your computer. If using Windows we
-  recommend not using the default archive unpacking utility, as that sometimes
-  mangles the file names. Other free archive management tools (such as 7-Zip)
-  are available.
+  \item {\bf Download the \Mimir{} sources}, if you do not already have a copy.
+  Pick the appropriate version from one of the tag directories listed in the
+  {\tt tags} directory at
+  \url{http://gate.svn.sourceforge.net/viewvc/gate/mimir/}, then click on the
+  {\em Download GNU tarball} link. If you want to use the latest development
+  version (which could be unstable!), use the {\tt trunk} directory instead of a
+  tag. Unpack the downloaded file to a location on your computer. If using
+  Windows we recommend not using the default archive unpacking utility, as that
+  sometimes mangles the file names. Other free archive management tools (such as
+  7-Zip) are available.
+  
+  Alternatively, if 
+  Subversion\footnote{\url{http://subversion.tigris.org/}} is installed on your
+  system, you can check out the sources directly from our SourceForge repository
+  by executing the following command:\\\cmd{svn co 
+  https://gate.svn.sourceforge.net/svnroot/gate/mimir/trunk\\mimir}.
+  The URL used in the command is for the {\tt trunk} version; adjust accordingly
+  to point to one of the tags, if you require a release version instead. This
+  will create a new directory called {\tt mimir} containing all the source
+  files.
   \item {\bf Build the library:} change to the top level directory where you
   unpacked the downloaded \Mimir{} sources. If you can see the {\tt mimir-core},
   {\tt mimir-client}, {\em etc.} directories, then you are in the correct
