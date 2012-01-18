@@ -11,7 +11,7 @@ Mímir provides a framework for implementing indexing and search functionality
 across all these data type."
 
 Some documentation:
-- %(http://gate.svn.sourceforge.net/svnroot/gate/mimir/trunk/doc/mimir-guide.pdf, a users and 
+- %(doc/mimir-guide.pdf, a users and 
   implementors guide)
 - %(http://services.gate.ac.uk/mimir/query-session-examples.pdf, an example
   query session)
