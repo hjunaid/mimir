@@ -139,10 +139,6 @@ Please delete/move it manually and try again!
   
   <target name="mimir-demo" depends="grails.command, fail-if-exists">
     <echo>This will create a new Grails application at ${grails-demo-webapp.dir}...</echo>
-
-    <grails dir="${grails-plugin.dir}">
-      <arg value="package-plugin" />
-    </grails>
     
     <xmlproperty prefix="mimir.web" file="${grails-plugin.dir}/plugin.xml" />
   	
