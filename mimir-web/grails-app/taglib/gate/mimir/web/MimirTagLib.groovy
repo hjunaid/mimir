@@ -120,16 +120,19 @@ class MimirTagLib implements ApplicationContextAware {
    *   be shown? Permitted values are <tt>true</tt> (default) and 
    *   <tt>false</tt>.</li> 
    *   <li><b>id</b>: a value for the id attribute of the span element created.
-   *   </li> 
+   *   If this is provided, the nested span class="progress" will also be given
+   *   an id of &quot;<i>id</i>-bar&quot; and the span showing the percentage
+   *   as text will be given an id of &quot;<i>id</i>-value&quot;, allowing
+   *   them to be easily updated dynamically using JavaScript.</li> 
    * </ul>
    */
   def progressbar = { attrs, body ->
 /* What we're trying to create looks like this:
-<span>
+<span id="myProgress">
   <div class="progressbar" style="width:20em; height:1em; display:inline-block; margin-right:5px;vertical-align:middle;">
-    <span class="progress" style="width:30%">
+    <span id="myProgress-bar" class="progress" style="width:30%">
     </span>
-  </div><span style="vertical-align:middle;">30%</span>
+  </div><span id="myProgress-value" style="vertical-align:middle;">30%</span>
 </span>    
 */
     double value = attrs.value
@@ -147,11 +150,15 @@ class MimirTagLib implements ApplicationContextAware {
     out << "height:" + (heightStr ? heightStr : "1em") + "; "
     out << "width:" + (widthStr ? widthStr : "20em") + "; "
     out << (showText ? "margin-right:5px; vertical-align:middle;\">" : "\">")
-    out << "<span class=\"progress\" style=\"width:"
+    out << "<span"
+    if(idStr) out << " id=\"" + idStr + "-bar\""
+    out << " class=\"progress\" style=\"width:"
     out << percentNumberInstance.format(value)
     out << "\"></span></div>"
     if(showText){
-      out << "<span style=\"vertical-align:middle;\">"
+      out << "<span"
+      if(idStr) out << " id=\"" + idStr + "-value\""
+      out << " style=\"vertical-align:middle;\">"
       out << percentNumberInstance.format(value)
       out << "</span>"
     }

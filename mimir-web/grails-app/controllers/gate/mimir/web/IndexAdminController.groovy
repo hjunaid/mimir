@@ -14,6 +14,9 @@ package gate.mimir.web;
 
 import gate.mimir.web.Index;
 
+import grails.converters.JSON
+
+import java.text.NumberFormat;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -21,6 +24,13 @@ import javax.servlet.http.HttpServletResponse;
  */
 class IndexAdminController {
   static defaultAction = "admin"
+
+  static NumberFormat percentNumberInstance = NumberFormat.getPercentInstance(Locale.US)
+
+  static{
+    percentNumberInstance.setMaximumFractionDigits(2)
+    percentNumberInstance.setMinimumFractionDigits(2)
+  }
 
   def admin = {
     def indexInstance = Index.findByIndexId(params.indexId)
@@ -41,7 +51,11 @@ class IndexAdminController {
     }
 
     double progress = indexInstance.closingProgress()
-    render(mimir.progressbar(value:progress))
+    if(indexInstance.state == Index.CLOSING) {
+      render([progress:percentNumberInstance.format(progress)] as JSON)
+    } else {
+      render([complete:true] as JSON)
+    }
   }
   
   def close = {
