@@ -9,33 +9,40 @@
 <title>Mimir index &quot;${indexInstance.name}&quot;</title>
 <mimir:load/>
 
-<g:javascript>
-			function pageLoaded() {
-			<g:if test="${indexInstance.state == Index.CLOSING}">
-				// start regular updates of the progress bar
-				new Ajax.PeriodicalUpdater('closeProgress',
-				'${g.createLink(controller:"indexAdmin",
-				action:"closingProgress",
-				params:[indexId:indexInstance.indexId]).encodeAsJavaScript()}', {
-				frequency: 5
-				});
-      </g:if>
-			}
+<g:if test="${indexInstance.state == Index.CLOSING}">
+  <g:javascript src="json2.min.js" />
+  <g:javascript>
+    function updateProgress() {
+      <g:remoteFunction
+        url="[controller:'indexAdmin', action:'closingProgress', params:[indexId:indexInstance.indexId]]"
+        method="GET" onSuccess="doProgressUpdate(e)"
+        onFailure="progressUpdateFailed(e)" />;
+    }
 
-			// can't do body onLoad="..." so use a prototype event handler instead
-			Event.observe(window, 'load', pageLoaded, false);
-		</g:javascript>
+    function doProgressUpdate(response) {
+      var result = JSON.parse(response.responseText);
+      if(result.complete) {
+        window.location.reload();
+      } else {
+        document.getElementById('closingProgress-bar').style.width = result.progress;
+        document.getElementById('closingProgress-value').innerHTML = result.progress;
+        setTimeout(updateProgress, 5000);
+      }
+    }
+
+    function progressUpdateFailed(response) {
+      var progValue = document.getElementById('closingProgress-value');
+      progValue.innerHTML = progValue.innerHTML + ' (unable to update dynamically, please reload to check progress)';
+    }
+  </g:javascript>
+</g:if>
+
 </head>
 <body>
   <div class="nav">
     <span class="menuButton"> <g:link class="home"
         controller="mimirStaticPages" action="admin">Admin Home</g:link>
    </span>
-    <%--
-			<span class="menuButton">
-				<g:link class="list" action="list">LocalIndex List</g:link>
-			</span>
-			--%>
   </div>
   <div class="body">
     <g:if test="${flash.message}">
@@ -96,7 +103,7 @@
           <g:elseif test="${indexInstance.state == Index.CLOSING}">
             <tr class="prop">
               <td>Index Closing Progress:</td>
-              <td id="closeProgress"></td>
+              <td><mimir:progressbar id="closingProgress" value="${indexInstance.closingProgress()}" /><g:javascript>setTimeout(updateProgress, 5000);</g:javascript></td>
             </tr>
           </g:elseif>
         </tbody>
