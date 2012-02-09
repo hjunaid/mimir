@@ -1,24 +1,37 @@
-<project name="mimir-core" default="publish" basedir=".">
+<project name="mimir-core" default="publish" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant" >
+  <property name="build.sysclasspath" value="ignore" /> 
   <property name="app.name" value="mimir-core" />
   <property name="app.title" value="Mimir Core" />
-
   <property file="../build.properties" />
+    
+  <!-- Load Ivy support -->
+  <property name="build.dir" location="build" />
+  <path id="ivy.lib.path">
+      <fileset dir="${build.dir}" includes="*.jar"/>
+  </path>
   
+  <taskdef resource="org/apache/ivy/ant/antlib.xml"
+           uri="antlib:org.apache.ivy.ant"
+           classpathref="ivy.lib.path"/>
+
   <!-- Common Properties -->
   <property environment="env"/>
   <fileset id="libs.fileset" dir="lib" includes="**/*.jar" />
-  <path id="libs">
-    <fileset refid="libs.fileset" />
-  </path>
   <property name="classes.dir" location="classes" />
   <property name="src.dir" location="src" />
   <property name="doc.dir" location="doc" />
-
 	<property name="grails-plugin.dir" location="../${grails-plugin.dirname}" />
-  
   <property name="jar.file" location="${app.name}-${app.version}.jar" />
+
+  
+
+  <path id="libs">
+    <fileset refid="libs.fileset" />
+  </path>
+  
   <path id="compile.classpath">
     <path refid="libs" />
+    <path refid="ivylibs" />
   </path>
     
   <target name="clean">
@@ -28,7 +41,13 @@
     </delete>
   </target>
   
-  <target name="compile">
+  <target name="depend">
+    <ivy:configure file="${build.dir}/ivysettings.xml"/>
+    <ivy:resolve file="${build.dir}/ivy.xml"/>
+    <ivy:cachepath pathid="ivylibs"/>
+  </target>
+  
+  <target name="compile" depends="depend">
     <mkdir dir="${classes.dir}"/>
     <javac destdir="${classes.dir}"
            srcdir="${src.dir}"
@@ -84,4 +103,6 @@
       <fileset file="${jar.file}" />
     </copy>
   </target>
+  
+
 </project>
