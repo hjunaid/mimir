@@ -39,14 +39,22 @@ grails.project.dependency.resolution = {
   }
   dependencies {
     // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
-    compile ('uk.ac.gate:gate-core:7.0-SNAPSHOT', 
+
+    compile ('uk.ac.gate:gate-core:7.0', 
             'commons-configuration:commons-configuration:1.5',
             'commons-collections:commons-collections:3.2.1',
             'commons-digester:commons-digester:1.8.1',
             'com.martiansoftware:jsap:2.1') {
+            
+      // GATE claims it needs ANT 1.8.1, but that's not compatible with 
+      // Grails 1.3.x. So we exclude it here.             
       excludes 'ant'
     }
-
+    
+    // For the kind of things we do in Mimir, ANT 1.7.1 (same as in Grails 
+    // 1.3.x) is good enough. So we include it explicitly here.
+    runtime 'org.apache.ant:ant:1.7.1'
+    
     // runtime 'mysql:mysql-connector-java:5.1.5'
   }
   plugins {
