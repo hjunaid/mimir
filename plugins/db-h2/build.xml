@@ -9,8 +9,6 @@
   <property name="generated-header.xml" location="../../etc/generated-header.xml" />
 
 	<property name="core-home" location="../../${mimir-core.dirname}"/>
-  	
-  <property name="core-home" location="../${mimir-core.dirname}"/>
   <!-- Load Ivy support -->
   <property name="build.dir" location="${core-home}/build" />
   <path id="ivy.lib.path">
