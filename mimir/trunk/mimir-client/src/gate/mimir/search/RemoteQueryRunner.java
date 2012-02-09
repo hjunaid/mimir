@@ -376,9 +376,8 @@ public class RemoteQueryRunner implements QueryRunner {
       Set<String> fieldNames) throws IndexException, IndexOutOfBoundsException, 
       IOException {
     Map<String, Serializable> res = new HashMap<String, Serializable>();
-    int docId = getDocumentID(rank);
     for(String fieldName : fieldNames) {
-      Serializable value = getDocumentMetadataField(docId, fieldName);
+      Serializable value = getDocumentMetadataField(rank, fieldName);
       if(value != null) res.put(fieldName, value);
     }
     return res;
