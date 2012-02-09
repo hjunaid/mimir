@@ -26,7 +26,8 @@ grails.project.dependency.resolution = {
     grailsPlugins()
     grailsHome()
     grailsCentral()
-
+    mavenRepo 'http://repo.gate.ac.uk/content/groups/public/'
+    
     // uncomment the below to enable remote dependency resolution
     // from public Maven repositories
     //mavenLocal()
@@ -38,6 +39,13 @@ grails.project.dependency.resolution = {
   }
   dependencies {
     // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
+    compile ('uk.ac.gate:gate-core:7.0-SNAPSHOT', 
+            'commons-configuration:commons-configuration:1.5',
+            'commons-collections:commons-collections:3.2.1',
+            'commons-digester:commons-digester:1.8.1',
+            'com.martiansoftware:jsap:2.1') {
+      excludes 'ant'
+    }
 
     // runtime 'mysql:mysql-connector-java:5.1.5'
   }

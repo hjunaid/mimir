@@ -1,0 +1,33 @@
+<ivy-module version="2.0">
+
+  <info
+    organisation="uk.ac.gate"
+    module="mimir-core"
+    revision="4.0-SNAPSHOT">
+    <description homepage="http://gate.ac.uk/mimir" />
+  </info>
+
+  <configurations>
+    <conf name="default" />
+  </configurations>
+
+  <dependencies defaultconf="*->master(default),runtime(default)" >
+    <!-- GATE -->
+    <dependency name="gate-core" org="uk.ac.gate" rev="7.0-SNAPSHOT">
+      <artifact name="gate-core" type="jar" />
+    </dependency>    
+    <!-- MG4J Dependencies -->
+    <dependency org="commons-configuration" name="commons-configuration" rev="1.5" >
+      <artifact name="commons-configuration" type="jar" />
+    </dependency>
+    <dependency org="commons-collections" name="commons-collections" rev="3.2.1" >
+        <artifact name="commons-collections" type="jar" />
+    </dependency>
+    <dependency org="commons-digester" name="commons-digester" rev="1.8.1" >
+        <artifact name="commons-digester" type="jar" />
+    </dependency>
+    <dependency org="com.martiansoftware" name="jsap" rev="2.1" >
+        <artifact name="jsap" type="jar" />
+    </dependency>
+  </dependencies>
+</ivy-module>

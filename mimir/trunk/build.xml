@@ -1,4 +1,5 @@
 <project name="mimir" default="all">
+  <property name="build.sysclasspath" value="ignore" />
   <property file="build.properties" />
 
   <property name="mimir-core.dir" location="${mimir-core.dirname}" />
@@ -17,7 +18,7 @@
   <!-- Load the AntContrib tasks -->
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
   <classpath>
-    <pathelement location="${mimir-core.dir}/lib/ant-contrib-1.0b3.jar"/>
+    <pathelement location="${mimir-core.dir}/build/ant-contrib-1.0b3.jar"/>
   </classpath>
   </taskdef>
   
