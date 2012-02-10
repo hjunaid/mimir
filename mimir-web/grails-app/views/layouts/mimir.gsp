@@ -26,7 +26,7 @@
         <div id="content">
           <g:layoutBody />
 				  <div align="center">
-				    <p>M&iacute;mir <mimir:version />,  &copy; <a href="http://gate.ac.uk">GATE</a> 2011.</p>
+				    <p>M&iacute;mir <mimir:version />,  &copy; <a href="http://gate.ac.uk">GATE</a> 2012.</p>
 				  </div>
         </div>
     </body>
