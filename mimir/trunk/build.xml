@@ -120,6 +120,9 @@
 
   <target name="prepare-cloud-app">
     <resolve-groovy-templates dir="${grails-cloud-webapp.dir}" />
+    <grails dir="${grails-cloud-webapp.dir}">
+      <arg value="set-version ${app.version}" />
+    </grails>
   </target>
 
   <target name="check-demo-app">
