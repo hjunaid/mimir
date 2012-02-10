@@ -112,7 +112,6 @@ public class RankingQueryRunnerImpl implements QueryRunner {
     
     @Override
     public void run() {
-      final boolean ranking = documentScores != null;
       int[] documentIndexes = null;
       if(ranking) {
         // we're ranking -> first calculate the range of documents in ID order
@@ -194,10 +193,9 @@ public class RankingQueryRunnerImpl implements QueryRunner {
     public void run() {
       try{
         // collect all documents and their scores
-        final boolean scoring = scorer != null;
-        if(scoring) scorer.wrap(queryExecutor);
-        int docId = scoring ? scorer.nextDocument(-1) : queryExecutor.nextDocument(-1);
-        if(!scoring) { // then also collect some hits
+        if(ranking) scorer.wrap(queryExecutor);
+        int docId = ranking ? scorer.nextDocument(-1) : queryExecutor.nextDocument(-1);
+        if(!ranking) { // then also collect some hits
           synchronized(hitCollectors) {
            hitCollectors.put(new int[]{0, docBlockSize}, 
              new FutureTask<Object>(this, null));
@@ -205,7 +203,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
         }
         while(docId >= 0) {
           // enlarge the hits list
-          if(scoring){
+          if(ranking){
             documentScores.add(scorer.score());
             documentHits.add(null);
           } else {
@@ -224,10 +222,10 @@ public class RankingQueryRunnerImpl implements QueryRunner {
           }
           // and store the new doc ID
           documentIds.add(docId);
-          docId = scoring ? scorer.nextDocument(-1) : queryExecutor.nextDocument(-1);
+          docId = ranking ? scorer.nextDocument(-1) : queryExecutor.nextDocument(-1);
         }
         allDocIdsCollected = true;
-        if(scoring) {
+        if(ranking) {
           // now rank the first batch of documents
           // this will also start a second background job to collect the hits
           rankDocuments(docBlockSize -1);
@@ -262,6 +260,12 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * The {@link MimirScorer} to be used for ranking documents.
    */
   protected MimirScorer scorer;
+  
+  /**
+   * Flag set to <code>true</code> when ranking is being performed, or 
+   * <code>false</code> otherwise.
+   */
+  final boolean ranking;
 
   /**
    * The number of documents to be ranked (of have their hits collected) as a 
@@ -327,6 +331,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
   public RankingQueryRunnerImpl(QueryExecutor executor, MimirScorer scorer) throws IOException {
     this.queryExecutor = executor;
     this.scorer = scorer;
+    ranking = scorer != null;
     queryEngine = queryExecutor.getQueryEngine();
     docBlockSize = queryEngine.getDocumentBlockSize();
     documentIds = new IntArrayList();
@@ -568,7 +573,10 @@ public class RankingQueryRunnerImpl implements QueryRunner {
       final int expansion = docBlockSize - (interval[1] - interval[0]);
       // expand up to (expansion / 2) to the left
       interval[0] = Math.max(0, interval[0] - (expansion / 2));
-      interval[1] = Math.min(documentsOrder.size(), interval[0] + docBlockSize);
+      // expand to the right
+      int upperBound = documentsOrder != null ? 
+          documentsOrder.size() : documentIds.size();
+      interval[1] = Math.min(upperBound, interval[0] + docBlockSize);
     }
     HitsCollector hitsCollector = null;
     synchronized(hitCollectors) {
