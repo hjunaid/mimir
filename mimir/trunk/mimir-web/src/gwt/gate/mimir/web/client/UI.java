@@ -490,6 +490,7 @@ public class UI implements EntryPoint {
     searchBox = new SuggestBox(new MimirOracle(), searchTextArea);
     searchBox.setTitle("Press Escape to hide suggestions list; " +
     		"press Ctrl+Space to show it again.");
+    searchBox.addStyleName("mimirSearchBox");
     searchDiv.add(searchBox);
     
     searchButton = new Button();

@@ -372,3 +372,10 @@ a.pageLink {
 .action-desc {
 	font-style: italic;
 }
+
+/* Mimir GWT UI */
+
+.mimirSearchBox {
+	vertical-align: middle;
+	margin: 5px;
+}
