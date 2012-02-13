@@ -22,6 +22,6 @@ GATE Mímir is open source software, released under the
 %(http://www.gnu.org/licenses/lgpl-3.0.html, GNU Lesser General Public
 Licence 3.0), with the source code hosted at
 %(https://gate.svn.sourceforge.net/svnroot/gate/mimir/, SourceForge).
-We do not supply ready-built binaries as there are too many possible deployment configurations. Instead we encourage you to download the sources directly from the SourceForge link above, and build your own binaries. Instructions for how to do so are included in the user guide.
+We do not supply ready-built binaries as there are too many possible deployment configurations. Instead we encourage you to download the sources directly from the SourceForge link above, and build your own binaries. Instructions for how to do so are included in the user guide. Check the '^tags^' directory for stable releases, or look at the '^trunk^' for the current development version.
 
 Alternatively you can buy a ready-to-run virtual server with GATE Mímir installed from %(https://gatecloud.net/, GATECloud.net).
