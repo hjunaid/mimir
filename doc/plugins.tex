@@ -139,9 +139,8 @@ semanticAnnotations = {
 
 Note that the measurement helper does not need any ``annType'' or
 ``{\em xxx}Features'' parameters, as it is hard-coded to work only for
-annotations of type ``Measurement'' with the features that are produced by the
-measurement tagger PR.  However the constructor does take a {\tt Map} with
-other named arguments:
+annotations that are produced by the measurement tagger PR.  However the
+constructor does take a {\tt Map} with other named arguments:
 \begin{lstlisting}[firstnumber=6,texcl]
     // Example of how to configure a custom ``units'' file
     annotation helper:new MeasurementAnnotationHelper(
@@ -170,11 +169,13 @@ The following parameters are supported:
   to ``en\_GB'' if unspecified.
 \item[encoding] the character encoding used to read the configuration files.
   Defaults to ``UTF-8'' if unspecified.
+\item[annType] the annotation type, if something other than the default of
+  ``Measurement''
 \ede
 
 The measurements SAH is pre-configured with the feature names that the
-measurements tagger produces, and can only be used for annotations of type
-{\tt Measurement}.
+measurements tagger produces, and attempting to specify any feature name
+parameters such as nominalFeatures will cause an error.
 
 \subsubsection{Measurements helper implementation}
 
