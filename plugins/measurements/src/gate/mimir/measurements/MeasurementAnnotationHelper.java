@@ -86,6 +86,17 @@ public class MeasurementAnnotationHelper extends
   protected transient MeasurementsParser measurementsParser;
   
   protected transient Class<? extends AbstractSemanticAnnotationHelper> delegateHelperType;
+
+  public MeasurementAnnotationHelper() {
+    super();
+    setAnnotationType(ANNOTATION_TYPE);
+    // our nominal features include "spec", those passed to the delegate
+    // at init() time will not.
+    super.setNominalFeatures(new String[]{SPEC_FAKE_FEATURE, TYPE_FEATURE,
+      DIMENSION_FEATURE, NORM_UNIT_FEATURE});
+    super.setFloatFeatures(new String[]{NORM_VALUE_FEATURE,
+      NORM_MIN_VALUE_FEATURE, NORM_MAX_VALUE_FEATURE});
+  }
   
   public String getUnitsFile() {
     return unitsFileLocation;
@@ -127,6 +138,39 @@ public class MeasurementAnnotationHelper extends
     this.delegateHelperType = delegateHelperType;
   }
 
+  // override feature setters as Measurement helper does not support additional
+  // features
+
+  @Override
+  public void setNominalFeatures(String[] features) {
+    throw new UnsupportedOperationException("MeasurementAnnotationHelper uses "
+        + "a fixed feature set.");
+  }
+
+  @Override
+  public void setIntegerFeatures(String[] features) {
+    throw new UnsupportedOperationException("MeasurementAnnotationHelper uses "
+        + "a fixed feature set.");
+  }
+
+  @Override
+  public void setFloatFeatures(String[] features) {
+    throw new UnsupportedOperationException("MeasurementAnnotationHelper uses "
+        + "a fixed feature set.");
+  }
+
+  @Override
+  public void setTextFeatures(String[] features) {
+    throw new UnsupportedOperationException("MeasurementAnnotationHelper uses "
+        + "a fixed feature set.");
+  }
+
+  @Override
+  public void setUriFeatures(String[] features) {
+    throw new UnsupportedOperationException("MeasurementAnnotationHelper uses "
+        + "a fixed feature set.");
+  }
+
   @Override
   public void init(Indexer indexer) {
     // create the delegate - needs to happen before super.init
@@ -135,16 +179,10 @@ public class MeasurementAnnotationHelper extends
     try {
       AbstractSemanticAnnotationHelper theDelegate =
         delegateHelperType.newInstance();
-      setAnnotationType(ANNOTATION_TYPE);
-      theDelegate.setAnnotationType(ANNOTATION_TYPE);
-      // nominal features - ours include spec, delegate's don't
-      setNominalFeatures(new String[]{SPEC_FAKE_FEATURE, TYPE_FEATURE,
-        DIMENSION_FEATURE, NORM_UNIT_FEATURE});
+      theDelegate.setAnnotationType(getAnnotationType());
+      // nominal features for delegate do not include spec
       theDelegate.setNominalFeatures(new String[]{TYPE_FEATURE,
         DIMENSION_FEATURE, NORM_UNIT_FEATURE});
-      // float features are the same in both cases
-      setFloatFeatures(new String[]{NORM_VALUE_FEATURE, NORM_MIN_VALUE_FEATURE,
-        NORM_MAX_VALUE_FEATURE});
       theDelegate.setFloatFeatures(new String[]{NORM_VALUE_FEATURE,
         NORM_MIN_VALUE_FEATURE, NORM_MAX_VALUE_FEATURE});
       
