@@ -2,10 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry exported="true" kind="lib" path="lib/fastutil-6.4.jar" sourcepath="lib/src/fastutil-6.4-src.zip"/>
-	<classpathentry exported="true" kind="lib" path="lib/dsiutils-2.0.jar" sourcepath="lib/src/dsiutils-2.0-src.zip"/>
-	<classpathentry exported="true" kind="lib" path="lib/sux4j-3.0.jar" sourcepath="lib/src/sux4j-3.0-src.zip"/>
-	<classpathentry exported="true" kind="lib" path="lib/mg4j-4.0.jar" sourcepath="lib/src/mg4j-4.0-src.zip"/>
 	<classpathentry exported="true" kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?ivyXmlPath=build%2Fivy.xml&amp;confs=*"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
