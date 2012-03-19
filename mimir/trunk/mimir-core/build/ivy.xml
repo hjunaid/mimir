@@ -13,21 +13,16 @@
 
   <dependencies defaultconf="*->master(default),runtime(default)" >
     <!-- GATE -->
-    <dependency name="gate-core" org="uk.ac.gate" rev="7.0-SNAPSHOT">
+    <dependency name="gate-core" org="uk.ac.gate" rev="7.0">
       <artifact name="gate-core" type="jar" />
     </dependency>    
-    <!-- MG4J Dependencies -->
-    <dependency org="commons-configuration" name="commons-configuration" rev="1.5" >
-      <artifact name="commons-configuration" type="jar" />
+    <!-- MG4J -->
+    <dependency org="it.unimi.dsi" name="mg4j" rev="4.0.3" >
+      <artifact name="mg4j" type="jar"  />
     </dependency>
-    <dependency org="commons-collections" name="commons-collections" rev="3.2.1" >
-        <artifact name="commons-collections" type="jar" />
-    </dependency>
-    <dependency org="commons-digester" name="commons-digester" rev="1.8.1" >
-        <artifact name="commons-digester" type="jar" />
-    </dependency>
-    <dependency org="com.martiansoftware" name="jsap" rev="2.1" >
-        <artifact name="jsap" type="jar" />
-    </dependency>
+    
+    <!-- Exclude xmlbeans as it includes forbidden classes 
+      (a copy excluding the offending classes is included in lib/ -->
+    <exclude org="org.apache.xmlbeans" module="xmlbeans" />  
   </dependencies>
 </ivy-module>
