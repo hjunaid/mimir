@@ -151,6 +151,9 @@ Please delete/move it manually and try again!
       <arg value="${grails-demo-webapp.name}" />
     </grails>
     
+    <replace file="${grails-demo-webapp.dir}/grails-app/conf/BuildConfig.groovy"
+      token="//mavenCentral()" value="mavenCentral()" />
+    
     <echo file="${grails-demo-webapp.dir}/grails-app/conf/UrlMappings.groovy"
       >class UrlMappings { static mappings = {} }</echo>
     <echo file="${grails-demo-webapp.dir}/grails-app/conf/BuildConfig.groovy"
