@@ -25,8 +25,17 @@
       <artifact name="fastutil" type="jar"  />
     </dependency>
     
+    <!-- Explicit import for slf4j so that we can control which versions get used -->
+    <dependency org="org.slf4j" name="slf4j-api" rev="1.6.4" >
+      <artifact name="slf4j-api" type="jar" />
+    </dependency>
+    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.4" >
+      <artifact name="slf4j-log4j12" type="jar" />
+    </dependency>   
+    
     <!-- Exclude xmlbeans as it includes forbidden classes 
       (a copy excluding the offending classes is included in lib/ -->
-    <exclude org="org.apache.xmlbeans" module="xmlbeans" />  
+    <exclude org="org.apache.xmlbeans" module="xmlbeans" />
+      
   </dependencies>
 </ivy-module>
