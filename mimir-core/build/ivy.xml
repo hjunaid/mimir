@@ -20,6 +20,10 @@
     <dependency org="it.unimi.dsi" name="mg4j" rev="4.0.3" >
       <artifact name="mg4j" type="jar"  />
     </dependency>
+    <!--  explicit versions for DSI tools -->
+    <dependency org="it.unimi.dsi" name="fastutil" rev="6.4.4" >
+      <artifact name="fastutil" type="jar"  />
+    </dependency>
     
     <!-- Exclude xmlbeans as it includes forbidden classes 
       (a copy excluding the offending classes is included in lib/ -->

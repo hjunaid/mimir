@@ -44,6 +44,7 @@
   <target name="depend">
     <ivy:configure file="${build.dir}/ivysettings.xml"/>
     <ivy:resolve file="${build.dir}/ivy.xml" log="quiet"/>
+    <ivy:report todir="${build.dir}/ivy-report" />
     <ivy:cachepath pathid="ivylibs"/>
   </target>
   
