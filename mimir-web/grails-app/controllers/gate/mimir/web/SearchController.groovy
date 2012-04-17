@@ -849,7 +849,7 @@ class SearchController {
         }
       }else{
         response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-        "No value provided for parameter documentId!")
+        "No value provided for parameter rank!")
       }
     }else{
       response.sendError(HttpServletResponse.SC_NOT_FOUND, 
