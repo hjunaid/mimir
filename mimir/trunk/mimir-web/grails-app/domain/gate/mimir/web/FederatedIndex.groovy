@@ -88,6 +88,15 @@ class FederatedIndex extends Index {
     return federatedIndexService.getDocumentData(this, documentID)
   }
   
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.web.Index#renderDocument(int, java.io.Writer)
+   */
+  @Override
+  public void renderDocument(int documentID, Appendable out) {
+    federatedIndexService.renderDocument(this, documentID, out)
+  }
+  
   /**
    * Returns the annotations config for this index.
    */

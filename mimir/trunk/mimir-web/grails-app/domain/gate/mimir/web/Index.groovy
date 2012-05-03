@@ -110,6 +110,15 @@ class Index implements Serializable {
     throw new UnsupportedOperationException()
   }
   
+    /**
+    * Renders the document specified by its ID to the provided writer.
+    * @param documentID
+    * @return
+    */
+   void renderDocument(int documentID, Appendable out) {
+     throw new UnsupportedOperationException()
+   }
+  
   /**
    * Mark the given document IDs in this index as having been deleted,
    * preventing them from being subsequently returned by any queries.

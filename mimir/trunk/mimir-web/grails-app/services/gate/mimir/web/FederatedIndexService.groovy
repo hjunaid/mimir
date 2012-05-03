@@ -114,6 +114,13 @@ class FederatedIndexService {
     int idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
     return subIndex.getDocumentData(idWithinSubIndex)
   }
+  
+  public void renderDocument(FederatedIndex fedIndex, int documentId, 
+      Appendable out) {
+    Index subIndex = fedIndex.indexes[documentId % fedIndex.indexes.size()]
+    int idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
+    subIndex.renderDocument(idWithinSubIndex, out)
+  }
 }
 
 class FederatedIndexProxy implements Runnable{
