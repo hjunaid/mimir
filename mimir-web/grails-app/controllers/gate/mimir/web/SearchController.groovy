@@ -157,8 +157,6 @@ class SearchController {
     String queryString = p["queryString"]
     try{
       String runnerId = searchService.postQuery(request.theIndex, queryString)
-      //save the query ID in the session, so we can close it on expiry
-      getSessionQueryIDs().add(runnerId)
       render(buildMessage(SUCCESS, null){
         queryId(runnerId)
       }, contentType:"text/xml")
@@ -486,7 +484,6 @@ class SearchController {
     //get the query ID
     String queryId = p["queryId"]
     if(searchService.closeQueryRunner(queryId)){
-      getSessionQueryIDs().remove(queryId)
       render(buildMessage(SUCCESS, null, null), contentType:"text/xml")
     }else{
       render(buildMessage(ERROR, "Query ID ${queryId} not known!", null), 
@@ -523,19 +520,6 @@ class SearchController {
     }
   }
   
-  /**
-   * Gets the query IDs for the current session
-   */
-  private Set<String> getSessionQueryIDs(){
-    Set<String> queryIDs = session["queryIDs"]
-    if(queryIDs == null){
-      queryIDs = new SessionSet(searchService);
-      session["queryIDs"] = queryIDs
-    }
-    return queryIDs
-  }
-  
-  
 // ============== Binary protocol (used by remote clients) ===================
   
   /**
@@ -547,8 +531,6 @@ class SearchController {
     String queryString = p["queryString"]
     try {
       String runnerId = searchService.postQuery(request.theIndex, queryString)
-      //save the query ID in the session, so we can close it on expiry
-      getSessionQueryIDs().add(runnerId)
       new ObjectOutputStream (response.outputStream).withStream {stream -> 
         stream.writeObject(runnerId)
       }
@@ -886,28 +868,6 @@ class SearchController {
     }else{
       response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
       "No value provided for parameter indexId!")
-    }
-  }
-}
-
-/**
- * An extension of HashSet, that listens to session binding events and releases
- * all queries upon unbinding. 
- */
-private class SessionSet extends HashSet<String> implements Set<String>, HttpSessionBindingListener{
-  SearchService searchService
-  
-  public SessionSet(SearchService searchService){
-    this.searchService = searchService
-  }
-  
-  public void valueBound(HttpSessionBindingEvent event){
-    
-  }
-  
-  public void valueUnbound(HttpSessionBindingEvent event){
-    for(String id : this){
-      searchService.closeQueryRunner(id)
     }
   }
 }

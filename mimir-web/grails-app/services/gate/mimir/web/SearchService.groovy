@@ -15,6 +15,15 @@ package gate.mimir.web
 import gate.mimir.web.Index;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PreDestroy;
+
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.Cache
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+
 import gate.mimir.search.QueryRunner
 
 class SearchService {
@@ -33,18 +42,24 @@ class SearchService {
   /**
    * A map holding the currently active query runners. 
    */
-  Map<String, QueryRunner> queryRunners = [:].asSynchronized()
+  //Map<String, QueryRunner> queryRunners = [:].asSynchronized()
+  Cache<String, QueryRunner> queryRunners = 
+      CacheBuilder.newBuilder()
+          .expireAfterAccess(30, TimeUnit.MINUTES)
+          .removalListener(new CacheRemovalListener(log:log))
+          .build()
+  
   
   public QueryRunner getQueryRunner(String id){
-    return queryRunners[id]
+    return id ? queryRunners.getIfPresent(id) : null
   }
 
   public boolean closeQueryRunner(String id){
-    QueryRunner runner = queryRunners[id]
+    QueryRunner runner = getQueryRunner(id)
     if(runner){
       log.debug("Releasing query ID ${id}")
       runner.close()
-      queryRunners.remove(id)
+      queryRunners.invalidate(id)
       return true
     }
     return false
@@ -76,6 +91,30 @@ class SearchService {
      return postQuery (theIndex, queryString) 
     }
     throw new IllegalArgumentException("Index with specified ID not found!")
+  }
+  
+  @PreDestroy
+  public void destroy() {
+    // close all remaining query runners
+    queryRunners.invalidateAll()
+  }
+}
+
+/**
+ * Implementation of a cache removal listener, so that we can close the query
+ * runners as they get evicted.
+ */
+class CacheRemovalListener implements RemovalListener<String, QueryRunner> {
+
+  def log
+  
+  /* (non-Javadoc)
+   * @see com.google.common.cache.RemovalListener#onRemoval(com.google.common.cache.RemovalNotification)
+   */
+  @Override
+  public void onRemoval(RemovalNotification<String, QueryRunner> notification) {
+    log.debug("Evicting query ${notification.key}.")
+    notification.value.close()
   }
   
 }
