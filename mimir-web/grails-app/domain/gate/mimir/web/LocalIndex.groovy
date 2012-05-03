@@ -13,6 +13,8 @@
 package gate.mimir.web;
 
 
+import java.io.Writer;
+
 import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.Document
@@ -110,6 +112,14 @@ class LocalIndex extends Index implements Serializable {
   */
   DocumentData getDocumentData(int documentID) {
     return localIndexService.getDocumentData(this, documentID)
+  }
+
+  /* (non-Javadoc)
+   * @see gate.mimir.web.Index#renderDocument(int, java.io.Writer)
+   */
+  @Override
+  public void renderDocument(int documentID, Appendable out) {
+    localIndexService.renderDocument(this, documentID, out)
   }
 
   void deleteDocuments(Collection<Integer> documentIds) {

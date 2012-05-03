@@ -91,6 +91,17 @@ class RemoteIndex extends Index {
           urlStr,  "documentId", Integer.toString(documentID));
   }
  
+  /* (non-Javadoc)
+   * @see gate.mimir.web.Index#renderDocument(int, java.lang.Appendable)
+   */
+  @Override
+  public void renderDocument(int documentID, Appendable out) {
+    String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) +
+        "/search/renderDocument";
+    webUtilsManager.currentWebUtils(this).getText(out, urlStr,
+      "documentId", Integer.toString(documentID));
+  }
+
   /**
    * Obtains the annotations config from the remote controller.
    */

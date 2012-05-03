@@ -812,31 +812,56 @@ class SearchController {
     def p = params["request"] ?: params
     //get the query ID
     String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the parameters
-      def documentRankParam = p["rank"]
-      if(documentRankParam){
-        try{
-          //we have all the required parameters
-          int documentRank = documentRankParam.toInteger()
-          response.characterEncoding = "UTF-8"
-          response.writer.withWriter{ writer ->
-            runner.renderDocument(documentRank, writer)
+    if(queryId) {
+      QueryRunner runner = searchService.getQueryRunner(queryId);
+      if(runner){
+        //get the parameters
+        def documentRankParam = p["rank"]
+        if(documentRankParam){
+          try{
+            //we have all the required parameters
+            int documentRank = documentRankParam.toInteger()
+            response.characterEncoding = "UTF-8"
+            response.writer.withWriter{ writer ->
+              runner.renderDocument(documentRank, writer)
+            }
+          }catch(Exception e){
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                "Error while rendering document: \"" +
+                e.getMessage() + "\"!")
           }
-        }catch(Exception e){
-          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-              "Error while rendering document: \"" + 
-              e.getMessage() + "\"!")
+        }else{
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+          "No value provided for parameter rank (required when using a queryId)!")
         }
       }else{
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-        "No value provided for parameter rank!")
+        response.sendError(HttpServletResponse.SC_NOT_FOUND,
+            "Query ID ${queryId} not known!")
       }
-    }else{
-      response.sendError(HttpServletResponse.SC_NOT_FOUND, 
-          "Query ID ${queryId} not known!")
+    } else {
+      //no queryId value supplied: use documentId
+      String documentIdStr = p["documentId"]
+      if(documentIdStr) {
+        int docId
+        try{
+          docId = documentIdStr.toInteger()
+        } catch (Exception e) {
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+            "Invalid value provided for parameter documentId (not an integer)!")
+          return;
+        }
+        response.characterEncoding = "UTF-8"
+        response.writer.withWriter{ writer ->
+          ((Index)request.theIndex).renderDocument(docId, writer)
+        }
+        log.debug("Document ${docId} rendered")
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+          "You must supply either a documentId or the queryId and rank!")
+      }
+      
     }
+
   }
   
   /**
