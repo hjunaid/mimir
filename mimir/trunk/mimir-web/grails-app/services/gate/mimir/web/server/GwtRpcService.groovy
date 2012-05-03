@@ -17,10 +17,6 @@ import grails.converters.JSON;
 
 import java.util.Set;
 
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-
-
 import gate.mimir.search.QueryRunner;
 import gate.mimir.search.query.Binding;
 import gate.mimir.web.Index;
@@ -29,7 +25,7 @@ import gate.mimir.web.client.MimirSearchException
 import gate.mimir.web.client.ResultsData;
 import gate.mimir.web.client.DocumentData;
 
-class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.client.GwtRpcService {
+class GwtRpcService implements gate.mimir.web.client.GwtRpcService {
 
   static transactional = false
 
@@ -38,28 +34,9 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
    */
   def searchService
 
-  // scope the service to the web session, so one instance per user
-  static scope = "session"
-
   // expose for GWT RPC
   static expose = ["gwt:gate.mimir.web.client"]
-
-  /**
-   * Set of in-progress queries for this session. The values are query IDs
-   * obtained from the search service
-   */
-  def Set<String> runningQueries = new HashSet<String>()
-
-  public void afterPropertiesSet() {
-  }
-
-  /**
-   * Close the executors and free any running queries
-   */
-  public void destroy() {
-    runningQueries.each(this.&releaseQuery)
-  }
-
+  
   /**
    * Post a query
    */
@@ -75,7 +52,6 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
         }
         else {
           String queryId = searchService.postQuery(index, query)
-          runningQueries.add(queryId)
           return queryId
         }
       } catch(MimirSearchException e) {
@@ -93,10 +69,7 @@ class GwtRpcService implements InitializingBean, DisposableBean, gate.mimir.web.
    * if the given ID does not correspond to a running query.
    */
   void releaseQuery(String id) {
-    //check if it's one of our queries
-    if(runningQueries.remove(id)){
-      searchService.closeQueryRunner(id)
-    }
+    searchService.closeQueryRunner(id)
   }
 
   /**
