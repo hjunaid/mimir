@@ -236,11 +236,9 @@
         <tr>
         <td>documentId</td>
         <td>the document ID (as obtained from a call to the 
-        <strong>documentId</strong> action) for the requested document. This
-        is an alternative method of referring to a document, and should be used
-        as a replacement for a queryId and rank, and not together with them. 
-        Finding documents by ID is outside the scope of any query, so there will
-        be no hit highlights.</td>
+        <strong>documentId</strong> action) for the requested document. Finding
+        documents by ID is outside the scope of any query, so there will be no
+        hit highlights.</td>
         </tr>
       </table>
     </div>
