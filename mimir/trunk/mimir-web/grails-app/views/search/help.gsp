@@ -227,6 +227,27 @@
   </div>
 
   <div class="action-box">
+    <span class="action-name">renderDocument</span>
+    <span class="action-desc">Renders the document text outside of the context 
+    of any given query. The html of the document is rendered directly to the 
+    response stream of this connection.</span>
+    <div class="list"><b>Parameters:</b>
+      <table>
+        <tr>
+        <td>documentId</td>
+        <td>the document ID (as obtained from a call to the 
+        <strong>documentId</strong> action) for the requested document. This
+        is an alternative method of referring to a document, and should be used
+        as a replacement for a queryId and rank, and not together with them. 
+        Finding documents by ID is outside the scope of any query, so there will
+        be no hit highlights.</td>
+        </tr>
+      </table>
+    </div>
+    <b>Returns:</b> the HTML source of the rendered document.
+  </div>
+
+  <div class="action-box">
     <span class="action-name">close</span>
     <span class="action-desc">Action for releasing a query.</span>
     <div class="list"><b>Parameters:</b>
