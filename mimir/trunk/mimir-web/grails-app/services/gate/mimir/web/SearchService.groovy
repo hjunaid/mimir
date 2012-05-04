@@ -17,6 +17,7 @@ import gate.mimir.web.Index;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import com.google.common.cache.CacheBuilder
@@ -43,13 +44,10 @@ class SearchService {
    * A map holding the currently active query runners. 
    */
   //Map<String, QueryRunner> queryRunners = [:].asSynchronized()
-  Cache<String, QueryRunner> queryRunners = 
-      CacheBuilder.newBuilder()
-          .expireAfterAccess(30, TimeUnit.MINUTES)
-          .removalListener(new CacheRemovalListener(log:log))
-          .build()
+  Cache<String, QueryRunner> queryRunners
   
-  
+  CacheCleaner cacheCleaner
+          
   public QueryRunner getQueryRunner(String id){
     return id ? queryRunners.getIfPresent(id) : null
   }
@@ -93,10 +91,23 @@ class SearchService {
     throw new IllegalArgumentException("Index with specified ID not found!")
   }
   
+  @PostConstruct
+  public void setUp() {
+    // construct the runners cache
+    queryRunners = CacheBuilder.newBuilder()
+        .expireAfterAccess(30, TimeUnit.MINUTES)
+        .removalListener(new CacheRemovalListener(log:log))
+        .build()
+    // background thread used to clean up the cache
+    cacheCleaner = new CacheCleaner(theCache:queryRunners, log:log)
+    new Thread(cacheCleaner).start()
+  }
+  
   @PreDestroy
   public void destroy() {
     // close all remaining query runners
     queryRunners.invalidateAll()
+    cacheCleaner.interrupt()
   }
 }
 
@@ -117,4 +128,35 @@ class CacheRemovalListener implements RemovalListener<String, QueryRunner> {
     notification.value.close()
   }
   
+}
+
+/**
+ * Action to regularly clean up the cache, running from a background thread.
+ */
+class CacheCleaner implements Runnable {
+
+  volatile Cache theCache
+  
+  def log
+  
+  Thread myThread
+  
+  public void interrupt() {
+    theCache = null
+    myThread?.interrupt()
+  }
+  
+  public void run() {
+    myThread = Thread.currentThread()
+    while(theCache != null) {
+//      log.debug("Clearing out runners cache.")
+      theCache.cleanUp();
+      try {
+        // every 30 seconds, clear out the old runners
+        Thread.sleep(30 * 1000);
+      } catch (InterruptedException ie) {
+        Thread.currentThread().interrupt()
+      }
+    }
+  }
 }
