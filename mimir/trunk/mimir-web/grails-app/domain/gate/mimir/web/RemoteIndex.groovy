@@ -96,8 +96,7 @@ class RemoteIndex extends Index {
    */
   @Override
   public void renderDocument(int documentID, Appendable out) {
-    String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) +
-        "/search/renderDocument";
+    String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) + "search/renderDocument";
     webUtilsManager.currentWebUtils(this).getText(out, urlStr,
       "documentId", Integer.toString(documentID));
   }

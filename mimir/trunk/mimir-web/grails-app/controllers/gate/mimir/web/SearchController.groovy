@@ -854,7 +854,6 @@ class SearchController {
         response.writer.withWriter{ writer ->
           ((Index)request.theIndex).renderDocument(docId, writer)
         }
-        log.debug("Document ${docId} rendered")
       } else {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST,
           "You must supply either a documentId or the queryId and rank!")
