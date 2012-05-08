@@ -675,7 +675,8 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    */
   @Override
   public void close() throws IOException {
-    queryExecutor.close();
+    if(queryEngine != null) queryEngine.releaseQueryRunner(this);
+    if(queryExecutor != null) queryExecutor.close();
     scorer = null;
     try {
       // stop the background tasks runnable, 
@@ -684,5 +685,5 @@ public class RankingQueryRunnerImpl implements QueryRunner {
     } catch(InterruptedException e) {
       // ignore
     }
-  } 
+  }
 }
