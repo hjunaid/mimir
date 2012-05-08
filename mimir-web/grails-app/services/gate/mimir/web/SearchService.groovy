@@ -149,8 +149,8 @@ class CacheCleaner implements Runnable {
   public void run() {
     myThread = Thread.currentThread()
     while(theCache != null) {
-//      log.debug("Clearing out runners cache.")
       theCache.cleanUp();
+      log.debug("Removed stale queries; count after clean-up: ${theCache.size()}")
       try {
         // every 30 seconds, clear out the old runners
         Thread.sleep(30 * 1000);
