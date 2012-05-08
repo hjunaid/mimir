@@ -28,7 +28,7 @@ class MimirStaticPagesController extends gate.mimir.web.MimirStaticPagesControll
     if(adminUser) {
       if(!adminUser?.password?.equals('not set')) {
         // admin password is set, use default behaviour
-        log.debug 'Password is set for administrative user, OK!'
+        //log.debug 'Password is set for administrative user, OK!'
         return true
       } else {
         log.debug 'Password not set for administrative user, redirecting!'
