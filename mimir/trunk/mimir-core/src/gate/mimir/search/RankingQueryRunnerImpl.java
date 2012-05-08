@@ -195,12 +195,6 @@ public class RankingQueryRunnerImpl implements QueryRunner {
         // collect all documents and their scores
         if(ranking) scorer.wrap(queryExecutor);
         int docId = ranking ? scorer.nextDocument(-1) : queryExecutor.nextDocument(-1);
-        if(!ranking) { // then also collect some hits
-          synchronized(hitCollectors) {
-           hitCollectors.put(new int[]{0, docBlockSize}, 
-             new FutureTask<Object>(this, null));
-          }
-        }
         while(docId >= 0) {
           // enlarge the hits list
           if(ranking){
@@ -365,7 +359,17 @@ public class RankingQueryRunnerImpl implements QueryRunner {
 
     // queue a job for collecting all document ids
     try {
-      backgroundTasks.put(new DocIdsCollector());
+      if(!ranking) {
+        // if not ranking, the doc IDs collector will all collect the
+        // hits for the first docBlockSize number of documents
+        FutureTask<Object> future = new FutureTask<Object>(new DocIdsCollector(), null);
+        synchronized(hitCollectors) {
+          hitCollectors.put(new int[]{0, docBlockSize}, future);
+        }
+        backgroundTasks.put(future);
+      } else {
+        backgroundTasks.put(new DocIdsCollector());
+      }
     } catch(InterruptedException e) {
       Thread.currentThread().interrupt();
       logger.error("Could not queue a background task.", e);
