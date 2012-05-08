@@ -72,11 +72,7 @@ class FederatedIndex extends Index {
    * delegating to the returned sub-query runners.
    */
   QueryRunner startQuery(String query) {
-    QueryRunner[] subRunners = new QueryRunner[indexes.size()]
-    indexes.eachWithIndex { subIndex, i ->
-      subRunners[i] = subIndex.startQuery(query)
-    }
-    return new FederatedQueryRunner(subRunners)
+    return federatedIndexService.getQueryRunner(this, query)
   }
   
   /**

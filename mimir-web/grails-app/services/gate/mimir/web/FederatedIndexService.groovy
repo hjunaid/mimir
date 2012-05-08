@@ -15,6 +15,8 @@
 package gate.mimir.web
 
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
+import gate.mimir.search.QueryRunner;
+import gate.mimir.search.FederatedQueryRunner;
 import gate.mimir.web.FederatedIndex;
 import gate.mimir.web.Index;
 
@@ -89,6 +91,24 @@ class FederatedIndexService {
     }
   }
   
+  public QueryRunner getQueryRunner(FederatedIndex index, String query) {
+    QueryRunner[] subRunners = new QueryRunner[index.indexes.size()]
+    try {
+      index.indexes.eachWithIndex { Index subIndex, i ->
+        subRunners[i] = subIndex.startQuery(query)
+      }
+      return new FederatedQueryRunner(subRunners)
+    } catch(Throwable t) {
+      log.error("Error creating query runner for sub-index", t)
+      subRunners.each { subRunner ->
+        try {
+          subRunner?.close()
+        } catch(Throwable t2) {
+          // ignore
+        }
+      }
+    }
+  }
 
   private void deleteOrUndelete(String method, FederatedIndex fedIndex, Collection<Integer> documentIds) {
     def numIndexes = fedIndex.indexes.size()
