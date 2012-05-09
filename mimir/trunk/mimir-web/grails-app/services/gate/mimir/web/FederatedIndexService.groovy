@@ -109,6 +109,8 @@ class FederatedIndexService {
           // ignore
         }
       }
+      // and re-throw
+      throw t
     }
   }
 
