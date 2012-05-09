@@ -441,9 +441,9 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    */
   protected int getDocumentIndex(int rank) throws IOException, 
       IndexOutOfBoundsException {
-    int maxIndex = documentIds.size();
-    if(rank >= maxIndex) throw new IndexOutOfBoundsException(
-      "Document index too large (" + rank + " > " + maxIndex + ".");
+    int maxRank = documentIds.size();
+    if(rank >= maxRank) throw new IndexOutOfBoundsException(
+      "Document rank too large (" + rank + " > " + maxRank + ".");
     if(documentsOrder != null) {
       // we're in ranking mode
       if(rank >= documentsOrder.size()) {
