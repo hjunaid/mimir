@@ -101,7 +101,7 @@ class FederatedIndexService {
       }
       return new FederatedQueryRunner(subRunners)
     } catch(Throwable t) {
-      log.error("Error creating query runner for sub-index", t)
+      log.debug("Error creating query runner for sub-index: ${t.message}")
       for(QueryRunner subRunner in subRunners){ 
         try {
           subRunner?.close()
