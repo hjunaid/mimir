@@ -14,11 +14,12 @@
  */
 package gate.mimir.web
 
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
-import gate.mimir.search.QueryRunner;
-import gate.mimir.search.FederatedQueryRunner;
-import gate.mimir.web.FederatedIndex;
-import gate.mimir.web.Index;
+import gate.mimir.index.mg4j.zipcollection.DocumentData
+import gate.mimir.search.QueryRunner
+import gate.mimir.search.FederatedQueryRunner
+import gate.mimir.search.query.parser.ParseException
+import gate.mimir.web.FederatedIndex
+import gate.mimir.web.Index
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger
@@ -91,7 +92,8 @@ class FederatedIndexService {
     }
   }
   
-  public QueryRunner getQueryRunner(FederatedIndex index, String query) {
+  public QueryRunner getQueryRunner(FederatedIndex index, String query) 
+      throws ParseException {
     QueryRunner[] subRunners = new QueryRunner[index.indexes.size()]
     try {
       index.indexes.eachWithIndex { Index subIndex, i ->

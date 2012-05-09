@@ -32,6 +32,7 @@ import gate.mimir.index.Indexer
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.IndexConfig.SemanticIndexerConfig;
+import gate.mimir.search.query.parser.ParseException;
 import gate.mimir.search.score.MimirScorer
 import gate.mimir.util.*
 
@@ -145,7 +146,8 @@ class LocalIndexService {
     }
   }
   
-  public synchronized QueryRunner getQueryRunner(LocalIndex index, String query) {
+  public synchronized QueryRunner getQueryRunner(LocalIndex index, String query) 
+      throws ParseException {
     return getQueryEngine(index).getQueryRunner(query)
   }
   

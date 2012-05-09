@@ -14,11 +14,12 @@
  */
 package gate.mimir.web;
 
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
-import gate.mimir.search.QueryRunner;
-import gate.mimir.search.RemoteQueryRunner;
-import gate.mimir.tool.WebUtils;
-import gate.mimir.util.WebUtilsManager;
+import gate.mimir.index.mg4j.zipcollection.DocumentData
+import gate.mimir.search.QueryRunner
+import gate.mimir.search.RemoteQueryRunner
+import gate.mimir.search.query.parser.ParseException
+import gate.mimir.tool.WebUtils
+import gate.mimir.util.WebUtilsManager
 
 /**
  * A remote index, accessed via a web service, and published locally.
@@ -71,12 +72,13 @@ class RemoteIndex extends Index {
   /**
    * Start running the given query.
    */
-  QueryRunner startQuery(String query) {
+  QueryRunner startQuery(String query) throws ParseException {
     //post query to the actual index
     
     //create a local RemoteQueryRunner and store the service URL, index ID, 
     //and query ID in it.
-    return new RemoteQueryRunner(remoteUrl, query, searchThreadPool, webUtilsManager.currentWebUtils(this))
+    return new RemoteQueryRunner(remoteUrl, query, searchThreadPool, 
+      webUtilsManager.currentWebUtils(this))
   }
 
   /**

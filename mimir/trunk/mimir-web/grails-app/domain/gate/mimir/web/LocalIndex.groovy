@@ -17,6 +17,7 @@ import java.io.Writer;
 
 import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
+import gate.mimir.search.query.parser.ParseException
 import gate.Document
 import gate.Gate
 import gate.creole.ResourceData
@@ -101,7 +102,7 @@ class LocalIndex extends Index implements Serializable {
     return localIndexService.annotationsConfig(this)
   }
 
-  QueryRunner startQuery(String queryString) {
+  QueryRunner startQuery(String queryString) throws ParseException {
     return localIndexService.getQueryRunner(this, queryString)
   }
   
