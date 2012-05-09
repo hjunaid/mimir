@@ -63,13 +63,8 @@ public class AndQuery implements QueryNode {
      */
     public void close() throws IOException {
       super.close();
-      for(QueryExecutor anExecutor : executors) {
-        anExecutor.close();
-      }
-      executors = null;
-      nodes = null;
       hitsOnCurrentDocument = null;
-      nextDocIDs = null;
+      query = null;
     }
 
 

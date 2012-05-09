@@ -125,10 +125,7 @@ public class SequenceQuery implements QueryNode {
     public void close() throws IOException {
       super.close();
       //release all pointers
-      for(int i = 0; i< executors.length; i++) executors[i].close();
-      executors = null;
       hitsOnCurrentDocument = null;
-      nextDocIDs = null;
       query = null;
     }
 
