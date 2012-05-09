@@ -20,6 +20,7 @@ import gate.mimir.web.SearchService;
 import groovy.xml.StreamingMarkupBuilder;
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.Binding;
+import gate.mimir.search.query.parser.ParseException;
 
 import java.io.ObjectOutputStream;
 import java.util.HashSet;
@@ -160,7 +161,10 @@ class SearchController {
       render(buildMessage(SUCCESS, null){
         queryId(runnerId)
       }, contentType:"text/xml")
-    }catch(Exception e){
+    } catch(ParseException pe) {
+      log.error("Syntax error in query: ${pe.message}")
+      render(buildMessage(ERROR, pe.message, null), contentType:"text/xml")
+    } catch(Exception e){
       log.error("Exception posting query", e)
       render(buildMessage(ERROR, e.message, null), contentType:"text/xml")
     }
