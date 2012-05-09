@@ -43,5 +43,6 @@
 			<attribute name="com.springsource.sts.grails.core.SOURCE_FOLDER" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry combineaccessrules="false" kind="src" path="/mimir-core"/>
 	<classpathentry kind="output" path="target-eclipse/classes"/>
 </classpath>

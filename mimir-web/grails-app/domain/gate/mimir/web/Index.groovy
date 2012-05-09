@@ -13,6 +13,7 @@
 package gate.mimir.web;
 
 import gate.mimir.search.QueryRunner
+import gate.mimir.search.query.parser.ParseException
 import gate.mimir.index.mg4j.zipcollection.DocumentData
 
 /**
@@ -97,7 +98,7 @@ class Index implements Serializable {
   /**
    * Start running the given query.
    */
-  QueryRunner startQuery(String query) {
+  QueryRunner startQuery(String query) throws ParseException {
     throw new UnsupportedOperationException() 
   }
 
