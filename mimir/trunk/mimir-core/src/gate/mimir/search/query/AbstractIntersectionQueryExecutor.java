@@ -32,6 +32,22 @@ import java.io.IOException;
  */
 public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExecutor {
   
+  /**
+   * The sub-queries
+   */
+  protected QueryNode[] nodes;
+  
+  /**
+   * An array of current nextDocumentID values, for all of the sub nodes.
+   */
+  protected int[] nextDocIDs;
+  
+  protected ReferenceSet<Index> indices;
+  
+  /**
+   * The {@link QueryExecutor}s for the contained nodes.
+   */
+  protected QueryExecutor[] executors;
   
   /**
    * Constructor from {@link QueryEngine}.
@@ -53,14 +69,7 @@ public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExe
         break;
       }
     }
-
   }
-
-  /**
-   * The {@link QueryExecutor}s for the contained nodes.
-   */
-  protected QueryExecutor[] executors;
-
 
   public int nextDocument(int greaterThan) throws IOException {
     if(closed) return latestDocument = -1;
@@ -137,16 +146,18 @@ public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExe
     return indices;
   }
 
-  /**
-   * The sub-queries
+  /* (non-Javadoc)
+   * @see gate.mimir.search.query.AbstractQueryExecutor#close()
    */
-  protected QueryNode[] nodes;
-  
-  /**
-   * An array of current nextDocumentID values, for all of the sub nodes.
-   */
-  protected int[] nextDocIDs;
-  
-  protected ReferenceSet<Index> indices;
-  
+  @Override
+  public void close() throws IOException {
+    super.close();
+    for(QueryExecutor anExecutor : executors) {
+      if(anExecutor != null) anExecutor.close();
+    }
+    executors = null;
+    nodes = null;
+    nextDocIDs = null;
+    indices = null;
+  }
 }
