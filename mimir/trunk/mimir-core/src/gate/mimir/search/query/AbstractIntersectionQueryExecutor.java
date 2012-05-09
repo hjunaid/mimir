@@ -23,6 +23,7 @@ import it.unimi.dsi.mg4j.index.Index;
 import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 
 /**
@@ -66,6 +67,8 @@ public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExe
       if(nextDocIDs[i] < 0) {
         // no results!
         latestDocument = -1;
+        // shorten the executors array, to avoid NPEs. 
+        executors = Arrays.copyOfRange(executors, 0, i + 1);
         break;
       }
     }
