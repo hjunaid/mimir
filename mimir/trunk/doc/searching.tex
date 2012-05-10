@@ -651,6 +651,31 @@ Example request:\\
 \end{longtable}
 
 \begin{longtable}{|p{1.8cm}|p{10.2cm}|}
+\multicolumn{2}{l}{\tt \bf renderDocument} \\
+\hline
+Function & Alternative version of the previous action. Renders the document text
+and hits for a given document, outside of the context of any given query. The
+HTML of the document is rendered directly to the response stream of the connection.\\
+\hline
+Parameters & \begin{minipage}[t]{10.2cm}
+\begin{description}
+\item[documentId:]the ID for the document, as returned by the {\tt documentId}
+action.
+\end{description}
+\end{minipage}\\
+\hline
+Returns & \begin{minipage}[t]{10.2cm}
+HTML content. No hits are highlighted, as there is no query context
+available.
+
+Example request:\\
+\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/renderDocument?documentId=11!
+
+\end{minipage}\\
+\hline
+\end{longtable}
+
+\begin{longtable}{|p{1.8cm}|p{10.2cm}|}
 \multicolumn{2}{l}{\tt \bf close} \\
 \hline
 Function & Closes a query, releasing all resources allocated for supporting
