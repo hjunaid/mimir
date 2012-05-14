@@ -81,7 +81,7 @@ class FederatedIndex extends Index {
    * @param documentID
    * @return
    */
-  DocumentData getDocumentData(int documentID) {
+  DocumentData getDocumentData(long documentID) {
     return federatedIndexService.getDocumentData(this, documentID)
   }
   
@@ -90,7 +90,7 @@ class FederatedIndex extends Index {
    * @see gate.mimir.web.Index#renderDocument(int, java.io.Writer)
    */
   @Override
-  public void renderDocument(int documentID, Appendable out) {
+  public void renderDocument(long documentID, Appendable out) {
     federatedIndexService.renderDocument(this, documentID, out)
   }
   
@@ -106,11 +106,11 @@ class FederatedIndex extends Index {
     return federatedIndexService.findProxy(this).closingProgress
   }
 
-  public void deleteDocuments(Collection<Integer> documentIds) {
+  public void deleteDocuments(Collection<Long> documentIds) {
     federatedIndexService.deleteDocuments(this, documentIds)
   }
 
-  public void undeleteDocuments(Collection<Integer> documentIds) {
+  public void undeleteDocuments(Collection<Long> documentIds) {
     federatedIndexService.undeleteDocuments(this, documentIds)
   }
   

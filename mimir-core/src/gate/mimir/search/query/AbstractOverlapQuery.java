@@ -19,8 +19,8 @@ import gate.mimir.search.QueryEngine;
 
 import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 import java.util.*;
@@ -89,14 +89,14 @@ public abstract class AbstractOverlapQuery implements QueryNode{
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#nextDocument(int)
      */
-    public int nextDocument(int greaterThan) throws IOException {
+    public long nextDocument(long greaterThan) throws IOException {
       if(closed) return latestDocument = -1;
       if(latestDocument == -1) return latestDocument;
       hitsOnCurrentDocument.clear();
       while(hitsOnCurrentDocument.isEmpty() && latestDocument != -1){
         //find a document on which both sub-executors agree
-        int outerNext = outerExecutor.nextDocument(greaterThan);
-        int innerNext = innerExecutor.nextDocument(greaterThan);
+        long outerNext = outerExecutor.nextDocument(greaterThan);
+        long innerNext = innerExecutor.nextDocument(greaterThan);
         while(outerNext != innerNext){
           if(outerNext == -1 || innerNext == -1){
             //one executor has run out -> we're done!

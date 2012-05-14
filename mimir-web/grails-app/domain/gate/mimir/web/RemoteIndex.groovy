@@ -86,21 +86,21 @@ class RemoteIndex extends Index {
    * @param documentID
    * @return
    */
-  DocumentData getDocumentData(int documentID) {
+  DocumentData getDocumentData(long documentID) {
     String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) +
         "/search/documentDataBin";
     return (DocumentData)webUtilsManager.currentWebUtils(this).getObject(
-          urlStr,  "documentId", Integer.toString(documentID));
+          urlStr,  "documentId", Long.toString(documentID));
   }
  
   /* (non-Javadoc)
    * @see gate.mimir.web.Index#renderDocument(int, java.lang.Appendable)
    */
   @Override
-  public void renderDocument(int documentID, Appendable out) {
+  public void renderDocument(long documentID, Appendable out) {
     String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) + "search/renderDocument";
     webUtilsManager.currentWebUtils(this).getText(out, urlStr,
-      "documentId", Integer.toString(documentID));
+      "documentId", Long.toString(documentID));
   }
 
   /**
@@ -157,7 +157,7 @@ class RemoteIndex extends Index {
   /**
    * Asks the remote index to mark objects as deleted.
    */
-  void deleteDocuments(Collection<Integer> documentIds) {
+  void deleteDocuments(Collection<Long> documentIds) {
     doDeleteOrUndelete("delete", documentIds)
   }
 
@@ -168,7 +168,7 @@ class RemoteIndex extends Index {
     doDeleteOrUndelete("undelete", documentIds)
   }
 
-  private void doDeleteOrUndelete(String method, Collection<Integer> documentIds) {
+  private void doDeleteOrUndelete(String method, Collection<Long> documentIds) {
     String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) +
         "manage/${method}DocumentsBin";
     try{
@@ -181,5 +181,4 @@ class RemoteIndex extends Index {
       }
     }
   }
-  
 }

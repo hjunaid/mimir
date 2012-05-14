@@ -21,11 +21,12 @@ import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 import it.unimi.dsi.fastutil.ints.IntHeapSemiIndirectPriorityQueue;
+import it.unimi.dsi.fastutil.longs.LongHeapSemiIndirectPriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 import java.util.*;
@@ -60,12 +61,12 @@ public class OrQuery implements QueryNode {
       } else {
         //prepare all the executors
         this.executors = new ExecutorsList(engine, query.getNodes());
-        currentDoc = new int[executors.size()];
+        currentDoc = new long[executors.size()];
         front = new int[executors.size()];
         this.hitsOnCurrentDocument = new ObjectArrayList<Binding>();
-        queue = new IntHeapSemiIndirectPriorityQueue(currentDoc);
+        queue = new LongHeapSemiIndirectPriorityQueue(currentDoc);
         for(int i = 0; i < executors.size(); i++){
-          int doc = executors.nextDocument(i, -1);
+          long doc = executors.nextDocument(i, -1);
           if (doc >= 0) {
             currentDoc[i] = doc;
             queue.enqueue(i);
@@ -107,7 +108,7 @@ public class OrQuery implements QueryNode {
     }
 
     
-    public int nextDocument(int greaterThan) throws IOException {
+    public long nextDocument(long greaterThan) throws IOException {
       if(closed) return latestDocument = -1;
       if(latestDocument == -1) return latestDocument;
       // advance
@@ -134,7 +135,7 @@ public class OrQuery implements QueryNode {
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#nextDocument(int)
      */
-    public int nextDocumentOld(int greaterThan) throws IOException {
+    public long nextDocumentOld(long greaterThan) throws IOException {
       if(closed) return latestDocument = -1;
       if(latestDocument == -1) return latestDocument;
       //find the minimum value for latest document
@@ -157,7 +158,7 @@ public class OrQuery implements QueryNode {
       //and prepare the hitsOnCurrentDocument list
       hitsOnCurrentDocument.clear();
       List<Integer> minExecutors = new LinkedList<Integer>();
-      int minDoc = Integer.MAX_VALUE;
+      long minDoc = Long.MAX_VALUE;
       for(int i = 0; i < executors.size(); i++){
         if(executors.latestDocument(i) >= 0){
           if(executors.latestDocument(i) < minDoc){
@@ -306,13 +307,13 @@ public class OrQuery implements QueryNode {
     
     protected ReferenceSet<Index> indices;
     
-    protected int[] currentDoc;
+    protected long[] currentDoc;
     
     protected int front[];
     
     protected int frontSize;
     
-    protected IntHeapSemiIndirectPriorityQueue queue;
+    protected LongHeapSemiIndirectPriorityQueue queue;
     
   }
   

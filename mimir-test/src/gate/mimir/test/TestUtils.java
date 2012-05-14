@@ -25,8 +25,8 @@ import gate.mimir.SemanticAnnotationHelper.Mode;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.*;
 
-import it.unimi.dsi.mg4j.index.DowncaseTermProcessor;
-import it.unimi.dsi.mg4j.index.NullTermProcessor;
+import it.unimi.dsi.big.mg4j.index.DowncaseTermProcessor;
+import it.unimi.dsi.big.mg4j.index.NullTermProcessor;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
@@ -153,8 +153,8 @@ public class TestUtils {
     QueryExecutor leftExecutor = left.getQueryExecutor(engine);
     QueryExecutor rightExecutor = right.getQueryExecutor(engine);
     
-    int leftDoc = leftExecutor.nextDocument(-1);
-    int rightDoc = rightExecutor.nextDocument(-1);
+    long leftDoc = leftExecutor.nextDocument(-1);
+    long rightDoc = rightExecutor.nextDocument(-1);
     while(leftDoc != -1 || rightDoc != -1){
       //at least one doc is not -1
       if(leftDoc == -1){
@@ -331,7 +331,7 @@ public class TestUtils {
     Writer writer = new BufferedWriter(new FileWriter(file));
     writer.write("Doc ID, Position, Length\n");
     List<String> lines = new ArrayList<String>();
-    int docId = executor.nextDocument(-1);
+    long docId = executor.nextDocument(-1);
     while(docId  != -1){
       Binding aHit = executor.nextHit();
       while(aHit != null){

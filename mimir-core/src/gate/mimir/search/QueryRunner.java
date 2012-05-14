@@ -53,7 +53,7 @@ public interface QueryRunner {
    * @return <code>-1</code> if the search has not yet completed, the total 
    * number of result document otherwise. 
    */
-  public int getDocumentsCount();
+  public long getDocumentsCount();
 
   /**
    * Gets the number of result documents found so far. After the search 
@@ -61,7 +61,7 @@ public interface QueryRunner {
    * {@link #getDocumentsCount()}. 
    * @return the number of result documents known so far.
    */
-  public int getDocumentsCurrentCount();
+  public long getDocumentsCurrentCount();
 
   /**
    * Gets the ID of a result document.
@@ -77,7 +77,7 @@ public interface QueryRunner {
    * or greater than {@link #getDocumentsCount()} -1.
    * @throws IOException 
    */
-  public int getDocumentID(int rank) throws IndexOutOfBoundsException,
+  public long getDocumentID(long rank) throws IndexOutOfBoundsException,
           IOException;
 
   /**
@@ -88,7 +88,7 @@ public interface QueryRunner {
    * This should be a value between 0 and {@link #getDocumentsCount()} -1.
    * @return
    */
-  public double getDocumentScore(int rank)  throws IndexOutOfBoundsException, 
+  public double getDocumentScore(long rank)  throws IndexOutOfBoundsException, 
       IOException ;
   
   /**
@@ -103,7 +103,7 @@ public interface QueryRunner {
    * @throws IOException 
    * @throws IndexOutOfBoundsException 
    */
-  public List<Binding> getDocumentHits(int rank)
+  public List<Binding> getDocumentHits(long rank)
           throws IndexOutOfBoundsException, IOException;
 
   /**
@@ -120,7 +120,7 @@ public interface QueryRunner {
    * @throws IndexOutOfBoundsException
    * @throws IOException
    */
-  public String[][] getDocumentText(int rank, int termPosition, int length)
+  public String[][] getDocumentText(long rank, int termPosition, int length)
           throws IndexException, IndexOutOfBoundsException, IOException;
 
   /**
@@ -132,7 +132,7 @@ public interface QueryRunner {
    * @throws IndexOutOfBoundsException
    * @throws IOException
    */
-  public String getDocumentURI(int rank) throws IndexException,
+  public String getDocumentURI(long rank) throws IndexException,
           IndexOutOfBoundsException, IOException;
 
   /**
@@ -144,7 +144,7 @@ public interface QueryRunner {
    * @throws IndexOutOfBoundsException
    * @throws IOException
    */
-  public String getDocumentTitle(int rank) throws IndexException,
+  public String getDocumentTitle(long rank) throws IndexException,
           IndexOutOfBoundsException, IOException;
 
   /**
@@ -161,7 +161,7 @@ public interface QueryRunner {
    * @throws IndexOutOfBoundsException
    * @throws IOException
    */
-  public Serializable getDocumentMetadataField(int rank, String fieldName)
+  public Serializable getDocumentMetadataField(long rank, String fieldName)
           throws IndexException, IndexOutOfBoundsException, IOException;
 
   /**
@@ -180,7 +180,7 @@ public interface QueryRunner {
    * @throws IndexOutOfBoundsException
    * @throws IOException
    */
-  public Map<String, Serializable> getDocumentMetadataFields(int rank,
+  public Map<String, Serializable> getDocumentMetadataFields(long rank,
           Set<String> fieldNames) throws IndexException,
           IndexOutOfBoundsException, IOException;
 
@@ -194,7 +194,7 @@ public interface QueryRunner {
    * @throws IOException
    * @throws IndexException
    */
-  public void renderDocument(int rank, Appendable out) throws IOException,
+  public void renderDocument(long rank, Appendable out) throws IOException,
           IndexException;
 
   /**

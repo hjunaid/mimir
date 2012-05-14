@@ -14,6 +14,52 @@
  */
 package gate.mimir.index.mg4j;
 
+import gate.Annotation;
+import gate.mimir.IndexConfig;
+import gate.mimir.index.IndexException;
+import gate.mimir.index.Indexer;
+import gate.util.GateRuntimeException;
+import it.unimi.dsi.Util;
+import it.unimi.dsi.big.io.FileLinesCollection;
+import it.unimi.dsi.big.util.ShiftAddXorSignedStringMap;
+import it.unimi.dsi.big.util.StringMap;
+import it.unimi.dsi.bits.TransformationStrategies;
+import it.unimi.dsi.fastutil.Arrays;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.Swapper;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntComparator;
+import it.unimi.dsi.fastutil.io.BinIO;
+import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
+import it.unimi.dsi.io.OutputBitStream;
+import it.unimi.dsi.lang.MutableString;
+import it.unimi.dsi.logging.ProgressLogger;
+import it.unimi.dsi.big.mg4j.index.BitStreamIndex;
+import it.unimi.dsi.big.mg4j.index.BitStreamIndexWriter;
+import it.unimi.dsi.big.mg4j.index.CompressionFlags;
+import it.unimi.dsi.big.mg4j.index.CompressionFlags.Coding;
+import it.unimi.dsi.big.mg4j.index.CompressionFlags.Component;
+import it.unimi.dsi.big.mg4j.index.DiskBasedIndex;
+import it.unimi.dsi.big.mg4j.index.FileIndex;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.index.IndexWriter;
+import it.unimi.dsi.big.mg4j.index.NullTermProcessor;
+import it.unimi.dsi.big.mg4j.index.SkipBitStreamIndexWriter;
+import it.unimi.dsi.big.mg4j.index.TermProcessor;
+import it.unimi.dsi.big.mg4j.index.cluster.ContiguousDocumentalStrategy;
+import it.unimi.dsi.big.mg4j.index.cluster.DocumentalCluster;
+import it.unimi.dsi.big.mg4j.index.cluster.DocumentalConcatenatedCluster;
+import it.unimi.dsi.big.mg4j.index.cluster.IndexCluster;
+import it.unimi.dsi.big.mg4j.io.ByteArrayPostingList;
+import it.unimi.dsi.big.mg4j.tool.Combine;
+import it.unimi.dsi.big.mg4j.tool.Concatenate;
+import it.unimi.dsi.big.mg4j.tool.Scan;
+import it.unimi.dsi.big.mg4j.tool.Scan.Completeness;
+import it.unimi.dsi.sux4j.mph.LcpMonotoneMinimalPerfectHashFunction;
+import it.unimi.dsi.util.Properties;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -28,44 +74,6 @@ import java.util.concurrent.BlockingQueue;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.log4j.Logger;
-
-
-import gate.Annotation;
-import gate.mimir.IndexConfig;
-import gate.mimir.index.*;
-import gate.util.GateRuntimeException;
-import it.unimi.dsi.Util;
-import it.unimi.dsi.util.ShiftAddXorSignedStringMap;
-import it.unimi.dsi.bits.TransformationStrategies;
-import it.unimi.dsi.fastutil.Arrays;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.Swapper;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntComparator;
-import it.unimi.dsi.fastutil.io.BinIO;
-import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
-import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
-import it.unimi.dsi.io.FileLinesCollection;
-import it.unimi.dsi.io.OutputBitStream;
-import it.unimi.dsi.lang.MutableString;
-import it.unimi.dsi.logging.ProgressLogger;
-import it.unimi.dsi.mg4j.index.*;
-import it.unimi.dsi.mg4j.index.CompressionFlags.Coding;
-import it.unimi.dsi.mg4j.index.CompressionFlags.Component;
-import it.unimi.dsi.mg4j.index.cluster.ContiguousDocumentalStrategy;
-import it.unimi.dsi.mg4j.index.cluster.DocumentalCluster;
-import it.unimi.dsi.mg4j.index.cluster.DocumentalConcatenatedCluster;
-import it.unimi.dsi.mg4j.index.cluster.IndexCluster;
-import it.unimi.dsi.mg4j.io.ByteArrayPostingList;
-import it.unimi.dsi.mg4j.tool.Combine;
-import it.unimi.dsi.mg4j.tool.Concatenate;
-import it.unimi.dsi.mg4j.tool.Scan;
-import it.unimi.dsi.mg4j.tool.Scan.Completeness;
-import it.unimi.dsi.sux4j.mph.LcpMonotoneMinimalPerfectHashFunction;
-import it.unimi.dsi.util.ImmutableExternalPrefixMap;
-import it.unimi.dsi.util.Properties;
-import it.unimi.dsi.util.StringMap;
-import it.unimi.dsi.util.StringMaps;
 
 /**
  * An index builder suitable for use by mimir.  It follows the logic
@@ -112,10 +120,10 @@ public abstract class MimirIndexBuilder implements Runnable {
     /**
      * The last seen document pointer.
      */
-    private int lastDocumentPointer = -1;
+    private long lastDocumentPointer = -1;
     
     @Override
-    public void setDocumentPointer(int pointer) {
+    public void setDocumentPointer(long pointer) {
       if(pointer != lastDocumentPointer) {
         // reset the lastPosition when moving to a new document
         lastDocumentPointer = pointer;
@@ -285,7 +293,7 @@ public abstract class MimirIndexBuilder implements Runnable {
    * The cutpoints of the batches (for building later a
    * {@link it.unimi.dsi.mg4j.index.cluster.ContiguousDocumentalStrategy}).
    */
-  protected IntArrayList cutPoints;
+  protected LongArrayList cutPoints;
   
   
   protected int globalMaxCount;
@@ -400,7 +408,7 @@ public abstract class MimirIndexBuilder implements Runnable {
     occurrencesInTotal = 0;
     postingsInTotal = 0;
     //initialise the cutpoints array
-    cutPoints = new IntArrayList();
+    cutPoints = new LongArrayList();
     cutPoints.add(0);
 
     File indexDir = new File(indexConfig.getIndexDirectory(), 
@@ -611,7 +619,7 @@ public abstract class MimirIndexBuilder implements Runnable {
       
       ByteArrayPostingList postingsList;
       int maxCount = 0;
-      int frequency;
+      long frequency;
       long bitLength;
       long postings = 0;
       long prevOffset = 0;
@@ -629,14 +637,14 @@ public abstract class MimirIndexBuilder implements Runnable {
   
         postings += frequency;
   
-        indexStream.writeGamma( frequency - 1 );
+        indexStream.writeLongGamma( frequency - 1 );
   
         // We need special treatment for terms appearing in all documents
         if ( frequency == documentPointer){
           postingsList.stripPointers( indexStream, bitLength );
         } else indexStream.write(postingsList.buffer, bitLength );
   
-        frequenciesStream.writeGamma( frequency );
+        frequenciesStream.writeLongGamma( frequency );
         globCountsStream.writeLongGamma( postingsList.globCount );
         offsetsStream.writeLongGamma( indexStream.writtenBits() - prevOffset );
         posLengthsStream.writeLongGamma( postingsList.posNumBits );
@@ -675,12 +683,10 @@ public abstract class MimirIndexBuilder implements Runnable {
       frequenciesStream.close();
       termMap.clear();
       termMap.trim( INITIAL_TERM_MAP_SIZE );
-      termMap.growthFactor( Hash.DEFAULT_GROWTH_FACTOR ); // In case we changed it because of an out-of-memory error.
-
       
       occurrencesInTotal += occurrencesInTheCurrentBatch;
       totalDocuments += documentPointer;
-      cutPoints.add( cutPoints.getInt( cutPoints.size() - 1 ) + documentPointer);
+      cutPoints.add( cutPoints.getLong( cutPoints.size() - 1 ) + documentPointer);
   
       maxTermPositionGlobal = Math.max(maxTermPositionGlobal, 
               maxTermPositionInBatch);
@@ -818,7 +824,7 @@ public abstract class MimirIndexBuilder implements Runnable {
     clusterProperties.setProperty( IndexCluster.PropertyKeys.FLAT, false );
   
     clusterProperties.setProperty( Index.PropertyKeys.INDEXCLASS, DocumentalConcatenatedCluster.class.getName() );
-    BinIO.storeObject( new ContiguousDocumentalStrategy( cutPoints.toIntArray()),
+    BinIO.storeObject( new ContiguousDocumentalStrategy( cutPoints.toLongArray()),
             getGlobalFile(CLUSTER_STRATEGY_EXTENSION));
   
     clusterProperties.setProperty( IndexCluster.PropertyKeys.STRATEGY,
@@ -911,21 +917,31 @@ public abstract class MimirIndexBuilder implements Runnable {
           .getStringArray(IndexCluster.PropertyKeys.LOCALINDEX);
       combineBatches(inputBasename, getGlobalFile("").getAbsolutePath());
       // save the termMap
-      FileLinesCollection fileLinesCollection =
-        new FileLinesCollection(getGlobalFile(DiskBasedIndex.TERMS_EXTENSION)
-          .getAbsolutePath(), "UTF-8");
-      StringMap<CharSequence> terms = new ShiftAddXorSignedStringMap(fileLinesCollection.iterator(),
-        new LcpMonotoneMinimalPerfectHashFunction<CharSequence>(
-          fileLinesCollection, TransformationStrategies.prefixFreeUtf16()));
-      
-      
-      BinIO.storeObject(terms, getGlobalFile(DiskBasedIndex.TERMMAP_EXTENSION));
+      generateTermMap(getGlobalFile(DiskBasedIndex.TERMS_EXTENSION), 
+        getGlobalFile(DiskBasedIndex.TERMMAP_EXTENSION));
     } catch(Exception e) {
       throw new IndexException("Exception while closing the index", e);
     }
     logger.info("Indexing completed for index " + indexBasename());
     closingProgress = 1;
     closed = true;
+  }
+  
+  /**
+   * Given a terms file (text file with one term per line) this method generates
+   * the corresponding termmap file (binary representation of a StringMap).
+   * @param termsFile the input file
+   * @param termmapFile the output file
+   * @throws IOException 
+   */
+  public static void generateTermMap(File termsFile, File termmapFile) throws IOException {
+    FileLinesCollection fileLinesCollection =
+        new FileLinesCollection(termsFile.getAbsolutePath(), "UTF-8");
+      StringMap<CharSequence> terms = new ShiftAddXorSignedStringMap(
+        fileLinesCollection.iterator(),
+        new LcpMonotoneMinimalPerfectHashFunction<CharSequence>(
+          fileLinesCollection, TransformationStrategies.prefixFreeUtf16()));
+      BinIO.storeObject(terms, termmapFile);    
   }
   
   /**
@@ -1050,7 +1066,7 @@ public abstract class MimirIndexBuilder implements Runnable {
               Combine.DEFAULT_BUFFER_SIZE, 
               CompressionFlags.DEFAULT_STANDARD_INDEX,
               false, true, 
-//              BitStreamIndex.DEFAULT_QUANTUM,
+              // BitStreamIndex.DEFAULT_QUANTUM,
               // replaced with optimised automatic calculation
               -5, 
               BitStreamIndex.DEFAULT_HEIGHT, 

@@ -54,7 +54,7 @@ public class ExecutorsList {
     this.nodes = nodes;
     this.closed = false;
     
-    latestDocuments = new int[nodes.length];
+    latestDocuments = new long[nodes.length];
     Arrays.fill(latestDocuments, EXECUTOR_NOT_STARTED);
     hitsOnLatestDocument = new Binding[nodes.length][];
     hitsReturned = new int[nodes.length];
@@ -129,7 +129,7 @@ public class ExecutorsList {
     return executors[nodeId];
   }
   
-  public int nextDocument(int nodeId, int greaterThan) throws IOException{
+  public long nextDocument(int nodeId, long greaterThan) throws IOException{
     if(latestDocuments[nodeId] == -1){
       //executor already exhausted
       return -1;
@@ -156,7 +156,7 @@ public class ExecutorsList {
       QueryExecutor executor = getExecutor(nodeId);
       if(executor.getLatestDocument() < 0) {
         // newly (re)created executor, so we need to skip ahead
-        int oldLatest = latestDocuments[nodeId];
+        long oldLatest = latestDocuments[nodeId];
         latestDocuments[nodeId] = executor.nextDocument(latestDocuments[nodeId] - 1);
         if(oldLatest != latestDocuments[nodeId]){
           throw new RuntimeException("Malfunction in " + 
@@ -183,7 +183,7 @@ public class ExecutorsList {
     return aHhit;
   }
   
-  public int latestDocument(int nodeId){
+  public long latestDocument(int nodeId){
     return latestDocuments[nodeId];
   }
   
@@ -258,7 +258,7 @@ public class ExecutorsList {
   /**
    * Array that holds the latest document ID returned by each executor.
    */
-  protected int[] latestDocuments;
+  protected long[] latestDocuments;
   
   /**
    * The number of hits already returned from the latest document, for each 

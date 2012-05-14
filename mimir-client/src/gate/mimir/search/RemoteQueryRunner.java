@@ -19,10 +19,15 @@ import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.Binding;
 import gate.mimir.tool.WebUtils;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleBigArrayBigList;
+import it.unimi.dsi.fastutil.doubles.DoubleBigList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
+import it.unimi.dsi.fastutil.longs.LongBigList;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -81,12 +86,12 @@ public class RemoteQueryRunner implements QueryRunner {
         if(closed) return;
         // update document counts
         try {
-          int newDocumentsCount = webUtils.getInt(
+          long newDocumentsCount = webUtils.getLong(
               getActionBaseUrl(ACTION_DOC_COUNT_BIN), "queryId", 
               URLEncoder.encode(queryId, "UTF-8"));
           if(newDocumentsCount < 0) {
             // still not finished-> update current count
-            currentDocumentsCount = webUtils.getInt(
+            currentDocumentsCount = webUtils.getLong(
               getActionBaseUrl(ACTION_CURRENT_DOC_COUNT_BIN), "queryId", 
               URLEncoder.encode(queryId, "UTF-8"));
             // ... and wait a while before asking again
@@ -129,7 +134,7 @@ public class RemoteQueryRunner implements QueryRunner {
   /**
    * A cache of MG4J {@link Document}s used for returning the hit text.
    */
-  private Int2ObjectLinkedOpenHashMap<DocumentData> documentCache;
+  private Long2ObjectLinkedOpenHashMap<DocumentData> documentCache;
   
   /**
    * The WebUtils instance we use to communicate with the remote
@@ -150,13 +155,13 @@ public class RemoteQueryRunner implements QueryRunner {
   /**
    * The total number of result documents (or -1 if not yet known).
    */
-  private volatile int documentsCount;
+  private volatile long documentsCount;
   
   /**
    * The current number of documents. After all documents have been retrieved, 
    * this value is identical to {@link #documentsCount}. 
    */
-  private volatile int currentDocumentsCount;
+  private volatile long currentDocumentsCount;
   
   private volatile boolean closed;
   
@@ -177,12 +182,12 @@ public class RemoteQueryRunner implements QueryRunner {
    * The document IDs in ranking order. If ranking is not preformed, then the
    * document IDs are in the order they are returned by the index. 
    */
-  protected IntList documentIds;  
+  protected LongBigList documentIds;  
   
   /**
    * The document scores. This list is aligned to {@link #documentIds}.   
    */
-  protected DoubleList documentScores;
+  protected DoubleBigList documentScores;
   
   public RemoteQueryRunner(String remoteUrl, String queryString, 
       Executor threadSource,  WebUtils webUtils) throws IOException {
@@ -203,9 +208,9 @@ public class RemoteQueryRunner implements QueryRunner {
     }
     
     // init the caches
-    this.documentIds = new IntArrayList();
-    this.documentScores = new DoubleArrayList();
-    this.documentCache = new Int2ObjectLinkedOpenHashMap<DocumentData>();
+    this.documentIds = new LongBigArrayBigList();
+    this.documentScores = new DoubleBigArrayBigList();
+    this.documentCache = new Long2ObjectLinkedOpenHashMap<DocumentData>();
     
     // start the background action
     documentsCount = -1;
@@ -247,7 +252,7 @@ public class RemoteQueryRunner implements QueryRunner {
    * @throws IndexOutOfBoundsException
    * @throws IOException
    */
-  protected DocumentData getDocumentData(int rank) throws IndexException, 
+  protected DocumentData getDocumentData(long rank) throws IndexException, 
       IndexOutOfBoundsException, IOException {
     DocumentData docData = documentCache.getAndMoveToFirst(rank);
     if(docData == null) {
@@ -256,7 +261,7 @@ public class RemoteQueryRunner implements QueryRunner {
         docData = (DocumentData)webUtils.getObject(
             getActionBaseUrl(ACTION_DOC_DATA_BIN),
             "queryId",  URLEncoder.encode(queryId, "UTF-8"),
-            "documentRank", Integer.toString(rank));
+            "documentRank", Long.toString(rank));
         documentCache.putAndMoveToFirst(rank, docData);
         if(documentCache.size() > DOCUMENT_CACHE_SIZE) {
           // reduce size
@@ -276,7 +281,7 @@ public class RemoteQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentsCount()
    */
   @Override
-  public int getDocumentsCount() {
+  public long getDocumentsCount() {
     return documentsCount;
   }
 
@@ -284,7 +289,7 @@ public class RemoteQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getCurrentDocumentsCount()
    */
   @Override
-  public int getDocumentsCurrentCount() {
+  public long getDocumentsCurrentCount() {
     return (documentsCount < 0) ? currentDocumentsCount : documentsCount;
   }
   
@@ -292,22 +297,22 @@ public class RemoteQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentID(int)
    */
   @Override
-  public int getDocumentID(int rank) throws IndexOutOfBoundsException,
+  public long getDocumentID(long rank) throws IndexOutOfBoundsException,
           IOException {
     if(rank >= documentIds.size()) {
       // we need to get more document IDs&scores
       downloadDocIdScores(rank);
     }
-    return documentIds.getInt(rank);
+    return documentIds.getLong(rank);
   }
 
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getDocumentScore(int)
    */
   @Override
-  public double getDocumentScore(int rank) throws IndexOutOfBoundsException,
+  public double getDocumentScore(long rank) throws IndexOutOfBoundsException,
           IOException {
-    if(rank >= documentScores.size()) {
+    if(rank >= documentScores.size64()) {
       // we need to get more document IDs&scores
       downloadDocIdScores(rank);
     }    
@@ -319,13 +324,13 @@ public class RemoteQueryRunner implements QueryRunner {
    */
   @SuppressWarnings("unchecked")
   @Override
-  public List<Binding> getDocumentHits(int rank)
+  public List<Binding> getDocumentHits(long rank)
           throws IndexOutOfBoundsException, IOException {
     try {
       return (List<Binding>)webUtils.getObject(
         getActionBaseUrl(ACTION_DOC_HITS_BIN),
         "queryId", queryId,
-        "documentRank", Integer.toString(rank));
+        "documentRank", Long.toString(rank));
     } catch(ClassNotFoundException e) {
       throw new RuntimeException("Got wrong value type from remote endpoint", 
         e);
@@ -336,7 +341,7 @@ public class RemoteQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentText(int, int, int)
    */
   @Override
-  public String[][] getDocumentText(int rank, int termPosition, int length)
+  public String[][] getDocumentText(long rank, int termPosition, int length)
           throws IndexException, IndexOutOfBoundsException, IOException {
     return getDocumentData(rank).getText(termPosition, length);
   }
@@ -345,7 +350,7 @@ public class RemoteQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentURI(int)
    */
   @Override
-  public String getDocumentURI(int rank) throws IndexException,
+  public String getDocumentURI(long rank) throws IndexException,
           IndexOutOfBoundsException, IOException {
     return getDocumentData(rank).getDocumentURI();
   }
@@ -354,7 +359,7 @@ public class RemoteQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentTitle(int)
    */
   @Override
-  public String getDocumentTitle(int rank) throws IndexException,
+  public String getDocumentTitle(long rank) throws IndexException,
           IndexOutOfBoundsException, IOException {
     return getDocumentData(rank).getDocumentTitle();
   }
@@ -363,7 +368,7 @@ public class RemoteQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentMetadataField(int, java.lang.String)
    */
   @Override
-  public Serializable getDocumentMetadataField(int rank, String fieldName)
+  public Serializable getDocumentMetadataField(long rank, String fieldName)
           throws IndexException, IndexOutOfBoundsException, IOException {
     return getDocumentData(rank).getMetadataField(fieldName);
   }
@@ -372,7 +377,7 @@ public class RemoteQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentMetadataFields(int, java.util.Set)
    */
   @Override
-  public Map<String, Serializable> getDocumentMetadataFields(int rank,
+  public Map<String, Serializable> getDocumentMetadataFields(long rank,
       Set<String> fieldNames) throws IndexException, IndexOutOfBoundsException, 
       IOException {
     Map<String, Serializable> res = new HashMap<String, Serializable>();
@@ -387,11 +392,11 @@ public class RemoteQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#renderDocument(int, java.lang.Appendable)
    */
   @Override
-  public void renderDocument(int rank, Appendable out) throws IOException,
+  public void renderDocument(long rank, Appendable out) throws IOException,
           IndexException {
     webUtils.getText(out, getActionBaseUrl(ACTION_RENDER_DOCUMENT),
             "queryId", queryId,
-            "rank", Integer.toString(rank));
+            "rank", Long.toString(rank));
   }
 
   /* (non-Javadoc)
@@ -411,29 +416,29 @@ public class RemoteQueryRunner implements QueryRunner {
    * @param rank
    * @throws IOException 
    */
-  protected void downloadDocIdScores(int rank) throws IOException {
-    int firstRank = documentIds.size();
-    if(firstRank != documentScores.size()) {
+  protected void downloadDocIdScores(long rank) throws IOException {
+    long firstRank = documentIds.size64();
+    if(firstRank != documentScores.size64()) {
       throw new IllegalStateException("Document IDs and scores out of sync.");
     }
-    int size = rank - firstRank;
+    long size = rank - firstRank;
     if(size < docBlockSize) size = docBlockSize;
     
-    int[] newDocIds;
+    long[] newDocIds;
     double[] newDocScores;
     try {
-      newDocIds = (int[]) webUtils.getObject(
+      newDocIds = (long[]) webUtils.getObject(
         getActionBaseUrl(ACTION_DOC_IDS_BIN), 
         "queryId", URLEncoder.encode(queryId, "UTF-8"),
-        "firstRank", Integer.toString(firstRank),
-        "size", Integer.toString(size));
-      documentIds.addElements(firstRank, newDocIds);
+        "firstRank", Long.toString(firstRank),
+        "size", Long.toString(size));
+      documentIds.addElements(firstRank, new long[][]{newDocIds});
       newDocScores = (double[]) webUtils.getObject(
         getActionBaseUrl(ACTION_DOC_SCORES_BIN), 
         "queryId", URLEncoder.encode(queryId, "UTF-8"),
-        "firstRank", Integer.toString(firstRank),
-        "size", Integer.toString(size));
-      documentScores.addElements(firstRank, newDocScores);
+        "firstRank", Long.toString(firstRank),
+        "size", Long.toString(size));
+      documentScores.addElements(firstRank, new double[][]{newDocScores});
     } catch(ClassNotFoundException e) {
       // this should really not happen (the 'class' is double)
       throw new RuntimeException("Error communicating to remote endpoint", e);

@@ -19,8 +19,8 @@ import gate.mimir.search.QueryEngine;
 
 import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -41,7 +41,7 @@ public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExe
   /**
    * An array of current nextDocumentID values, for all of the sub nodes.
    */
-  protected int[] nextDocIDs;
+  protected long[] nextDocIDs;
   
   protected ReferenceSet<Index> indices;
   
@@ -60,7 +60,7 @@ public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExe
     this.nodes = subNodes;
     // prepare all the executors
     this.executors = new QueryExecutor[subNodes.length];
-    this.nextDocIDs = new int[executors.length];
+    this.nextDocIDs = new long[executors.length];
     for(int i = 0; i < subNodes.length; i++) {
       executors[i] = subNodes[i].getQueryExecutor(engine);
       nextDocIDs[i] = executors[i].nextDocument(-1);
@@ -74,7 +74,8 @@ public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExe
     }
   }
 
-  public int nextDocument(int greaterThan) throws IOException {
+  @Override
+  public long nextDocument(long greaterThan) throws IOException {
     if(closed) return latestDocument = -1;
     if(latestDocument == -1) return latestDocument;
     // we want all documentIDs to converge to max, which should be at least
@@ -82,7 +83,7 @@ public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExe
     // the max value will only move up!
     // Note that the greterThan value can be anything (e.g.-100), so we need to  
     // force the advance by comparing to latestDocument.
-    int max = Math.max(latestDocument, greaterThan)  + 1;
+    long max = Math.max(latestDocument, greaterThan)  + 1;
     // move all documentIDs to at or over current max,
     // until they all have the same ID
     boolean doneAdvancing = false;

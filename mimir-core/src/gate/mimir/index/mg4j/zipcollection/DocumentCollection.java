@@ -175,7 +175,7 @@ public class DocumentCollection {
    * @throws IOException if there are problems accessing the underlying zip file; 
    * @throws NoSuchElementException if the requested document ID is not found.
    */
-  public DocumentData getDocumentData(int documentID) throws IndexException{
+  public DocumentData getDocumentData(long documentID) throws IndexException{
     if(closed) throw new IllegalStateException(
             "This document collection has already been closed!");
     if(zipFiles == null){
@@ -194,7 +194,7 @@ public class DocumentCollection {
               documentID + ". Document ID too large for this collection!");
     }
     
-    ZipEntry entry = zipFiles[zipFileId].getEntry(Integer.toString(documentID));
+    ZipEntry entry = zipFiles[zipFileId].getEntry(Long.toString(documentID));
     if(entry == null) 
       throw new NoSuchElementException("No entry found for document ID " + documentID);
     try {

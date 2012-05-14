@@ -107,7 +107,7 @@ class Index implements Serializable {
    * @param documentID
    * @return
    */
-  DocumentData getDocumentData(int documentID) {
+  DocumentData getDocumentData(long documentID) {
     throw new UnsupportedOperationException()
   }
   
@@ -116,7 +116,7 @@ class Index implements Serializable {
     * @param documentID
     * @return
     */
-   void renderDocument(int documentID, Appendable out) {
+   void renderDocument(long documentID, Appendable out) {
      throw new UnsupportedOperationException()
    }
   
@@ -124,7 +124,7 @@ class Index implements Serializable {
    * Mark the given document IDs in this index as having been deleted,
    * preventing them from being subsequently returned by any queries.
    */
-  void deleteDocuments(Collection<Integer> documentIds) {
+  void deleteDocuments(Collection<Long> documentIds) {
     throw new UnsupportedOperationException()
   }
 
@@ -132,7 +132,7 @@ class Index implements Serializable {
    * Mark the given document IDs in this index as not having been deleted,
    * allowing them to bereturned by future queries.
    */
-  void undeleteDocuments(Collection<Integer> documentIds) {
+  void undeleteDocuments(Collection<Long> documentIds) {
     throw new UnsupportedOperationException()
   }
   

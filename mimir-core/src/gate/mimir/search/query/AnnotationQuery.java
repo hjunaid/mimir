@@ -25,8 +25,8 @@ import gate.mimir.search.QueryEngine;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import it.unimi.dsi.fastutil.objects.ReferenceSets;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -141,7 +141,7 @@ public class AnnotationQuery implements QueryNode {
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#getLatestDocument()
      */
-    public int getLatestDocument() {
+    public long getLatestDocument() {
       if(closed || latestDocument == -1) return -1;
       return underlyingExecutor.getLatestDocument();
     }
@@ -149,7 +149,7 @@ public class AnnotationQuery implements QueryNode {
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#nextDocument(int)
      */
-    public int nextDocument(int greaterThan) throws IOException {
+    public long nextDocument(long greaterThan) throws IOException {
       if(closed || latestDocument == -1) return -1;
       return latestDocument = underlyingExecutor.nextDocument(greaterThan);
     }
@@ -161,7 +161,7 @@ public class AnnotationQuery implements QueryNode {
       if(closed || latestDocument == -1) return null;
       Binding underlyingHit = underlyingExecutor.nextHit();
       if(underlyingHit == null) return null;
-      int doc = underlyingHit.getDocumentId();
+      long doc = underlyingHit.getDocumentId();
       if(isInDocumentMode) {
         return new Binding(query, doc, 0, engine.getDocumentSizes().getInt(doc),
           underlyingHit.getContainedBindings());        

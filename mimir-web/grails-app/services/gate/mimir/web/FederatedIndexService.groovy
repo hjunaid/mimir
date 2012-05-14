@@ -114,7 +114,7 @@ class FederatedIndexService {
     }
   }
 
-  private void deleteOrUndelete(String method, FederatedIndex fedIndex, Collection<Integer> documentIds) {
+  private void deleteOrUndelete(String method, FederatedIndex fedIndex, Collection<Long> documentIds) {
     def numIndexes = fedIndex.indexes.size()
     // map the supplied federated document IDs to the corresponding IDs in the
     // sub-indexes - first separate out the IDs that belong in each index
@@ -125,24 +125,24 @@ class FederatedIndexService {
     }
   }
 
-  public void deleteDocuments(FederatedIndex index, Collection<Integer> documentIds) {
+  public void deleteDocuments(FederatedIndex index, Collection<Long> documentIds) {
     deleteOrUndelete("delete", index, documentIds)
   }
 
-  public void undeleteDocuments(FederatedIndex index, Collection<Integer> documentIds) {
+  public void undeleteDocuments(FederatedIndex index, Collection<Long> documentIds) {
     deleteOrUndelete("undelete", index, documentIds)
   }
   
-  public DocumentData getDocumentData(FederatedIndex fedIndex, int documentId) {
+  public DocumentData getDocumentData(FederatedIndex fedIndex, long documentId) {
     Index subIndex = fedIndex.indexes[documentId % fedIndex.indexes.size()]
-    int idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
+    long idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
     return subIndex.getDocumentData(idWithinSubIndex)
   }
   
-  public void renderDocument(FederatedIndex fedIndex, int documentId, 
+  public void renderDocument(FederatedIndex fedIndex, long documentId, 
       Appendable out) {
     Index subIndex = fedIndex.indexes[documentId % fedIndex.indexes.size()]
-    int idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
+    long idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
     subIndex.renderDocument(idWithinSubIndex, out)
   }
 }

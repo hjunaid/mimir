@@ -15,7 +15,7 @@
 package gate.mimir.search.query;
 
 import gate.mimir.search.QueryEngine;
-import it.unimi.dsi.mg4j.search.DocumentIterator;
+import it.unimi.dsi.big.mg4j.search.DocumentIterator;
 
 import java.io.IOException;
 
@@ -48,7 +48,7 @@ public interface QueryExecutor extends DocumentIterator{
    * are found.
    * @throws IOException if the index files cannot be accessed.
    */
-  public int nextDocument(int greaterThan) throws IOException;
+  public long nextDocument(long greaterThan) throws IOException;
   
 
   /**
@@ -56,7 +56,7 @@ public interface QueryExecutor extends DocumentIterator{
    * {@link #nextDocument(int)}.
    * @return an int value.
    */
-  public int getLatestDocument();
+  public long getLatestDocument();
   /**
    * Gets the next matching position, in the document last returned by 
    * {@link #nextDocument()}.  Hits are always returned in increasing order

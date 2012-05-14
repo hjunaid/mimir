@@ -17,9 +17,9 @@ package gate.mimir.search.query;
 import gate.mimir.search.QueryEngine;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.search.DocumentIterator;
-import it.unimi.dsi.mg4j.search.IntervalIterator;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.search.DocumentIterator;
+import it.unimi.dsi.big.mg4j.search.IntervalIterator;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
@@ -35,7 +35,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
    * The latest document ID returned by a call to nextDocument.  Initially this 
    * value is set to -2, will be -1 if there are no more hits.
    */
-  protected int latestDocument;
+  protected long latestDocument;
     
   /**
    * Flag to mark whether the executor has been closed.
@@ -62,7 +62,7 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
   /* (non-Javadoc)
    * @see gate.mimir.search.query.QueryExecutor#getLatestDocument()
    */
-  public int getLatestDocument() {
+  public long getLatestDocument() {
     return latestDocument;
   }
   
@@ -100,31 +100,31 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
     throw new UnsupportedOperationException("This method is not implemented.");
   }
 
-  @Override
-  public int nextInt() {
-    try {
-      int nextDoc = nextDocument(-1);
-      if(nextDoc < 0) throw new NoSuchElementException();
-      return nextDoc;
-    } catch(IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  //@Override
+//  public int nextInt() {
+//    try {
+//      int nextDoc = nextDocument(-1);
+//      if(nextDoc < 0) throw new NoSuchElementException();
+//      return nextDoc;
+//    } catch(IOException e) {
+//      throw new RuntimeException(e);
+//    }
+//  }
 
   @Override
-  public int nextDocument() throws IOException {
+  public long nextDocument() throws IOException {
     return nextDocument(-1);
   }
 
   @Override
-  public int document() {
+  public long document() {
     return getLatestDocument();
   }
 
   @Override
-  public int skipTo(int n) throws IOException {
-    int nextDoc = nextDocument(n - 1);
-    return nextDoc < 0 ? Integer.MAX_VALUE : nextDoc;
+  public long skipTo(long n) throws IOException {
+    long nextDoc = nextDocument(n - 1);
+    return nextDoc < 0 ? END_OF_LIST : nextDoc;
   }
 
   @Override
@@ -148,23 +148,9 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
   }
 
   @Override
-  public int skip(int arg0) {
+  public boolean mayHaveNext() {
     throw new UnsupportedOperationException("This method is not implemented.");
   }
 
-  @Override
-  public boolean hasNext() {
-    throw new UnsupportedOperationException("This method is not implemented.");
-  }
-
-  @Override
-  public Integer next() {
-    return nextInt();
-  }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException("This method is not implemented.");
-  }
   
 }

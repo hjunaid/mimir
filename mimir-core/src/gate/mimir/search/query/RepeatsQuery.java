@@ -18,8 +18,8 @@ package gate.mimir.search.query;
 import gate.mimir.search.QueryEngine;
 
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 import java.util.*;
@@ -85,10 +85,10 @@ public class RepeatsQuery implements QueryNode {
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#nextDocument(int)
      */
-    public int nextDocument(int greaterThan) throws IOException {
+    public long nextDocument(long greaterThan) throws IOException {
       if(closed) return latestDocument = -1;
       if(latestDocument == -1) return latestDocument;
-      int nextDoc = -1;
+      long nextDoc = -1;
       while(nextDoc < 0){
         nextDoc = wrappedExecutor.nextDocument(greaterThan);
         if(nextDoc < 0){

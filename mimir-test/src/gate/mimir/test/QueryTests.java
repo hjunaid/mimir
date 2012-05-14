@@ -128,12 +128,12 @@ public class QueryTests {
    */
   @AfterClass
   public static void oneTimeTearDown() {
-    for(File indexDir : indexDirs) {
-      // recursively delete index dir
-      if(!TestUtils.deleteDir(indexDir)) {
-        System.err.println("Could not delete index directory " + indexDir);
-      }      
-    }
+//    for(File indexDir : indexDirs) {
+//      // recursively delete index dir
+//      if(!TestUtils.deleteDir(indexDir)) {
+//        System.err.println("Could not delete index directory " + indexDir);
+//      }      
+//    }
   }
 
   /**
