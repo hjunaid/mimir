@@ -22,10 +22,17 @@ import gate.mimir.search.query.QueryExecutor;
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.score.MimirScorer;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
+import it.unimi.dsi.fastutil.longs.LongBigList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
+import it.unimi.dsi.fastutil.objects.ObjectBigList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.io.IOException;
@@ -98,34 +105,34 @@ public class RankingQueryRunnerImpl implements QueryRunner {
     /**
      * The starting rank
      */
-    int start;
+    long start;
     
     /**
      * The ending rank
      */
-    int end;
+    long end;
     
-    public HitsCollector(int rangeStart, int rangeEnd) {
+    public HitsCollector(long rangeStart, long rangeEnd) {
       this.start = rangeStart;
       this.end = rangeEnd;
     }
     
     @Override
     public void run() {
-      int[] documentIndexes = null;
+      long[] documentIndexes = null;
       if(ranking) {
         // we're ranking -> first calculate the range of documents in ID order
-        documentIndexes = new int[end - start];
-        for(int i = start; i < end; i++) {
-          documentIndexes[i - start] = documentsOrder.getInt(i);
+        documentIndexes = new long[(int)(end - start)];
+        for(long i = start; i < end; i++) {
+          documentIndexes[(int)(i - start)] = documentsOrder.getLong(i);
         }
         Arrays.sort(documentIndexes);
       }
       
       try {
         // see if we can get at the first document
-        int docIndex = (documentIndexes != null ? documentIndexes[0] : start);
-        int docId = documentIds.getInt(docIndex);
+        long docIndex = (documentIndexes != null ? documentIndexes[0] : start);
+        long docId = documentIds.getLong(docIndex);
         if(queryExecutor.getLatestDocument() < 0 ||
            queryExecutor.getLatestDocument() >= docId) {
           // we need to 'scroll back' the executor: get a new executor
@@ -134,10 +141,11 @@ public class RankingQueryRunnerImpl implements QueryRunner {
                   queryEngine);
           oldExecutor.close();
         }
-        for(int i = start; i < end; i++) {
-          docIndex = (documentIndexes != null ? documentIndexes[i - start] : i);
-          docId = documentIds.getInt(docIndex);
-          int newDoc = queryExecutor.nextDocument(docId - 1);
+        for(long i = start; i < end; i++) {
+          docIndex = (documentIndexes != null ? 
+              documentIndexes[(int)(i - start)] : i);
+          docId = documentIds.getLong(docIndex);
+          long newDoc = queryExecutor.nextDocument(docId - 1);
           // sanity check
           if(newDoc == docId) {
             List<Binding> hits = new ObjectArrayList<Binding>();
@@ -194,7 +202,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
       try{
         // collect all documents and their scores
         if(ranking) scorer.wrap(queryExecutor);
-        int docId = ranking ? scorer.nextDocument(-1) : queryExecutor.nextDocument(-1);
+        long docId = ranking ? scorer.nextDocument(-1) : queryExecutor.nextDocument(-1);
         while(docId >= 0) {
           // enlarge the hits list
           if(ranking){
@@ -271,34 +279,34 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * The document IDs for the documents found to contain hits. This list is
    * sorted in ascending documentID order.
    */
-  protected IntList documentIds;
+  protected LongBigList documentIds;
   
   /**
    * If scoring is enabled ({@link #scorer} is not <code>null</code>), this list
    * contains the scores for the documents found to contain hits. This list is 
    * aligned to {@link #documentIds}.   
    */
-  protected DoubleArrayList documentScores;
+  protected DoubleBigArrayBigList documentScores;
   
   /**
    * The sets of hits for each returned document. This data structure is lazily 
    * built, so some elements may be null. This list is aligned to 
    * {@link #documentIds}.   
    */
-  protected ObjectList<List<Binding>> documentHits;
+  protected ObjectBigList<List<Binding>> documentHits;
 
   /**
    * The order the documents should be returned in (elements in this list are 
    * indexes in {@link #documentIds}).
    */
-  protected IntList documentsOrder;
+  protected LongBigList documentsOrder;
   
   /**
    * Data structure holding references to {@link Future}s that are currently 
    * working (or have worked) on collecting hits for a range of document 
    * indexes.
    */
-  protected SortedMap<int[], Future<?>> hitCollectors;
+  protected SortedMap<long[], Future<?>> hitCollectors;
   
   /**
    * The background thread used for collecting hits.
@@ -328,16 +336,19 @@ public class RankingQueryRunnerImpl implements QueryRunner {
     ranking = scorer != null;
     queryEngine = queryExecutor.getQueryEngine();
     docBlockSize = queryEngine.getDocumentBlockSize();
-    documentIds = new IntArrayList();
-    documentHits = new ObjectArrayList<List<Binding>>();
+    documentIds = new LongBigArrayBigList();
+    documentHits = new ObjectBigArrayBigList<List<Binding>>();
     if(scorer != null) {
-      documentScores = new DoubleArrayList();
-      documentsOrder = new IntArrayList(docBlockSize);
+      documentScores = new DoubleBigArrayBigList();
+      documentsOrder = new LongBigArrayBigList(docBlockSize);
     }
-    hitCollectors = new Object2ObjectAVLTreeMap<int[], Future<?>>(
-        new Comparator<int[]>(){
+    hitCollectors = new Object2ObjectAVLTreeMap<long[], Future<?>>(
+        new Comparator<long[]>(){
           @Override
-          public int compare(int[] o1, int[] o2) { return o1[0] - o2[0]; }
+          public int compare(long[] o1, long[] o2) {
+            long res = o1[0] - o2[0]; 
+            return res > 0 ? 1 : (res == 0 ? 0 : -1); 
+          }
         });
     // start the background thread
     backgroundTasks = new LinkedBlockingQueue<Runnable>();
@@ -364,7 +375,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
         // hits for the first docBlockSize number of documents
         FutureTask<Object> future = new FutureTask<Object>(new DocIdsCollector(), null);
         synchronized(hitCollectors) {
-          hitCollectors.put(new int[]{0, docBlockSize}, future);
+          hitCollectors.put(new long[]{0, docBlockSize}, future);
         }
         backgroundTasks.put(future);
       } else {
@@ -380,8 +391,8 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentsCount()
    */
   @Override
-  public int getDocumentsCount() {
-    if(allDocIdsCollected) return documentIds.size();
+  public long getDocumentsCount() {
+    if(allDocIdsCollected) return documentIds.size64();
     else return -1;
   }
 
@@ -389,20 +400,20 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getCurrentDocumentsCount()
    */
   @Override
-  public int getDocumentsCurrentCount() {
-    return documentIds.size();
+  public long getDocumentsCurrentCount() {
+    return documentIds.size64();
   }
   
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getDocumentID(int)
    */
   @Override
-  public int getDocumentID(int rank) throws IndexOutOfBoundsException, IOException {
-    return documentIds.getInt(getDocumentIndex(rank));
+  public long getDocumentID(long rank) throws IndexOutOfBoundsException, IOException {
+    return documentIds.getLong(getDocumentIndex(rank));
   }
   
   @Override
-  public double getDocumentScore(int rank) throws IndexOutOfBoundsException, IOException {
+  public double getDocumentScore(long rank) throws IndexOutOfBoundsException, IOException {
     return (documentScores != null) ? 
         documentScores.getDouble(getDocumentIndex(rank)) : 
         DEFAULT_SCORE;
@@ -412,15 +423,15 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentHits(int)
    */
   @Override
-  public List<Binding> getDocumentHits(int rank) throws IndexOutOfBoundsException, IOException {
-    int documentIndex = getDocumentIndex(rank);
+  public List<Binding> getDocumentHits(long rank) throws IndexOutOfBoundsException, IOException {
+    long documentIndex = getDocumentIndex(rank);
     List<Binding> hits = documentHits.get(documentIndex);
     if(hits == null) {
       // hits not collected yet
       try {
         // find the Future working on it, or start a new one, 
         // then wait for it to complete
-        collectHits(new int[]{rank, rank + 1}).get();
+        collectHits(new long[]{rank, rank + 1}).get();
         hits = documentHits.get(documentIndex);
       } catch(Exception e) {
         logger.error("Exception while waiting for hits collection", e);
@@ -439,18 +450,18 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @return
    * @throws IOException, IndexOutOfBoundsException 
    */
-  protected int getDocumentIndex(int rank) throws IOException, 
+  protected long getDocumentIndex(long rank) throws IOException, 
       IndexOutOfBoundsException {
-    int maxRank = documentIds.size();
+    long maxRank = documentIds.size64();
     if(rank >= maxRank) throw new IndexOutOfBoundsException(
       "Document rank too large (" + rank + " > " + maxRank + ".");
     if(documentsOrder != null) {
       // we're in ranking mode
-      if(rank >= documentsOrder.size()) {
+      if(rank >= documentsOrder.size64()) {
         // document exists, but has not been ranked yet
         rankDocuments(rank);
       }
-      return documentsOrder.getInt(rank);
+      return documentsOrder.getLong(rank);
     } else {
       return rank;
     }
@@ -468,33 +479,33 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @param rank
    * @throws IOException 
    */
-  protected void rankDocuments(int rank) throws IOException {
-    if(rank < documentsOrder.size()) return;
+  protected void rankDocuments(long rank) throws IOException {
+    if(rank < documentsOrder.size64()) return;
     synchronized(documentsOrder) {
       // rank some documents
-      int rankRangeStart = documentsOrder.size();
+      long rankRangeStart = documentsOrder.size64();
       // right boundary is exclusive
-      int rankRangeEnd = rank + 1;
+      long rankRangeEnd = rank + 1;
       if((rankRangeEnd - rankRangeStart) < (docBlockSize)) {
         // extend the size of the chunk of documents to be ranked
         rankRangeEnd = rankRangeStart + docBlockSize; 
       }
       // the document with the minimum score already ranked.
-      int smallestOldScoreDocId = rankRangeStart > 0 ? 
-        documentIds.getInt(documentsOrder.getInt(rankRangeStart -1))
+      long smallestOldScoreDocId = rankRangeStart > 0 ? 
+        documentIds.getLong(documentsOrder.getLong(rankRangeStart -1))
         : -1;
       // the score for the document above, which is a the upper limit for new scores
       double smallestOldScore = rankRangeStart > 0 ? 
-          documentScores.getDouble(documentsOrder.getInt(rankRangeStart -1))
+          documentScores.getDouble(documentsOrder.getLong(rankRangeStart -1))
           : Double.POSITIVE_INFINITY;
       // now collect some more documents
-      for(int i = 0; i < documentIds.size(); i++) {
-        int documentId = documentIds.getInt(i);
+      for(long i = 0; i < documentIds.size64(); i++) {
+        long documentId = documentIds.getLong(i);
         double documentScore = documentScores.getDouble(i);
         // the index for the document with the smallest score, 
         // from the new ones being ranked 
-        int smallestDocIndex = rankRangeStart < documentsOrder.size() ?
-            documentsOrder.getInt(rankRangeStart) : -1;
+        long smallestDocIndex = rankRangeStart < documentsOrder.size64() ?
+            documentsOrder.getLong(rankRangeStart) : -1;
         // the smallest score that's been seen in this new round 
         double smallestNewScore = smallestDocIndex == -1 ? Double.NEGATIVE_INFINITY : 
             documentScores.getDouble(smallestDocIndex);
@@ -505,7 +516,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
         // already been ranked)., or
         // - it's a new document (i.e. with an ID strictly larger) with the same 
         // score as the largest permitted score
-        if(documentsOrder.size() < rankRangeEnd
+        if(documentsOrder.size64() < rankRangeEnd
            || 
            (documentScore > smallestNewScore && documentScore < smallestOldScore) 
            ||
@@ -513,16 +524,16 @@ public class RankingQueryRunnerImpl implements QueryRunner {
            ) {
           // find the rank for the new doc in the documentsOrder list, and insert
           documentsOrder.add(findRank(documentScore, rankRangeStart, 
-              documentsOrder.size()), i);
+              documentsOrder.size64()), i);
           // if we have too many documents, drop the lowest scoring one
-          if(documentsOrder.size() > rankRangeEnd) {
-            documentsOrder.removeInt(documentsOrder.size() - 1);
+          if(documentsOrder.size64() > rankRangeEnd) {
+            documentsOrder.removeLong(documentsOrder.size64() - 1);
           }          
         }
       }
       // start collecting the hits for the newly ranked documents (in a new thread)
-      if(documentsOrder.size() > rankRangeStart){
-        collectHits(new int[] {rankRangeStart, documentsOrder.size()});
+      if(documentsOrder.size64() > rankRangeStart){
+        collectHits(new long[] {rankRangeStart, documentsOrder.size64()});
       }
     }
   }
@@ -540,20 +551,20 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @param end the end of the search range within {@link #documentsOrder} 
    * @return the largest correct insertion point
    */
-  protected int findRank(double documentScore, int start, int end) {
+  protected long findRank(double documentScore, long start, long end) {
     // standard binary search
     double midVal;
     end--;
     while (start <= end) {
-     int mid = (start + end) >>> 1;
-     midVal = documentScores.getDouble(documentsOrder.getInt(mid));
+     long mid = (start + end) >>> 1;
+     midVal = documentScores.getDouble(documentsOrder.getLong(mid));
      // note that the documentOrder list is in decreasing score order!
      if (midVal > documentScore) start = mid + 1;
      else if (midVal < documentScore) end = mid - 1;
      else {
        // we found a doc with exactly the same score: scan to the right
-       while(documentsOrder.size() < mid && 
-             documentScores.getDouble(documentsOrder.getInt(mid)) == 
+       while(documentsOrder.size64() < mid && 
+             documentScores.getDouble(documentsOrder.getLong(mid)) == 
            documentScore){
          mid++;
        }
@@ -571,36 +582,36 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * interval[0] and (interval[1]-1) inclusive. 
    * @return the future that has been queued for collecting the hits.
    */
-  protected Future<?> collectHits(int[] interval) {
+  protected Future<?> collectHits(long[] interval) {
     // expand the interval to block size (or size of documentsOrder)
     if(interval[1] - interval[0] < docBlockSize) {
-      final int expansion = docBlockSize - (interval[1] - interval[0]);
+      final long expansion = docBlockSize - (interval[1] - interval[0]);
       // expand up to (expansion / 2) to the left
       interval[0] = Math.max(0, interval[0] - (expansion / 2));
       // expand to the right
-      int upperBound = documentsOrder != null ? 
-          documentsOrder.size() : documentIds.size();
+      long upperBound = documentsOrder != null ? 
+          documentsOrder.size64() : documentIds.size64();
       interval[1] = Math.min(upperBound, interval[0] + docBlockSize);
     }
     HitsCollector hitsCollector = null;
     synchronized(hitCollectors) {
-      SortedMap<int[], Future<?>> headMap = hitCollectors.headMap(interval); 
-      int[] previousInterval = headMap.isEmpty() ? new int[]{0, 0} : 
+      SortedMap<long[], Future<?>> headMap = hitCollectors.headMap(interval); 
+      long[] previousInterval = headMap.isEmpty() ? new long[]{0, 0} : 
           headMap.lastKey();
       if(previousInterval[1] >= interval[1]) {
         // we're part of previous interval
         return hitCollectors.get(previousInterval);
       } else {
         // calculate an appropriate interval to collect hits for
-        SortedMap<int[], Future<?>> tailMap = hitCollectors.tailMap(
-          new int[]{interval[1], interval[1]});
-        int[] followingInterval = tailMap.isEmpty() ? 
-            new int[]{interval[1], interval[1]} : tailMap.firstKey();
-        int start = Math.max(previousInterval[1] - 1, interval[0]);
-        int end = Math.min(followingInterval[0], interval[1]);
+        SortedMap<long[], Future<?>> tailMap = hitCollectors.tailMap(
+          new long[]{interval[1], interval[1]});
+        long[] followingInterval = tailMap.isEmpty() ? 
+            new long[]{interval[1], interval[1]} : tailMap.firstKey();
+        long start = Math.max(previousInterval[1] - 1, interval[0]);
+        long end = Math.min(followingInterval[0], interval[1]);
         hitsCollector = new HitsCollector(start, end);
         FutureTask<?> future = new FutureTask<Object>(hitsCollector, null);
-        hitCollectors.put(new int[]{start, end}, future);
+        hitCollectors.put(new long[]{start, end}, future);
         try {
           backgroundTasks.put(future);
         } catch(InterruptedException e) {
@@ -616,7 +627,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentText(int, int, int)
    */
   @Override
-  public String[][] getDocumentText(int rank, int termPosition, int length) 
+  public String[][] getDocumentText(long rank, int termPosition, int length) 
           throws IndexException, IndexOutOfBoundsException, IOException {
     return queryEngine.getText(getDocumentID(rank), termPosition, length);
   }
@@ -625,7 +636,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentURI(int)
    */
   @Override
-  public String getDocumentURI(int rank) throws IndexException, 
+  public String getDocumentURI(long rank) throws IndexException, 
       IndexOutOfBoundsException, IOException {
     return queryEngine.getDocumentURI(getDocumentID(rank));
   }
@@ -634,7 +645,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentTitle(int)
    */
   @Override
-  public String getDocumentTitle(int rank) throws IndexException, 
+  public String getDocumentTitle(long rank) throws IndexException, 
       IndexOutOfBoundsException, IOException {
     return queryEngine.getDocumentTitle(getDocumentID(rank));
   }
@@ -643,7 +654,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentMetadataField(int, java.lang.String)
    */
   @Override
-  public Serializable getDocumentMetadataField(int rank, String fieldName)
+  public Serializable getDocumentMetadataField(long rank, String fieldName)
       throws IndexException, IndexOutOfBoundsException, IOException {
     return queryEngine.getDocumentMetadataField(getDocumentID(rank), fieldName);
   }
@@ -652,11 +663,11 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentMetadataFields(int, java.util.Set)
    */
   @Override
-  public Map<String, Serializable> getDocumentMetadataFields(int rank,
+  public Map<String, Serializable> getDocumentMetadataFields(long rank,
       Set<String> fieldNames) throws IndexException, IndexOutOfBoundsException, 
       IOException {
     Map<String, Serializable> res = new HashMap<String, Serializable>();
-    int docId = getDocumentID(rank);
+    long docId = getDocumentID(rank);
     for(String fieldName : fieldNames) {
       Serializable value = getDocumentMetadataField(docId, fieldName);
       if(value != null) res.put(fieldName, value);
@@ -668,7 +679,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#renderDocument(int, java.lang.Appendable)
    */
   @Override
-  public void renderDocument(int rank, Appendable out) throws IOException, 
+  public void renderDocument(long rank, Appendable out) throws IOException, 
       IndexException {
         queryEngine.renderDocument(getDocumentID(rank), 
                 getDocumentHits(rank), out);

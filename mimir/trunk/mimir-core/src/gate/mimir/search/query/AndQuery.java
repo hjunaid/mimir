@@ -73,7 +73,7 @@ public class AndQuery implements QueryNode {
      * 
      * @see gate.mimir.search.query.QueryExecutor#nextDocument(int)
      */
-    public int nextDocument(int greaterThan) throws IOException {
+    public long nextDocument(long greaterThan) throws IOException {
       hitsOnCurrentDocument = null;
       return super.nextDocument(greaterThan);
     }

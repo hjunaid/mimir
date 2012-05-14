@@ -16,8 +16,8 @@ package gate.mimir.search.score;
 
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
-import it.unimi.dsi.mg4j.search.DocumentIterator;
-import it.unimi.dsi.mg4j.search.score.DelegatingScorer;
+import it.unimi.dsi.big.mg4j.search.DocumentIterator;
+import it.unimi.dsi.big.mg4j.search.score.DelegatingScorer;
 
 import java.io.IOException;
 
@@ -39,6 +39,6 @@ public interface MimirScorer extends DelegatingScorer {
   public void wrap(DocumentIterator queryExecutor) throws IOException;
   
   
-  public int nextDocument(int greaterThan) throws IOException;
+  public long nextDocument(long greaterThan) throws IOException;
   
 }

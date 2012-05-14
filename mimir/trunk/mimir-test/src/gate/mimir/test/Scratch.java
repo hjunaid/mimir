@@ -7,12 +7,12 @@ import it.unimi.dsi.fastutil.ints.IntHeapIndirectPriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntHeapPriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntIndirectPriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntPriorityQueue;
-import it.unimi.dsi.mg4j.search.score.BM25FScorer;
-import it.unimi.dsi.mg4j.search.score.BM25Scorer;
-import it.unimi.dsi.mg4j.search.score.CountScorer;
-import it.unimi.dsi.mg4j.search.score.DelegatingScorer;
-import it.unimi.dsi.mg4j.search.score.Scorer;
-import it.unimi.dsi.mg4j.search.score.TfIdfScorer;
+import it.unimi.dsi.big.mg4j.search.score.BM25FScorer;
+import it.unimi.dsi.big.mg4j.search.score.BM25Scorer;
+import it.unimi.dsi.big.mg4j.search.score.CountScorer;
+import it.unimi.dsi.big.mg4j.search.score.DelegatingScorer;
+import it.unimi.dsi.big.mg4j.search.score.Scorer;
+import it.unimi.dsi.big.mg4j.search.score.TfIdfScorer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -60,7 +60,7 @@ public class Scratch {
     NumberFormat nf = NumberFormat.getNumberInstance();
     long startLocal = System.currentTimeMillis();
     QueryExecutor qExecutor = qNode.getQueryExecutor(qEngine);
-    int latestDoc = qExecutor.nextDocument(-1);
+    long latestDoc = qExecutor.nextDocument(-1);
     int totalHitCount = 0;
     int docCount = 0;
     while(latestDoc >= 0) {
@@ -126,7 +126,7 @@ public class Scratch {
         }
         double minScore = Double.MAX_VALUE;
         double maxScore = Double.MIN_VALUE;
-        int docCount = qRunner.getDocumentsCount();
+        long docCount = qRunner.getDocumentsCount();
         for(int i = 0;  i < docCount; i++) {
           double score = qRunner.getDocumentScore(i);
           if(score < minScore) minScore = score;

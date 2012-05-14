@@ -270,6 +270,52 @@ public class WebUtils {
     }
   }
   
+  
+  /**
+   * Calls a web service action (i.e. it connects to a URL), and reads a 
+   * serialised long value from the resulting connection. If the connection 
+   * fails, for whatever reason, or the response code is different from 
+   * {@link HttpURLConnection#HTTP_OK}, then an IOException is raised.
+   * This method will drain (and discard) all additional content available from 
+   * either the input and error streams of the resulting connection (which 
+   * should permit connection keepalives).
+   *   
+   * @param baseUrl the constant part of the URL to be accessed.
+   * @param params an array of String values, that contain an alternation of
+   * parameter name, and parameter values.
+   * @throws IOException if the connection fails.
+   */
+  public long getLong(String baseUrl, String... params)
+          throws IOException {
+    
+    URL actionUrl = new URL(buildUrl(baseUrl, params));
+    
+    URLConnection conn = openURLConnection(actionUrl);
+    if(conn instanceof HttpURLConnection) {
+      HttpURLConnection httpConn = (HttpURLConnection)conn;
+      long res;
+      try {
+        httpConn.connect();
+        int code = httpConn.getResponseCode();
+        if(code == HttpURLConnection.HTTP_OK) {
+          res = new ObjectInputStream(httpConn.getInputStream()).readLong();
+        }else{
+          // try to get more details
+          String message = httpConn.getResponseMessage();
+          throw new IOException(code
+                  + (message != null ? " (" + message + ")" : "")
+                  + " Remote connection failed.");
+        }
+      } finally {
+        // make sure the connection is drained, to allow connection keepalive
+        drainConnection(httpConn);
+      }
+      return res;
+    } else {
+      throw new IOException("Connection received is not HTTP!"
+              + " Connection class: " + conn.getClass().getCanonicalName());
+    }
+  }  
 
   /**
    * Calls a web service action (i.e. it connects to a URL), and reads a 

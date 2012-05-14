@@ -17,9 +17,9 @@ package gate.mimir.search.score;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
 import it.unimi.dsi.fastutil.objects.Reference2DoubleMap;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.search.DocumentIterator;
-import it.unimi.dsi.mg4j.search.score.DelegatingScorer;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.search.DocumentIterator;
+import it.unimi.dsi.big.mg4j.search.score.DelegatingScorer;
 
 import java.io.IOException;
 
@@ -34,7 +34,7 @@ public class DelegatingScoringQueryExecutor implements MimirScorer {
     this.underlyingScorer = scorer;
   }
   
-  public int nextDocument(int greaterThan) throws IOException {
+  public long nextDocument(long greaterThan) throws IOException {
     return underlyingExecutor.nextDocument(greaterThan);
   }
   
@@ -55,20 +55,6 @@ public class DelegatingScoringQueryExecutor implements MimirScorer {
   
   private QueryExecutor underlyingExecutor;
 
-  public boolean hasNext() {
-    return underlyingScorer.hasNext();
-  }
-
-  public Integer next() {
-    return underlyingScorer.next();
-  }
-
-
-
-  public void remove() {
-    underlyingScorer.remove();
-  }
-
 
 
   public double score(Index index) throws IOException {
@@ -86,14 +72,7 @@ public class DelegatingScoringQueryExecutor implements MimirScorer {
   }
 
 
-  @Deprecated
-  public int nextInt() {
-    return underlyingScorer.nextInt();
-  }
-
-
-
-  public int nextDocument() throws IOException {
+  public long nextDocument() throws IOException {
     return underlyingScorer.nextDocument();
   }
 
@@ -101,15 +80,13 @@ public class DelegatingScoringQueryExecutor implements MimirScorer {
 
   public DelegatingScorer copy() {
     try {
-      return new DelegatingScoringQueryExecutor(underlyingScorer.copy());
+      return new DelegatingScoringQueryExecutor(
+          (DelegatingScorer)underlyingScorer.copy());
     } catch(IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public int skip(int arg0) {
-    return underlyingScorer.skip(arg0);
-  }
 
   public void wrap(DocumentIterator queryExecutor) throws IOException {
     underlyingExecutor = (QueryExecutor)queryExecutor;

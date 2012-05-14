@@ -14,8 +14,8 @@
  */
 package gate.mimir.search;
 
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.index.IndexReader;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.index.IndexReader;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;

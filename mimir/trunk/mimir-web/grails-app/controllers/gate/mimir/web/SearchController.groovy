@@ -185,7 +185,7 @@ class SearchController {
     if(runner){
       try{
         //we have all required parameters
-        int docCount = runner.getDocumentsCount()
+        long docCount = runner.getDocumentsCount()
         message = buildMessage(SUCCESS, null){
           value(docCount)
         }
@@ -217,7 +217,7 @@ class SearchController {
     if(runner){
       try{
         //we have all required parameters
-        int docCount = runner.getDocumentsCurrentCount()
+        long docCount = runner.getDocumentsCurrentCount()
         message = buildMessage(SUCCESS, null){
           value(docCount)
         }
@@ -255,8 +255,8 @@ class SearchController {
       String rankStr = p["rank"]
       if(rankStr){
         try {
-          int rank = Integer.parseInt(rankStr)
-          int docId = runner.getDocumentID(rank)
+          long rank = Long.parseLong(rankStr)
+          long docId = runner.getDocumentID(rank)
           message = buildMessage(SUCCESS, null){
             value(docId)
           }
@@ -292,7 +292,7 @@ class SearchController {
       String rankStr = p["rank"]
       if(rankStr){
         try {
-          int rank = Integer.parseInt(rankStr)
+          long rank = Long.parseLong(rankStr)
           double score = runner.getDocumentScore(rank)
           message = buildMessage(SUCCESS, null){
             value(score)
@@ -331,7 +331,7 @@ class SearchController {
       String rankStr = p["rank"]
       if(rankStr){
         try {
-          int rank = Integer.parseInt(rankStr)
+          long rank = Long.parseLong(rankStr)
           //we have all required parameters
           List<Binding> hits = runner.getDocumentHits(rank)
           message = buildMessage(SUCCESS, null){
@@ -391,7 +391,7 @@ class SearchController {
       if(rankStr){
         try {
           paramName = "rank"
-          int rank = Integer.parseInt(rankStr)
+          long rank = Long.parseLong(rankStr)
           paramName = "termPosition"
           int position = Integer.parseInt(positionStr)
           paramName = "length"
@@ -406,11 +406,12 @@ class SearchController {
             }
           }
         } catch(NumberFormatException e) {
-          message = buildMessage(ERROR, "Non-integer value provided for parameter ${paramName}", null);
+          message = buildMessage(ERROR, 
+              "Non-integer value provided for parameter ${paramName}", null);
         }
       }else{
-        message = buildMessage(ERROR, "No value provided for parameter rank", 
-            null)
+        message = buildMessage(ERROR, 
+            "No value provided for parameter rank", null)
       }
     } else{
       message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
@@ -440,20 +441,20 @@ class SearchController {
       //get the parameters
       String rankStr = p["rank"]
       if(rankStr){
-        int rank = rankStr as int
-        // see if any fields were requested
-        Map<String, Serializable> metadata = null;
-        def fieldNamesStr = p["fieldNames"]
-        if(fieldNamesStr) {
-          Set<String> fieldNames = new HashSet<String>()
-          // split on each comma (not preceded by a backslash)
-          fieldNamesStr.split(/\s*(?<!\\),\s*/).collect{
-            // un-escape commas
-            it.replace('\\,', ',')
-          }.each{fieldNames.add(it)}
-          metadata = runner.getDocumentMetadataFields(rank, fieldNames)
-        }
         try{
+          long rank = Long.parseLong(rankStr)
+          // see if any fields were requested
+          Map<String, Serializable> metadata = null;
+          def fieldNamesStr = p["fieldNames"]
+          if(fieldNamesStr) {
+            Set<String> fieldNames = new HashSet<String>()
+            // split on each comma (not preceded by a backslash)
+            fieldNamesStr.split(/\s*(?<!\\),\s*/).collect{
+              // un-escape commas
+              it.replace('\\,', ',')
+            }.each{fieldNames.add(it)}
+            metadata = runner.getDocumentMetadataFields(rank, fieldNames)
+          }
           //we have all required parameters
           String documentURI = runner.getDocumentURI(rank)
           String documentTitle = runner.getDocumentTitle(rank)
@@ -464,16 +465,19 @@ class SearchController {
               delegate.metadataField(name:key, value:value.toString())
             }
           }
-        }catch(Exception e){
+        } catch(NumberFormatException e) {
+          message = buildMessage(ERROR,
+            "Non-integer value provided for parameter rank", null);
+        } catch(Exception e){
           message = buildMessage(ERROR, 
             'Error while obtaining the document metadata: "' + 
             e.getMessage() + "\"!", null)
         }
-      }else{
+      } else {
         message= buildMessage(ERROR, 
         "No value provided for parameter rank!", null)
       }
-    } else{
+    } else {
       message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
     }
     //return the results
@@ -559,9 +563,9 @@ class SearchController {
     if(runner) {
       try {
         // we have all required parameters
-        int docCount = runner.getDocumentsCurrentCount()
+        long docCount = runner.getDocumentsCurrentCount()
         new ObjectOutputStream (response.outputStream).withStream {stream ->
-          stream.writeInt(docCount)
+          stream.writeLong(docCount)
         }
       } catch(Exception e) {
         log.warn("Error while sending document current count", e)
@@ -588,9 +592,9 @@ class SearchController {
     if(runner) {
       try {
         // we have all required parameters
-        int docCount = runner.getDocumentsCount()
+        long docCount = runner.getDocumentsCount()
         new ObjectOutputStream (response.outputStream).withStream {stream ->
-          stream.writeInt(docCount)
+          stream.writeLong(docCount)
         }
       } catch(Exception e) {
         log.warn("Error while sending document count", e)
@@ -625,15 +629,15 @@ class SearchController {
         if(sizeParam) {
           //we have all required parameters
           try {
-            int from = firstRankParam.toInteger()
-            int resultSize = sizeParam.toInteger()
-            int to = from + resultSize
+            long from = firstRankParam as long
+            int resultSize = sizeParam as int
+            long to = from + resultSize
             if(to > runner.getDocumentsCount()) {
               to = runner.getDocumentsCount()
             }
-            int[] docIds = new int[(to - from)]
-            for(int rank = from; rank < to; rank++) {
-              docIds[rank] = runner.getDocumentID(rank)
+            long[] docIds = new long[(int)(to - from)]
+            for(long rank = from; rank < to; rank++) {
+              docIds[(int)(rank - from)] = runner.getDocumentID(rank)
             }
             new ObjectOutputStream (response.outputStream).withStream {stream ->
               stream.writeObject(docIds)
@@ -675,15 +679,15 @@ class SearchController {
         if(sizeParam) {
           //we have all required parameters
           try {
-            int from = firstRankParam.toInteger()
-            int resultSize = sizeParam.toInteger()
-            int to = from + resultSize
+            long from = firstRankParam as long
+            int resultSize = sizeParam as int
+            long to = from + resultSize
             if(to > runner.getDocumentsCount()) {
               to = runner.getDocumentsCount()
             }
-            double[] docScores = new double[(to - from)]
+            double[] docScores = new double[(int)(to - from)]
             for(int rank = from; rank < to; rank++) {
-              docScores[rank] = runner.getDocumentScore(rank)
+              docScores[(int)(rank - from)] = runner.getDocumentScore(rank)
             }
             new ObjectOutputStream (response.outputStream).withStream {stream ->
               stream.writeObject(docScores)
@@ -721,7 +725,7 @@ class SearchController {
       def documentRankParam = p["documentRank"]
       if(documentRankParam){
         try{
-          int documentRank = documentRankParam.toInteger()
+          long documentRank = documentRankParam as long
           //we have all required parameters
           List<Binding> hits = runner.getDocumentHits(documentRank)
           new ObjectOutputStream (response.outputStream).withStream {stream ->
@@ -754,10 +758,10 @@ class SearchController {
     def p = params["request"] ?: params
     Index index = request.theIndex
     // get the document ID
-    int documentId = -1;
+    long documentId = -1;
     String documentIdParam = p["documentId"]
     if(documentIdParam) {
-      documentId = documentIdParam.toInteger()
+      documentId = documentIdParam as long
     } else {
       // we didn't get the explicit ID; try queryId and rank instead
       String queryId = p["queryId"]
@@ -766,7 +770,7 @@ class SearchController {
         if(runner){
           String documentRankParam = p["documentRank"]
           if (documentRankParam) {
-            int documentRank = documentRankParam.toInteger()
+            long documentRank = documentRankParam as long
             documentId = runner.getDocumentID(documentRank)
           } else {
             log.warn("Error while sending document data: " +
@@ -824,7 +828,7 @@ class SearchController {
         if(documentRankParam){
           try{
             //we have all the required parameters
-            int documentRank = documentRankParam.toInteger()
+            long documentRank = documentRankParam as long
             response.characterEncoding = "UTF-8"
             response.writer.withWriter{ writer ->
               runner.renderDocument(documentRank, writer)
@@ -846,9 +850,9 @@ class SearchController {
       //no queryId value supplied: use documentId
       String documentIdStr = p["documentId"]
       if(documentIdStr) {
-        int docId
+        long docId
         try{
-          docId = documentIdStr.toInteger()
+          docId = documentIdStr as long
         } catch (Exception e) {
           response.sendError(HttpServletResponse.SC_BAD_REQUEST,
             "Invalid value provided for parameter documentId (not an integer)!")
@@ -862,9 +866,7 @@ class SearchController {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST,
           "You must supply either a documentId or the queryId and rank!")
       }
-      
     }
-
   }
   
   /**

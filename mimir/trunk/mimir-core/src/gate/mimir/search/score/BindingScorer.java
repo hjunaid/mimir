@@ -16,9 +16,9 @@ package gate.mimir.search.score;
 
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.search.DocumentIterator;
-import it.unimi.dsi.mg4j.search.score.AbstractWeightedScorer;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.search.DocumentIterator;
+import it.unimi.dsi.big.mg4j.search.score.AbstractWeightedScorer;
 
 import java.io.IOException;
 
@@ -73,7 +73,7 @@ public class BindingScorer  extends AbstractWeightedScorer implements MimirScore
   
   protected double alpha;
 
-  public int nextDocument(int greaterThan) throws IOException {
+  public long nextDocument(long greaterThan) throws IOException {
     return underlyingExecutor.nextDocument(greaterThan);
   }
 

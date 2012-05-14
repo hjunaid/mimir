@@ -22,12 +22,13 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import it.unimi.dsi.lang.MutableString;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.index.IndexIterator;
-import it.unimi.dsi.mg4j.index.IndexReader;
-import it.unimi.dsi.mg4j.index.payload.Payload;
-import it.unimi.dsi.mg4j.search.IntervalIterator;
-import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.index.IndexIterator;
+import it.unimi.dsi.big.mg4j.index.IndexReader;
+import it.unimi.dsi.big.mg4j.index.payload.Payload;
+import it.unimi.dsi.big.mg4j.search.DocumentIterator;
+import it.unimi.dsi.big.mg4j.search.IntervalIterator;
+import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 import java.util.*;
@@ -151,7 +152,7 @@ public class TermQuery implements QueryNode {
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#nextDocument()
      */
-    public int nextDocument(int from) throws IOException {
+    public long nextDocument(long from) throws IOException {
       if(closed) return latestDocument = -1;
       if(latestDocument == -1){
         //we have exhausted the search already
@@ -161,7 +162,7 @@ public class TermQuery implements QueryNode {
       if (from >= latestDocument){
         //we do need to skip
         latestDocument = indexIterator.skipTo(from + 1);
-        if(latestDocument == Integer.MAX_VALUE){
+        if(latestDocument == DocumentIterator.END_OF_LIST){
           //no more documents available
           latestDocument = -1;
         }
@@ -222,7 +223,7 @@ public class TermQuery implements QueryNode {
       return indexIterator.intervalIterator();
     }
 
-    public int frequency() throws IOException {
+    public long frequency() throws IOException {
       return indexIterator.frequency();
     }
 
@@ -259,15 +260,11 @@ public class TermQuery implements QueryNode {
       return indexIterator.indices();
     }
 
-    public int nextInt() {
-      return indexIterator.nextInt();
-    }
-
     public IndexIterator id(int id) {
       return indexIterator.id(id);
     }
 
-    public int nextDocument() throws IOException {
+    public long nextDocument() throws IOException {
       return indexIterator.nextDocument();
     }
 
@@ -275,7 +272,7 @@ public class TermQuery implements QueryNode {
       return indexIterator.id();
     }
 
-    public int document() {
+    public long document() {
       return indexIterator.document();
     }
 
@@ -296,11 +293,7 @@ public class TermQuery implements QueryNode {
       return indexIterator.iterator();
     }
 
-    public int skip(int arg0) {
-      return indexIterator.skip(arg0);
-    }
-
-    public int termNumber() {
+    public long termNumber() {
       return indexIterator.termNumber();
     }
 
@@ -316,7 +309,7 @@ public class TermQuery implements QueryNode {
       return indexIterator.weight(weight);
     }
 
-    public int skipTo(int n) throws IOException {
+    public long skipTo(long n) throws IOException {
       return indexIterator.skipTo(n);
     }
 

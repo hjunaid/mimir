@@ -23,6 +23,7 @@ import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.IndexException;
 import gate.mimir.index.Indexer;
 import gate.mimir.index.mg4j.MentionsIndexBuilder;
+import gate.mimir.index.mg4j.MimirIndexBuilder;
 import gate.mimir.index.mg4j.TokenIndexBuilder;
 import gate.mimir.index.mg4j.zipcollection.DocumentCollection;
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
@@ -33,10 +34,14 @@ import gate.mimir.search.query.parser.ParseException;
 import gate.mimir.search.query.parser.QueryParser;
 import gate.mimir.search.score.MimirScorer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.mg4j.index.DiskBasedIndex;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.index.Index.UriKeys;
+import it.unimi.dsi.fastutil.io.BinIO;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.util.Properties;
+import it.unimi.dsi.big.mg4j.index.DiskBasedIndex;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.index.Index.UriKeys;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -54,7 +59,10 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Timer;
@@ -117,7 +125,7 @@ public class QueryEngine {
    * A cache of {@link DocumentData} values used for returning the various
    * document details (title, URI, text).
    */
-  protected Int2ObjectLinkedOpenHashMap<DocumentData> documentCache;
+  protected Long2ObjectLinkedOpenHashMap<DocumentData> documentCache;
 
   /**
    * The maximum number of documents to be stored in the document cache.
@@ -127,7 +135,7 @@ public class QueryEngine {
   /**
    * The set of IDs for the documents marked as deleted. 
    */
-  private transient SortedSet<Integer> deletedDocumentIds;
+  private transient SortedSet<Long> deletedDocumentIds;
   
   /**
    * A timer used to execute the writing of deleted documents data to disk.
@@ -146,7 +154,7 @@ public class QueryEngine {
    * The document sizes used during search time (if running in document mode) to
    * simulate document-spanning annotations.
    */
-  private transient IntList documentSizes;
+  private transient IntBigList documentSizes;
   
   /**
    * The name for the file (stored in the root index directory) containing 
@@ -188,7 +196,7 @@ public class QueryEngine {
    */
   protected Callable<MimirScorer> scorerSource;
   
-  protected Logger logger = Logger.getLogger(QueryEngine.class);
+  protected static final Logger logger = Logger.getLogger(QueryEngine.class);
 
   /**
    * The tokeniser (technically any GATE LA) used to split the text segments
@@ -334,7 +342,7 @@ public class QueryEngine {
    * sub-indexes should have the same sizes).
    * @return
    */
-  public IntList getDocumentSizes() {
+  public IntBigList getDocumentSizes() {
     return documentSizes;
   }
   
@@ -596,7 +604,7 @@ public class QueryEngine {
    *         the second represents the spaces between them
    * @throws IndexException
    */
-  public String[][] getText(int documentID, int termPosition, int length)
+  public String[][] getText(long documentID, int termPosition, int length)
   throws IndexException {
     return getDocumentData(documentID).getText(termPosition, length);
   }
@@ -615,7 +623,7 @@ public class QueryEngine {
    * @throws IndexException
    *           if no document renderer is available.
    */
-  public void renderDocument(int docID, List<Binding> hits, Appendable output)
+  public void renderDocument(long docID, List<Binding> hits, Appendable output)
   throws IOException, IndexException {
     DocumentRenderer docRenderer = indexConfig.getDocumentRenderer();
     if(docRenderer == null) { throw new IndexException(
@@ -623,11 +631,11 @@ public class QueryEngine {
     docRenderer.render(getDocumentData(docID), hits, output);
   }
 
-  public String getDocumentTitle(int docID) throws IndexException {
+  public String getDocumentTitle(long docID) throws IndexException {
     return getDocumentData(docID).getDocumentTitle();
   }
 
-  public String getDocumentURI(int docID) throws IndexException {
+  public String getDocumentURI(long docID) throws IndexException {
     return getDocumentData(docID).getDocumentURI();
   }
 
@@ -643,7 +651,7 @@ public class QueryEngine {
    * field name and document.
    * @throws IndexException
    */
-  public Serializable getDocumentMetadataField(int docID, String fieldName) 
+  public Serializable getDocumentMetadataField(long docID, String fieldName) 
       throws IndexException {
     return getDocumentData(docID).getMetadataField(fieldName);
   }
@@ -657,7 +665,7 @@ public class QueryEngine {
    * @return the {@link DocumentData} associated with the given document ID.
    * @throws IndexException
    */
-  public synchronized DocumentData getDocumentData(int documentID)
+  public synchronized DocumentData getDocumentData(long documentID)
   throws IndexException {
     if(isDeleted(documentID)) {
       throw new IndexException("Invalid document ID " + documentID);
@@ -757,7 +765,7 @@ public class QueryEngine {
       // open the zipped document collection
       documentCollection = new DocumentCollection(indexDir);
       // prepare the document cache
-      documentCache = new Int2ObjectLinkedOpenHashMap<DocumentData>();
+      documentCache = new Long2ObjectLinkedOpenHashMap<DocumentData>();
     } catch(IOException e) {
       // IOException gets thrown upward
       throw e;
@@ -790,6 +798,9 @@ public class QueryEngine {
   ClassNotFoundException, InstantiationException,
   IllegalAccessException, InvocationTargetException,
   NoSuchMethodException {
+    // see if the index needs upgrading
+    upgradeIndex(indexUri);
+    // calculate the flags
     Index theIndex;
     try {
       // Optimisations: if the index size (i.e. index + positions files) is
@@ -823,6 +834,7 @@ public class QueryEngine {
           (UriKeys.MAPPED.name().toLowerCase() + "=1;" + 
            UriKeys.OFFSETSTEP.toString().toLowerCase() + "=-" + 
            DiskBasedIndex.DEFAULT_OFFSET_STEP ));
+      
       logger.debug("Opening index: " + indexUri.toString() + options);
       theIndex = Index.getInstance(indexUri.toString() + options, true, true);
     } catch(IOException e) {
@@ -836,11 +848,79 @@ public class QueryEngine {
   }
   
   /**
+   * Given a index URI (a file URI denoting the index base name for all the 
+   * index files), this method checks if the index if an older version, and 
+   * upgrades it to the current version, making sure it can be opened. 
+   * @param indexUri
+   * @throws IOException
+   * @throws ClassNotFoundException
+   * @throws ConfigurationException 
+   */
+  public static void upgradeIndex(URI indexUri) throws IOException, 
+      ClassNotFoundException, ConfigurationException {
+    // check if the term map is 32 bits, and convert if needed.
+    File termMapFile = new File(URI.create(indexUri.toString()
+          + DiskBasedIndex.TERMMAP_EXTENSION));
+    Object termmap = BinIO.loadObject(termMapFile);
+    if(termmap instanceof it.unimi.dsi.util.StringMap) {
+      // 32 bit index: save the old termmap
+      logger.warn("Old index format detected (32 bits term map file); " +
+          "converting to new version. Old files will be backed up with " +
+          "a .32bit extension.");
+      if(termMapFile.renameTo(new File(URI.create(indexUri.toString()
+          + DiskBasedIndex.TERMMAP_EXTENSION + ".32bit")))) {
+        // and generate the new one
+        File termsFile = new File(URI.create(indexUri.toString()
+          + DiskBasedIndex.TERMS_EXTENSION));
+        MimirIndexBuilder.generateTermMap(termsFile, termMapFile);
+      } else {
+        throw new IOException("Could not rename old termmap file (" + 
+            termMapFile.getAbsolutePath() + ").");
+      }
+    }
+    // check if the .properties file contains any mg4j-standard classes,
+    // and replace all mentions with the equivalent mg4j-big ones
+    File propsFile = new File(URI.create(indexUri.toString()
+      + DiskBasedIndex.PROPERTIES_EXTENSION));
+    Properties indexProps = new Properties(propsFile);
+    indexProps.setAutoSave(false);
+    Iterator<String> keysIter = indexProps.getKeys();
+    String OLDPKG = "it.unimi.dsi.mg4j";
+    String NEWPKG = "it.unimi.dsi.big.mg4j";
+    Map<String, String> newVals = new LinkedHashMap<String, String>();
+    while(keysIter.hasNext()) {
+      String key = keysIter.next();
+      Object value = indexProps.getProperty(key);
+      if(value instanceof String && ((String)value).indexOf(OLDPKG) >= 0) {
+        newVals.put(key, ((String)value).replace(OLDPKG, NEWPKG));
+      }
+    }
+    if(newVals.size() > 0) {
+      // save a backup
+      logger.warn("Old index format detected (32 bits properties file); " +
+          "converting to new version. Old files will be backed up with " +
+          "a .32bit extension.");
+      if(propsFile.renameTo(new File(URI.create(indexUri.toString()
+        + DiskBasedIndex.PROPERTIES_EXTENSION + ".32bit")))) {
+        // update the properties values
+        for(Map.Entry<String, String> newEntry : newVals.entrySet()) {
+          indexProps.setProperty(newEntry.getKey(), newEntry.getValue());
+        }
+        // save the changed props
+        indexProps.save();
+      } else {
+        throw new IOException("Could not rename old properties file (" + 
+            propsFile.getAbsolutePath() + ").");          
+      }
+    }
+  }
+  
+  /**
    * Marks a given document (identified by its ID) as deleted. Deleted documents
    * are never returned as search results.
    * @param documentId
    */
-  public void deleteDocument(int documentId) {
+  public void deleteDocument(long documentId) {
     if(deletedDocumentIds.add(documentId)) {
       writeDeletedDocsLater();
     }
@@ -851,7 +931,7 @@ public class QueryEngine {
    * documents are never returned as search results.
    * @param documentIds
    */
-  public void deleteDocuments(Collection<Integer> documentIds) {
+  public void deleteDocuments(Collection<Long> documentIds) {
     if(deletedDocumentIds.addAll(documentIds)) {
       writeDeletedDocsLater();
     }
@@ -862,7 +942,7 @@ public class QueryEngine {
    * @param documentId
    * @return
    */
-  public boolean isDeleted(int documentId) {
+  public boolean isDeleted(long documentId) {
     return deletedDocumentIds.contains(documentId);
   }
   
@@ -882,7 +962,7 @@ public class QueryEngine {
    * this method for a document ID that is not currently marked as deleted has
    * no effect.
    */
-  public void undeleteDocuments(Collection<Integer> documentIds) {
+  public void undeleteDocuments(Collection<Long> documentIds) {
     if(deletedDocumentIds.removeAll(documentIds)) {
       writeDeletedDocsLater();
     }
@@ -909,7 +989,7 @@ public class QueryEngine {
   @SuppressWarnings("unchecked")
   protected synchronized void readDeletedDocs() throws IOException{
     deletedDocumentIds = Collections.synchronizedSortedSet(
-            new TreeSet<Integer>());
+            new TreeSet<Long>());
     File delFile = new File(indexDir, DELETED_DOCUMENT_IDS_FILE_NAME);
     if(delFile.exists()) {
       try {
@@ -917,7 +997,12 @@ public class QueryEngine {
                 new GZIPInputStream(
                 new BufferedInputStream(
                 new FileInputStream(delFile))));
-        deletedDocumentIds.addAll((Set<Integer>)ois.readObject());
+        // an old index will have saved a Set<Integer>, a new one will be
+        // Set<Long>
+        Set<? extends Number> savedSet = (Set<? extends Number>)ois.readObject();
+        for(Number n : savedSet) {
+          deletedDocumentIds.add(Long.valueOf(n.longValue()));
+        }
       } catch(ClassNotFoundException e) {
         // this should never happen
         throw new RuntimeException(e);

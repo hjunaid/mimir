@@ -18,8 +18,8 @@ package gate.mimir.search.query;
 import gate.mimir.search.QueryEngine;
 
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
-import it.unimi.dsi.mg4j.index.Index;
-import it.unimi.dsi.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 import java.util.*;
@@ -68,14 +68,14 @@ public class GapQuery implements QueryNode {
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#getLatestDocument()
      */
-    public int getLatestDocument() {
+    public long getLatestDocument() {
       return wrappedExecutor.getLatestDocument();
     }
 
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#nextDocument(int)
      */
-    public int nextDocument(int from) throws IOException {
+    public long nextDocument(long from) throws IOException {
       if(closed) return -1;
       return wrappedExecutor.nextDocument(from);
     }

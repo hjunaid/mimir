@@ -111,7 +111,7 @@ class LocalIndex extends Index implements Serializable {
   * @param documentID
   * @return
   */
-  DocumentData getDocumentData(int documentID) {
+  DocumentData getDocumentData(long documentID) {
     return localIndexService.getDocumentData(this, documentID)
   }
 
@@ -119,15 +119,15 @@ class LocalIndex extends Index implements Serializable {
    * @see gate.mimir.web.Index#renderDocument(int, java.io.Writer)
    */
   @Override
-  public void renderDocument(int documentID, Appendable out) {
+  public void renderDocument(long documentID, Appendable out) {
     localIndexService.renderDocument(this, documentID, out)
   }
 
-  void deleteDocuments(Collection<Integer> documentIds) {
+  void deleteDocuments(Collection<Long> documentIds) {
     localIndexService.deleteDocuments(this, documentIds)
   }
 
-  void undeleteDocuments(Collection<Integer> documentIds) {
+  void undeleteDocuments(Collection<Long> documentIds) {
     localIndexService.undeleteDocuments(this, documentIds)
   }
   

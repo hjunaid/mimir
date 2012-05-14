@@ -16,8 +16,8 @@ package gate.mimir;
 
 import gate.Gate;
 import gate.mimir.index.IndexException;
-import it.unimi.dsi.mg4j.index.NullTermProcessor;
-import it.unimi.dsi.mg4j.index.TermProcessor;
+import it.unimi.dsi.big.mg4j.index.NullTermProcessor;
+import it.unimi.dsi.big.mg4j.index.TermProcessor;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -171,7 +171,7 @@ public class IndexConfig implements Serializable {
    * The current format version for the XML files containing serialisations of 
    * IndexConfig instances.
    */
-  private static final int FORMAT_VERSION = 4;
+  private static final int FORMAT_VERSION = 5;
 
   /**
    * The default feature name for obtaining document URIs (provided as features
@@ -360,6 +360,7 @@ public class IndexConfig implements Serializable {
     xs.alias("indexConfig", IndexConfig.class);
     xs.alias("tokenIndexer", TokenIndexerConfig.class);
     xs.alias("semanticIndexer", SemanticIndexerConfig.class);
+    xs.aliasPackage("it.unimi.dsi.mg4j", "it.unimi.dsi.big.mg4j");
     return xs;
   }
 

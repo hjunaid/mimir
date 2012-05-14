@@ -151,20 +151,20 @@ class LocalIndexService {
     return getQueryEngine(index).getQueryRunner(query)
   }
   
-  public synchronized DocumentData getDocumentData(LocalIndex index, int documentId) {
+  public synchronized DocumentData getDocumentData(LocalIndex index, long documentId) {
     return getQueryEngine(index).getDocumentData(documentId)
   }
   
-  public synchronized void renderDocument(LocalIndex index, int documentId, Appendable out) {
+  public synchronized void renderDocument(LocalIndex index, long documentId, Appendable out) {
     getQueryEngine(index).renderDocument(documentId, [], out)
   }
   
   
-  public synchronized void deleteDocuments(LocalIndex index, Collection<Integer> documentIds) {
+  public synchronized void deleteDocuments(LocalIndex index, Collection<Long> documentIds) {
     getQueryEngine(index).deleteDocuments(documentIds)
   }
 
-  public synchronized void undeleteDocuments(LocalIndex index, Collection<Integer> documentIds) {
+  public synchronized void undeleteDocuments(LocalIndex index, Collection<Long> documentIds) {
     getQueryEngine(index).undeleteDocuments(documentIds)
   }
     

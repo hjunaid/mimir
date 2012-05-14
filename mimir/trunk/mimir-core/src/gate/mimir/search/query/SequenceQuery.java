@@ -132,14 +132,14 @@ public class SequenceQuery implements QueryNode {
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#nextDocument(int)
      */
-    public int nextDocument(int greaterThan) throws IOException {
+    public long nextDocument(long greaterThan) throws IOException {
       if(closed) return latestDocument = -1;
       if(latestDocument == -1) return latestDocument;
       
       //we've just been asked to change documents -> old hits not current any more
       hitsOnCurrentDocument.clear();
       while(hitsOnCurrentDocument.isEmpty()){
-        int nextDocFromSuper = super.nextDocument(greaterThan);
+        long nextDocFromSuper = super.nextDocument(greaterThan);
         if(nextDocFromSuper < 0){
           //no more documents
           return nextDocFromSuper;

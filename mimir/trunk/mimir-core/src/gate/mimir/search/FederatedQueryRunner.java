@@ -18,7 +18,11 @@ import gate.mimir.index.IndexException;
 import gate.mimir.search.query.Binding;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
+import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
+import it.unimi.dsi.fastutil.longs.LongBigList;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -39,7 +43,7 @@ public class FederatedQueryRunner implements QueryRunner {
   /**
    * The total number of result documents (or -1 if not yet known).
    */
-  private int documentsCount = -1;
+  private long documentsCount = -1;
   
   /**
    * The query runners for the sub-indexes.
@@ -49,13 +53,13 @@ public class FederatedQueryRunner implements QueryRunner {
   /**
    * The next rank that needs to be merged from each sub runner.
    */
-  protected int[] nextSubRunnerRank;
+  protected long[] nextSubRunnerRank;
   
   /**
    * For each result document rank, this list supplies the index for the
    * sub-runner that supplied the document.
    */
-  protected IntList rank2runnerIndex;
+  protected IntBigList rank2runnerIndex;
   
   /**
    * Which of the sub-runners has provided the previous document. This is an
@@ -68,24 +72,24 @@ public class FederatedQueryRunner implements QueryRunner {
    * For each result document rank, this list supplies the rank of the document
    * in sub-runner that supplied it.
    */
-  protected IntList rank2subRank;
+  protected LongBigList rank2subRank;
   
   public FederatedQueryRunner(QueryRunner[] subrunners) {
     this.subRunners = subrunners;
     this.nextSubRunnerRank = null;
-    this.rank2runnerIndex = new IntArrayList();
-    this.rank2subRank = new IntArrayList();
+    this.rank2runnerIndex = new IntBigArrayBigList();
+    this.rank2subRank = new LongBigArrayBigList();
   }
 
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getDocumentsCount()
    */
   @Override
-  public int getDocumentsCount() {
+  public long getDocumentsCount() {
     if(documentsCount < 0) {
-      int newDocumentsCount = 0;
+      long newDocumentsCount = 0;
       for(QueryRunner subRunner : subRunners) {
-        int subDocumentsCount = subRunner.getDocumentsCount();
+        long subDocumentsCount = subRunner.getDocumentsCount();
         if(subDocumentsCount < 0) {
           return -1;
         } else {
@@ -94,7 +98,7 @@ public class FederatedQueryRunner implements QueryRunner {
       }
       synchronized(this) {
         // initialize the nextSubRunnerRank array
-        nextSubRunnerRank = new int[subRunners.length];
+        nextSubRunnerRank = new long[subRunners.length];
         for(int i = 0; i < nextSubRunnerRank.length; i++) {
           if(subRunners[i].getDocumentsCount() == 0) {
             nextSubRunnerRank[i] = -1;
@@ -110,7 +114,7 @@ public class FederatedQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getCurrentDocumentsCount()
    */
   @Override
-  public int getDocumentsCurrentCount() {
+  public long getDocumentsCurrentCount() {
     if(documentsCount >= 0) {
       return documentsCount;
     } else {
@@ -126,12 +130,12 @@ public class FederatedQueryRunner implements QueryRunner {
    * Ensure that the given rank is resolved to the appropriate sub-runner rank.
    * @throws IndexOutOfBoundsException if rank is beyond the last document.
    */
-  private final synchronized void checkRank(int rank) throws IndexOutOfBoundsException, IOException {
+  private final synchronized void checkRank(long rank) throws IndexOutOfBoundsException, IOException {
     // quick check to see if we need to do anything else
-    if(rank < rank2runnerIndex.size()) {
+    if(rank < rank2runnerIndex.size64()) {
       return;
     }
-    for(int nextRank = rank2runnerIndex.size(); nextRank <= rank; nextRank++) {
+    for(long nextRank = rank2runnerIndex.size64(); nextRank <= rank; nextRank++) {
       boolean allOut = true;
       // start with the runner next the previously chosen one
       bestSubRunnerIndex = (bestSubRunnerIndex + 1) % subRunners.length;
@@ -176,10 +180,11 @@ public class FederatedQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentID(int)
    */
   @Override
-  public int getDocumentID(int rank) throws IndexOutOfBoundsException,
+  public long getDocumentID(long rank) throws IndexOutOfBoundsException,
     IOException {
     checkRank(rank);
-    int subId = subRunners[rank2runnerIndex.getInt(rank)].getDocumentID(rank2subRank.getInt(rank));
+    long subId = subRunners[rank2runnerIndex.getInt(rank)].getDocumentID(
+      rank2subRank.getLong(rank));
     return subId * subRunners.length + rank2runnerIndex.getInt(rank);
   }
 
@@ -187,81 +192,89 @@ public class FederatedQueryRunner implements QueryRunner {
    * @see gate.mimir.search.QueryRunner#getDocumentScore(int)
    */
   @Override
-  public double getDocumentScore(int rank) throws IndexOutOfBoundsException,
+  public double getDocumentScore(long rank) throws IndexOutOfBoundsException,
     IOException {
     checkRank(rank);
-    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentScore(rank2subRank.getInt(rank));
+    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentScore(
+        rank2subRank.getLong(rank));
   }
 
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getDocumentHits(int)
    */
   @Override
-  public List<Binding> getDocumentHits(int rank)
+  public List<Binding> getDocumentHits(long rank)
     throws IndexOutOfBoundsException, IOException {
     checkRank(rank);
-    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentHits(rank2subRank.getInt(rank));
+    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentHits(
+        rank2subRank.getLong(rank));
   }
 
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getDocumentText(int, int, int)
    */
   @Override
-  public String[][] getDocumentText(int rank, int termPosition, int length)
+  public String[][] getDocumentText(long rank, int termPosition, int length)
     throws IndexException, IndexOutOfBoundsException, IOException {
     checkRank(rank);
-    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentText(rank2subRank.getInt(rank), termPosition, length);
+    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentText(
+        rank2subRank.getLong(rank), termPosition, length);
   }
 
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getDocumentURI(int)
    */
   @Override
-  public String getDocumentURI(int rank) throws IndexException,
+  public String getDocumentURI(long rank) throws IndexException,
     IndexOutOfBoundsException, IOException {
     checkRank(rank);
-    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentURI(rank2subRank.getInt(rank));
+    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentURI(
+        rank2subRank.getLong(rank));
   }
 
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getDocumentTitle(int)
    */
   @Override
-  public String getDocumentTitle(int rank) throws IndexException,
+  public String getDocumentTitle(long rank) throws IndexException,
     IndexOutOfBoundsException, IOException {
     checkRank(rank);
-    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentTitle(rank2subRank.getInt(rank));
+    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentTitle(
+        rank2subRank.getLong(rank));
   }
 
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getDocumentMetadataField(int, java.lang.String)
    */
   @Override
-  public Serializable getDocumentMetadataField(int rank, String fieldName)
+  public Serializable getDocumentMetadataField(long rank, String fieldName)
     throws IndexException, IndexOutOfBoundsException, IOException {
     checkRank(rank);
-    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentMetadataField(rank2subRank.getInt(rank), fieldName);
+    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentMetadataField(
+        rank2subRank.getLong(rank), fieldName);
   }
 
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getDocumentMetadataFields(int, java.util.Set)
    */
   @Override
-  public Map<String, Serializable> getDocumentMetadataFields(int rank,
+  public Map<String, Serializable> getDocumentMetadataFields(long rank,
                                                              Set<String> fieldNames)
     throws IndexException, IndexOutOfBoundsException, IOException {
     checkRank(rank);
-    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentMetadataFields(rank2subRank.getInt(rank), fieldNames);
+    return subRunners[rank2runnerIndex.getInt(rank)].getDocumentMetadataFields(
+          rank2subRank.getLong(rank), fieldNames);
   }
 
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#renderDocument(int, java.lang.Appendable)
    */
   @Override
-  public void renderDocument(int rank, Appendable out) throws IOException,
+  public void renderDocument(long rank, Appendable out) throws IOException,
     IndexException {
     checkRank(rank);
-    subRunners[rank2runnerIndex.getInt(rank)].renderDocument(rank2subRank.getInt(rank), out);
+    subRunners[rank2runnerIndex.getInt(rank)].renderDocument(
+        rank2subRank.getLong(rank), out);
   }
 
   /* (non-Javadoc)

@@ -32,7 +32,7 @@ public class Binding implements Comparable<Binding>, Serializable {
   /**
    * The document ID for this binding.
    */
-  protected int documentID;
+  protected long documentID;
   
   /**
    * The term position for this binding.
@@ -61,7 +61,7 @@ public class Binding implements Comparable<Binding>, Serializable {
    * @param length
    * @param containedBindings
    */
-  public Binding(QueryNode queryNode, int documentID, int termPosition,
+  public Binding(QueryNode queryNode, long documentID, int termPosition,
           int length, Binding[] containedBindings) {
     this.queryNode = queryNode;
     this.documentID = documentID;
@@ -75,21 +75,21 @@ public class Binding implements Comparable<Binding>, Serializable {
    * @see java.lang.Comparable#compareTo(java.lang.Object)
    */
   public int compareTo(Binding o) {
-    int res = getDocumentId() - o.getDocumentId();
+    long res = getDocumentId() - o.getDocumentId();
     if(res == 0){
       res = getTermPosition() - o.getTermPosition();
     }
     if(res == 0){
       res = getLength() - o.getLength();
     }
-    return res;
+    return res > 0 ? 1 : (res == 0 ? 0 : -1);
   }
 
   /**
    * Gets the documentID for this binding.
    * @return
    */
-  public int getDocumentId(){
+  public long getDocumentId(){
     return documentID;
   }
   

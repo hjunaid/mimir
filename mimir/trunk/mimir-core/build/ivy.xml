@@ -17,12 +17,12 @@
       <artifact name="gate-core" type="jar" />
     </dependency>    
     <!-- MG4J -->
-    <dependency org="it.unimi.dsi" name="mg4j" rev="4.0.3" >
-      <artifact name="mg4j" type="jar"  />
+    <dependency org="it.unimi.dsi" name="mg4j-big" rev="4.0.4" >
+      <artifact name="mg4j-big" type="jar"  />
     </dependency>
     <!--  explicit versions for DSI tools -->
-    <dependency org="it.unimi.dsi" name="fastutil" rev="6.4.4" >
-      <artifact name="fastutil" type="jar"  />
+    <dependency org="it.unimi.dsi" name="webgraph" rev="3.0.7" >
+      <artifact name="webgraph" type="jar"  />
     </dependency>
     
     <!-- Exclude xmlbeans as it includes forbidden classes 
