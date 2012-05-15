@@ -193,7 +193,7 @@ public abstract class MimirIndexBuilder implements Runnable {
   /**
    * The current document pointer (gets incremented for each document).
    */
-  protected int documentPointer;
+  protected long documentPointer;
   
   /**
    * The position of the current (or most-recently used) token in the current
@@ -220,7 +220,7 @@ public abstract class MimirIndexBuilder implements Runnable {
   /**
    * The number of postings in the current batch.
    */
-  protected int occurrencesInTheCurrentBatch;
+  protected long occurrencesInTheCurrentBatch;
   
   /**
    * The number of postings in the whole index.
@@ -231,7 +231,7 @@ public abstract class MimirIndexBuilder implements Runnable {
   /**
    * The total number of documents indexed.
    */
-  protected int totalDocuments;
+  protected long totalDocuments;
   
   /** The initial size of the term map. */
   private static final int INITIAL_TERM_MAP_SIZE = 1000;
