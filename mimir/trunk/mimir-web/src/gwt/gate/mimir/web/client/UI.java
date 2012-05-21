@@ -650,6 +650,8 @@ public class UI implements EntryPoint {
     }
     // reset internal data
     initLocalData();
+    // clear the results pages list
+    pageLinksPanel.clear();
     // post the new query
     postQuery(searchBox.getText());
   }
@@ -684,25 +686,32 @@ public class UI implements EntryPoint {
   protected void updatePage(ResultsData resultsData) {
     int resTotal = resultsData.getResultsTotal();
     int resPartial = resultsData.getResultsPartial();
-    StringBuilder textBuilder = new StringBuilder("Documents ");
-    textBuilder.append(firstDocumentOnPage + 1);
-    textBuilder.append(" to ");
-    if(firstDocumentOnPage + maxDocumentsOnPage < resPartial) {
-      textBuilder.append(firstDocumentOnPage + maxDocumentsOnPage);
+    StringBuilder textBuilder = new StringBuilder();
+    if(resTotal == 0) {
+      // no results
+      textBuilder.append("No results, try rephrasing the query.");
     } else {
-      textBuilder.append(resPartial - firstDocumentOnPage);
+      textBuilder.append("Documents ");
+      textBuilder.append(firstDocumentOnPage + 1);
+      textBuilder.append(" to ");
+      if(firstDocumentOnPage + maxDocumentsOnPage < resPartial) {
+        textBuilder.append(firstDocumentOnPage + maxDocumentsOnPage);
+      } else {
+        textBuilder.append(resPartial - firstDocumentOnPage);
+      }
+      textBuilder.append(" of ");
+      
+      if(resTotal >= 0) {
+        // all results obtained
+        textBuilder.append(resultsData.getResultsTotal());
+      } else {
+        // more to come
+        textBuilder.append("at least ");
+        textBuilder.append(resPartial);
+      }
+      textBuilder.append(":");
     }
-    textBuilder.append(" of ");
     
-    if(resTotal > 0) {
-      // all results obtained
-      textBuilder.append(resultsData.getResultsTotal());
-    } else {
-      // more to come
-      textBuilder.append("at least ");
-      textBuilder.append(resPartial);
-    }
-    textBuilder.append(":");
     feedbackLabel.setText(textBuilder.toString());
     // now update the documents display
     if(resultsData.getDocuments() != null){
