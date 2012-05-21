@@ -50,9 +50,25 @@ import gate.util.GateRuntimeException;
  * A Semantic annotation helper that, at query time, connects to a SPARQL
  * endpoint to obtain a list of candidate URIs that are then passed to the
  * underlying delegate annotation helper.
+ * 
+ * This {@link DelegatingSemanticAnnotationHelper} wraps another actual 
+ * {@link SemanticAnnotationHelper} (the delegate). At search time, this helper
+ * provides an extra synthetic feature (its name being the value of 
+ * {@link SPARQLSemanticAnnotationHelper#SPARQL_QUERY_FEATURE_NAME}). The 
+ * content of an {@link ConstraintType#EQ} constraint is interpreted as a SPARQL
+ * query, which is executed against the SPARQL endpoint (see 
+ * {@link #getSparqlEndpoint()}). Each row in the result set contains a set of
+ * variable assignments, which are used to generate standard M&iacute;mir 
+ * queries that are passed-on to the delegate.   
  */
 public class SPARQLSemanticAnnotationHelper extends
                                            DelegatingSemanticAnnotationHelper {
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 3855212427922484546L;
+
+
   private static final Logger logger = Logger
       .getLogger(SPARQLSemanticAnnotationHelper.class);
 
@@ -75,7 +91,7 @@ public class SPARQLSemanticAnnotationHelper extends
   
   /**
    * The name used for the synthetic feature used at query time to supply the
-   * SPARQL query.
+   * SPARQL query ({@value}).
    */
   public static final String SPARQL_QUERY_FEATURE_NAME = "sparql";
   
@@ -152,6 +168,31 @@ public class SPARQLSemanticAnnotationHelper extends
     this.sparqlEndpointPassword = sparqlEndpointPassword;
   }
 
+  /* (non-Javadoc)
+   * @see gate.mimir.util.DelegatingSemanticAnnotationHelper#getNominalFeatures()
+   */
+  @Override
+  public String[] getNominalFeatures() {
+    String[] oldNomFeats = super.getNominalFeatures();
+    // add virtual "sparql" feature, if not already present
+    boolean sparqlAdded = false;
+    for(String aFeat : getNominalFeatures()) {
+      if(aFeat.equals(SPARQL_QUERY_FEATURE_NAME)) {
+        sparqlAdded = true;
+        break;
+      }
+    }
+    if(!sparqlAdded) {
+      // add the virtual sparql feature (on the first position, to reduce the
+      // cost of future calls to this method).
+      String[] newNomFeats = new String[oldNomFeats.length + 1];
+      newNomFeats[0] = SPARQL_QUERY_FEATURE_NAME;
+      System.arraycopy(oldNomFeats, 0, newNomFeats, 1, oldNomFeats.length);
+      nominalFeatureNames = newNomFeats;
+    }
+    return nominalFeatureNames;
+  }
+
   @Override
   public void init(Indexer indexer) {
     super.init(indexer);
@@ -168,10 +209,6 @@ public class SPARQLSemanticAnnotationHelper extends
     } else {
       authHeader = null;
     }
-
-    // add virtual "sparql" feature
-    setNominalFeatures(concatenateArrays(getNominalFeatures(), 
-            new String[]{SPARQL_QUERY_FEATURE_NAME}));
   }
 
   @Override

@@ -34,19 +34,32 @@ import gate.mimir.search.QueryEngine;
  * 
  * <p>The default implementation of the "business" methods init/close,
  * documentStart/End and getMentions/getMentionUris is to simply call
- * the delegate's equivalent method.  However the "info" methods
- * getNominal/Integer/Float/Text/UriFeatureNames simply return the values
- * passed to the constructor.  This is deliberate, as it allows this
- * helper to claim support for additional features not provided by the
- * delegate, and/or to hide features that the delegate supports if, at
- * search time the helper will be faking these features in terms of
- * other features.</p>
+ * the delegate's equivalent method.  
+ * 
+ * The logic for the "info" methods 
+ * getNominal/Integer/Float/Text/UriFeatureNames is:
+ * <ul>
+ *   <li>if the required value is known locally (e.g. an explicit value was set 
+ *   by a setter), then simply return it;</li>
+ *   <li>if no explicit value is set, and if the delegate helper is an instance 
+ *   of {@link AbstractSemanticAnnotationHelper} (which can supply appropriate 
+ *   information), then the value is obtained from the delegate, stored 
+ *   locally, and returned. Future calls to the same method will use the locally
+ *   stored value.</li>
+ *   <li>if no local value exists, and the delegate cannot supply the 
+ *   information, then <code>null</code> is returned.</li>
+ * </ul> 
+ * This allows sub-classes of this class to override the appropriate getters so 
+ * that they change the set of supported features. This can be useful in order 
+ * to claim support for additional features not provided by the delegate, and/or
+ * to hide features that the delegate supports if, at search time the helper 
+ * will be faking these features in terms of other features.
  * 
  * <p><b>Note</b> this class does <b>not</b> override the convenience method
  * {@link AbstractSemanticAnnotationHelper#getMentions(String, Map, QueryEngine)},
  * so this method is implemented as a call to
- * <code>this.getMentions(String, List&lt;Constraint&gt;, QueryEngine)</code>, not
- * to <code>delegate.getMentions(String, Map, QueryEngine)</code>.
+ * <code>this.getMentions(String, List&lt;Constraint&gt;, QueryEngine)</code>, 
+ * not to <code>delegate.getMentions(String, Map, QueryEngine)</code>.
  */
 public abstract class DelegatingSemanticAnnotationHelper extends
                                                         AbstractSemanticAnnotationHelper {
@@ -59,8 +72,6 @@ public abstract class DelegatingSemanticAnnotationHelper extends
 
   protected SemanticAnnotationHelper delegate;
 
-
-  
   public SemanticAnnotationHelper getDelegate() {
     return delegate;
   }
@@ -69,36 +80,115 @@ public abstract class DelegatingSemanticAnnotationHelper extends
     this.delegate = delegate;
   }
 
+  
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.AbstractSemanticAnnotationHelper#getAnnotationType()
+   */
+  @Override
+  public String getAnnotationType() {
+    if(annotationType == null) {
+      // not explicitly set -> calculate it
+      if(delegate instanceof AbstractSemanticAnnotationHelper) {
+        annotationType = 
+            ((AbstractSemanticAnnotationHelper)delegate).getAnnotationType();
+      }
+    }
+    return annotationType;
+  }
+  
+
+  /* (non-Javadoc)
+   * @see gate.mimir.AbstractSemanticAnnotationHelper#getNominalFeatures()
+   */
+  @Override
+  public String[] getNominalFeatures() {
+    if(nominalFeatureNames == null) {
+      // not explicitly set -> calculate the value
+      if(delegate instanceof AbstractSemanticAnnotationHelper) {
+        nominalFeatureNames = 
+            ((AbstractSemanticAnnotationHelper)delegate).getNominalFeatures();
+      }
+    }
+    return nominalFeatureNames;
+  }
+
+  /* (non-Javadoc)
+   * @see gate.mimir.AbstractSemanticAnnotationHelper#getIntegerFeatures()
+   */
+  @Override
+  public String[] getIntegerFeatures() {
+    if(integerFeatureNames == null) {
+      // not explicitly set -> calculate the value
+      if(delegate instanceof AbstractSemanticAnnotationHelper) {
+        integerFeatureNames = 
+            ((AbstractSemanticAnnotationHelper)delegate).getIntegerFeatures();
+      }
+    }
+    return integerFeatureNames;
+  }
+
+  /* (non-Javadoc)
+   * @see gate.mimir.AbstractSemanticAnnotationHelper#getFloatFeatures()
+   */
+  @Override
+  public String[] getFloatFeatures() {
+    if(floatFeatureNames == null) {
+      // not explicitly set -> calculate the value
+      if(delegate instanceof AbstractSemanticAnnotationHelper) {
+        floatFeatureNames = 
+            ((AbstractSemanticAnnotationHelper)delegate).getFloatFeatures();
+      }
+    }
+    return floatFeatureNames;  
+  }
+
+  /* (non-Javadoc)
+   * @see gate.mimir.AbstractSemanticAnnotationHelper#getTextFeatures()
+   */
+  @Override
+  public String[] getTextFeatures() {
+    if(textFeatureNames == null) {
+      // not explicitly set -> calculate the value
+      if(delegate instanceof AbstractSemanticAnnotationHelper) {
+        textFeatureNames = 
+            ((AbstractSemanticAnnotationHelper)delegate).getTextFeatures();
+      }
+    }
+    return textFeatureNames;
+  }
+
+  /* (non-Javadoc)
+   * @see gate.mimir.AbstractSemanticAnnotationHelper#getUriFeatures()
+   */
+  @Override
+  public String[] getUriFeatures() {
+    if(uriFeatureNames == null) {
+      // not explicitly set -> calculate the value
+      if(delegate instanceof AbstractSemanticAnnotationHelper) {
+        uriFeatureNames = 
+            ((AbstractSemanticAnnotationHelper)delegate).getUriFeatures();
+      }
+    }
+    return uriFeatureNames;
+  }
+
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.AbstractSemanticAnnotationHelper#getMode()
+   */
+  @Override
+  public Mode getMode() {
+    if(mode == null) {
+      mode = delegate.getMode();
+    }
+    return mode;
+  }
+
   @Override
   public void init(Indexer indexer) {
     super.init(indexer);
     delegate.init(indexer);
-    // obtain from delegate all values that have not been expliclty set
-    if(delegate instanceof AbstractSemanticAnnotationHelper) {
-      AbstractSemanticAnnotationHelper absDelegate =
-          (AbstractSemanticAnnotationHelper)delegate;
-      if(annotationType == null) {
-        annotationType = absDelegate.getAnnotationType();
-      }
-      if(nominalFeatureNames == null) {
-        nominalFeatureNames = absDelegate.getNominalFeatures();
-      }
-      if(integerFeatureNames == null) {
-        integerFeatureNames = absDelegate.getIntegerFeatures();
-      }
-      if(floatFeatureNames == null) {
-        floatFeatureNames = absDelegate.getFloatFeatures();
-      }
-      if(textFeatureNames == null) {
-        textFeatureNames = absDelegate.getTextFeatures();
-      }
-      if(uriFeatureNames == null) {
-        uriFeatureNames = absDelegate.getUriFeatures();
-      }
-    }
-    if(mode == null) {
-      mode = delegate.getMode();
-    }
   }
 
   @Override
