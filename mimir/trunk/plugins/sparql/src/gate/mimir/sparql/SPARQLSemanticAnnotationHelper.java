@@ -176,7 +176,7 @@ public class SPARQLSemanticAnnotationHelper extends
     String[] oldNomFeats = super.getNominalFeatures();
     // add virtual "sparql" feature, if not already present
     boolean sparqlAdded = false;
-    for(String aFeat : getNominalFeatures()) {
+    for(String aFeat : oldNomFeats) {
       if(aFeat.equals(SPARQL_QUERY_FEATURE_NAME)) {
         sparqlAdded = true;
         break;
