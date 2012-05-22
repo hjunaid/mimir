@@ -10,11 +10,12 @@
             location="${grails-demo-webapp.dirname}" />
   <property name="grails-cloud-webapp.dir"
             location="${grails-cloud-webapp.dirname}" />
-  
+  <property name="mimir-guide.dir" location="doc" />  
   <property file="mimir-web/application.properties"  prefix="mimir.web." />
 
   <property name="generated-header.java" location="etc/generated-header.java" />
-
+  <property name="generated-header.tex" location="etc/generated-header.tex" />
+  
   <!-- Load the AntContrib tasks -->
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
   <classpath>
@@ -65,6 +66,19 @@
 
   <target name="grails.command" depends="detect.os, grails.command.win, grails.command.notwin" />
 
+  <target name="resolve-tex-templates">
+    <copy todir="${mimir-guide.dir}" overwrite="true">
+      <fileset dir="${mimir-guide.dir}" includes="**/*.tex.template" />
+      <globmapper from="*.template" to="*" />
+      <filterset>
+        <filter token="version" value="${app.version}" />
+      </filterset>
+      <filterchain>
+        <concatfilter prepend="${generated-header.tex}" />
+      </filterchain>
+    </copy>
+  </target>
+  
   <macrodef name="resolve-groovy-templates">
     <attribute name="dir" />
     <sequential>
@@ -202,7 +216,8 @@ gwt.version = "${gwt.version}"
     mean.</echo>
   </target>  
   
-  <target name="all" depends="core, plugins, grails-plugin, prepare-cloud-app" />
+  <target name="all" 
+    depends="core, plugins, grails-plugin, prepare-cloud-app, resolve-tex-templates" />
 
   <target name="clean" depends="grails.command">
     <ant dir="${mimir-core.dir}" target="clean" />
