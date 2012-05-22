@@ -1,5 +1,24 @@
 This appendix details the main changes in each \Mimir\ release.
 
+\section{Version 4.1.1 (May 2012)}
+\begin{itemize}
+\item Bugfix: the annotation type needed to be specified twice in the index
+  template when using the SPQARQL plugin.
+\item Bugfix: the web search UI was not updating correctly when a query
+  completed without matching any results.   
+\end{itemize}
+
+\section{Version 4.1 (May 2012)}
+\begin{itemize}
+\item A bugfix was applied to avoid leaking threads and memory in the new
+  ranking query runner implementation (the class {\tt gate.mimir.search.RankingQueryRunnerImpl}).
+\item \Mimir{} now uses the mg4j-big variant of the MG4J library. This uses
+  64 bit integers (Java longs) for document identifiers, and allows for larger
+  indexes to be created.
+\item The dependency to MG4J and related libraries is now managed through the
+  maven-central repository.
+\end{itemize}
+
 \section{Version 4.0 (February 2012)}
 \begin{itemize}
   \item Changed the results presentation to be document-centric, as opposed to
