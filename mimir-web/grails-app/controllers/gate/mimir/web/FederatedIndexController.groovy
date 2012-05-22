@@ -118,7 +118,7 @@ class FederatedIndexController {
 
     def save = {
         def federatedIndexInstance = new FederatedIndex(params)
-        federatedIndexInstance.indexId =  UUID.randomUUID().toString()
+        federatedIndexInstance.indexId = params.indexId ?: UUID.randomUUID().toString()
         // check that all the sub-indexes are in the right state
         federatedIndexInstance.state = federatedIndexInstance.indexes.get(0).state 
         if(federatedIndexInstance.indexes.any { it.state != federatedIndexInstance.state }) {

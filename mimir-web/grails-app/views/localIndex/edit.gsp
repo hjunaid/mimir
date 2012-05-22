@@ -29,7 +29,8 @@
 	<table>
 		<tbody>
 
-			<tr class="prop">
+			<g:set var="i" value="${0}" />
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="indexId">Index ID:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:localIndexInstance,field:'indexId','errors')}">
@@ -38,7 +39,7 @@
 				</td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="name">Name:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:localIndexInstance,field:'name','errors')}">
@@ -46,7 +47,7 @@
 					value="${fieldValue(bean:localIndexInstance,field:'name')}" /></td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="state">State:</label>
 				</td>
 				<td valign="top"
@@ -55,7 +56,7 @@
 				</td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="indexDirectory">Index
 				Directory:</label></td>
 				<td valign="top"
@@ -65,7 +66,7 @@
 				</td>
 			</tr>
 
-      <tr class="prop">
+      <tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
         <td valign="top" class="name"><label for="scorer">Scorer:</label></td>
         <td valign="top"
           class="value ${hasErrors(bean:localIndexInstance,field:'scorer','errors')}">
@@ -75,7 +76,7 @@
             name="scorer"/>
       </tr>
 			
-      <tr class="prop">
+      <tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
         <td valign="top" class="name"><label for="uriIsExternalLink">Document
       URIs are external links:</label></td>
         <td valign="top" class="value"><g:checkBox

@@ -28,7 +28,8 @@
 	<table>
 		<tbody>
 
-      <tr class="prop">
+			<g:set var="i" value="${0}" />
+      <tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
         <td valign="top" class="name"><label for="indexId">Index ID:</label></td>
         <td valign="top"
           class="value ${hasErrors(bean:remoteIndexInstance,field:'indexId','errors')}">
@@ -39,7 +40,7 @@
       
 
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="name">Name:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:remoteIndexInstance,field:'name','errors')}">
@@ -48,7 +49,7 @@
 			</tr>
 
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name">State:</td>
 				<td valign="top"
 					class="value ${hasErrors(bean:remoteIndexInstance,field:'state','errors')}">
@@ -56,12 +57,12 @@
 				</td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<th valign="top" class="name" colspan="2">Remote Data:
 				</td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="state"
 					style="margin-left: 20px">Remote URL:</label></td>
 				<td valign="top"
@@ -71,10 +72,10 @@
 				</td>
 			</tr>
 			<tr>
-			  <td colspan="2">This should be the "Index URL" from the target index's management page.</td>
+			  <td class="${(i % 2) ? 'even' : 'odd'}" colspan="2">This should be the "Index URL" from the target index's management page.</td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="remoteUsername">Remote Username:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:remoteIndexInstance,field:'remoteUsername','errors')}">
@@ -83,11 +84,11 @@
 				</td>
 			</tr>
 			<tr>
-			  <td colspan="2">If the remote server requires authentication, enter here
+			  <td class="${(i % 2) ? 'even' : 'odd'}" colspan="2">If the remote server requires authentication, enter here
 			  the username that should be used when connecting.</td>
 			</tr>
 			
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="remotePassword">Remote Password:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:remoteIndexInstance,field:'remotePassword','errors')}">
@@ -96,11 +97,11 @@
 				</td>
 			</tr>
 			<tr>
-			  <td colspan="2">If the remote server requires authentication, enter here
+			  <td class="${(i % 2) ? 'even' : 'odd'}" colspan="2">If the remote server requires authentication, enter here
 			  the password that should be used when connecting.</td>
 			</tr>
 
-      <tr class="prop">
+      <tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
         <td valign="top" class="name"><label for="uriIsExternalLink">Document
       URIs are external links:</label></td>
         <td valign="top" class="value"><g:checkBox

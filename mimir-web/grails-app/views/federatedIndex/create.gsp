@@ -25,7 +25,8 @@
 	<table>
 		<tbody>
 
-			<tr class="prop">
+			<g:set var="i" value="${0}" />
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="name">Name:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:federatedIndexInstance,field:'name','errors')}">
@@ -34,7 +35,7 @@
 				</td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="indexes">Indexes:</label>
 				</td>
 				<td valign="top"
@@ -44,13 +45,22 @@
 					optionKey="id" value="${federatedIndexInstance?.indexes}" /></td>
 			</tr>
 
-      <tr class="prop">
+      <tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
         <td valign="top" class="name"><label for="uriIsExternalLink">Document
       URIs are external links:</label></td>
         <td valign="top" class="value"><g:checkBox
           name="uriIsExternalLink"
           value="${federatedIndexInstance.uriIsExternalLink}" /></td>
       </tr>
+
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
+				<td valign="top" class="name"><label for="indexId">Index ID (optional):</label></td>
+				<td valign="top"
+					class="value ${hasErrors(bean:federatedIndexInstance,field:'indexId','errors')}">
+				<input type="text" id="indexId" name="indexId"
+					value="${fieldValue(bean:federatedIndexInstance,field:'indexId')}" />
+				</td>
+			</tr>
 
 		</tbody>
 	</table>

@@ -26,7 +26,8 @@
 	<table>
 		<tbody>
 
-			<tr class="prop">
+			<g:set var="i" value="${0}" />
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="name">Name:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:localIndexInstance,field:'name','errors')}">
@@ -34,7 +35,15 @@
 					value="${fieldValue(bean:localIndexInstance,field:'name')}" /></td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
+				<td valign="top" class="name"><label for="indexId">Index ID (optional):</label></td>
+				<td valign="top"
+					class="value ${hasErrors(bean:localIndexInstance,field:'indexId','errors')}">
+				<input type="text" id="indexId" name="indexId"
+					value="${fieldValue(bean:localIndexInstance,field:'indexId')}" /></td>
+			</tr>
+
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="indexDirectory">Index
 				directory:</label></td>
 				<td valign="top" class="value"><input type="text"
@@ -43,7 +52,7 @@
 				</td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="uriIsExternalLink">Document
       URIs are external links:</label></td>
 				<td valign="top" class="value"><g:checkBox
