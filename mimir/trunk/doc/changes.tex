@@ -1,15 +1,14 @@
 This appendix details the main changes in each \Mimir\ release.
 
-\section{Version 4.2-SNAPSHOT}
+\section{Version 4.1.1 (May 2012)}
 \begin{itemize}
 \item It is now possible to specify an index ID for a newly created/imported
   local, remote or federated index, rather than having to create the index with
   a random UUID and then change the ID later.
-%TODO fix up the screenshots to match this
-\end{itemize}
-
-\section{Version 4.1.1 (May 2012)}
-\begin{itemize}
+%TODO fix up the screenshots to match this  
+\item Bugfix: stopped the web search UI from showing `{\tt null}' for context
+  tokens outside of the document, when a hit result occurs close to the end of
+  the document.
 \item Bugfix: the annotation type needed to be specified twice in the index
   template when using the SPQARQL plugin.
 \item Bugfix: the web search UI was not updating correctly when a query
