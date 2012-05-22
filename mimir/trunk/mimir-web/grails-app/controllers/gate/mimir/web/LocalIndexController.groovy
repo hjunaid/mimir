@@ -173,7 +173,8 @@ class LocalIndexController {
       return
     }
     
-    def localIndexInstance = new LocalIndex(indexId:UUID.randomUUID().toString())
+    def indexId = params.indexId ?: UUID.randomUUID().toString()
+    def localIndexInstance = new LocalIndex(indexId:indexId)
     localIndexInstance.name = params.name
     localIndexInstance.uriIsExternalLink = params.uriIsExternalLink ? true : false
     localIndexInstance.state = Index.INDEXING
@@ -246,7 +247,7 @@ class LocalIndexController {
       render(view:'importIndex', model:[localIndexInstance:localIndexInstance])
     }
     else {
-      localIndexInstance.indexId = UUID.randomUUID().toString()
+      localIndexInstance.indexId = params.indexId ?: UUID.randomUUID().toString()
       if(localIndexInstance.save()) {
         flash.message = "Local Index \"${localIndexInstance.name}\" imported"
         redirect(controller:'mimirStaticPages', action: "admin")

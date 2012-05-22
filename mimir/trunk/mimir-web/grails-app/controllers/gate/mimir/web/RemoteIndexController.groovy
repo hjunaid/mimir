@@ -127,7 +127,8 @@ class RemoteIndexController {
    * Action to create a new index for indexing.
    */
   def save = {
-    def remoteIndexInstance = new RemoteIndex(indexId:UUID.randomUUID().toString())
+    def indexId = params.indexId ?: UUID.randomUUID().toString()
+    def remoteIndexInstance = new RemoteIndex(indexId:indexId)
     remoteIndexInstance.name = params.name
     remoteIndexInstance.uriIsExternalLink = params.uriIsExternalLink ? true : false
     remoteIndexInstance.remoteUrl = params.remoteUrl

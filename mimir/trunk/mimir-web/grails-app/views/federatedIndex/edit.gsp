@@ -29,7 +29,8 @@
 	<table>
 		<tbody>
 
-			<tr class="prop">
+			<g:set var="i" value="${0}" />
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="indexId">Index
 				Id:</label></td>
 				<td valign="top"
@@ -39,7 +40,7 @@
 				</td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="name">Name:</label></td>
 				<td valign="top"
 					class="value ${hasErrors(bean:federatedIndexInstance,field:'name','errors')}">
@@ -48,7 +49,7 @@
 				</td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="state">State:</label>
 				</td>
 				<td valign="top"
@@ -57,7 +58,7 @@
 				</td>
 			</tr>
 
-			<tr class="prop">
+			<tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
 				<td valign="top" class="name"><label for="indexes">Indexes:</label>
 				</td>
 				<td valign="top"
@@ -68,7 +69,7 @@
 					value="${federatedIndexInstance?.indexes.collect{it.id}}" /></td>
 			</tr>
 
-      <tr class="prop">
+      <tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
         <td valign="top" class="name"><label for="uriIsExternalLink">Document
       URIs are external links:</label></td>
         <td valign="top" class="value"><g:checkBox
