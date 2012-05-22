@@ -130,7 +130,7 @@ class GwtRpcService implements gate.mimir.web.client.GwtRpcService {
                 snippet[2] = qRunner.getDocumentText(docRank,
                   aHit.termPosition + aHit.length, 3).toList().
                   transpose().inject('') {
-                    acc, val -> acc + val[0] + (val[1] ? ' ' : '')
+                    acc, val -> acc + (val[0]?: '') + (val[1] ? ' ' : '')
                   }
                 snippets << snippet
               }
