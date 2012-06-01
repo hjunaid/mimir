@@ -101,6 +101,7 @@ public class OrQuery implements QueryNode {
      * @see gate.mimir.search.query.QueryExecutor#close()
      */
     public void close() throws IOException {
+      if(closed) return;
       super.close();
       if(executors != null) executors.close();
       executors = null;
