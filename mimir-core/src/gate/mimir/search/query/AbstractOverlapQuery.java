@@ -80,6 +80,7 @@ public abstract class AbstractOverlapQuery implements QueryNode{
      * @see gate.mimir.search.query.QueryExecutor#close()
      */
     public void close() throws IOException {
+      if(closed) return;
       super.close();
       innerExecutor.close();
       outerExecutor.close();

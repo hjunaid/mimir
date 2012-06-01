@@ -134,6 +134,7 @@ public class AnnotationQuery implements QueryNode {
      * @see gate.mimir.search.query.QueryExecutor#close()
      */
     public void close() throws IOException {
+      if(closed) return;
       super.close();
       if(underlyingExecutor != null) underlyingExecutor.close();
     }

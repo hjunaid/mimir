@@ -60,6 +60,7 @@ public class GapQuery implements QueryNode {
      * @see gate.mimir.search.query.QueryExecutor#close()
      */
     public void close() throws IOException {
+      if(closed) return;
       super.close();
       wrappedExecutor.close();
     }

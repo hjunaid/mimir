@@ -155,6 +155,7 @@ public abstract class AbstractIntersectionQueryExecutor extends AbstractQueryExe
    */
   @Override
   public void close() throws IOException {
+    if(closed) return;
     super.close();
     for(QueryExecutor anExecutor : executors) {
       if(anExecutor != null) anExecutor.close();
