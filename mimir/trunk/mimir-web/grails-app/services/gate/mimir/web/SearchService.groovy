@@ -57,7 +57,7 @@ class SearchService {
     QueryRunner runner = getQueryRunner(id)
     if(runner){
       log.debug("Releasing query ID ${id}")
-      runner.close()
+      // the cache listener will close the runner
       queryRunners.invalidate(id)
       return true
     }
