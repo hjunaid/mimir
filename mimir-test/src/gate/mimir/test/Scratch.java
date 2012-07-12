@@ -17,11 +17,13 @@ import it.unimi.dsi.big.mg4j.search.score.TfIdfScorer;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 
 import gate.Gate;
+import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryRunner;
 import gate.mimir.search.RankingQueryRunnerImpl;
@@ -31,9 +33,12 @@ import gate.mimir.search.query.parser.QueryParser;
 import gate.mimir.search.score.BindingScorer;
 import gate.mimir.search.score.DelegatingScoringQueryExecutor;
 import gate.mimir.search.score.MimirScorer;
+import gate.util.GateException;
 
 public class Scratch {
 
+  
+  
   public static void mainSimple(String[] args) throws Exception {
     Gate.setGateHome(new File("gate-home"));
     Gate.setUserConfigFile(new File("gate-home/user-gate.xml"));
@@ -84,7 +89,7 @@ public class Scratch {
    * Version that exercises the scorers 
    * @param args
    */
-  public static void main(String[] args) throws Exception {
+  public static void mainScorers(String[] args) throws Exception {
     Gate.setGateHome(new File("gate-home"));
     Gate.setUserConfigFile(new File("gate-home/user-gate.xml"));
     Gate.init();
@@ -150,4 +155,41 @@ public class Scratch {
     qEngine.close();
   }  
   
+  
+  /**
+   * Main version for building direct indexes
+   * @param args
+   * @throws Exception sometimes 
+   */
+  public static void main(String[] args) throws Exception {
+    Gate.setGateHome(new File("gate-home"));
+    Gate.setUserConfigFile(new File("gate-home/user-gate.xml"));
+    Gate.init();
+    // load the tokeniser plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("gate-home/plugins/ANNIE-tokeniser").toURI().toURL());
+    // load the DB plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/db-h2").toURI().toURL());
+    // load the measurements plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/measurements").toURI().toURL());
+    // load the SPARQL plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/sparql").toURI().toURL());
+    
+    // the Mímir index dir from params
+    if(args.length  != 2) {
+      System.err.println(
+        "Parameters: <index directory> <sub-index basename>");
+      return;
+    }
+    try {
+      MimirDirectIndexBuilder mdib = new MimirDirectIndexBuilder(new File(args[0]), args[1]);
+      mdib.run();
+      
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
 }
