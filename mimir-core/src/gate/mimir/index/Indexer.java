@@ -309,7 +309,7 @@ public class Indexer {
    * The name of the index subdirectory storing MG4J indexes.
    */
   public static final String MG4J_INDEX_DIRNAME = "mg4j";
-
+  
   /**
    * The basename used for all MG4J indexes.
    */

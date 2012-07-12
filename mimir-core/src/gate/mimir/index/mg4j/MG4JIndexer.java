@@ -295,8 +295,16 @@ public class MG4JIndexer {
   /**
    * How many documents should be indexed in memory before dumping a batch to 
    * disk.
+   * @deprecated use {@link #OCCURRENCES_PER_BATCH} to limit the size of a batch 
+   * based on the number of occurrences instead.
    */
   public static final int DOCUMENTS_PER_BATCH = 4000;
+  
+  /**
+   * How many occurrences to index in each batch. This metric is more reliable, 
+   * than document counts, as it does not depend on average document size. 
+   */
+  public static final int OCCURRENCES_PER_BATCH = 20 * 1000 * 1000;
 
   /**
    * The size of the {@link #inputQueue}. 
