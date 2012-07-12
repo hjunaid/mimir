@@ -66,6 +66,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.util.EnumMap;
@@ -108,8 +109,34 @@ public abstract class MimirIndexBuilder implements Runnable {
    * addPosition(int), if the position provided is the same as the previous one. 
    */
   protected static class PostingsList extends ByteArrayPostingList{
-    public PostingsList(byte[] a, boolean differential) {
-      super(a, differential, Completeness.POSITIONS);
+    
+    private static final Field countField;
+    
+    static {
+      // Hack to access the normally private count field inside the 
+      // ByteArrayPostingsList class.
+      try {
+        countField = ByteArrayPostingList.class.getDeclaredField("count");
+        countField.setAccessible(true);
+      } catch(Exception e) {
+        throw new AssertionError("Could not acces the " + 
+           ByteArrayPostingList.class.getName() + 
+           ".count field via reflection.");
+      }
+    }
+    
+    public PostingsList(byte[] a, boolean differential,
+                        Completeness completeness) {
+      super(a, differential, completeness);
+      // TODO Auto-generated constructor stub
+    }
+    
+    public void setCount(int count) {
+      try {
+        countField.setInt(this, count);
+      } catch(Exception e) {
+        new RuntimeException("Could not set counts by reflection.");
+      }
     }
 
     /**
@@ -177,13 +204,14 @@ public abstract class MimirIndexBuilder implements Runnable {
   /**
    * Flag showing whether the indexer is closed. 
    */
-  private boolean closed = false;
+  protected boolean closed = false;
   
+  protected boolean savePositions = true;
   /**
    * A value between 0 and 1 representing the progress of the current index 
    * closing operation. 
    */
-  private volatile double closingProgress = 0.0;
+  protected volatile double closingProgress = 0.0;
   
   /**
    * The index configuration.
@@ -308,6 +336,19 @@ public abstract class MimirIndexBuilder implements Runnable {
    */
   protected String indexBaseName;
   
+  /**
+   * Protected no-op constructor. 
+   * Allows sub-classes to initialise the internal state according to their 
+   * own requirements.
+   */
+  protected MimirIndexBuilder() {  
+    // create the progress logger.  We use this.getClass to use the
+    // logger belonging to a subclass rather than our own.
+    this.progressLogger = new ProgressLogger(
+            Logger.getLogger(this.getClass()), "documents");
+    closed = false;
+    closingProgress = 0;    
+  }
   
   public MimirIndexBuilder(BlockingQueue<GATEDocument> inputQueue,
           BlockingQueue<GATEDocument> outputQueue,
@@ -530,7 +571,8 @@ public abstract class MimirIndexBuilder implements Runnable {
     if(termPostings == null){
       //new term -> create a new postings list.
       termMap.put( currentTerm.copy(), 
-              termPostings = new PostingsList( new byte[ 32 ], true));
+              termPostings = new PostingsList( new byte[ 32 ], true, 
+                  Completeness.POINTERS));
     }
     //add the current posting to the current postings list
     termPostings.setDocumentPointer(documentPointer);
@@ -612,9 +654,10 @@ public abstract class MimirIndexBuilder implements Runnable {
       
       final OutputBitStream offsetsStream = new OutputBitStream(
               getBatchFile(DiskBasedIndex.OFFSETS_EXTENSION));
-  
-      final OutputBitStream posLengthsStream = new OutputBitStream(
-              getBatchFile(DiskBasedIndex.POSITIONS_NUMBER_OF_BITS_EXTENSION));
+      final OutputBitStream posLengthsStream = savePositions ?
+          new OutputBitStream(
+            getBatchFile(DiskBasedIndex.POSITIONS_NUMBER_OF_BITS_EXTENSION)) :
+          null;
 
       
       ByteArrayPostingList postingsList;
@@ -647,7 +690,7 @@ public abstract class MimirIndexBuilder implements Runnable {
         frequenciesStream.writeLongGamma( frequency );
         globCountsStream.writeLongGamma( postingsList.globCount );
         offsetsStream.writeLongGamma( indexStream.writtenBits() - prevOffset );
-        posLengthsStream.writeLongGamma( postingsList.posNumBits );
+        if(savePositions) posLengthsStream.writeLongGamma( postingsList.posNumBits );
         prevOffset = indexStream.writtenBits();
       }
   
@@ -666,7 +709,7 @@ public abstract class MimirIndexBuilder implements Runnable {
       properties.addProperty( Index.PropertyKeys.CODING, "FREQUENCIES:GAMMA" );
       properties.addProperty( Index.PropertyKeys.CODING, "POINTERS:DELTA" );
       properties.addProperty( Index.PropertyKeys.CODING, "COUNTS:GAMMA" );
-      properties.addProperty( Index.PropertyKeys.CODING, "POSITIONS:DELTA" );
+      if(savePositions) properties.addProperty( Index.PropertyKeys.CODING, "POSITIONS:DELTA" );
       properties.setProperty( Index.PropertyKeys.TERMPROCESSOR, 
               termProcessor == null ? 
               NullTermProcessor.class.getName() :
@@ -679,7 +722,7 @@ public abstract class MimirIndexBuilder implements Runnable {
       indexStream.close();
       offsetsStream.close();
       globCountsStream.close();
-      posLengthsStream.close();
+      if(savePositions) posLengthsStream.close();
       frequenciesStream.close();
       termMap.clear();
       termMap.trim( INITIAL_TERM_MAP_SIZE );
@@ -1061,10 +1104,19 @@ public abstract class MimirIndexBuilder implements Runnable {
           NoSuchMethodException{
     if(inputBasenames.length <= MAXIMUM_BATCHES_TO_COMBINE){
       //simple combine
+      
+      Map<Component,Coding> codingFlags;
+      if(savePositions) {
+        codingFlags = CompressionFlags.DEFAULT_STANDARD_INDEX; 
+      } else {
+        codingFlags = new EnumMap<Component, Coding>(CompressionFlags.DEFAULT_STANDARD_INDEX);
+        codingFlags.remove(Component.POSITIONS);
+      }
+      
       new Concatenate(outputBaseName,
               inputBasenames, false, 
               Combine.DEFAULT_BUFFER_SIZE, 
-              CompressionFlags.DEFAULT_STANDARD_INDEX,
+              codingFlags,
               false, true, 
               // BitStreamIndex.DEFAULT_QUANTUM,
               // replaced with optimised automatic calculation

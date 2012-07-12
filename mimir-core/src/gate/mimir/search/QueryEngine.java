@@ -23,7 +23,6 @@ import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.IndexException;
 import gate.mimir.index.Indexer;
 import gate.mimir.index.mg4j.MentionsIndexBuilder;
-import gate.mimir.index.mg4j.MimirIndexBuilder;
 import gate.mimir.index.mg4j.TokenIndexBuilder;
 import gate.mimir.index.mg4j.zipcollection.DocumentCollection;
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
@@ -33,15 +32,12 @@ import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException;
 import gate.mimir.search.query.parser.QueryParser;
 import gate.mimir.search.score.MimirScorer;
+import gate.mimir.util.MG4JTools;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.io.BinIO;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.util.Properties;
-import it.unimi.dsi.big.mg4j.index.DiskBasedIndex;
 import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.index.Index.UriKeys;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -59,10 +55,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Timer;
@@ -167,7 +160,7 @@ public class QueryEngine {
    * The maximum size of an index that can be loaded in memory (by default 64
    * MB).
    */
-  protected static final long MAX_IN_MEMORY_INDEX = 64 * 1024 * 1024;
+  public static final long MAX_IN_MEMORY_INDEX = 64 * 1024 * 1024;
   
   /**
    * The default value for the document block size.
@@ -799,51 +792,8 @@ public class QueryEngine {
   IllegalAccessException, InvocationTargetException,
   NoSuchMethodException {
     // see if the index needs upgrading
-    upgradeIndex(indexUri);
-    // calculate the flags
-    Index theIndex;
-    try {
-      // Optimisations: if the index size (i.e. index + positions files) is
-      // less than 64MB, then we load the index in memory,
-      // otherwise we memory-map it.
-      long size = 0;
-      File aFile =
-        new File(URI.create(indexUri.toString()
-                + DiskBasedIndex.INDEX_EXTENSION));
-      if(aFile.exists()) {
-        size += aFile.length();
-      } else {
-        // no index file!
-        throw new IllegalArgumentException(
-                "Could not locate the index file at " + aFile.getAbsolutePath()
-                + "!");
-      }
-      aFile =
-        new File(URI.create(indexUri.toString()
-                + DiskBasedIndex.POSITIONS_EXTENSION));
-      if(aFile.exists()) {
-        size += aFile.length();
-      } else {
-        // no index file!
-        throw new IllegalArgumentException(
-                "Could not locate the index file at " + aFile.getAbsolutePath()
-                + "!");
-      }
-      String options = "?" + (size <= MAX_IN_MEMORY_INDEX ? 
-          UriKeys.INMEMORY.toString().toLowerCase() + "=1" : 
-          (UriKeys.MAPPED.name().toLowerCase() + "=1;" + 
-           UriKeys.OFFSETSTEP.toString().toLowerCase() + "=-" + 
-           DiskBasedIndex.DEFAULT_OFFSET_STEP ));
-      
-      logger.debug("Opening index: " + indexUri.toString() + options);
-      theIndex = Index.getInstance(indexUri.toString() + options, true, true);
-    } catch(IOException e) {
-      // memory mapping failed
-      logger.info("Memory mapping failed for index " + indexUri
-              + ". Loading as file index instead");
-      // now try to just open it as an on-disk index
-      theIndex = Index.getInstance(indexUri.toString(), true, true);
-    }
+    MG4JTools.upgradeIndex(indexUri);
+    Index theIndex = MG4JTools.openMg4jIndex(indexUri);
     return new IndexReaderPool(theIndex);
   }
   
@@ -855,65 +805,12 @@ public class QueryEngine {
    * @throws IOException
    * @throws ClassNotFoundException
    * @throws ConfigurationException 
+   * @deprecated Use {@link MG4JTools#upgradeIndex(URI)} instead
    */
   public static void upgradeIndex(URI indexUri) throws IOException, 
       ClassNotFoundException, ConfigurationException {
-    // check if the term map is 32 bits, and convert if needed.
-    File termMapFile = new File(URI.create(indexUri.toString()
-          + DiskBasedIndex.TERMMAP_EXTENSION));
-    Object termmap = BinIO.loadObject(termMapFile);
-    if(termmap instanceof it.unimi.dsi.util.StringMap) {
-      // 32 bit index: save the old termmap
-      logger.warn("Old index format detected (32 bits term map file); " +
-          "converting to new version. Old files will be backed up with " +
-          "a .32bit extension.");
-      if(termMapFile.renameTo(new File(URI.create(indexUri.toString()
-          + DiskBasedIndex.TERMMAP_EXTENSION + ".32bit")))) {
-        // and generate the new one
-        File termsFile = new File(URI.create(indexUri.toString()
-          + DiskBasedIndex.TERMS_EXTENSION));
-        MimirIndexBuilder.generateTermMap(termsFile, termMapFile);
-      } else {
-        throw new IOException("Could not rename old termmap file (" + 
-            termMapFile.getAbsolutePath() + ").");
+        MG4JTools.upgradeIndex(indexUri);
       }
-    }
-    // check if the .properties file contains any mg4j-standard classes,
-    // and replace all mentions with the equivalent mg4j-big ones
-    File propsFile = new File(URI.create(indexUri.toString()
-      + DiskBasedIndex.PROPERTIES_EXTENSION));
-    Properties indexProps = new Properties(propsFile);
-    indexProps.setAutoSave(false);
-    Iterator<String> keysIter = indexProps.getKeys();
-    String OLDPKG = "it.unimi.dsi.mg4j";
-    String NEWPKG = "it.unimi.dsi.big.mg4j";
-    Map<String, String> newVals = new LinkedHashMap<String, String>();
-    while(keysIter.hasNext()) {
-      String key = keysIter.next();
-      Object value = indexProps.getProperty(key);
-      if(value instanceof String && ((String)value).indexOf(OLDPKG) >= 0) {
-        newVals.put(key, ((String)value).replace(OLDPKG, NEWPKG));
-      }
-    }
-    if(newVals.size() > 0) {
-      // save a backup
-      logger.warn("Old index format detected (32 bits properties file); " +
-          "converting to new version. Old files will be backed up with " +
-          "a .32bit extension.");
-      if(propsFile.renameTo(new File(URI.create(indexUri.toString()
-        + DiskBasedIndex.PROPERTIES_EXTENSION + ".32bit")))) {
-        // update the properties values
-        for(Map.Entry<String, String> newEntry : newVals.entrySet()) {
-          indexProps.setProperty(newEntry.getKey(), newEntry.getValue());
-        }
-        // save the changed props
-        indexProps.save();
-      } else {
-        throw new IOException("Could not rename old properties file (" + 
-            propsFile.getAbsolutePath() + ").");          
-      }
-    }
-  }
   
   /**
    * Marks a given document (identified by its ID) as deleted. Deleted documents
