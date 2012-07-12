@@ -14,33 +14,22 @@
  */
 package gate.mimir.index.mg4j;
 
-import static it.unimi.dsi.big.mg4j.tool.Scan.Completeness.COUNTS;
-import static it.unimi.dsi.big.mg4j.tool.Scan.Completeness.POSITIONS;
-import static it.unimi.dsi.io.OutputBitStream.GAMMA;
-import static it.unimi.dsi.io.OutputBitStream.MAX_PRECOMPUTED;
 import gate.Annotation;
 import gate.mimir.IndexConfig;
 import gate.mimir.index.IndexException;
 import gate.mimir.index.Indexer;
-import gate.mimir.index.mg4j.MimirIndexBuilder.PostingsList;
 import gate.mimir.util.MG4JTools;
 import gate.util.GateRuntimeException;
-
 import it.unimi.dsi.Util;
 import it.unimi.dsi.big.mg4j.index.Index;
 import it.unimi.dsi.big.mg4j.index.IndexIterator;
 import it.unimi.dsi.big.mg4j.index.IndexReader;
-import it.unimi.dsi.big.mg4j.io.ByteArrayPostingList;
 import it.unimi.dsi.big.mg4j.tool.Scan.Completeness;
-import it.unimi.dsi.bits.Fast;
 import it.unimi.dsi.logging.ProgressLogger;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.URI;
 import java.text.NumberFormat;
-import java.util.concurrent.BlockingQueue;
 
 import org.apache.log4j.Logger;
 
@@ -73,10 +62,8 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
     this.indexBaseName = subIndexName + BASENAME_SUFFIX;
     // create the progress logger.  We use this.getClass to use the
     // logger belonging to a subclass rather than our own.
-    this.progressLogger = new ProgressLogger(
-            Logger.getLogger(this.getClass()), "documents");
-    closed = false;
-    closingProgress = 0;
+    progressLogger = new ProgressLogger(
+            Logger.getLogger(this.getClass()), "input terms");
     savePositions = false;
   }
 
@@ -118,7 +105,7 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
     // input documentIDs become output termIDs
     // input termIDs become output documentIDs
     // NB: the variables in this method are named based on output semantics! 
-    
+    progressLogger.start("Inverting index...");
     try {
       // open the input index for reading
       Index inputIndex = MG4JTools.openMg4jIndex(
@@ -155,7 +142,7 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
             }
             termPostings.setDocumentPointer(outputDocId);
             termPostings.setCount(count);
-            occurrencesInTheCurrentBatch++;
+            occurrencesInTheCurrentBatch += count;
             if(termPostings.outOfMemoryError) {
               // we are running out of memory, dump batches ASAP to free it up.
               indexer.getMg4jIndexer().dumpASAP();
@@ -187,8 +174,12 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
         }
         if ( // we have been asked to dump 
              ( dumpBatchASAP || 
-               //.. OR we reached the maximum document limit for a batch       
-               documentPointer == MG4JIndexer.DOCUMENTS_PER_BATCH ) &&
+               //.. OR we reached the maximum occurrences for a batch       
+               // We're not storing positions, so the amount of data in the 
+               // index is smaller. We increase the number of occurrences / batch
+               // by a factor of 3.
+               occurrencesInTheCurrentBatch > (MG4JIndexer.OCCURRENCES_PER_BATCH * 3)
+               ) &&
              // AND there is data to dump
              occurrencesInTheCurrentBatch > 0 ){
           dumpBatch();
@@ -207,7 +198,7 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
         }
         
       }
-      
+      inputIndexReader.close();
       // dump the last current batch
       flush();
       // close the index (combine the batches)

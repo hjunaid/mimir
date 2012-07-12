@@ -910,8 +910,8 @@ public abstract class MimirIndexBuilder implements Runnable {
         if (
                // we have been asked to dump 
              ( dumpBatchASAP || 
-               //.. OR we reached the maximum document limit for a batch       
-               documentPointer == MG4JIndexer.DOCUMENTS_PER_BATCH
+               //.. OR we reached the maximum occurrences for a batch  
+               occurrencesInTheCurrentBatch > MG4JIndexer.OCCURRENCES_PER_BATCH  
              ) &&
              // AND there is data to dump
              occurrencesInTheCurrentBatch > 0
