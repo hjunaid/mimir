@@ -128,7 +128,6 @@ public abstract class MimirIndexBuilder implements Runnable {
     public PostingsList(byte[] a, boolean differential,
                         Completeness completeness) {
       super(a, differential, completeness);
-      // TODO Auto-generated constructor stub
     }
     
     public void setCount(int count) {
@@ -207,16 +206,29 @@ public abstract class MimirIndexBuilder implements Runnable {
   protected boolean closed = false;
   
   protected boolean savePositions = true;
+
   /**
    * A value between 0 and 1 representing the progress of the current index 
    * closing operation. 
    */
   protected volatile double closingProgress = 0.0;
+
+  /**
+   * Builder used to construct the direct index (if requested) by inverting the
+   * inverted index.
+   */
+  protected MimirDirectIndexBuilder directIndexBuilder;
   
   /**
    * The index configuration.
    */
   protected IndexConfig indexConfig;
+  
+  
+  /**
+   * Should a direct index also be built?
+   */
+  protected boolean directIndexEnabled;
   
   /**
    * The current document pointer (gets incremented for each document).
@@ -353,12 +365,14 @@ public abstract class MimirIndexBuilder implements Runnable {
   public MimirIndexBuilder(BlockingQueue<GATEDocument> inputQueue,
           BlockingQueue<GATEDocument> outputQueue,
           Indexer indexer, 
-          String baseName) {
+          String baseName,
+          boolean directIndexEnabled) {
     this.inputQueue = inputQueue;
     this.outputQueue = outputQueue;
     this.indexer = indexer;
     this.indexConfig = indexer.getIndexConfig();
     this.indexBaseName = baseName;
+    this.directIndexEnabled = directIndexEnabled;
     
     // create the progress logger.  We use this.getClass to use the
     // logger belonging to a subclass rather than our own.
@@ -572,7 +586,7 @@ public abstract class MimirIndexBuilder implements Runnable {
       //new term -> create a new postings list.
       termMap.put( currentTerm.copy(), 
               termPostings = new PostingsList( new byte[ 32 ], true, 
-                  Completeness.POINTERS));
+                  Completeness.POSITIONS));
     }
     //add the current posting to the current postings list
     termPostings.setDocumentPointer(documentPointer);
@@ -791,7 +805,13 @@ public abstract class MimirIndexBuilder implements Runnable {
    * @return
    */
   public double getClosingProgress(){
-    return closingProgress;
+    if(directIndexEnabled) {
+      double directIndexProgress = 
+          (directIndexBuilder == null) ? 0 : directIndexBuilder.getProgress();
+      return (closingProgress + directIndexProgress) / 2;
+    } else {
+      return closingProgress;  
+    }
   }
   
   /**
@@ -962,11 +982,19 @@ public abstract class MimirIndexBuilder implements Runnable {
       // save the termMap
       generateTermMap(getGlobalFile(DiskBasedIndex.TERMS_EXTENSION), 
         getGlobalFile(DiskBasedIndex.TERMMAP_EXTENSION));
+      // closing completed
+      closingProgress = 1;
+      
+      if(directIndexEnabled) {
+        // also build the direct index
+        directIndexBuilder = new MimirDirectIndexBuilder(
+          indexConfig.getIndexDirectory(), indexBaseName);
+        directIndexBuilder.run();
+      }
     } catch(Exception e) {
       throw new IndexException("Exception while closing the index", e);
     }
     logger.info("Indexing completed for index " + indexBasename());
-    closingProgress = 1;
     closed = true;
   }
   
