@@ -41,6 +41,10 @@ class SemanticAnnotationsHandler {
   }
 
   def index(Closure callable) {
+    index([:], callable)
+  }
+  
+  def index(Map params, Closure callable) {
     Map savedCurrentIndex = currentIndex
     currentIndex = [annotationTypes:[], helpers:[]]
     callable.delegate = this
@@ -48,7 +52,8 @@ class SemanticAnnotationsHandler {
 
     indexerConfigs << new SemanticIndexerConfig(
         currentIndex.annotationTypes as String[],
-        currentIndex.helpers as SemanticAnnotationHelper[])
+        currentIndex.helpers as SemanticAnnotationHelper[],
+        params?.directIndex ? true : false)
     
     currentIndex = savedCurrentIndex
   }
