@@ -69,18 +69,18 @@ public class TestUtils {
             new TokenIndexerConfig[]{
                 new TokenIndexerConfig(
                         ANNIEConstants.TOKEN_STRING_FEATURE_NAME, 
-                        DowncaseTermProcessor.getInstance()),
+                        DowncaseTermProcessor.getInstance(), true),
                 new TokenIndexerConfig(
                         ANNIEConstants.TOKEN_CATEGORY_FEATURE_NAME, 
-                        NullTermProcessor.getInstance()),
+                        NullTermProcessor.getInstance(), true),
                 new TokenIndexerConfig(
                         "root", 
-                        NullTermProcessor.getInstance())
+                        NullTermProcessor.getInstance(), true)
             }, 
             new SemanticIndexerConfig[]{
                 new SemanticIndexerConfig(
                     new String[]{"Measurement"}, 
-                    new SemanticAnnotationHelper[] {measurementHelper}),
+                    new SemanticAnnotationHelper[] {measurementHelper}, true),
                 new SemanticIndexerConfig(
                         new String[]{"PublicationAuthor", "PublicationDate",
                                 "PublicationLocation", "PublicationPages",
@@ -92,7 +92,8 @@ public class TestUtils {
                             createHelper(helperClass, "PublicationPages", null, null, null, null, null, Mode.ANNOTATION),
                             createHelper(helperClass, "Reference", new String[]{"type"}, null, null, null, null, Mode.ANNOTATION),
                             createHelper(helperClass, "Section", new String[]{"type"}, null, null, null, null, Mode.ANNOTATION),
-                            createHelper(helperClass, "Sentence", null, null, null, null, null, Mode.ANNOTATION)}),
+                            createHelper(helperClass, "Sentence", null, null, null, null, null, Mode.ANNOTATION)}, 
+                            true),
 
                 new SemanticIndexerConfig(
                         new String[]{"Abstract", "Assignee",
@@ -105,7 +106,8 @@ public class TestUtils {
                           createHelper(helperClass, "InventionTitle", new String[]{"lang", "status"}, null, null, null, null, Mode.ANNOTATION),
                           createHelper(helperClass, "Inventor", new String[]{"format", "status"}, null, null, null, null, Mode.ANNOTATION),
                           createHelper(helperClass, "Document", null, new String[]{"date"}, null, new String[]{"ucid"}, null, Mode.DOCUMENT),
-                          createHelper(helperClass, "PriorityClaim", null, null, null, new String[]{"ucid"}, null, Mode.ANNOTATION)})
+                          createHelper(helperClass, "PriorityClaim", null, null, null, new String[]{"ucid"}, null, Mode.ANNOTATION)},
+                          true)
             },
             new DocumentMetadataHelper[] {docHelper}, 
             docHelper);
