@@ -17,16 +17,14 @@ package gate.mimir.search.query;
 
 import gate.mimir.Constraint;
 import gate.mimir.ConstraintType;
-import gate.mimir.IndexConfig;
-import gate.mimir.IndexConfig.SemanticIndexerConfig;
 import gate.mimir.SemanticAnnotationHelper;
-import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.ReferenceSet;
-import it.unimi.dsi.fastutil.objects.ReferenceSets;
+import gate.mimir.search.terms.AnnotationTermQuery;
+import gate.mimir.search.terms.TermsResultSet;
 import it.unimi.dsi.big.mg4j.index.Index;
 import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSets;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -79,54 +77,25 @@ public class AnnotationQuery implements QueryNode {
      * Build the underlying OrQuery executor that this annotation query uses.
      */
     protected void buildQuery() throws IOException {
-      // find the semantic annotation helper for the right annotation type
-      SemanticAnnotationHelper helper = getAnnotationHelper(engine.getIndexConfig());
-      isInDocumentMode = (helper.getMode() == SemanticAnnotationHelper.Mode.DOCUMENT);
-      // ask the helper for the mentions that correspond to this query
-      long start = System.currentTimeMillis();      
-            List<Mention> mentions = helper.getMentions(query.getAnnotationType(),
-                    query.getConstraints(), engine);
-      logger.debug(mentions.size() + " mentions obtained in " + 
-        (System.currentTimeMillis() - start) + " ms");
-      // now create a big OrQuery of all the possible mentions with
-      // appropriate gaps
-      if(mentions.size() > 0) {
-        QueryNode[] disjuncts = new QueryNode[mentions.size()];
-        int index = 0;
-        for(Mention m : mentions) {
+      SemanticAnnotationHelper helper = engine.getAnnotationHelper(query);
+      isInDocumentMode = (helper.getMode() == 
+          SemanticAnnotationHelper.Mode.DOCUMENT);
+      // get the mention URIs
+      TermsResultSet trs = new AnnotationTermQuery(query, engine).execute();
+      if(trs.terms != null && trs.terms.length > 0 && 
+         trs.termLengths != null) {
+        QueryNode[] disjuncts = new QueryNode[trs.terms.length];
+        for(int index = 0; index < trs.terms.length; index++) {
           // create a term query for the mention URI
           disjuncts[index] = new TermQuery(query.annotationType, 
-                  m.getUri(), m.getLength());
-          index++;
+                  trs.termIds[index], trs.termLengths[index]);
         }
-        
         QueryNode underlyingQuery = new OrQuery(disjuncts);
-        underlyingExecutor = underlyingQuery.getQueryExecutor(engine);
+        underlyingExecutor = underlyingQuery.getQueryExecutor(engine);        
       } else {
         // no results from the helper => no results from us
         latestDocument = -1;
       }
-    }
-
-    /**
-     * Get the {@link SemanticAnnotationHelper} corresponding to this query's
-     * annotation type.
-     * @param indexConfig the index configuration
-     * @throws IllegalArgumentException if the annotation helper for this
-     *         type is not a {@link PlainAnnotationHelper}.
-     */
-    protected SemanticAnnotationHelper getAnnotationHelper(
-            IndexConfig indexConfig) {
-      for(SemanticIndexerConfig semConfig : indexConfig.getSemanticIndexers()){
-        for(int i = 0; i < semConfig.getAnnotationTypes().length; i++){
-          if(query.getAnnotationType().equals(
-                  semConfig.getAnnotationTypes()[i])){
-            return semConfig.getHelpers()[i];
-          }
-        }
-      }
-      throw new IllegalArgumentException("Semantic annotation type \""
-              + query.getAnnotationType() + "\" not known to this query engine.");
     }
     
     

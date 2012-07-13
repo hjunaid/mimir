@@ -26,6 +26,7 @@ import gate.mimir.index.mg4j.MentionsIndexBuilder;
 import gate.mimir.index.mg4j.TokenIndexBuilder;
 import gate.mimir.index.mg4j.zipcollection.DocumentCollection;
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
+import gate.mimir.search.query.AnnotationQuery;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
 import gate.mimir.search.query.QueryNode;
@@ -426,6 +427,26 @@ public class QueryEngine {
     writeDeletedDocsTimer = new Timer("Delete documents writer");
   }
 
+  /**
+   * Get the {@link SemanticAnnotationHelper} corresponding to a query's
+   * annotation type.
+   * @throws IllegalArgumentException if the annotation helper for this
+   *         type cannot be found.
+   */
+  public SemanticAnnotationHelper getAnnotationHelper(AnnotationQuery query) {
+    for(SemanticIndexerConfig semConfig : indexConfig.getSemanticIndexers()){
+      for(int i = 0; i < semConfig.getAnnotationTypes().length; i++){
+        if(query.getAnnotationType().equals(
+                semConfig.getAnnotationTypes()[i])){
+          return semConfig.getHelpers()[i];
+        }
+      }
+    }
+    throw new IllegalArgumentException("Semantic annotation type \""
+            + query.getAnnotationType() + "\" not known to this query engine.");
+  }
+  
+  
   /**
    * Obtains a query executor for a given {@link QueryNode}.
    * 
