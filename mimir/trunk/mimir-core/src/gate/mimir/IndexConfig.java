@@ -47,10 +47,41 @@ import com.thoughtworks.xstream.io.xml.StaxReader;
  * Interface for indexer configurations.
  */
 public class IndexConfig implements Serializable {
+  
+  /**
+   * Base class for indexer configs
+   */
+  public static class IndexerConfig implements Serializable {
+    
+    /**
+     * Serialisation ID.
+     */
+    private static final long serialVersionUID = -3980825689154182192L;
+
+    public IndexerConfig(boolean directIndexEnabled) {
+      super();
+      this.directIndexEnabled = directIndexEnabled;
+    }
+
+    /**
+     * Should a direct index be also built?
+     */
+    private boolean directIndexEnabled = false;
+    
+    /**
+     * Should a direct index be also built?
+     * @return <code>true</code> if a direct index was requested.
+     */
+    public boolean isDirectIndexEnabled() {
+      return directIndexEnabled;
+    }
+
+  }
+  
   /**
    * Object storing the configuration for a Token indexer.
    */
-  public static class TokenIndexerConfig implements Serializable {
+  public static class TokenIndexerConfig extends IndexerConfig {
     /**
      * Serialisation ID.
      */
@@ -76,8 +107,11 @@ public class IndexConfig implements Serializable {
      *          The {@link TermProcessor} to be used by this indexer. If
      *          <code>null</code> is given, then a {@link NullTermProcessor} is
      *          used.
+     * @param directIndexEnabled should a direct index also be built?         
      */
-    public TokenIndexerConfig(String featureName, TermProcessor termProcessor) {
+    public TokenIndexerConfig(String featureName, TermProcessor termProcessor, 
+                              boolean directIndexEnabled) {
+      super(directIndexEnabled);
       this.featureName = featureName;
       this.termProcessor =
               termProcessor == null
@@ -109,7 +143,7 @@ public class IndexConfig implements Serializable {
   /**
    * Object storing the configuration for a semantic annotation indexer.
    */
-  public static class SemanticIndexerConfig implements Serializable {
+  public static class SemanticIndexerConfig extends IndexerConfig {
     /**
      * Serialisation ID.
      */
@@ -136,9 +170,11 @@ public class IndexConfig implements Serializable {
      *          indexer.
      * @param helper
      *          the {@link SemanticAnnotationHelper}s used by this indexer.
+     * @param directIndexEnabled should a direct index also be built?         
      */
     public SemanticIndexerConfig(String[] annotationTypes,
-            SemanticAnnotationHelper[] helpers) {
+            SemanticAnnotationHelper[] helpers, boolean directIndexEnabled) {
+      super(directIndexEnabled);
       this.annotationTypes = annotationTypes;
       this.helpers = helpers;
     }

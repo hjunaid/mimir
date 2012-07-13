@@ -41,6 +41,11 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
 
   private static Logger logger = Logger.getLogger(MimirDirectIndexBuilder.class);
   
+  /**
+   * The progress of the index building operation. 
+   */
+  private volatile double buildProgress = 0;
+  
   protected String inputSubindexBasename;
   
   protected static final String BASENAME_SUFFIX = "-dir";
@@ -102,6 +107,8 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
    */
   @Override
   public void run() {
+    buildProgress = 0;
+    double lastProgress = buildProgress;
     // input documentIDs become output termIDs
     // input termIDs become output documentIDs
     // NB: the variables in this method are named based on output semantics! 
@@ -191,22 +198,34 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
         // and move to the next input term (output 'document')
         inputTermIterator = inputIndexReader.nextIterator();
         termsProcessed++;
-        if(termsProcessed % 1000 == 0) {
-          logger.debug("Processed " + 
-              percentNF.format((double)termsProcessed / inputIndex.numberOfTerms) + 
-              " terms");  
+        buildProgress = (double)termsProcessed / inputIndex.numberOfTerms;
+        if(buildProgress - lastProgress >= 1) {
+          logger.debug("Direct index  " +  percentNF.format(buildProgress) + 
+              " built.");
+          lastProgress = buildProgress;
         }
-        
       }
       inputIndexReader.close();
       // dump the last current batch
       flush();
+      buildProgress = 1;
       // close the index (combine the batches)
       close();
-      progressLogger.done();              
+      progressLogger.done();
     } catch(Exception e) {
       throw new GateRuntimeException("Exception during indexing!", e);
     }
+  }
+  
+  /**
+   * Returns a value between 0 and 1, representing the amount of work already 
+   * performed for the index building operation. Building a large index can be 
+   * very lengthy operation; this method can be called regularly to obtain an 
+   * indication of progress. 
+   * @return a double value
+   */
+  public double getProgress() {
+    return (closingProgress + buildProgress) / 2;
   }
   
   /**

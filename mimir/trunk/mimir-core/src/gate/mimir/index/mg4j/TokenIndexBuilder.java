@@ -102,7 +102,8 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
           GATEDocumentFactory factory, boolean zipCollection,
           String baseName,
           TokenIndexerConfig config) {
-    super(inputQueue, outputQueue, indexer, baseName);
+    super(inputQueue, outputQueue, indexer, baseName, 
+        config.isDirectIndexEnabled());
     this.termProcessor = config.getTermProcessor();
     this.docMetadataHelpers = indexer.getIndexConfig().getDocMetadataHelpers();
     this.featureName = config.getFeatureName();

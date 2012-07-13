@@ -59,7 +59,8 @@ public class MentionsIndexBuilder extends MimirIndexBuilder implements Runnable 
   public MentionsIndexBuilder(BlockingQueue<GATEDocument> inputQueue,
           BlockingQueue<GATEDocument> outputQueue,
           Indexer indexer, String baseName, SemanticIndexerConfig config){
-    super(inputQueue, outputQueue, indexer, baseName);
+    super(inputQueue, outputQueue, indexer, baseName, 
+        config.isDirectIndexEnabled());
     //get the helpers
     annotationHelpers = new HashMap<String, SemanticAnnotationHelper>(
               config.getAnnotationTypes().length);
