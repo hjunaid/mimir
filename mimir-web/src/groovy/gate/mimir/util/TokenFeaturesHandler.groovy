@@ -37,15 +37,37 @@ class TokenFeaturesHandler {
     def firstFeature = indexerConfigs.isEmpty()
 
     TermProcessor processor = null
+    boolean directIndex = false
     if(args) {
-      if(args[0] instanceof TermProcessor) {
-        processor = (TermProcessor)args[0]
-      }
-      else {
-        throw new IllegalArgumentException("${args[0]} is not a TermProcessor")
+      for(arg in args) {
+        if(arg instanceof TermProcessor) {
+          if(processor != null) {
+            throw new IllegalArgumentException(
+              "Term processor for token feature ${name} specified more than once")
+          }
+          processor = (TermProcessor)arg
+        } else if(arg instanceof Map) {
+          if(arg.directIndex) directIndex = true
+          if(arg.termProcessor) {
+            if(processor != null) {
+              throw new IllegalArgumentException(
+                "Term processor for token feature ${name} specified more than once")
+            }
+            if(arg.termProcessor instanceof TermProcessor) {
+              processor = arg.termProcessor
+            } else {
+              throw new IllegalArgumentException(
+                "termProcessor value for token feature ${name} is not a TermProcessor instance")
+            }
+          } 
+        }
+        else {
+          throw new IllegalArgumentException("${args[0]} is not a TermProcessor")
+        }
       }
     }
-    else {
+    
+    if(processor == null) {
       if(firstFeature) {
         processor = DowncaseTermProcessor.getInstance()
       }
@@ -54,6 +76,6 @@ class TokenFeaturesHandler {
       }
     }
 
-    indexerConfigs << new TokenIndexerConfig(name, processor)
+    indexerConfigs << new TokenIndexerConfig(name, processor, directIndex)
   }
 }
