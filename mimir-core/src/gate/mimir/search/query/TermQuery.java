@@ -66,6 +66,13 @@ public class TermQuery implements QueryNode {
   private String term;
   
   /**
+   * The term ID for this query. If not known, 
+   * {@link DocumentIterator#END_OF_LIST} is used.
+   */
+  private long termId = DocumentIterator.END_OF_LIST;
+  
+  
+  /**
    * The name of the index to search.
    */
   private String indexName;
@@ -122,30 +129,20 @@ public class TermQuery implements QueryNode {
     public TermQueryExecutor(TermQuery node, QueryEngine engine) throws IOException {
       super(engine, node);
       this.query = node;
-      switch(this.query.indexType){
-        case TOKENS:
-          if(query.indexName == null){
-            //token query, with no index name provided -> use the default
-            indexReaderPool = engine.getIndexes()[0];
-          }else{
-            indexReaderPool = engine.getTokenIndex(query.indexName);
-          }
-          break;
-        case ANNOTATIONS:
-          indexReaderPool = engine.getAnnotationIndex(query.indexName);
-          break;
-        default:
-          throw new IllegalArgumentException("Indexes of type " + 
-                  this.query.indexType + " are not supported!"); 
-      }
+      indexReaderPool = query.getIndex(engine);
 
       if(indexReaderPool == null) throw new IllegalArgumentException(
               "No index provided for field " + node.getIndexName() + "!");
-      //use the term processor for the query term
-      MutableString mutableString = new MutableString(query.getTerm());
-      indexReader = indexReaderPool.borrowReader();
-      indexReaderPool.getIndex().termProcessor.processTerm(mutableString);
-      this.indexIterator = indexReader.documents(mutableString.toString());
+      indexReader = indexReaderPool.borrowReader();      
+      // if we have the term ID, use that
+      if(query.termId != DocumentIterator.END_OF_LIST) {
+        this.indexIterator = indexReader.documents(query.termId);
+      } else {
+        //use the term processor for the query term
+        MutableString mutableString = new MutableString(query.getTerm());
+        indexReaderPool.getIndex().termProcessor.processTerm(mutableString);
+        this.indexIterator = indexReader.documents(mutableString.toString());        
+      }
       positionsIterator = null;
     }
 
@@ -325,11 +322,41 @@ public class TermQuery implements QueryNode {
   public CharSequence getTerm() {
     return term;
   }
+  
+  /**
+   * @return the termId
+   */
+  public long getTermId() {
+    return termId;
+  }
+
   /**
    * @return the indexName
    */
   public String getIndexName() {
     return indexName;
+  }
+  
+  /**
+   * Gets the index for this query in a given {@link QueryEngine}.
+   * @param engine
+   * @return
+   */
+  public IndexReaderPool getIndex(QueryEngine engine) {
+    switch(this.indexType){
+      case TOKENS:
+        if(indexName == null){
+          //token query, with no index name provided -> use the default
+          return engine.getIndexes()[0];
+        }else{
+          return engine.getTokenIndex(indexName);
+        }
+      case ANNOTATIONS:
+        return engine.getAnnotationIndex(indexName);
+      default:
+        throw new IllegalArgumentException("Indexes of type " + 
+                indexType + " are not supported!"); 
+    }
   }
   
   
@@ -348,7 +375,20 @@ public class TermQuery implements QueryNode {
     this(IndexType.TOKENS, indexName, term, 1);
   }
   
-
+  /**
+   * Creates a new term query, for searching over the document text. 
+   * 
+   * @param indexName the name of the index to be searched. This should be one
+   * of the annotation feature names used for indexing tokens (see 
+   * {@link IndexConfig.TokenIndexerConfig}).
+   * 
+   * @param termId the term ID for the term to be searched for.
+   * 
+   * @see IndexConfig.TokenIndexerConfig
+   */
+  public TermQuery(String indexName, long termId) {
+    this(IndexType.TOKENS, indexName, termId, 1);
+  }
   
   /**
    * Creates a new term query, for searching over semantic annotations.
@@ -362,12 +402,23 @@ public class TermQuery implements QueryNode {
    * @param length the length of the mention sought.
    */
   public TermQuery(String annotationType, String mentionURI, int length) {
-    this.indexType = IndexType.ANNOTATIONS;
-    this.indexName = annotationType;
-    this.term = mentionURI;
-    this.length = length;
+    this(IndexType.ANNOTATIONS, annotationType, mentionURI, length);
   }
-
+  
+  /**
+   * Creates a new term query, for searching over semantic annotations.
+   *   
+   * @param annotationType the type of annotation sought. This should one of the 
+   * annotation types used when indexing semantic annotations (see 
+   * {@link IndexConfig.SemanticIndexerConfig}).
+   * 
+   * @param mentionTermid the term ID for the mentionURI sought.
+   * 
+   * @param length the length of the mention sought.
+   */
+  public TermQuery(String annotationType, long mentionTermid, int length) {
+    this(IndexType.ANNOTATIONS, annotationType, mentionTermid, length);
+  }  
   
   /**
    * Creates a new term query. This constructor is part of a low-level API. see 
@@ -392,6 +443,32 @@ public class TermQuery implements QueryNode {
     this.term = term;
     this.length = length;
   }
+  
+  /**
+   * Creates a new term query. This constructor is part of a low-level API. see 
+   * the other constructors of this class, which may be more suitable!
+   *   
+   * @param indexType The type of index to be searched.
+   * 
+   * @param indexName the name of the index to be searched. If the indexType is
+   * {@link IndexType#TOKENS}, then the name is interpreted as the feature name 
+   * for the document tokens, if the indexType is {@link IndexType#ANNOTATIONS}, 
+   * then the name is interpreted as annotation type.
+   * 
+   * @param length the length of the hits (useful in the case of annotation 
+   * indexes, where the length of each mention is stored external to the actual 
+   * index).
+   * 
+   * @param termId the term ID for sought term.
+   */
+  public TermQuery(IndexType indexType, String indexName, long termId, int length) {
+    this.indexType = indexType;
+    this.indexName = indexName;
+    this.termId = termId;
+    this.length = length;
+  }
+  
+  
   
   /**
    * Gets a new query executor for this {@link TermQuery}.
