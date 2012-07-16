@@ -43,12 +43,13 @@ public class TermsResultSet {
    */
   public final int[] termCounts;
 
-  public TermsResultSet(long[] termIds, String[] terms,int[] termLengths, int[] counts) {
+  public TermsResultSet(long[] termIds, String[] termStrings,int[] termLengths, 
+                        int[] termCounts) {
     super();
     this.termIds = termIds;
-    this.termStrings = terms;
+    this.termStrings = termStrings;
     this.termLengths = termLengths;
-    this.termCounts = counts;
+    this.termCounts = termCounts;
   }
   
   /**
