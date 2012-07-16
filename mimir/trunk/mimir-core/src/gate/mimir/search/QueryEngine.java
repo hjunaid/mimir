@@ -23,6 +23,7 @@ import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.IndexException;
 import gate.mimir.index.Indexer;
 import gate.mimir.index.mg4j.MentionsIndexBuilder;
+import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
 import gate.mimir.index.mg4j.TokenIndexBuilder;
 import gate.mimir.index.mg4j.zipcollection.DocumentCollection;
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
@@ -125,6 +126,12 @@ public class QueryEngine {
    * configuration).
    */
   protected IndexReaderPool[] indexReaderPools;
+  
+  /**
+   * Array containing the direct indexes (if enabled) for the Mímir composite
+   * index.
+   */
+  protected IndexReaderPool[] directIndexReaderPools;
 
   /**
    * The zipped document collection from MG4J (built during the indexing of the
@@ -350,6 +357,19 @@ public class QueryEngine {
   }
 
   /**
+   * Returns the set of direct indexes (if enabled) in the Mimir composite 
+   * index. The array contains first the token indexes (in the same order as 
+   * listed in the index configuration), followed by the mentions indexes 
+   * (in the same order as listed in the index configuration). In other words,
+   * this array is parallel to the one returned by {@link #getIndexes()}.
+   * 
+   * @return an array of {@link Index} objects.
+   */
+  public IndexReaderPool[] getDirectIndexes() {
+    return directIndexReaderPools;
+  }  
+  
+  /**
    * Gets the list of document sizes from one underlying MG4J index (all 
    * sub-indexes should have the same sizes).
    * @return
@@ -375,6 +395,27 @@ public class QueryEngine {
   }
 
   /**
+   * Returns the <strong>direct</strong> index that stores the data for a 
+   * particular feature of token annotations. 
+   * 
+   * NB: direct indexes are used to search for term IDs given
+   * a document ID. For standard searches (getting documents given search terms)
+   * use the default (inverted) index returned by: 
+   * {@link #getTokenIndex(String)}.
+   * 
+   * @param featureName
+   * @return
+   */
+  public IndexReaderPool getTokenDirectIndex(String featureName) {
+    for(int i = 0; i < indexConfig.getTokenIndexers().length; i++) {
+      if(indexConfig.getTokenIndexers()[i].getFeatureName().equals(featureName)) {
+        return directIndexReaderPools[i]; 
+      }
+    }
+    return null;
+  }  
+  
+  /**
    * Returns the index that stores the data for a particular semantic annotation
    * type.
    * 
@@ -383,16 +424,40 @@ public class QueryEngine {
    */
   public IndexReaderPool getAnnotationIndex(String annotationType) {
     for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
-      for(String aType : indexConfig.getSemanticIndexers()[i]
-                                                           .getAnnotationTypes()) {
-        if(aType.equals(annotationType)) { return indexReaderPools[indexConfig
-                                                          .getTokenIndexers().length
-                                                          + i]; }
+      for(String aType : 
+          indexConfig.getSemanticIndexers()[i].getAnnotationTypes()) {
+        if(aType.equals(annotationType)) { 
+          return indexReaderPools[indexConfig.getTokenIndexers().length + i]; 
+        }
       }
     }
     return null;
   }
 
+  /**
+   * Returns the <strong>direct</strong> index that stores the data for a 
+   * particular semantic annotation type.
+   * 
+   * NB: direct indexes are used to search for term IDs given
+   * a document ID. For standard searches (getting documents given search terms)
+   * use the default (inverted) index returned by: 
+   * {@link #getAnnotationIndex(String)}.
+   * 
+   * @param annotationType
+   * @return
+   */
+  public IndexReaderPool getAnnotationDirectIndex(String annotationType) {
+    for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
+      for(String aType : 
+          indexConfig.getSemanticIndexers()[i].getAnnotationTypes()) {
+        if(aType.equals(annotationType)) { 
+          return directIndexReaderPools[indexConfig.getTokenIndexers().length + i]; 
+        }
+      }
+    }
+    return null;
+  }  
+  
   /**
    * @return the index configuration for this index
    */
@@ -762,6 +827,17 @@ public class QueryEngine {
       }
     }
     indexReaderPools = null;
+
+    for(IndexReaderPool aPool : directIndexReaderPools) {
+      try {
+        if(aPool != null) aPool.close();
+      } catch(IOException e) {
+        // log and ignore
+        logger.error("Exception while closing direct index reader pool.", e);
+      }
+    }
+    directIndexReaderPools = null;
+    
   }
 
   /**
@@ -771,9 +847,14 @@ public class QueryEngine {
    * @throws IndexException
    */
   protected void initMG4J() throws IOException, IndexException {
-    indexReaderPools =
-      new IndexReaderPool[indexConfig.getTokenIndexers().length
-                + indexConfig.getSemanticIndexers().length];
+    indexReaderPools = new IndexReaderPool[
+        indexConfig.getTokenIndexers().length + 
+        indexConfig.getSemanticIndexers().length];
+    
+    directIndexReaderPools = new IndexReaderPool[
+        indexConfig.getTokenIndexers().length +
+        indexConfig.getSemanticIndexers().length];
+    
     try {
       File mg4JIndexDir = new File(indexDir, Indexer.MG4J_INDEX_DIRNAME);
       // Load the token indexes as memory mapped, if possible
@@ -783,6 +864,14 @@ public class QueryEngine {
                   + TokenIndexBuilder.TOKEN_INDEX_BASENAME + "-" + i);
         URI indexURI = indexBasename.toURI();
         indexReaderPools[i] = openOneSubIndex(indexURI);
+        directIndexReaderPools[i] = null;
+        if(indexConfig.getTokenIndexers()[i].isDirectIndexEnabled()) {
+          indexBasename = new File(mg4JIndexDir, 
+              Indexer.MG4J_INDEX_BASENAME + "-" + 
+              TokenIndexBuilder.TOKEN_INDEX_BASENAME + "-" + i + 
+              MimirDirectIndexBuilder.BASENAME_SUFFIX);
+            directIndexReaderPools[i] = openOneSubIndex(indexBasename.toURI());
+        }
       }
       // load the mentions indexes
       for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
@@ -793,6 +882,15 @@ public class QueryEngine {
         URI indexURI = indexBasename.toURI();
         indexReaderPools[indexConfig.getTokenIndexers().length + i] =
           openOneSubIndex(indexURI);
+        directIndexReaderPools[indexConfig.getTokenIndexers().length + i] = null;
+        if(indexConfig.getSemanticIndexers()[i].isDirectIndexEnabled()) {
+          indexBasename = new File(mg4JIndexDir, 
+              Indexer.MG4J_INDEX_BASENAME + "-" + 
+              MentionsIndexBuilder.MENTIONS_INDEX_BASENAME + "-" + i +
+              MimirDirectIndexBuilder.BASENAME_SUFFIX);
+          indexReaderPools[indexConfig.getTokenIndexers().length + i] = 
+              openOneSubIndex(indexBasename.toURI());
+        }
       }
       // open the zipped document collection
       documentCollection = new DocumentCollection(indexDir);
@@ -833,7 +931,7 @@ public class QueryEngine {
     // see if the index needs upgrading
     MG4JTools.upgradeIndex(indexUri);
     Index theIndex = MG4JTools.openMg4jIndex(indexUri);
-    return new IndexReaderPool(theIndex);
+    return new IndexReaderPool(theIndex, indexUri);
   }
   
   /**

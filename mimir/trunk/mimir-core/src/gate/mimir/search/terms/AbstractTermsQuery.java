@@ -21,34 +21,27 @@ public abstract class AbstractTermsQuery implements TermsQuery {
   
   protected boolean stringsEnabled;
   
-  protected boolean idsEnabled;
-  
   protected boolean countsEnabled;
 
-  
+  public static final int NO_LIMIT = -1;
   /**
    * The maximum number of results to be returned.
    */
   protected final int limit;  
   
-  public AbstractTermsQuery(boolean idsEnabled, boolean stringsEnabled,
-                            boolean countsEnabled, int limit) {
-    this.idsEnabled = idsEnabled;
+  public AbstractTermsQuery(boolean stringsEnabled, boolean countsEnabled, 
+                            int limit) {
     this.stringsEnabled = stringsEnabled;
     this.countsEnabled = countsEnabled;
     this.limit = limit;
   }
   
-  public AbstractTermsQuery(boolean idsEnabled, boolean stringsEnabled,
-                            boolean countsEnabled) {
-    this.idsEnabled = idsEnabled;
-    this.stringsEnabled = stringsEnabled;
-    this.countsEnabled = countsEnabled;
-    this.limit = -1;
+  public AbstractTermsQuery(boolean stringsEnabled, boolean countsEnabled) {
+    this(stringsEnabled, countsEnabled, NO_LIMIT);
   }  
   
   public AbstractTermsQuery() {
-    this(true, false, false);
+    this(false, false, NO_LIMIT);
   }
   
 }

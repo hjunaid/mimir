@@ -14,6 +14,8 @@
  */
 package gate.mimir.search.terms;
 
+import java.io.IOException;
+
 import gate.mimir.search.QueryEngine;
 
 /**
@@ -25,7 +27,8 @@ public interface TermsQuery {
    * Runs the term query (in the calling thread) and returns the matched terms.
    * @return a {@link TermsResultSet} containing the matched terms.
    * @param engine the {@link QueryEngine} used to execute the search.
+   * @throws IOException 
    */
-  public TermsResultSet execute(QueryEngine engine);
+  public TermsResultSet execute(QueryEngine engine) throws IOException;
   
 }
