@@ -48,7 +48,7 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
   
   protected String inputSubindexBasename;
   
-  protected static final String BASENAME_SUFFIX = "-dir";
+  public static final String BASENAME_SUFFIX = "-dir";
   
   /**
    * @param indexDirectory the top level directory for the Mímir index being

@@ -152,10 +152,7 @@ public class MG4JTools {
       if(aFile.exists()) {
         size += aFile.length();
       } else {
-        // no index file!
-        throw new IllegalArgumentException(
-                "Could not locate the index file at " + aFile.getAbsolutePath()
-                + "!");
+        // probably a direct index with no positions
       }
       String options = "?" + (size <= QueryEngine.MAX_IN_MEMORY_INDEX ? 
           UriKeys.INMEMORY.toString().toLowerCase() + "=1" : 

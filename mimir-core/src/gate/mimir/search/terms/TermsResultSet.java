@@ -21,7 +21,7 @@ public class TermsResultSet {
   
   /**
    * The term IDs, as retrieved from the index. Array parallel with 
-   * {@link #terms} and {@link #counts}.
+   * {@link #termStrings} and {@link #termCounts}.
    */
   public final long[] termIds;
   
@@ -32,23 +32,23 @@ public class TermsResultSet {
   
   /**
    * The strings for the terms. Array parallel with 
-   * {@link #termIds} and {@link #counts}.
+   * {@link #termIds} and {@link #termCounts}.
    */
-  public final String[] terms;
+  public final String[] termStrings;
   
   
   /**
    * The counts (numbers of occurrences) for the terms. Array parallel with 
-   * {@link #terms} and {@link #termIds}.
+   * {@link #termStrings} and {@link #termIds}.
    */
-  public final int[] counts;
+  public final int[] termCounts;
 
   public TermsResultSet(long[] termIds, String[] terms,int[] termLengths, int[] counts) {
     super();
     this.termIds = termIds;
-    this.terms = terms;
+    this.termStrings = terms;
     this.termLengths = termLengths;
-    this.counts = counts;
+    this.termCounts = counts;
   }
   
   /**

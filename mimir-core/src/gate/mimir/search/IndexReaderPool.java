@@ -14,10 +14,16 @@
  */
 package gate.mimir.search;
 
+import it.unimi.dsi.big.io.FileLinesCollection;
+import it.unimi.dsi.big.mg4j.index.DiskBasedIndex;
 import it.unimi.dsi.big.mg4j.index.Index;
 import it.unimi.dsi.big.mg4j.index.IndexReader;
+import it.unimi.dsi.big.util.ImmutableExternalPrefixMap;
+import it.unimi.dsi.lang.MutableString;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,6 +31,32 @@ import java.util.concurrent.atomic.AtomicInteger;
  * A pool for IndexReader values assocuated with a given index.
  */
 public class IndexReaderPool {
+  
+  private class IndexDictionary extends ImmutableExternalPrefixMap {
+
+    private static final long serialVersionUID = 3350171413268036811L;
+
+    public IndexDictionary(Iterable<? extends CharSequence> terms)
+      throws IOException {
+      super(terms);
+    }
+
+    /**
+     * A mutable string used internally. 
+     */
+    private MutableString ms = new MutableString();
+
+    /**
+     * Gets the term string for a given term ID. This method is synchronised to
+     * protect the shared mutable string instance.
+     * @param termId the ID for the term being sought.
+     * @return the string for the given term.
+     */
+    public synchronized String getTerm(long termId) {
+      return super.getTerm(termId, ms).toString();
+    }
+    
+  }
   
   private static final int DEFAULT_CAPACITY = 100000;
   
@@ -41,25 +73,39 @@ public class IndexReaderPool {
    */
   private Index index;
   
+  
+  /**
+   * A URI representing the index basename (the template index file name, 
+   * without any extension). 
+   */
+  private URI indexURI;
+  
   /**
    * The current size of the pool.
    */
   private AtomicInteger size;
   
   /**
+   * An external map that holds the index terms. Allows the retrieval of a 
+   * term's text given a term ID.
+   */
+  private IndexDictionary dictionary;
+  
+  /**
    * The actual pool.
    */
   private ConcurrentLinkedQueue<IndexReader> pool;
 
-  public IndexReaderPool(Index index, int capacity) {
+  public IndexReaderPool(Index index, int capacity, URI indexUri) {
     this.capacity = capacity;
     this.index = index;
+    this.indexURI = indexUri;
     pool = new ConcurrentLinkedQueue<IndexReader>();
     size = new AtomicInteger(0);
   }
   
-  public IndexReaderPool(Index index) {
-    this(index, DEFAULT_CAPACITY);
+  public IndexReaderPool(Index index, URI indexUri) {
+    this(index, DEFAULT_CAPACITY, indexUri);
   }
   
   /**
@@ -97,6 +143,22 @@ public class IndexReaderPool {
 
   public Index getIndex() {
     return index;
+  }
+  
+  /**
+   * Gets the string term for a given term ID.
+   * @param termId
+   * @return
+   * @throws IOException
+   */
+  public String getTerm(long termId) throws IOException {
+    if(dictionary == null) {
+      FileLinesCollection dictionaryLines = new FileLinesCollection(
+        new File(URI.create(indexURI.toString() + 
+          DiskBasedIndex.TERMS_EXTENSION)).getAbsolutePath(), "UTF-8");
+      dictionary = new IndexDictionary(dictionaryLines);
+    }
+    return dictionary.getTerm(termId);
   }
   
   public void close() throws IOException {

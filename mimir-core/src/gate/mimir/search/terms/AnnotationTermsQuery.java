@@ -35,9 +35,8 @@ import gate.mimir.search.query.AnnotationQuery;
 public class AnnotationTermsQuery extends AbstractTermsQuery {
   
   public AnnotationTermsQuery(AnnotationQuery annotationQuery, 
-      boolean idsEnabled, boolean stringsEnabled, boolean countsEnabled,
-      int limit) {
-    super(idsEnabled, stringsEnabled, countsEnabled, limit);
+      boolean stringsEnabled, boolean countsEnabled, int limit) {
+    super(stringsEnabled, countsEnabled, limit);
     this.annotationQuery = annotationQuery;
   }
   
