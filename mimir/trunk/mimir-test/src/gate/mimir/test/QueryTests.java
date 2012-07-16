@@ -241,7 +241,7 @@ public class QueryTests {
       SequenceQuery sQuery1 =
               new SequenceQuery(new SequenceQuery.Gap[]{SequenceQuery
                       .getGap(1, 1)}, tq1, tq3);
-      TermQuery tq1Gap = new TermQuery(TermQuery.IndexType.TOKENS, "string", "up", 2);
+      TermQuery tq1Gap = new TermQuery(QueryEngine.IndexType.TOKENS, "string", "up", 2);
       SequenceQuery sQuery2 = new SequenceQuery(null, tq1Gap, tq3);
       GapQuery gQ1 = new GapQuery(tq1, 1);
       SequenceQuery sQuery3 = new SequenceQuery(null, gQ1, tq3);
