@@ -19,7 +19,7 @@ import gate.mimir.Constraint;
 import gate.mimir.ConstraintType;
 import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.search.QueryEngine;
-import gate.mimir.search.terms.AnnotationTermQuery;
+import gate.mimir.search.terms.AnnotationTermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
 import it.unimi.dsi.big.mg4j.index.Index;
 import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
@@ -81,7 +81,7 @@ public class AnnotationQuery implements QueryNode {
       isInDocumentMode = (helper.getMode() == 
           SemanticAnnotationHelper.Mode.DOCUMENT);
       // get the mention URIs
-      TermsResultSet trs = new AnnotationTermQuery(query, engine).execute();
+      TermsResultSet trs = new AnnotationTermsQuery(query).execute(engine);
       if(trs.terms != null && trs.terms.length > 0 && 
          trs.termLengths != null) {
         QueryNode[] disjuncts = new QueryNode[trs.terms.length];

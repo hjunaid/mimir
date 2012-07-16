@@ -101,6 +101,24 @@ public class QueryEngine {
   
   
   /**
+   * Represents the type of index that should be searched. Mimir uses two types
+   * of indexes: token indexes (which index the text input) and annotation
+   * indexes (which index semantic annotations).
+   */
+  public static enum IndexType{
+    /**
+     * Value representing token indexes, used for the document text.
+     */
+    TOKENS,
+    
+    /**
+     * Value representing annotation indexes, used for the document semantic
+     * annotations.
+     */
+    ANNOTATIONS
+  }
+
+  /**
    * The various indexes in the Mimir composite index. The array contains first
    * the token indexes (in the same order as listed in the index configuration),
    * followed by the mentions indexes (in the same order as listed in the index

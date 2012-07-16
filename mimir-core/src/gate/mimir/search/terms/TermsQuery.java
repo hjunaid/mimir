@@ -14,15 +14,18 @@
  */
 package gate.mimir.search.terms;
 
+import gate.mimir.search.QueryEngine;
+
 /**
  * A query that returns terms.
  * Term queries are fast, so they run synchronously.
  */
-public interface TermQuery {
+public interface TermsQuery {
   /**
    * Runs the term query (in the calling thread) and returns the matched terms.
    * @return a {@link TermsResultSet} containing the matched terms.
+   * @param engine the {@link QueryEngine} used to execute the search.
    */
-  public TermsResultSet execute();
+  public TermsResultSet execute(QueryEngine engine);
   
 }

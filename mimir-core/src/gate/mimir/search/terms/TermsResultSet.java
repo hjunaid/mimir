@@ -15,7 +15,7 @@
 package gate.mimir.search.terms;
 
 /**
- * Class representing the results of a {@link TermQuery}. 
+ * Class representing the results of a {@link TermsQuery}. 
  */
 public class TermsResultSet {
   

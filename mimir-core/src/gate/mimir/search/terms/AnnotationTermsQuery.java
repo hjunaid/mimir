@@ -27,40 +27,36 @@ import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.AnnotationQuery;
-import gate.mimir.search.query.OrQuery;
-import gate.mimir.search.query.QueryNode;
-import gate.mimir.search.query.TermQuery;
 
 /**
  * Given an {@link AnnotationQuery}, this finds the set of terms that satisfy 
  * it.
  */
-public class AnnotationTermQuery extends AbstractTermsQuery {
+public class AnnotationTermsQuery extends AbstractTermsQuery {
   
-  public AnnotationTermQuery(boolean idsEnabled, boolean stringsEnabled,
-                             boolean countsEnabled,
-                             AnnotationQuery annotationQuery) {
-    super(idsEnabled, stringsEnabled, countsEnabled);
+  public AnnotationTermsQuery(AnnotationQuery annotationQuery, 
+      boolean idsEnabled, boolean stringsEnabled, boolean countsEnabled,
+      int limit) {
+    super(idsEnabled, stringsEnabled, countsEnabled, limit);
     this.annotationQuery = annotationQuery;
   }
-
-  public AnnotationTermQuery(AnnotationQuery annotationQuery, QueryEngine engine) {
+  
+  public AnnotationTermsQuery(AnnotationQuery annotationQuery) {
     super();
     this.annotationQuery = annotationQuery;
-    this.engine = engine;
   }
 
   protected AnnotationQuery annotationQuery;
   
-  protected QueryEngine engine;
+//  protected QueryEngine engine;
   
-  private static final Logger logger = Logger.getLogger(AnnotationTermQuery.class);
+  private static final Logger logger = Logger.getLogger(AnnotationTermsQuery.class);
   
   /* (non-Javadoc)
    * @see gate.mimir.search.terms.TermQuery#execute()
    */
   @Override
-  public TermsResultSet execute() {
+  public TermsResultSet execute(QueryEngine engine) {
     // find the semantic annotation helper for the right annotation type
     SemanticAnnotationHelper helper = 
         engine.getAnnotationHelper(annotationQuery);
@@ -79,7 +75,7 @@ public class AnnotationTermQuery extends AbstractTermsQuery {
     } else {
       // this indicates major changes in the underlying MG4J implementation
       throw new IllegalStateException(
-        "Underlying MG4J index is not bitstream based!");
+        "Underlying MG4J index is not a bitstream index.");
     }
   
     if(mentions.size() > 0) {
@@ -94,7 +90,6 @@ public class AnnotationTermQuery extends AbstractTermsQuery {
         //use the term processor for the query term
         MutableString mutableString = new MutableString(m.getUri());
         mg4jIndex.termProcessor.processTerm(mutableString);
-        // TODO use toString() if not working
         termIds[index] = termMap.getLong( mutableString);
         index++;
       }

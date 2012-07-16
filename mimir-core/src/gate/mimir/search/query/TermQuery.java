@@ -31,8 +31,8 @@ import it.unimi.dsi.big.mg4j.search.IntervalIterator;
 import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
-import java.util.*;
 
+import static gate.mimir.search.QueryEngine.IndexType;
 
 /**
  * A {@link QueryNode} for term queries. A term query consists of an index name 
@@ -42,24 +42,6 @@ public class TermQuery implements QueryNode {
 
   private static final long serialVersionUID = 7302348587893649887L;
 
-  /**
-   * Represents the type of index that should be searched. Mimir uses two types
-   * of indexes: token indexes (which index the text input) and annotation
-   * indexes (which index semantic annotations).
-   */
-  public static enum IndexType{
-    /**
-     * Value representing token indexes, used for the document text.
-     */
-    TOKENS,
-    
-    /**
-     * Value representing annotation indexes, used for the document semantic
-     * annotations.
-     */
-    ANNOTATIONS
-  }
-  
   /**
    * The query term
    */
