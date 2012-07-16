@@ -862,8 +862,7 @@ public class QueryEngine {
         File indexBasename =
           new File(mg4JIndexDir, Indexer.MG4J_INDEX_BASENAME + "-"
                   + TokenIndexBuilder.TOKEN_INDEX_BASENAME + "-" + i);
-        URI indexURI = indexBasename.toURI();
-        indexReaderPools[i] = openOneSubIndex(indexURI);
+        indexReaderPools[i] = openOneSubIndex(indexBasename.toURI());
         directIndexReaderPools[i] = null;
         if(indexConfig.getTokenIndexers()[i].isDirectIndexEnabled()) {
           indexBasename = new File(mg4JIndexDir, 
@@ -879,16 +878,15 @@ public class QueryEngine {
           new File(mg4JIndexDir, Indexer.MG4J_INDEX_BASENAME + "-"
                   + MentionsIndexBuilder.MENTIONS_INDEX_BASENAME + "-"
                   + i);
-        URI indexURI = indexBasename.toURI();
         indexReaderPools[indexConfig.getTokenIndexers().length + i] =
-          openOneSubIndex(indexURI);
+          openOneSubIndex(indexBasename.toURI());
         directIndexReaderPools[indexConfig.getTokenIndexers().length + i] = null;
         if(indexConfig.getSemanticIndexers()[i].isDirectIndexEnabled()) {
           indexBasename = new File(mg4JIndexDir, 
               Indexer.MG4J_INDEX_BASENAME + "-" + 
               MentionsIndexBuilder.MENTIONS_INDEX_BASENAME + "-" + i +
               MimirDirectIndexBuilder.BASENAME_SUFFIX);
-          indexReaderPools[indexConfig.getTokenIndexers().length + i] = 
+          directIndexReaderPools[indexConfig.getTokenIndexers().length + i] = 
               openOneSubIndex(indexBasename.toURI());
         }
       }
