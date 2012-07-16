@@ -17,7 +17,7 @@ package gate.mimir.search.terms;
 /**
  * Base class for term queries.
  */
-public abstract class AbstractTermsQuery implements TermQuery {
+public abstract class AbstractTermsQuery implements TermsQuery {
   
   protected boolean stringsEnabled;
   
@@ -25,12 +25,27 @@ public abstract class AbstractTermsQuery implements TermQuery {
   
   protected boolean countsEnabled;
 
+  
+  /**
+   * The maximum number of results to be returned.
+   */
+  protected final int limit;  
+  
+  public AbstractTermsQuery(boolean idsEnabled, boolean stringsEnabled,
+                            boolean countsEnabled, int limit) {
+    this.idsEnabled = idsEnabled;
+    this.stringsEnabled = stringsEnabled;
+    this.countsEnabled = countsEnabled;
+    this.limit = limit;
+  }
+  
   public AbstractTermsQuery(boolean idsEnabled, boolean stringsEnabled,
                             boolean countsEnabled) {
     this.idsEnabled = idsEnabled;
     this.stringsEnabled = stringsEnabled;
     this.countsEnabled = countsEnabled;
-  }
+    this.limit = -1;
+  }  
   
   public AbstractTermsQuery() {
     this(true, false, false);
