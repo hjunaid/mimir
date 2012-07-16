@@ -25,6 +25,7 @@ import java.util.concurrent.Callable;
 import gate.Gate;
 import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
 import gate.mimir.search.QueryEngine;
+import gate.mimir.search.QueryEngine.IndexType;
 import gate.mimir.search.QueryRunner;
 import gate.mimir.search.RankingQueryRunnerImpl;
 import gate.mimir.search.query.QueryExecutor;
@@ -33,6 +34,9 @@ import gate.mimir.search.query.parser.QueryParser;
 import gate.mimir.search.score.BindingScorer;
 import gate.mimir.search.score.DelegatingScoringQueryExecutor;
 import gate.mimir.search.score.MimirScorer;
+import gate.mimir.search.terms.DocumentTermsQuery;
+import gate.mimir.search.terms.TermsQuery;
+import gate.mimir.search.terms.TermsResultSet;
 import gate.util.GateException;
 
 public class Scratch {
@@ -161,7 +165,7 @@ public class Scratch {
    * @param args
    * @throws Exception sometimes 
    */
-  public static void main(String[] args) throws Exception {
+  public static void mainBuildDirectIndex(String[] args) throws Exception {
     Gate.setGateHome(new File("gate-home"));
     Gate.setUserConfigFile(new File("gate-home/user-gate.xml"));
     Gate.init();
@@ -187,9 +191,59 @@ public class Scratch {
     try {
       MimirDirectIndexBuilder mdib = new MimirDirectIndexBuilder(new File(args[0]), args[1]);
       mdib.run();
-      
     } catch(Exception e) {
       e.printStackTrace();
     }
   }
+  
+  /**
+   * Main version for testing direct indexes
+   * @param args
+   * @throws Exception sometimes 
+   */
+  public static void main(String[] args) throws Exception {
+    Gate.setGateHome(new File("gate-home"));
+    Gate.setUserConfigFile(new File("gate-home/user-gate.xml"));
+    Gate.init();
+    // load the tokeniser plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("gate-home/plugins/ANNIE-tokeniser").toURI().toURL());
+    // load the DB plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/db-h2").toURI().toURL());
+//    Gate.getCreoleRegister().registerDirectories(
+//      new File("../plugins/sesame").toURI().toURL());    
+    // load the measurements plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/measurements").toURI().toURL());
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/sparql").toURI().toURL());
+    
+    QueryEngine qEngine = new QueryEngine(new File(args[0]));
+    NumberFormat nf = NumberFormat.getNumberInstance();
+    
+    long start = System.currentTimeMillis();
+    TermsQuery query = new DocumentTermsQuery(1, "root", IndexType.TOKENS, 
+      true, true, DocumentTermsQuery.NO_LIMIT);
+    TermsResultSet res = query.execute(qEngine);
+    for(int  i = 0; i < res.termIds.length; i++) {
+      System.out.print(res.termIds[i] + "\t");
+      if(res.termStrings != null) {
+        System.out.print("\"" + res.termStrings[i] + "\"\t");
+      }      
+      if(res.termLengths != null) {
+        System.out.print("len:" + res.termLengths[i] + "\t");
+      }
+      if(res.termCounts != null) {
+        System.out.print("cnt:" + res.termCounts[i]);
+      }
+      System.out.println();
+    }
+    
+    System.out.println("Found " + nf.format(res.termIds.length)
+        + " hits in " + 
+        nf.format(System.currentTimeMillis() - start) + " ms.");
+    qEngine.close();
+  }
+  
 }
