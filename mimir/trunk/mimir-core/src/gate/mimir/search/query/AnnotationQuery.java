@@ -82,7 +82,7 @@ public class AnnotationQuery implements QueryNode {
           SemanticAnnotationHelper.Mode.DOCUMENT);
       // get the mention URIs
       TermsResultSet trs = new AnnotationTermsQuery(query).execute(engine);
-      if(trs.termStrings != null && trs.termStrings.length > 0 && 
+      if(trs.termIds != null && trs.termIds.length > 0 && 
          trs.termLengths != null) {
         QueryNode[] disjuncts = new QueryNode[trs.termStrings.length];
         for(int index = 0; index < trs.termStrings.length; index++) {
