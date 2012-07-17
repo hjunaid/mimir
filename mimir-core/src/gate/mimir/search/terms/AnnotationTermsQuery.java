@@ -47,8 +47,6 @@ public class AnnotationTermsQuery extends AbstractTermsQuery {
 
   protected AnnotationQuery annotationQuery;
   
-//  protected QueryEngine engine;
-  
   private static final Logger logger = Logger.getLogger(AnnotationTermsQuery.class);
   
   /* (non-Javadoc)
