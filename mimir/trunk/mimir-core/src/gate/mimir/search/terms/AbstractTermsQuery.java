@@ -14,14 +14,6 @@
  */
 package gate.mimir.search.terms;
 
-import java.io.IOException;
-
-import gate.mimir.search.IndexReaderPool;
-import it.unimi.dsi.big.mg4j.index.IndexIterator;
-import it.unimi.dsi.big.mg4j.search.DocumentIterator;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
  * Base class for term queries.

@@ -15,10 +15,8 @@
 package gate.mimir.search.terms;
 
 import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
-import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
-import it.unimi.dsi.big.mg4j.index.IndexIterator;
 import it.unimi.dsi.big.mg4j.index.IndexReader;
 
 import java.io.IOException;
