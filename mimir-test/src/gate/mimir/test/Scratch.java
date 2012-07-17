@@ -16,6 +16,7 @@ import it.unimi.dsi.big.mg4j.search.score.TfIdfScorer;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.text.NumberFormat;
@@ -34,7 +35,10 @@ import gate.mimir.search.query.parser.QueryParser;
 import gate.mimir.search.score.BindingScorer;
 import gate.mimir.search.score.DelegatingScoringQueryExecutor;
 import gate.mimir.search.score.MimirScorer;
+import gate.mimir.search.terms.AndTermsQuery;
 import gate.mimir.search.terms.DocumentTermsQuery;
+import gate.mimir.search.terms.DocumentsAndTermsQuery;
+import gate.mimir.search.terms.DocumentsOrTermsQuery;
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
 import gate.util.GateException;
@@ -220,11 +224,40 @@ public class Scratch {
       new File("../plugins/sparql").toURI().toURL());
     
     QueryEngine qEngine = new QueryEngine(new File(args[0]));
-    NumberFormat nf = NumberFormat.getNumberInstance();
+    TermsQuery query = null;
     
+//    query = new DocumentTermsQuery("root", IndexType.TOKENS, 
+//      true, true, DocumentTermsQuery.NO_LIMIT, 0);
+//    printTermQuery(query, qEngine);
+//    System.out.println("\n=======================================");
+//    query = new DocumentTermsQuery("root", IndexType.TOKENS, 
+//      true, true, DocumentTermsQuery.NO_LIMIT, 1);
+//    printTermQuery(query, qEngine);
+//    System.out.println("\n=======================================");
+    
+//    query = new DocumentsOrTermsQuery("root", IndexType.TOKENS, 
+//      true, true, DocumentTermsQuery.NO_LIMIT, 0, 1);
+//    printTermQuery(query, qEngine);
+    
+    TermsQuery q1 = new DocumentTermsQuery("root", IndexType.TOKENS, 
+        true, true, DocumentTermsQuery.NO_LIMIT, 0);
+    TermsQuery q2 = new DocumentTermsQuery("root", IndexType.TOKENS, 
+      true, true, DocumentTermsQuery.NO_LIMIT, 1);
+    query = new AndTermsQuery(true, true, Integer.MAX_VALUE, q1, q2);
+    // now for real
+    printTermQuery(query, qEngine);
+    
+    System.out.println("\n=======================================");
+    
+    
+    qEngine.close();
+  }
+  
+  private static NumberFormat nf = NumberFormat.getNumberInstance();
+
+  private static void printTermQuery(TermsQuery query, QueryEngine qEngine) throws IOException {
+
     long start = System.currentTimeMillis();
-    TermsQuery query = new DocumentTermsQuery(1, "root", IndexType.TOKENS, 
-      true, true, DocumentTermsQuery.NO_LIMIT);
     TermsResultSet res = query.execute(qEngine);
     for(int  i = 0; i < res.termIds.length; i++) {
       System.out.print(res.termIds[i] + "\t");
@@ -243,7 +276,6 @@ public class Scratch {
     System.out.println("Found " + nf.format(res.termIds.length)
         + " hits in " + 
         nf.format(System.currentTimeMillis() - start) + " ms.");
-    qEngine.close();
   }
   
 }
