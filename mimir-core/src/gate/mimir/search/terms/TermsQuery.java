@@ -19,12 +19,13 @@ import java.io.IOException;
 import gate.mimir.search.QueryEngine;
 
 /**
- * A query that returns terms.
- * Term queries are fast, so they run synchronously.
+ * A query that returns terms. The terms returned must be sorted in ascending 
+ * order of their term ID.
  */
 public interface TermsQuery {
   /**
    * Runs the term query (in the calling thread) and returns the matched terms.
+   * The terms returned must be sorted in ascending order of their term ID. 
    * @return a {@link TermsResultSet} containing the matched terms.
    * @param engine the {@link QueryEngine} used to execute the search.
    * @throws IOException 

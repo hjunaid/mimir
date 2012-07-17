@@ -14,43 +14,24 @@
  */
 package gate.mimir.search.terms;
 
-import java.io.IOException;
-
-import it.unimi.dsi.big.mg4j.index.BitStreamIndex;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.index.IndexIterator;
-import it.unimi.dsi.big.mg4j.index.IndexReader;
-import it.unimi.dsi.big.mg4j.search.DocumentIterator;
-import it.unimi.dsi.big.util.StringMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
 import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
+import gate.mimir.search.QueryEngine.IndexType;
+import it.unimi.dsi.big.mg4j.index.IndexIterator;
+import it.unimi.dsi.big.mg4j.index.IndexReader;
 
-import static gate.mimir.search.QueryEngine.IndexType;
+import java.io.IOException;
 
 /**
  * A {@link TermsQuery} that returns the terms occurring in a document.
  */
-public class DocumentTermsQuery extends AbstractTermsQuery {
+public class DocumentTermsQuery extends AbstractIndexTermsQuery {
   
   /**
    * The ID of the document for which the terms are being sought.
    */
   protected final long documentId;
-  
-  /**
-   * The name of the subindex in which the terms are sought. Each Mímir 
-   * index includes multiple sub-indexes (some storing tokens, other storing 
-   * annotations), identified by a name. For token indexes, the index name is
-   * the name of the token feature being indexed; for annotation indexes, the
-   * index name is the annotation type. 
-   */
-  protected final String indexName; 
-
-  protected final IndexType indexType;
   
   
   /**
@@ -72,13 +53,11 @@ public class DocumentTermsQuery extends AbstractTermsQuery {
    * 
    * @param limit the maximum number of results to be returned.
    */
-  public DocumentTermsQuery(long documentId, String indexName, 
+  public DocumentTermsQuery(String indexName, 
       IndexType indexType, boolean stringsEnabled, boolean countsEnabled, 
-      int limit) {
-    super(stringsEnabled, countsEnabled, limit);
+      int limit, long documentId) {
+    super(indexName, indexType, stringsEnabled, countsEnabled, limit);
     this.documentId = documentId;
-    this.indexName = indexName;
-    this.indexType = indexType;
   }
 
   /**
@@ -99,9 +78,9 @@ public class DocumentTermsQuery extends AbstractTermsQuery {
    * 
    * @param indexType the type of the index being searched.
    */
-  public DocumentTermsQuery(long documentId, String indexName, 
-      IndexType indexType) {
-    this(documentId, indexName, indexType, false, true, NO_LIMIT);
+  public DocumentTermsQuery(String indexName, IndexType indexType, 
+                            long documentId) {
+    this(indexName, indexType, false, true, NO_LIMIT, documentId);
   }
 
   /**
@@ -123,59 +102,26 @@ public class DocumentTermsQuery extends AbstractTermsQuery {
    * 
    * @param limit the maximum number of results to be returned.
    */
-  public DocumentTermsQuery(long documentId, String indexName, 
-      IndexType indexType, int limit) {
-    this(documentId, indexName, indexType, false, true, limit);
+  public DocumentTermsQuery(String indexName, IndexType indexType, int limit,
+                            long documentId) {
+    this(indexName, indexType, false, true, limit, documentId);
   }
+
+  
   
   /* (non-Javadoc)
-   * @see gate.mimir.search.terms.TermQuery#execute()
+   * @see gate.mimir.search.terms.TermsQuery#execute(gate.mimir.search.QueryEngine)
    */
   @Override
   public TermsResultSet execute(QueryEngine engine) throws IOException {
-    IndexReaderPool directIndexPool = null;
-    IndexReaderPool indirectIndexPool = null;
-    IndexReader indexReader = null;
+    prepare(engine);
+    IndexReader indexReader = null; 
     try{
-      switch(indexType){
-        case ANNOTATIONS:
-          directIndexPool = engine.getAnnotationDirectIndex(indexName);
-          indirectIndexPool = engine.getAnnotationIndex(indexName);
-          break;
-        case TOKENS:
-          directIndexPool = engine.getTokenDirectIndex(indexName);
-          indirectIndexPool = engine.getTokenIndex(indexName);
-          break;
-        default:
-          throw new IllegalArgumentException("Invalid index type: " + 
-              indexType.toString());
-      }
-      
-      // prepare local data
-      LongArrayList termIds = new LongArrayList();
-      ObjectArrayList<String> termStrings = stringsEnabled ? 
-          new ObjectArrayList<String>() : null;
-      IntArrayList termCounts = countsEnabled ? new IntArrayList() : null;
-      // start the actual search
       indexReader = directIndexPool.borrowReader();
-      IndexIterator results = indexReader.documents(
-        MimirDirectIndexBuilder.longToTerm(documentId));
-      long termId = results.nextDocument();
-      while(termId != DocumentIterator.END_OF_LIST && termId != -1) {
-        termIds.add(termId);
-        if(countsEnabled) termCounts.add(results.count());
-        if(stringsEnabled) termStrings.add(indirectIndexPool.getTerm(termId));
-        termId = results.nextDocument();
-      }
-      // construct the result
-      return new TermsResultSet(termIds.toLongArray(),
-        stringsEnabled ? termStrings.toArray(new String[termStrings.size()]) : null,
-        null,
-        countsEnabled ? termCounts.toIntArray() : null);      
+      return buildResultSet(
+        indexReader.documents(MimirDirectIndexBuilder.longToTerm(documentId)));
     } finally {
-      if(indexReader != null) {
-        directIndexPool.returnReader(indexReader);  
-      }
+      if(indexReader != null) directIndexPool.returnReader(indexReader);
     }
   }
 }
