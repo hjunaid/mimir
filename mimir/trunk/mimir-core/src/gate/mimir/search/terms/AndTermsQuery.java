@@ -44,13 +44,9 @@ public class AndTermsQuery extends AbstractTermsQuery {
   @Override
   public TermsResultSet execute(QueryEngine engine) throws IOException {
     final TermsResultSet[] resSets = new TermsResultSet[subQueries.length];
-    int minLen = Integer.MAX_VALUE;
     for(int i = 0; i < subQueries.length; i++) {
       resSets[i] = subQueries[i].execute(engine);
-      if(minLen > resSets[i].termIds.length) {
-        minLen = resSets[i].termIds.length;
-        if(minLen == 0) return TermsResultSet.EMPTY;
-      }
+      if(resSets[i].termIds.length == 0) return TermsResultSet.EMPTY;
     }
     // optimisation: sort sub-runners by increasing sizes
     Arrays.quickSort(0, resSets.length, new IntComparator() {
