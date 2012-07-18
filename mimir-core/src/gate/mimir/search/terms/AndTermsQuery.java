@@ -30,8 +30,21 @@ import java.io.IOException;
  */
 public class AndTermsQuery extends AbstractTermsQuery {
   
+  /**
+   * The sub-queries being AND'ed.
+   */
   protected TermsQuery[] subQueries;
   
+  /**
+   * Constructs a new AND term query.
+   * 
+   * @param stringsEnabled should terms strings be returned.
+   * @param countsEnabled should term counts be returned. Counts are 
+   * accumulated across all sub-queries: the count for a term is the sum of all
+   * counts for the same term in all sub-queries.  
+   * @param limit the maximum number of terms to be returned. 
+   * @param subQueries the term queries that form the disjunction.
+   */
   public AndTermsQuery(boolean stringsEnabled, boolean countsEnabled,
                        int limit, TermsQuery... subQueries) {
     super(stringsEnabled, countsEnabled, limit);
