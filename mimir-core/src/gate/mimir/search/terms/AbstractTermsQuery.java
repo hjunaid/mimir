@@ -28,7 +28,7 @@ public abstract class AbstractTermsQuery implements TermsQuery {
   /**
    * The maximum number of results to be returned.
    */
-  protected final int limit;  
+  protected final int limit;
   
   public AbstractTermsQuery(boolean stringsEnabled, boolean countsEnabled, 
                             int limit) {
@@ -45,4 +45,19 @@ public abstract class AbstractTermsQuery implements TermsQuery {
     this(false, false, NO_LIMIT);
   }
 
+  /**
+   * @return the stringsEnabled
+   */
+  public boolean isStringsEnabled() {
+    return stringsEnabled;
+  }
+
+  /**
+   * @return the countsEnabled
+   */
+  public boolean isCountsEnabled() {
+    return countsEnabled;
+  }
+
+  
 }
