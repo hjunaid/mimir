@@ -20,11 +20,11 @@ package gate.mimir.search.terms;
  */
 public abstract class AbstractTermsQuery implements TermsQuery {
   
-  protected boolean stringsEnabled;
+  protected final boolean stringsEnabled;
   
-  protected boolean countsEnabled;
+  protected final boolean countsEnabled;
 
-  public static final int NO_LIMIT = Integer.MAX_VALUE;
+  
   /**
    * The maximum number of results to be returned.
    */
