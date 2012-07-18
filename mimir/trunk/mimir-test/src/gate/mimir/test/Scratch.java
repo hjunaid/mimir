@@ -39,6 +39,9 @@ import gate.mimir.search.terms.AndTermsQuery;
 import gate.mimir.search.terms.DocumentTermsQuery;
 import gate.mimir.search.terms.DocumentsAndTermsQuery;
 import gate.mimir.search.terms.DocumentsOrTermsQuery;
+import gate.mimir.search.terms.LimitTermsQuery;
+import gate.mimir.search.terms.OrTermsQuery;
+import gate.mimir.search.terms.SortedTermsQuery;
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
 import gate.util.GateException;
@@ -236,14 +239,17 @@ public class Scratch {
 //    System.out.println("\n=======================================");
     
 //    query = new DocumentsOrTermsQuery("root", IndexType.TOKENS, 
-//      true, true, DocumentTermsQuery.NO_LIMIT, 0, 1);
+//      true, true, TermsQuery.NO_LIMIT, 0, 1);
 //    printTermQuery(query, qEngine);
+//    System.out.println("\n=======================================");
     
     TermsQuery q1 = new DocumentTermsQuery("root", IndexType.TOKENS, 
-        true, true, DocumentTermsQuery.NO_LIMIT, 0);
+        true, true, TermsQuery.NO_LIMIT, 0);
     TermsQuery q2 = new DocumentTermsQuery("root", IndexType.TOKENS, 
-      true, true, DocumentTermsQuery.NO_LIMIT, 1);
-    query = new AndTermsQuery(true, true, Integer.MAX_VALUE, q1, q2);
+      true, true, TermsQuery.NO_LIMIT, 1);
+    query = new OrTermsQuery(true, true, TermsQuery.NO_LIMIT, q1, q2);
+    
+    query = new LimitTermsQuery(new SortedTermsQuery(query), 100);
     // now for real
     printTermQuery(query, qEngine);
     
