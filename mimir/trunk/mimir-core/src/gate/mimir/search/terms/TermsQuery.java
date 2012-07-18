@@ -35,4 +35,16 @@ public interface TermsQuery {
    */
   public TermsResultSet execute(QueryEngine engine) throws IOException;
   
+  /**
+   * Does this query return term strings?
+   * @return
+   */
+  public boolean isStringsEnabled();
+  
+  /**
+   * Does this query return term counts?
+   * @return
+   */
+  public boolean isCountsEnabled();
+  
 }
