@@ -45,14 +45,18 @@ class SearchService {
    * A map holding the currently active query runners. 
    */
   //Map<String, QueryRunner> queryRunners = [:].asSynchronized()
-  Cache<String, QueryRunner> queryRunners
+  Cache<String, QueryRunnerHolder> queryRunners
   
   CacheCleaner cacheCleaner
           
-  public QueryRunner getQueryRunner(String id){
-    return id ? queryRunners.getIfPresent(id) : null
+  public QueryRunner getQueryRunner(String queryId){
+    return queryId ? queryRunners.getIfPresent(queryId)?.queryRunner : null
   }
 
+  public Index getQueryRunnerIndex(String queryId){
+    return queryId ? queryRunners.getIfPresent(queryId)?.index : null
+  }
+  
   public boolean closeQueryRunner(String id){
     QueryRunner runner = getQueryRunner(id)
     if(runner){
@@ -74,7 +78,8 @@ class SearchService {
     QueryRunner aRunner = theIndex.startQuery(queryString)
     if(aRunner){
       String runnerId = UUID.randomUUID()
-      queryRunners.put(runnerId, aRunner)
+      queryRunners.put(runnerId, 
+        new QueryRunnerHolder(queryRunner:aRunner, index:theIndex))
       return runnerId
     } else {
       throw new RuntimeException("Could not start query")
@@ -113,6 +118,11 @@ class SearchService {
     queryRunners.invalidateAll()
     cacheCleaner.interrupt()
   }
+}
+
+class QueryRunnerHolder {
+  QueryRunner queryRunner
+  Index index
 }
 
 /**
