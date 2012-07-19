@@ -169,7 +169,7 @@ class LocalIndexService {
   }
     
   
-  private synchronized QueryEngine getQueryEngine (LocalIndex index){
+  public synchronized QueryEngine getQueryEngine (LocalIndex index){
     QueryEngine engine = queryEngines[index.id]
     if(!engine) {
       if(index.state != Index.SEARCHING) {
