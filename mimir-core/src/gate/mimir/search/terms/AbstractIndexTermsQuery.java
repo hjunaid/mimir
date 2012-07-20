@@ -28,7 +28,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import java.io.IOException;
 
 /**
- * Base class for terms queries that use an MG4J index for their search.
+ * Base class for terms queries that use an MG4J direct index for their search.
  */
 public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
   
@@ -69,7 +69,16 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
     this.indexType = indexType;
   }
 
-  
+  /**
+   * Populates the internal state by obtaining references to the direct and
+   * indirect indexes from the {@link QueryEngine}.
+   *   
+   * @param engine the {@link QueryEngine} used to execute this query.
+   * 
+   * @throws IllegalArgumentException if the index represented by the provided
+   * query engine does not have a direct index for the given sub-index (as 
+   * specified by {@link #indexType} and {@link #indexName}).
+   */
   protected void prepare(QueryEngine engine) {
     this.engine = engine;
     switch(indexType){
@@ -84,6 +93,12 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
       default:
         throw new IllegalArgumentException("Invalid index type: " + 
             indexType.toString());
+    }
+    if(directIndexPool == null) {
+      throw new IllegalArgumentException("This type of query requires a " +
+      		"direct index, but one was not found for (" + 
+          indexType.toString().toLowerCase() + ") sub-index \"" + 
+      		indexName + "\"");
     }
   }
   
