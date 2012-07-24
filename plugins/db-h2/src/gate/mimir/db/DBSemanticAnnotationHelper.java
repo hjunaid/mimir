@@ -37,6 +37,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -99,6 +101,19 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
    */
   protected transient PreparedStatement level1SelectStmt;
 
+  
+  /**
+   * Prepared statement used to obtain the Level-1 feature values based on a 
+   * mention ID. Only used at search time. 
+   */
+  protected transient PreparedStatement level1DescribeStmt;
+
+  /**
+   * Prepared statement used to obtain the Level-1 and Level-2 feature values 
+   * based on a mention ID. Only used at search time. 
+   */
+  protected transient PreparedStatement level1And2DescribeStmt;
+  
   /**
    * Prepared statement used to insert anew row into the Level-1 table. 
    * Only used at indexing time. 
@@ -255,8 +270,79 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     if(textFeatureNames != null){
       for(String name : textFeatureNames) nonNominalFeatureNameSet.add(name);
     }
+    try {
+      constructDescriptionStatements();
+    } catch(SQLException e) {
+      throw new RuntimeException("Error while opening database", e);
+    }
   }
 
+  protected void constructDescriptionStatements() throws SQLException {
+    // level 1 query
+    List<String> nomFeatNames = new ArrayList<String>(
+        Arrays.asList(descriptiveFeatures));
+    nomFeatNames.retainAll(nominalFeatureNameSet);
+
+    StringBuilder stmt = new StringBuilder("SELECT DISTINCT ");
+    stmt.append(tableName(null, MENTIONS_TABLE_SUFFIX)).append(".\"ID\"");
+    for(int i = 0; i < nomFeatNames.size(); i++) {
+      String featName = nomFeatNames.get(i);
+      stmt.append(", ").append(tableName(null, L1_TABLE_SUFFIX))
+          .append(".\"").append(featName).append("\"");
+    }
+    stmt.append(" FROM ")
+        .append(tableName(null, MENTIONS_TABLE_SUFFIX))
+        .append(", ").append(tableName(null, L1_TABLE_SUFFIX))
+        .append(" WHERE ").append(tableName(null, MENTIONS_TABLE_SUFFIX))
+        .append(".\"ID\" IS ?")
+        .append(" AND ").append(tableName(null, MENTIONS_TABLE_SUFFIX))
+        .append(".\"L1_ID\" = ").append(tableName(null, L1_TABLE_SUFFIX))
+        .append(".\"ID\"");
+    if(level2Used){
+      stmt.append(" AND ").append(tableName(null, MENTIONS_TABLE_SUFFIX))
+          .append(".\"L2_ID\" IS NULL;");
+    }else {
+      stmt.append(";");
+    }
+//    logger.debug("L1 description statement: " + stmt.toString());
+    level1DescribeStmt = dbConnection.prepareStatement(stmt.toString());
+
+    if(level2Used) {
+      // levels 1 and 2 query
+      List<String> nonNomFeatNames = new ArrayList<String>(
+          Arrays.asList(descriptiveFeatures));
+      nonNomFeatNames.retainAll(nonNominalFeatureNameSet);
+      stmt = new StringBuilder("SELECT DISTINCT ");
+      stmt.append(tableName(null, MENTIONS_TABLE_SUFFIX)).append(".\"ID\"");
+      for(int i = 0; i < nomFeatNames.size(); i++) {
+        String featName = nomFeatNames.get(i);
+        stmt.append(", ").append(tableName(null, L1_TABLE_SUFFIX))
+            .append(".\"").append(featName).append("\"");
+      }
+      for(int i = 0; i < nonNomFeatNames.size(); i++) {
+        String featName = nonNomFeatNames.get(i);
+        stmt.append(", ").append(tableName(null, L2_TABLE_SUFFIX))
+            .append(".\"").append(featName).append("\"");
+      }    
+      stmt.append(" FROM ")
+          .append(tableName(null, MENTIONS_TABLE_SUFFIX))
+          .append(", ").append(tableName(null, L1_TABLE_SUFFIX))
+          .append(", ").append(tableName(null, L2_TABLE_SUFFIX))
+          .append(" WHERE ").append(tableName(null, MENTIONS_TABLE_SUFFIX))
+          .append(".\"ID\" IS ?")
+          .append(" AND ").append(tableName(null, MENTIONS_TABLE_SUFFIX))
+          .append(".\"L1_ID\" = ").append(tableName(null, L1_TABLE_SUFFIX))
+          .append(".\"ID\" AND ").append(tableName(null, MENTIONS_TABLE_SUFFIX))
+          .append(".\"L2_ID\" = ").append(tableName(null, L2_TABLE_SUFFIX))
+          .append(".\"ID\";");
+//      logger.debug("L1+2 description statement: " + stmt.toString());
+      level1And2DescribeStmt = dbConnection.prepareStatement(stmt.toString());      
+    } else {
+      level1And2DescribeStmt = null;
+    }
+
+  }
+  
   /**
    * Creates in the database the tables required by this helper for indexing.
    * Called at index creation, during the initialisation process.
@@ -618,6 +704,69 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       // something went bad: we can't fix it :(
       logger.error("Error while interogating database. Annotation was lost!", e);
       return new String[]{};
+    }
+  }
+
+  /* (non-Javadoc)
+   * @see gate.mimir.AbstractSemanticAnnotationHelper#getDescriptiveFeatureValues(java.lang.String)
+   */
+  @Override
+  protected String[] getDescriptiveFeatureValues(String mentionUri) {
+    long mentionId = -1;
+    try {
+      mentionId = Long.parseLong(
+          mentionUri.substring(annotationType.length() + 1));
+    } catch(Exception e) {
+      logger.error("Could not describe mention with invalid URI: \"" + 
+          mentionUri + "\"", e);
+      return null;
+    }
+    ResultSet res = null;
+    try {
+      level1DescribeStmt.setLong(1, mentionId);
+      res = level1DescribeStmt.executeQuery();
+      if(!res.next()) {
+        // no level 1 results: try levels 1+2
+        res.close();
+        level1And2DescribeStmt.setLong(1, mentionId);
+        res = level1And2DescribeStmt.executeQuery();
+        if(!res.next()){
+          logger.error("Was asked to describe mention with ID " + mentionId + 
+            " but was unable to find it.");
+          return null;
+        }
+      }
+      // by this point the result set was advanced to the one and only row
+      String[] result = new String[descriptiveFeatures.length];
+      for(int i = 0; i < descriptiveFeatures.length; i++) {
+        String columnName = null;
+        if(nominalFeatureNameSet.contains(descriptiveFeatures[i])) {
+          columnName = tableName(null, L1_TABLE_SUFFIX) + "\"" +
+              descriptiveFeatures[i] + "\"";
+        } else {
+          columnName = tableName(null, L2_TABLE_SUFFIX) + "\"" +
+              descriptiveFeatures[i] + "\"";
+        }
+        try {
+          Object sqlValue = res.getObject(columnName);
+          if(sqlValue != null) result[i] = sqlValue.toString();
+        } catch(Exception e) {
+          // ignore
+        }
+      }
+      return result;
+    } catch(SQLException e) {
+      logger.error("Database error while describing mention with ID: " + 
+          mentionId, e);
+      return null;
+    } finally {
+      if(res != null){
+        try {
+          res.close();
+        } catch(SQLException e) {
+          logger.error("Error while closing SQL result set", e);
+        }
+      }
     }
   }
 
