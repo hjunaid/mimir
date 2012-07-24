@@ -26,6 +26,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.IOException;
+import java.util.HashSet;
 
 /**
  * Base class for terms queries that use an MG4J direct index for their search.
@@ -58,9 +59,70 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
   protected IndexReaderPool indirectIndexPool;
   
   /**
+   * Should stop words be filtered out of the results? 
+   */
+  protected boolean stopWordsBlocked = false;
+  
+  /**
+   * Stop words list used for filtering out stop words. See 
+   * {@link #stopWordsBlocked}. 
+   */
+  protected String[] stopWords = null;
+  
+  /**
    * The query engine used to execute this query.
    */
   protected QueryEngine engine;
+
+  /**
+   * The default set of stop words.
+   */
+  public static final String[] DEFAULT_STOP_WORDS = new String[] {
+      ",", ".", "?", "!", ":", ";", "#", "~", "^", "@", "%", "&", "(", ")", 
+      "[", "]", "{", "}", "|", "\\", "<", ">", "-", "+", "*", "/", "=", 
+      "a", "about", "above", "above", "across", "after", "afterwards", "again", 
+      "against", "all", "almost", "alone", "along", "already", "also",
+      "although","always","am","among", "amongst", "amoungst", "amount", "an", 
+      "and", "another", "any","anyhow","anyone","anything","anyway", "anywhere",
+      "are", "around", "as",  "at", "back","be","became", "because", "become",
+      "becomes", "becoming", "been", "before", "beforehand", "behind", "being", 
+      "below", "beside", "besides", "between", "beyond", "bill", "both", 
+      "bottom","but", "by", "call", "can", "cannot", "cant", "co", "con", 
+      "could", "couldnt", "cry", "de", "describe", "detail", "do", "done", 
+      "down", "due", "during", "each", "eg", "eight", "either", "eleven",
+      "else", "elsewhere", "empty", "enough", "etc", "even", "ever", "every", 
+      "everyone", "everything", "everywhere", "except", "few", "fifteen", 
+      "fify", "fill", "find", "fire", "first", "five", "for", "former", 
+      "formerly", "forty", "found", "four", "from", "front", "full", "further", 
+      "get", "give", "go", "had", "has", "hasnt", "have", "he", "hence", "her", 
+      "here", "hereafter", "hereby", "herein", "hereupon", "hers", "herself", 
+      "him", "himself", "his", "how", "however", "hundred", "ie", "if", "in", 
+      "inc", "indeed", "interest", "into", "is", "it", "its", "itself", "keep", 
+      "last", "latter", "latterly", "least", "less", "ltd", "made", "many", 
+      "may", "me", "meanwhile", "might", "mill", "mine", "more", "moreover", 
+      "most", "mostly", "move", "much", "must", "my", "myself", "name", 
+      "namely", "neither", "never", "nevertheless", "next", "nine", "no", 
+      "nobody", "none", "noone", "nor", "not", "nothing", "now", "nowhere", 
+      "of", "off", "often", "on", "once", "one", "only", "onto", "or", "other",
+      "others", "otherwise", "our", "ours", "ourselves", "out", "over", "own",
+      "part", "per", "perhaps", "please", "put", "rather", "re", "same", "see", 
+      "seem", "seemed", "seeming", "seems", "serious", "several", "she", 
+      "should", "show", "side", "since", "sincere", "six", "sixty", "so", 
+      "some", "somehow", "someone", "something", "sometime", "sometimes", 
+      "somewhere", "still", "such", "system", "take", "ten", "than", "that", 
+      "the", "their", "them", "themselves", "then", "thence", "there", 
+      "thereafter", "thereby", "therefore", "therein", "thereupon", "these", 
+      "they", "thickv", "thin", "third", "this", "those", "though", "three", 
+      "through", "throughout", "thru", "thus", "to", "together", "too", "top", 
+      "toward", "towards", "twelve", "twenty", "two", "un", "under", "until", 
+      "up", "upon", "us", "very", "via", "was", "we", "well", "were", "what", 
+      "whatever", "when", "whence", "whenever", "where", "whereafter", 
+      "whereas", "whereby", "wherein", "whereupon", "wherever", "whether", 
+      "which", "while", "whither", "who", "whoever", "whole", "whom", "whose",
+      "why", "will", "with", "within", "without", "would", "yet", "you", "your",
+      "yours", "yourself", "yourselves"
+  };
+  
   
   public AbstractIndexTermsQuery(String indexName, IndexType indexType, 
       boolean stringsEnabled, boolean countsEnabled, int limit) {
@@ -121,25 +183,83 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
       counterSetupVisitor.prepare();
       documentIterator.accept( counterSetupVisitor ); 
     }
+    HashSet<String> stopWordsSet = null;
+    if(stopWordsBlocked) {
+      String[] sws = stopWords == null ?  DEFAULT_STOP_WORDS : stopWords;
+      stopWordsSet = new HashSet<String>(sws.length);
+      for(String sw : sws) stopWordsSet.add(sw);
+    }
     
     long termId = documentIterator.nextDocument();
     while(termId != DocumentIterator.END_OF_LIST && termId != -1 &&
         termIds.size() < limit) {
-      termIds.add(termId);
-      if(countsEnabled){
-        counterSetupVisitor.clear();
-        documentIterator.acceptOnTruePaths( counterCollectionVisitor );
-        int count = 0;
-        for (int aCount : counterSetupVisitor.count ) count +=  aCount;
-        termCounts.add(count);
+      String termString = null;
+      if(isStopWordsBlocked() || stringsEnabled) {
+        termString = indirectIndexPool.getTerm(termId);
       }
-      if(stringsEnabled) termStrings.add(indirectIndexPool.getTerm(termId));
+      if(stopWordsBlocked && stopWordsSet.contains(termString)) {
+        // do nothing
+      } else {
+        termIds.add(termId);
+        if(countsEnabled){
+          counterSetupVisitor.clear();
+          documentIterator.acceptOnTruePaths( counterCollectionVisitor );
+          int count = 0;
+          for (int aCount : counterSetupVisitor.count ) count +=  aCount;
+          termCounts.add(count);
+        }
+        if(stringsEnabled) termStrings.add(termString);
+      }
       termId = documentIterator.nextDocument();
     }
     // construct the result
     return new TermsResultSet(termIds.toLongArray(),
       stringsEnabled ? termStrings.toArray(new String[termStrings.size()]) : null,
       null,
-      countsEnabled ? termCounts.toIntArray() : null);  
+      countsEnabled ? termCounts.toIntArray() : null);
   }
+
+  /**
+   * Should stop words be filtered out from the results? Defaults to 
+   * <code>false</code>.
+   * 
+   * @return the stopWordsBlocked
+   */
+  public boolean isStopWordsBlocked() {
+    return stopWordsBlocked;
+  }
+
+  /**
+   * Enables or disables the filtering of stop words from the results. If a 
+   * custom list of stop words has been set (by calling 
+   * {@link #setStopWords(String[])}) then it is used, otherwise the 
+   * {@link #DEFAULT_STOP_WORDS} list is used.
+   * 
+   * @param stopWordsBlocked the stopWordsBlocked to set
+   */
+  public void setStopWordsBlocked(boolean stopWordsBlocked) {
+    this.stopWordsBlocked = stopWordsBlocked;
+  }
+
+  /**
+   * Gets the current custom list of stop words.
+   * @return the stopWords
+   */
+  public String[] getStopWords() {
+    return stopWords;
+  }
+
+  /**
+   * Sets the custom list of stop words that should be blocked from query 
+   * results. The actual blocking also needs to be enabled by calling 
+   * {@link #setStopWordsBlocked(boolean)}. 
+   * If this array is set to <code>null<code>, then the 
+   * {@link #DEFAULT_STOP_WORDS} are used.
+   * 
+   * @param stopWords the stopWords to set
+   */
+  public void setStopWords(String[] stopWords) {
+    this.stopWords = stopWords;
+  }
+  
 }
