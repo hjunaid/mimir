@@ -14,6 +14,7 @@
  */
 package gate.mimir.search.terms;
 
+import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
@@ -57,6 +58,12 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
    * The indirect index used for executing the query.
    */
   protected IndexReaderPool indirectIndexPool;
+  
+  /**
+   * If {@link #indexType} is {@link IndexType#ANNOTATIONS}, this holds a 
+   * reference to the annotation helper.
+   */
+  protected SemanticAnnotationHelper annotationHelper;
   
   /**
    * Should stop words be filtered out of the results? 
@@ -147,6 +154,7 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
       case ANNOTATIONS:
         directIndexPool = engine.getAnnotationDirectIndex(indexName);
         indirectIndexPool = engine.getAnnotationIndex(indexName);
+        annotationHelper = engine.getAnnotationHelper(indexName);
         break;
       case TOKENS:
         directIndexPool = engine.getTokenDirectIndex(indexName);
@@ -208,7 +216,13 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
           for (int aCount : counterSetupVisitor.count ) count +=  aCount;
           termCounts.add(count);
         }
-        if(stringsEnabled) termStrings.add(termString);
+        if(stringsEnabled){
+          if(indexType == IndexType.ANNOTATIONS) {
+            // describe the term
+            termString = annotationHelper.describeMention(termString);
+          }
+          termStrings.add(termString);
+        }
       }
       termId = documentIterator.nextDocument();
     }

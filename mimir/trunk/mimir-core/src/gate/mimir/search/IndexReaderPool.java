@@ -41,10 +41,6 @@ public class IndexReaderPool {
       super(terms);
     }
 
-    /**
-     * A mutable string used internally. 
-     */
-    private MutableString ms = new MutableString();
 
     /**
      * Gets the term string for a given term ID. This method is synchronised to
@@ -52,8 +48,8 @@ public class IndexReaderPool {
      * @param termId the ID for the term being sought.
      * @return the string for the given term.
      */
-    public synchronized String getTerm(long termId) {
-      return super.getTerm(termId, ms).toString();
+    public String getTerm(long termId) {
+      return super.getTerm(termId, new MutableString()).toString();
     }
     
   }

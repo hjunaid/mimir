@@ -458,6 +458,19 @@ public class QueryEngine {
     return null;
   }  
   
+  public SemanticAnnotationHelper getAnnotationHelper(String annotationType) {
+    for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
+      String[] annTypes = indexConfig.getSemanticIndexers()[i]
+          .getAnnotationTypes(); 
+      for(int j = 0; j < annTypes.length; j++) {
+        if(annTypes[j].equals(annotationType)) {
+          return indexConfig.getSemanticIndexers()[i].getHelpers()[j];
+        }
+      }
+    }
+    return null;
+  }
+  
   /**
    * @return the index configuration for this index
    */

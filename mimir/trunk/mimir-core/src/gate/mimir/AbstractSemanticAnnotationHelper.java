@@ -20,6 +20,7 @@ import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -87,6 +88,12 @@ public abstract class AbstractSemanticAnnotationHelper implements
    */
   protected String annotationType;
 	
+  /**
+   * The list of names for all the features that should be used when describing
+   * an annotation mention (see {@link #describeMention(String)}).
+   */
+  protected String[] descriptiveFeatures;
+  
   /**
    * The working mode for this helper (defaults to {@link Mode#ANNOTATION}).
    */
@@ -157,10 +164,31 @@ public abstract class AbstractSemanticAnnotationHelper implements
   public void setUriFeatures(String[] uriFeatureNames) {
     this.uriFeatureNames = uriFeatureNames;
   }
-
-
-
   
+  /**
+   * Gets the names of features that should be used when describing an
+   * annotation mention.
+   *  
+   * @return the descriptiveFeatures
+   */
+  public String[] getDescriptiveFeatures() {
+    return descriptiveFeatures;
+  }
+
+  /**
+   * Sets the names of features that should be used when describing an
+   * annotation mention. This should be called <strong>before</strong> the 
+   * helper is initialised (i.e. before calling {@link #init(QueryEngine)}).
+   * 
+   * If no custom value has been set before {@link #init(QueryEngine)} is 
+   * called, then all features are used as descriptive features.
+   * 
+   * @param descriptiveFeatures the descriptiveFeatures to set
+   */
+  public void setDescriptiveFeatures(String[] descriptiveFeatures) {
+    this.descriptiveFeatures = descriptiveFeatures;
+  }
+
   /* (non-Javadoc)
    * @see gate.mimir.SemanticAnnotationHelper#documentEnd()
    */
@@ -182,6 +210,47 @@ public abstract class AbstractSemanticAnnotationHelper implements
     return getMentions(annotationType, predicates, engine);
   }
 
+  
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.SemanticAnnotationHelper#describeMention(java.lang.String)
+   */
+  @Override
+  public String describeMention(String mentionUri) {
+    String[] values = getDescriptiveFeatureValues(mentionUri);
+    if(values == null) {
+      return mentionUri;
+    } else {
+      StringBuilder res = new StringBuilder("{").append(annotationType);
+      for(int i = 0; i < descriptiveFeatures.length; i++) {
+        if(values[i] != null && values[i].length() > 0) {
+          res.append(' ').append(descriptiveFeatures[i]).append(" = ");
+          res.append(values[i]);
+        }
+      }
+      res.append('}');
+      return res.toString();
+    }
+  }
+  
+  /**
+   * Calculates the textual representations for the values of features that are
+   * part of the description of an annotation mention. The list of features for
+   * which the values should be returned is {@link #descriptiveFeatures}.
+   * 
+   * This implementation always returns <code>null</code> as the abstract class
+   * has no way of accessing the actual feature values. Subclasses should 
+   * provide an actual implementation to support proper mention descriptions. 
+   * 
+   * @param mentionUri the URI for the mention that needs to be described.
+   * 
+   * @return an array of strings parallel with {@link #descriptiveFeatures}, or
+   * null if the feature values are not known.
+   */
+  protected String[] getDescriptiveFeatureValues(String mentionUri) {
+    return null;
+  }
+  
   /**
    * Helper method to concatenate a number of arrays into one, for helpers
    * that don't support all the feature types and want to combine some of
@@ -210,6 +279,7 @@ public abstract class AbstractSemanticAnnotationHelper implements
   private void checkInit() {
     if(isInited) throw new IllegalStateException(
       "This helper has already been initialised!");
+    
     isInited = true;
   }
 
@@ -222,8 +292,26 @@ public abstract class AbstractSemanticAnnotationHelper implements
   @Override
   public void init(QueryEngine queryEngine) {
     checkInit();
+    // calculate the list of descriptive features if needed
+    if(descriptiveFeatures == null) {
+      List<String> featNames = new ArrayList<String>();
+      if(nominalFeatureNames != null){
+        Collections.addAll(featNames, nominalFeatureNames);
+      }
+      if(integerFeatureNames != null) {
+        Collections.addAll(featNames, integerFeatureNames);
+      }
+      if(floatFeatureNames != null) {
+        Collections.addAll(featNames, floatFeatureNames);
+      }
+      if(textFeatureNames != null) {
+        Collections.addAll(featNames, textFeatureNames);
+      }
+      if(uriFeatureNames != null) {
+        Collections.addAll(featNames, uriFeatureNames);
+      }
+      descriptiveFeatures = featNames.toArray(new String[featNames.size()]);
+    }
   }
-
-  
   
 }

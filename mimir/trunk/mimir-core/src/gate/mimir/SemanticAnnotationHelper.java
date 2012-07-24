@@ -133,6 +133,18 @@ public interface SemanticAnnotationHelper extends Serializable{
   public List<Mention> getMentions(String annotationType,
           List<Constraint> constraints, QueryEngine engine);
   
+  
+  /**
+   * Provides a human-friendly representation of a mention, specified by the
+   * given URI. 
+   * @param mentionUri the mention URI, a string identical to the one that would
+   * be returned by one of the getMentions() methods. There is no requirement 
+   * that the actual string value was previously obtained from a getMentions()
+   * call. 
+   * @return a textual representation of the specified mention.  
+   */
+  public String describeMention(String mentionUri) ;
+  
   /**
    * Closes this annotation helper. Implementers should perform maintenance 
    * operations (such as closing connections to ORDI, etc) on this call.
