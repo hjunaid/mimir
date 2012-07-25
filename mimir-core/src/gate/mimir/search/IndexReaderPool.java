@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A pool for IndexReader values assocuated with a given index.
+ * A pool for IndexReader values associated with a given index.
  */
 public class IndexReaderPool {
   
