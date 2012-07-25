@@ -288,7 +288,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     for(int i = 0; i < nomFeatNames.size(); i++) {
       String featName = nomFeatNames.get(i);
       stmt.append(", ").append(tableName(null, L1_TABLE_SUFFIX))
-          .append(".\"").append(featName).append("\"");
+          .append(".\"").append(featName).append("\" AS ").append(featName);
     }
     stmt.append(" FROM ")
         .append(tableName(null, MENTIONS_TABLE_SUFFIX))
@@ -317,12 +317,12 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       for(int i = 0; i < nomFeatNames.size(); i++) {
         String featName = nomFeatNames.get(i);
         stmt.append(", ").append(tableName(null, L1_TABLE_SUFFIX))
-            .append(".\"").append(featName).append("\"");
+            .append(".\"").append(featName).append("\" AS ").append(featName);
       }
       for(int i = 0; i < nonNomFeatNames.size(); i++) {
         String featName = nonNomFeatNames.get(i);
         stmt.append(", ").append(tableName(null, L2_TABLE_SUFFIX))
-            .append(".\"").append(featName).append("\"");
+            .append(".\"").append(featName).append("\" AS ").append(featName);
       }    
       stmt.append(" FROM ")
           .append(tableName(null, MENTIONS_TABLE_SUFFIX))
@@ -707,6 +707,22 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     }
   }
 
+  
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.SemanticAnnotationHelper#isMentionUri(java.lang.String)
+   */
+  @Override
+  public boolean isMentionUri(String mentionUri) {
+    final String prefix = annotationType + ":";
+    if(mentionUri.startsWith(prefix)) {
+      try{
+        return Long.parseLong(mentionUri.substring(prefix.length())) >= 0;
+      } catch (Exception e) {}
+    }
+    return false;
+  }
+
   /* (non-Javadoc)
    * @see gate.mimir.AbstractSemanticAnnotationHelper#getDescriptiveFeatureValues(java.lang.String)
    */
@@ -718,9 +734,10 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
           mentionUri.substring(annotationType.length() + 1));
     } catch(Exception e) {
       logger.error("Could not describe mention with invalid URI: \"" + 
-          mentionUri + "\"", e);
+          mentionUri + "\" (" + e.getMessage() + ")." );
       return null;
     }
+    if(level1DescribeStmt == null) return null;
     ResultSet res = null;
     try {
       level1DescribeStmt.setLong(1, mentionId);
@@ -728,30 +745,27 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       if(!res.next()) {
         // no level 1 results: try levels 1+2
         res.close();
-        level1And2DescribeStmt.setLong(1, mentionId);
-        res = level1And2DescribeStmt.executeQuery();
-        if(!res.next()){
-          logger.error("Was asked to describe mention with ID " + mentionId + 
-            " but was unable to find it.");
+        if(level2Used && level1And2DescribeStmt != null) {
+          level1And2DescribeStmt.setLong(1, mentionId);
+          res = level1And2DescribeStmt.executeQuery();
+          if(!res.next()){
+            logger.error("Was asked to describe mention with ID " + mentionId + 
+              " but was unable to find it.");
+            return null;
+          }          
+        } else {
+          // no results from level 1, and level2 not used
           return null;
         }
       }
       // by this point the result set was advanced to the one and only row
       String[] result = new String[descriptiveFeatures.length];
       for(int i = 0; i < descriptiveFeatures.length; i++) {
-        String columnName = null;
-        if(nominalFeatureNameSet.contains(descriptiveFeatures[i])) {
-          columnName = tableName(null, L1_TABLE_SUFFIX) + "\"" +
-              descriptiveFeatures[i] + "\"";
-        } else {
-          columnName = tableName(null, L2_TABLE_SUFFIX) + "\"" +
-              descriptiveFeatures[i] + "\"";
-        }
         try {
-          Object sqlValue = res.getObject(columnName);
+          Object sqlValue = res.getObject(descriptiveFeatures[i]);
           if(sqlValue != null) result[i] = sqlValue.toString();
         } catch(Exception e) {
-          // ignore
+          logger.error("Error while obtaining description feature value.", e);
         }
       }
       return result;
