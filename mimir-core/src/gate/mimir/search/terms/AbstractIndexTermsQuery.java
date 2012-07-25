@@ -39,7 +39,7 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
    * index includes multiple sub-indexes (some storing tokens, other storing 
    * annotations), identified by a name. For token indexes, the index name is
    * the name of the token feature being indexed; for annotation indexes, the
-   * index name is the annotation type. 
+   * index name is the annotation type.
    */
   protected final String indexName; 
 
@@ -60,8 +60,9 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
   protected IndexReaderPool indirectIndexPool;
   
   /**
-   * If {@link #indexType} is {@link IndexType#ANNOTATIONS}, this holds a 
-   * reference to the annotation helper.
+   * The semantic annotation helper for the correct annotation type (as 
+   * given by {@link #indexName}), if {@link #indexType} is 
+   * {@link IndexType#ANNOTATIONS}, <code>null</code> otherwise. 
    */
   protected SemanticAnnotationHelper annotationHelper;
   
@@ -130,7 +131,21 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
       "yours", "yourself", "yourselves"
   };
   
-  
+  /**
+   * 
+   * @param indexName The name of the subindex in which the terms are sought. 
+   *    Each Mímir index includes multiple sub-indexes (some storing tokens, 
+   *    other storing annotations), identified by a name. For token indexes, 
+   *    the index name is the name of the token feature being indexed; for 
+   *    annotation indexes, the index name is the annotation type.    
+   * @param indexType The type of index to be searched (tokens or annotations).
+   * 
+   * @param stringsEnabled should term strings be obtained?
+   * 
+   * @param countsEnabled should term counts be obtained?
+   * 
+   * @param limit the maximum number of terms to return.
+   */
   public AbstractIndexTermsQuery(String indexName, IndexType indexType, 
       boolean stringsEnabled, boolean countsEnabled, int limit) {
     super(stringsEnabled, countsEnabled, limit);
@@ -199,30 +214,40 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
     }
     
     long termId = documentIterator.nextDocument();
-    while(termId != DocumentIterator.END_OF_LIST && termId != -1 &&
+    terms:while(termId != DocumentIterator.END_OF_LIST && termId != -1 &&
         termIds.size() < limit) {
       String termString = null;
-      if(isStopWordsBlocked() || stringsEnabled) {
+      // get the term string, if required
+      if(// if stop words are blocked, we need to check the term string  
+         isStopWordsBlocked() || 
+         // if strings enabled, we need the term string so we can return it
+         stringsEnabled ||
+         // if annotation index, we need the term to check for the right 
+         // annotation type inside the index (which may include multiple types)
+         indexType == IndexType.ANNOTATIONS) {
         termString = indirectIndexPool.getTerm(termId);
       }
       if(stopWordsBlocked && stopWordsSet.contains(termString)) {
-        // do nothing
-      } else {
-        termIds.add(termId);
-        if(countsEnabled){
-          counterSetupVisitor.clear();
-          documentIterator.acceptOnTruePaths( counterCollectionVisitor );
-          int count = 0;
-          for (int aCount : counterSetupVisitor.count ) count +=  aCount;
-          termCounts.add(count);
-        }
-        if(stringsEnabled){
-          if(indexType == IndexType.ANNOTATIONS) {
-            // describe the term
-            termString = annotationHelper.describeMention(termString);
-          }
-          termStrings.add(termString);
-        }
+        // skip this term
+        termId = documentIterator.nextDocument();
+        continue terms;
+      }
+      if(indexType == IndexType.ANNOTATIONS && 
+         (!annotationHelper.isMentionUri(termString))){
+        // skip this term
+        termId = documentIterator.nextDocument();
+        continue terms;
+      }
+      termIds.add(termId);
+      if(countsEnabled){
+        counterSetupVisitor.clear();
+        documentIterator.acceptOnTruePaths( counterCollectionVisitor );
+        int count = 0;
+        for (int aCount : counterSetupVisitor.count ) count +=  aCount;
+        termCounts.add(count);
+      }
+      if(stringsEnabled){
+        termStrings.add(termString);
       }
       termId = documentIterator.nextDocument();
     }

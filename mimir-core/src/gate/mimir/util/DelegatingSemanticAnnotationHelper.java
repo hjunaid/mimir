@@ -213,6 +213,23 @@ public abstract class DelegatingSemanticAnnotationHelper extends
     return delegate.getMentions(annotationType, constraints, engine);
   }
 
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.AbstractSemanticAnnotationHelper#describeMention(java.lang.String)
+   */
+  @Override
+  public String describeMention(String mentionUri) {
+    return delegate.describeMention(mentionUri);
+  }
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.SemanticAnnotationHelper#isMentionUri(java.lang.String)
+   */
+  @Override
+  public boolean isMentionUri(String mentionUri) {
+    return delegate.isMentionUri(mentionUri);
+  }
+
   @Override
   public void documentEnd() {
     delegate.documentEnd();

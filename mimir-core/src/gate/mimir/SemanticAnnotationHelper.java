@@ -143,7 +143,25 @@ public interface SemanticAnnotationHelper extends Serializable{
    * call. 
    * @return a textual representation of the specified mention.  
    */
-  public String describeMention(String mentionUri) ;
+  public String describeMention(String mentionUri);
+  
+  /**
+   * Checks whether the supplied string <strong>looks like</strong> a valid
+   * mention URI that may have been returned by a call to 
+   * {@link #getMentions(String, List, QueryEngine)} or 
+   * {@link #getMentions(String, Map, QueryEngine)}.
+   * 
+   * Note that this is a superficial test that may be able to distinguish a URI
+   * produced by this helper from one produced by another. It will not actually 
+   * access any data structure to check that the URI really is valid. The main 
+   * use case for this call is to distinguish different URIs indexed in the same
+   * annotations index, but produced by different helpers.  
+   *  
+   * @param mentionUri the URI to test.
+   * @return <code>true</code> if this URI looks like an URI produced by this 
+   * helper.
+   */
+  public boolean isMentionUri(String mentionUri);
   
   /**
    * Closes this annotation helper. Implementers should perform maintenance 
