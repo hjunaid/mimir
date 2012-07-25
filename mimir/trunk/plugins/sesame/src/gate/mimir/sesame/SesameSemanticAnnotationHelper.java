@@ -106,10 +106,12 @@ public class SesameSemanticAnnotationHelper extends
 	private static boolean staticInitDone = false;
 
 	/**
-	 * Flag for the initialisation. Set to <code>true</code> after the
-	 * initialisation has completed.
+	 * @deprecated this flag is not used any more, as the same logic is already 
+	 * implemented in the init() methods on 
+	 * {@link AbstractSemanticAnnotationHelper}. The field is not removed to allow
+	 * old indexes to be opened.
 	 */
-	private boolean initDone = false;
+	private transient boolean initDone = false;
 
 	/**
 	 * Parser used for SPARQL queries.
@@ -203,6 +205,11 @@ public class SesameSemanticAnnotationHelper extends
 	protected URI annotationTemplateURILevel1;
 
 	/**
+	 * The prefix shared by all mention URIs produced by this helper.
+	 */
+	protected String mentionUriPrefix;
+	
+	/**
 	 * The URI for the level 2 annotation template ontology class corresponding
 	 * to the current annotation type.
 	 */
@@ -227,7 +234,6 @@ public class SesameSemanticAnnotationHelper extends
 	protected transient String[] uriFeatureNamesPlusSemanticConstraint;
 
 	private static NumberFormat percentFormat;
-
 	
   /**
    * When in document mode (see
@@ -238,7 +244,7 @@ public class SesameSemanticAnnotationHelper extends
   
 	protected ValueFactory factory;
 
-	private URICache uriCache;
+	private transient URICache uriCache;
 
 	// private RepositoryManager manager;
 	protected transient RepositoryConnection connection;
@@ -249,8 +255,8 @@ public class SesameSemanticAnnotationHelper extends
 	protected String sesameConfigLocation = "resources/owlim.ttl";
 
 	protected String absoluteConfigLocation = "";
-	
-	public void setRelativePath(String relativePath) {
+
+  public void setRelativePath(String relativePath) {
 	  sesameConfigLocation = relativePath;
 	}
 	
@@ -265,8 +271,6 @@ public class SesameSemanticAnnotationHelper extends
 
 	@Override
 	public void init(Indexer indexer) {
-		if (initDone)
-			return;
 		super.init(indexer);
 		setFloatFeatures(concatenateArrays(getIntegerFeatures(), getFloatFeatures()));
 		setIntegerFeatures(new String[0]);
@@ -290,7 +294,6 @@ public class SesameSemanticAnnotationHelper extends
 			uriCache = new URICache(this);
 			docsSoFar = 0;
 			initCommon();
-			initDone = true;
 		} catch (RepositoryException e) {
 			logger.error(e);
 		} catch (RepositoryConfigException e) {
@@ -302,8 +305,6 @@ public class SesameSemanticAnnotationHelper extends
 
 	@Override
 	public void init(QueryEngine queryEngine) {
-		if (initDone)
-			return;
 		super.init(queryEngine);
 		try {
 			connection = getRepositoryConnection(queryEngine.getIndexConfig());
@@ -315,7 +316,6 @@ public class SesameSemanticAnnotationHelper extends
 			uriCache = new URICache(this);
 			docsSoFar = 0;
 			initCommon();
-			initDone = true;
 		} catch (RepositoryException e) {
 			logger.error(e);
 		} catch (RepositoryConfigException e) {
@@ -340,9 +340,7 @@ public class SesameSemanticAnnotationHelper extends
   @Override
 	public String[] getMentionUris(Annotation ann, int length,
 			Indexer indexer) {
-		if (!initDone) {
-			init(indexer);
-		}
+		if (!isInited())  init(indexer);
 		
     FeatureMap featuresToIndex;
     if(getMode() == Mode.DOCUMENT) {
@@ -369,8 +367,7 @@ public class SesameSemanticAnnotationHelper extends
 	@Override
 	public List<Mention> getMentions(String annotationType,
 			List<Constraint> constraints, QueryEngine engine) {
-		if (!initDone)
-			init(engine);
+		if (!isInited()) init(engine);
 		StringBuilder atQuery = new StringBuilder(
 				"?annotationTemplateInstance " + "<" + RDF.TYPE.stringValue()
 						+ "> " + "<" + annotationTemplateURILevel1 + "> .\n");
@@ -526,9 +523,17 @@ public class SesameSemanticAnnotationHelper extends
 		return new ArrayList<Mention>();
 	}
 
-	@Override
+	/* (non-Javadoc)
+   * @see gate.mimir.SemanticAnnotationHelper#isMentionUri(java.lang.String)
+   */
+  @Override
+  public boolean isMentionUri(String mentionUri) {
+    return mentionUri.startsWith(mentionUriPrefix);
+  }
+
+  @Override
 	public void close(Indexer indexer) {
-		if (initDone) {
+		if (isInited()) {
 			logger.info("Closing Sesame Repository Connection");
 			try {
 				connection.commit();
@@ -539,7 +544,6 @@ public class SesameSemanticAnnotationHelper extends
 			}
 			connection = null;
 			parser = null;
-			initDone = false;
 			// if we're the last helper, shutdown the ORDI source
 			int clientCount = (Integer) indexer.getIndexConfig().getContext()
 					.get(SESAME_CONNECTION_COUNT_KEY);
@@ -564,7 +568,7 @@ public class SesameSemanticAnnotationHelper extends
 
 	@Override
 	public void close(QueryEngine qEngine) {
-		if (initDone) {
+		if (isInited()) {
 			logger.info("Closing Sesame Repository Connection");
 			try {
 				connection.commit();
@@ -575,7 +579,6 @@ public class SesameSemanticAnnotationHelper extends
 			}
 			connection = null;
 			parser = null;
-			initDone = false;
 			// if we're the last helper, shutdown the ORDI source
 			int clientCount = (Integer) qEngine.getIndexConfig().getContext()
 					.get(SESAME_CONNECTION_COUNT_KEY);
@@ -807,7 +810,10 @@ public class SesameSemanticAnnotationHelper extends
 					uriFeatureNames.length);
 			uriFeatureNamesPlusSemanticConstraint[uriFeatureNames.length] = SEMANTIC_CONSTRAINT_FEATURE;
 		}
-		initDone = true;
+		
+		// compute the mentions URI prefix
+		mentionUriPrefix =  factory.createURI(MIMIR_NAMESPACE, annotationType )
+		    .stringValue();
 	}
 
 	/**
