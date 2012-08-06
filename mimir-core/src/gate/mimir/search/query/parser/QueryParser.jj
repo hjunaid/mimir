@@ -771,7 +771,7 @@ Query AnnotationQuery() :
   String feature = null;
   Object value = null;
   String flags = null;
-  String number = "";
+  String numberStr = "";
   int constraintType = 0;
 }
 {
@@ -783,88 +783,64 @@ Query AnnotationQuery() :
   (
     // feature name
     t = <tok>
-    
     {feature = unescape(t.image);}
-  
     (
+      LOOKAHEAD(regex())
+      RegexQuery(aq, feature)
+      |
       (
-          LOOKAHEAD(regex())
-          RegexQuery(aq, feature)
-        |
         (
           (
-            LOOKAHEAD(2)
             (
               t = <equals>
               { constraintType = FeatureValuePair.EQ; }
-              (
-                LOOKAHEAD(1)
-                (
-                  t = <string>
-                  { value = t.image.substring(1, t.image.length()-1); }
-                )
-                |
-                (
-                  t = <tok>
-                  { value = unescape(t.image); }
-                )
-              )
             )
             |
             (
-              (
-                LOOKAHEAD(1)
-                (
-                  t = <equals>
-                  { constraintType = FeatureValuePair.EQ; }
-                )
-                |
-                (
-                  LOOKAHEAD(1)
-                  (
-                    t = <le>
-                    { constraintType = FeatureValuePair.LE; }
-                  )
-                  |
-                  (
-                    LOOKAHEAD(1)
-                    (
-                      t = <ge>
-                      { constraintType = FeatureValuePair.GE; }
-                    )
-                    |
-                    (
-                      LOOKAHEAD(1)
-                      (
-                        t = <gt>
-                        { constraintType = FeatureValuePair.GT; }
-                      )
-                      |
-                      (
-                        t = <lt>
-                        { constraintType = FeatureValuePair.LT; }
-                      )
-                    )
-                  )
-                )
-              )
-              
-              number = number() 
-              { 
-                try { 
-                  value = new Double(Double.parseDouble(number)); 
-                } catch(NumberFormatException nfe) {
-                  throw new ParseException("Invalid Number :" + number);
-                }
-              }
-              
+              t = <le>
+              { constraintType = FeatureValuePair.LE; }
+            )
+            |
+            (
+              t = <ge>
+              { constraintType = FeatureValuePair.GE; }
+            )
+            |
+            (
+              t = <gt>
+              { constraintType = FeatureValuePair.GT; }
+            )
+            |
+            (
+              t = <lt>
+              { constraintType = FeatureValuePair.LT; }
             )
           )
-        
-              
-          // add this pair to annotation query
-          {aq.add(constraintType, feature, value);}
+          (
+            (
+              t = <string>
+              { value = t.image.substring(1, t.image.length()-1); }
+            )
+            |
+            (
+              t = <tok>
+              { value = unescape(t.image); }
+            )
+            |
+            (
+              numberStr = number() 
+              { 
+                try { 
+                  value = new Double(Double.parseDouble(numberStr)); 
+                } catch(NumberFormatException nfe) {
+                  throw new ParseException("Invalid Number :" + numberStr);
+                }
+              }
+            )
+          )
         )
+        // add this pair to annotation query
+        {aq.add(constraintType, feature, value);}
       )
     )
   )*

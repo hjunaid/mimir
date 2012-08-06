@@ -64,7 +64,7 @@
   </target>  
   
   
-  <target name="compile.grammar">
+  <target name="compile.grammar" depends="depend">
     <java classname="javacc" fork="true" spawn="false" dir="${src.dir}/gate/mimir/search/query/parser">
       <classpath refid="compile.classpath" />
       <arg value="QueryParser.jj"/>

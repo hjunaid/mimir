@@ -172,35 +172,35 @@ public class QueryParser implements QueryParserConstants {
       Constraint c = null;
       if(fvp.constraintType == FeatureValuePair.EQ) {
         if(debug)
-          System.out.println("\u005ct"+fvp.feature+"="+fvp.value);
+          System.out.println("\t"+fvp.feature+"="+fvp.value);
         c = new Constraint(ConstraintType.EQ, fvp.feature, fvp.value);
       } else if(fvp.constraintType == FeatureValuePair.REGEX) {
         if(fvp.value instanceof String[]) {
           if(debug) {
             String[] values = (String[]) fvp.value;
-            System.out.println("\u005ct"+fvp.feature+".REGEX("+values[0]+"," +
+            System.out.println("\t"+fvp.feature+".REGEX("+values[0]+"," +
                                values[1]+")");
           }
         } else {
-          if(debug) System.out.println("\u005ct"+fvp.feature+".REGEX("
+          if(debug) System.out.println("\t"+fvp.feature+".REGEX("
                                         +fvp.value+")");
         }
         c = new Constraint(ConstraintType.REGEX, fvp.feature, fvp.value);
       } else if(fvp.constraintType == FeatureValuePair.LT) {
         if(debug)
-          System.out.println("\u005ct"+fvp.feature+"<"+fvp.value);
+          System.out.println("\t"+fvp.feature+"<"+fvp.value);
         c = new Constraint(ConstraintType.LT, fvp.feature, fvp.value);
       } else if(fvp.constraintType == FeatureValuePair.GT) {
         if(debug)
-          System.out.println("\u005ct"+fvp.feature+">"+fvp.value);
+          System.out.println("\t"+fvp.feature+">"+fvp.value);
         c = new Constraint(ConstraintType.GT, fvp.feature, fvp.value);
       } else if(fvp.constraintType == FeatureValuePair.LE) {
         if(debug)
-          System.out.println("\u005ct"+fvp.feature+"<="+fvp.value);
+          System.out.println("\t"+fvp.feature+"<="+fvp.value);
         c = new Constraint(ConstraintType.LE, fvp.feature, fvp.value);
       } else {
         if(debug)
-          System.out.println("\u005ct"+fvp.feature+">="+fvp.value);
+          System.out.println("\t"+fvp.feature+">="+fvp.value);
         c = new Constraint(ConstraintType.GE, fvp.feature, fvp.value);
       }
       featureConstraints.add(c);
@@ -346,21 +346,21 @@ public class QueryParser implements QueryParserConstants {
 
   /** converts escape sequences into normal sequences */
   public String unescape(String s) {
-    return s.replaceAll("\u005c\u005c\u005c"IN\u005c\u005c\u005c"","IN")
-                      .replaceAll("\u005c\u005c\u005c"OVER\u005c\u005c\u005c"","OVER")
-                      .replaceAll("\u005c\u005c\u005c"AND\u005c\u005c\u005c"","AND")
-                      .replaceAll("\u005c\u005c\u005c"OR\u005c\u005c\u005c"","OR")
-                      .replaceAll("\u005c\u005c\u005c"REGEX\u005c\u005c\u005c"","REGEX")
-                      .replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c{","{").replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c}","}")
-                      .replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c<","<").replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c>",">")
-                      .replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c-","-")
-                      .replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c[","[").replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c]","]")
-                      .replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c(","(").replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c)",")")
-                      .replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c:",":").replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c+","+")
-                      .replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c|","|").replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c?","?")
-                      .replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c&","&")
-                      .replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c.",".").replaceAll("\u005c\u005c\u005c\u005c\u005c"","\u005c"")
-                      .replaceAll("\u005c\u005c\u005c\u005c\u005c\u005c=","=").replaceAll("(\u005c\u005c\u005c\u005c){2}","\u005c\u005c\u005c\u005c");
+    return s.replaceAll("\\\"IN\\\"","IN")
+                      .replaceAll("\\\"OVER\\\"","OVER")
+                      .replaceAll("\\\"AND\\\"","AND")
+                      .replaceAll("\\\"OR\\\"","OR")
+                      .replaceAll("\\\"REGEX\\\"","REGEX")
+                      .replaceAll("\\\\\\{","{").replaceAll("\\\\\\}","}")
+                      .replaceAll("\\\\\\<","<").replaceAll("\\\\\\>",">")
+                      .replaceAll("\\\\\\-","-")
+                      .replaceAll("\\\\\\[","[").replaceAll("\\\\\\]","]")
+                      .replaceAll("\\\\\\(","(").replaceAll("\\\\\\)",")")
+                      .replaceAll("\\\\\\:",":").replaceAll("\\\\\\+","+")
+                      .replaceAll("\\\\\\|","|").replaceAll("\\\\\\?","?")
+                      .replaceAll("\\\\\\&","&")
+                      .replaceAll("\\\\\\.",".").replaceAll("\\\\\"","\"")
+                      .replaceAll("\\\\\\=","=").replaceAll("(\\\\){2}","\\\\");
   }
 
   // parse string and obtain the appropriate query object
@@ -686,7 +686,7 @@ public class QueryParser implements QueryParserConstants {
   String feature = null;
   Object value = null;
   String flags = null;
-  String number = "";
+  String numberStr = "";
   int constraintType = 0;
     jj_consume_token(leftbrace);
     t = jj_consume_token(tok);
@@ -704,7 +704,7 @@ public class QueryParser implements QueryParserConstants {
       // feature name
           t = jj_consume_token(tok);
      feature = unescape(t.image);
-      if (jj_2_5(2147483647)) {
+      if (jj_2_4(2147483647)) {
         RegexQuery(aq, feature);
       } else {
         switch (jj_nt.kind) {
@@ -713,103 +713,59 @@ public class QueryParser implements QueryParserConstants {
         case lt:
         case gt:
         case equals:
-          if (jj_2_4(2)) {
+          switch (jj_nt.kind) {
+          case equals:
             t = jj_consume_token(equals);
                 constraintType = FeatureValuePair.EQ;
-            switch (jj_nt.kind) {
-            case string:
-              t = jj_consume_token(string);
-                    value = t.image.substring(1, t.image.length()-1);
-              break;
-            case tok:
-              t = jj_consume_token(tok);
-                    value = unescape(t.image);
-              break;
-            default:
-              jj_la1[8] = jj_gen;
-              jj_consume_token(-1);
-              throw new ParseException();
-            }
-          } else {
-            switch (jj_nt.kind) {
-            case le:
-            case ge:
-            case lt:
-            case gt:
-            case equals:
-              switch (jj_nt.kind) {
-              case equals:
-                t = jj_consume_token(equals);
-                    constraintType = FeatureValuePair.EQ;
-                break;
-              case le:
-              case ge:
-              case lt:
-              case gt:
-                switch (jj_nt.kind) {
-                case le:
-                  t = jj_consume_token(le);
-                      constraintType = FeatureValuePair.LE;
-                  break;
-                case ge:
-                case lt:
-                case gt:
-                  switch (jj_nt.kind) {
-                  case ge:
-                    t = jj_consume_token(ge);
-                        constraintType = FeatureValuePair.GE;
-                    break;
-                  case lt:
-                  case gt:
-                    switch (jj_nt.kind) {
-                    case gt:
-                      t = jj_consume_token(gt);
-                          constraintType = FeatureValuePair.GT;
-                      break;
-                    case lt:
-                      t = jj_consume_token(lt);
-                          constraintType = FeatureValuePair.LT;
-                      break;
-                    default:
-                      jj_la1[9] = jj_gen;
-                      jj_consume_token(-1);
-                      throw new ParseException();
-                    }
-                    break;
-                  default:
-                    jj_la1[10] = jj_gen;
-                    jj_consume_token(-1);
-                    throw new ParseException();
-                  }
-                  break;
-                default:
-                  jj_la1[11] = jj_gen;
-                  jj_consume_token(-1);
-                  throw new ParseException();
-                }
-                break;
-              default:
-                jj_la1[12] = jj_gen;
-                jj_consume_token(-1);
-                throw new ParseException();
-              }
-              number = number();
-                try {
-                  value = new Double(Double.parseDouble(number));
-                } catch(NumberFormatException nfe) {
-                  {if (true) throw new ParseException("Invalid Number :" + number);}
-                }
-              break;
-            default:
-              jj_la1[13] = jj_gen;
-              jj_consume_token(-1);
-              throw new ParseException();
-            }
+            break;
+          case le:
+            t = jj_consume_token(le);
+                constraintType = FeatureValuePair.LE;
+            break;
+          case ge:
+            t = jj_consume_token(ge);
+                constraintType = FeatureValuePair.GE;
+            break;
+          case gt:
+            t = jj_consume_token(gt);
+                constraintType = FeatureValuePair.GT;
+            break;
+          case lt:
+            t = jj_consume_token(lt);
+                constraintType = FeatureValuePair.LT;
+            break;
+          default:
+            jj_la1[8] = jj_gen;
+            jj_consume_token(-1);
+            throw new ParseException();
           }
-           aq.add(constraintType, feature, value);
+          switch (jj_nt.kind) {
+          case string:
+            t = jj_consume_token(string);
+                value = t.image.substring(1, t.image.length()-1);
+            break;
+          case tok:
+            t = jj_consume_token(tok);
+                value = unescape(t.image);
+            break;
+          case number:
+          case hyphen:
+            numberStr = number();
+                try {
+                  value = new Double(Double.parseDouble(numberStr));
+                } catch(NumberFormatException nfe) {
+                  {if (true) throw new ParseException("Invalid Number :" + numberStr);}
+                }
+            break;
+          default:
+            jj_la1[9] = jj_gen;
+            jj_consume_token(-1);
+            throw new ParseException();
+          }
+         aq.add(constraintType, feature, value);
           break;
         default:
-          jj_la1[14] = jj_gen;
+          jj_la1[10] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -830,7 +786,7 @@ public class QueryParser implements QueryParserConstants {
   Token t1;
   String n;
   TermQuery tq;
-    if (jj_2_6(2)) {
+    if (jj_2_5(2)) {
       t = jj_consume_token(tok);
       jj_consume_token(colon);
           tq = new TermQuery();
@@ -845,7 +801,7 @@ public class QueryParser implements QueryParserConstants {
             tq.term = t.image.substring(1, t.image.length()-1);
         break;
       default:
-        jj_la1[15] = jj_gen;
+        jj_la1[11] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -865,7 +821,7 @@ public class QueryParser implements QueryParserConstants {
         {if (true) return parseString(unescape(n));}
         break;
       default:
-        jj_la1[16] = jj_gen;
+        jj_la1[12] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1063,72 +1019,65 @@ public class QueryParser implements QueryParserConstants {
         kq.max = Integer.parseInt(t.image);
       break;
     default:
-      jj_la1[17] = jj_gen;
+      jj_la1[13] = jj_gen;
       ;
     }
    {if (true) return kq;}
     throw new Error("Missing return statement in function");
   }
 
-  private boolean jj_2_1(int xla) {
+  final private boolean jj_2_1(int xla) {
     jj_la = xla; jj_lastpos = jj_scanpos = token;
     try { return !jj_3_1(); }
     catch(LookaheadSuccess ls) { return true; }
     finally { jj_save(0, xla); }
   }
 
-  private boolean jj_2_2(int xla) {
+  final private boolean jj_2_2(int xla) {
     jj_la = xla; jj_lastpos = jj_scanpos = token;
     try { return !jj_3_2(); }
     catch(LookaheadSuccess ls) { return true; }
     finally { jj_save(1, xla); }
   }
 
-  private boolean jj_2_3(int xla) {
+  final private boolean jj_2_3(int xla) {
     jj_la = xla; jj_lastpos = jj_scanpos = token;
     try { return !jj_3_3(); }
     catch(LookaheadSuccess ls) { return true; }
     finally { jj_save(2, xla); }
   }
 
-  private boolean jj_2_4(int xla) {
+  final private boolean jj_2_4(int xla) {
     jj_la = xla; jj_lastpos = jj_scanpos = token;
     try { return !jj_3_4(); }
     catch(LookaheadSuccess ls) { return true; }
     finally { jj_save(3, xla); }
   }
 
-  private boolean jj_2_5(int xla) {
+  final private boolean jj_2_5(int xla) {
     jj_la = xla; jj_lastpos = jj_scanpos = token;
     try { return !jj_3_5(); }
     catch(LookaheadSuccess ls) { return true; }
     finally { jj_save(4, xla); }
   }
 
-  private boolean jj_2_6(int xla) {
-    jj_la = xla; jj_lastpos = jj_scanpos = token;
-    try { return !jj_3_6(); }
-    catch(LookaheadSuccess ls) { return true; }
-    finally { jj_save(5, xla); }
-  }
-
-  private boolean jj_3_6() {
-    if (jj_scan_token(tok)) return true;
-    if (jj_scan_token(colon)) return true;
+  final private boolean jj_3R_5() {
+    if (jj_scan_token(number)) return true;
     return false;
   }
 
-  private boolean jj_3R_5() {
-    if (jj_scan_token(tok)) return true;
+  final private boolean jj_3_2() {
+    if (jj_scan_token(or)) return true;
     return false;
   }
 
-  private boolean jj_3_1() {
-    if (jj_3R_3()) return true;
+  final private boolean jj_3R_4() {
+    if (jj_scan_token(period)) return true;
+    if (jj_scan_token(regex)) return true;
     return false;
   }
 
-  private boolean jj_3R_3() {
+  final private boolean jj_3R_3() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_scan_token(17)) {
@@ -1153,7 +1102,7 @@ public class QueryParser implements QueryParserConstants {
     jj_scanpos = xsp;
     if (jj_scan_token(38)) {
     jj_scanpos = xsp;
-    if (jj_3R_7()) return true;
+    if (jj_3R_5()) return true;
     }
     }
     }
@@ -1168,148 +1117,117 @@ public class QueryParser implements QueryParserConstants {
     return false;
   }
 
-  private boolean jj_3R_4() {
-    if (jj_scan_token(string)) return true;
+  final private boolean jj_3_1() {
+    if (jj_3R_3()) return true;
     return false;
   }
 
-  private boolean jj_3R_6() {
-    if (jj_scan_token(period)) return true;
-    if (jj_scan_token(regex)) return true;
+  final private boolean jj_3_4() {
+    if (jj_3R_4()) return true;
     return false;
   }
 
-  private boolean jj_3_5() {
-    if (jj_3R_6()) return true;
+  final private boolean jj_3_5() {
+    if (jj_scan_token(tok)) return true;
+    if (jj_scan_token(colon)) return true;
     return false;
   }
 
-  private boolean jj_3R_7() {
-    if (jj_scan_token(number)) return true;
-    return false;
-  }
-
-  private boolean jj_3_3() {
+  final private boolean jj_3_3() {
     if (jj_scan_token(and)) return true;
     return false;
   }
 
-  private boolean jj_3_4() {
-    if (jj_scan_token(equals)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_4()) {
-    jj_scanpos = xsp;
-    if (jj_3R_5()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3_2() {
-    if (jj_scan_token(or)) return true;
-    return false;
-  }
-
-  /** Generated Token Manager. */
   public QueryParserTokenManager token_source;
   SimpleCharStream jj_input_stream;
-  /** Current token. */
-  public Token token;
-  /** Next token. */
-  public Token jj_nt;
+  public Token token, jj_nt;
   private Token jj_scanpos, jj_lastpos;
   private int jj_la;
+  public boolean lookingAhead = false;
+  private boolean jj_semLA;
   private int jj_gen;
-  final private int[] jj_la1 = new int[18];
+  final private int[] jj_la1 = new int[14];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static {
-      jj_la1_init_0();
-      jj_la1_init_1();
+      jj_la1_0();
+      jj_la1_1();
    }
-   private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0xa060000,0xa060000,0x0,0x20000000,0x0,0x20000000,0x0,0x0,0x20000,0x1800000,0x1c00000,0x1e00000,0x41e00000,0x41e00000,0x41e00000,0x20000,0x40000,0x20000000,};
+   private static void jj_la1_0() {
+      jj_la1_0 = new int[] {0xa060000,0xa060000,0x0,0x20000000,0x0,0x20000000,0x0,0x0,0x41e00000,0x60000,0x41e00000,0x20000,0x40000,0x20000000,};
    }
-   private static void jj_la1_init_1() {
-      jj_la1_1 = new int[] {0x9ee,0x9e0,0x8,0x0,0x40,0x0,0x1,0x800,0x800,0x0,0x0,0x0,0x0,0x0,0x0,0x800,0x840,0x0,};
+   private static void jj_la1_1() {
+      jj_la1_1 = new int[] {0x9ee,0x9e0,0x8,0x0,0x40,0x0,0x1,0x800,0x0,0x840,0x0,0x800,0x840,0x0,};
    }
-  final private JJCalls[] jj_2_rtns = new JJCalls[6];
+  final private JJCalls[] jj_2_rtns = new JJCalls[5];
   private boolean jj_rescan = false;
   private int jj_gc = 0;
 
-  /** Constructor with InputStream. */
   public QueryParser(java.io.InputStream stream) {
      this(stream, null);
   }
-  /** Constructor with InputStream and supplied encoding */
   public QueryParser(java.io.InputStream stream, String encoding) {
     try { jj_input_stream = new SimpleCharStream(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
     token_source = new QueryParserTokenManager(jj_input_stream);
     token = new Token();
     token.next = jj_nt = token_source.getNextToken();
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
-  /** Reinitialise. */
   public void ReInit(java.io.InputStream stream) {
      ReInit(stream, null);
   }
-  /** Reinitialise. */
   public void ReInit(java.io.InputStream stream, String encoding) {
     try { jj_input_stream.ReInit(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
     token_source.ReInit(jj_input_stream);
     token = new Token();
     token.next = jj_nt = token_source.getNextToken();
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
-  /** Constructor. */
   public QueryParser(java.io.Reader stream) {
     jj_input_stream = new SimpleCharStream(stream, 1, 1);
     token_source = new QueryParserTokenManager(jj_input_stream);
     token = new Token();
     token.next = jj_nt = token_source.getNextToken();
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
-  /** Reinitialise. */
   public void ReInit(java.io.Reader stream) {
     jj_input_stream.ReInit(stream, 1, 1);
     token_source.ReInit(jj_input_stream);
     token = new Token();
     token.next = jj_nt = token_source.getNextToken();
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
-  /** Constructor with generated Token Manager. */
   public QueryParser(QueryParserTokenManager tm) {
     token_source = tm;
     token = new Token();
     token.next = jj_nt = token_source.getNextToken();
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
-  /** Reinitialise. */
   public void ReInit(QueryParserTokenManager tm) {
     token_source = tm;
     token = new Token();
     token.next = jj_nt = token_source.getNextToken();
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
-  private Token jj_consume_token(int kind) throws ParseException {
+  final private Token jj_consume_token(int kind) throws ParseException {
     Token oldToken = token;
     if ((token = jj_nt).next != null) jj_nt = jj_nt.next;
     else jj_nt = jj_nt.next = token_source.getNextToken();
@@ -1335,7 +1253,7 @@ public class QueryParser implements QueryParserConstants {
 
   static private final class LookaheadSuccess extends java.lang.Error { }
   final private LookaheadSuccess jj_ls = new LookaheadSuccess();
-  private boolean jj_scan_token(int kind) {
+  final private boolean jj_scan_token(int kind) {
     if (jj_scanpos == jj_lastpos) {
       jj_la--;
       if (jj_scanpos.next == null) {
@@ -1356,8 +1274,6 @@ public class QueryParser implements QueryParserConstants {
     return false;
   }
 
-
-/** Get the next Token. */
   final public Token getNextToken() {
     if ((token = jj_nt).next != null) jj_nt = jj_nt.next;
     else jj_nt = jj_nt.next = token_source.getNextToken();
@@ -1365,9 +1281,8 @@ public class QueryParser implements QueryParserConstants {
     return token;
   }
 
-/** Get the specific Token. */
   final public Token getToken(int index) {
-    Token t = token;
+    Token t = lookingAhead ? jj_scanpos : token;
     for (int i = 0; i < index; i++) {
       if (t.next != null) t = t.next;
       else t = t.next = token_source.getNextToken();
@@ -1375,7 +1290,7 @@ public class QueryParser implements QueryParserConstants {
     return t;
   }
 
-  private java.util.List jj_expentries = new java.util.ArrayList();
+  private java.util.Vector jj_expentries = new java.util.Vector();
   private int[] jj_expentry;
   private int jj_kind = -1;
   private int[] jj_lasttokens = new int[100];
@@ -1390,31 +1305,36 @@ public class QueryParser implements QueryParserConstants {
       for (int i = 0; i < jj_endpos; i++) {
         jj_expentry[i] = jj_lasttokens[i];
       }
-      jj_entries_loop: for (java.util.Iterator it = jj_expentries.iterator(); it.hasNext();) {
-        int[] oldentry = (int[])(it.next());
+      boolean exists = false;
+      for (java.util.Enumeration e = jj_expentries.elements(); e.hasMoreElements();) {
+        int[] oldentry = (int[])(e.nextElement());
         if (oldentry.length == jj_expentry.length) {
+          exists = true;
           for (int i = 0; i < jj_expentry.length; i++) {
             if (oldentry[i] != jj_expentry[i]) {
-              continue jj_entries_loop;
+              exists = false;
+              break;
             }
           }
-          jj_expentries.add(jj_expentry);
-          break jj_entries_loop;
+          if (exists) break;
         }
       }
+      if (!exists) jj_expentries.addElement(jj_expentry);
       if (pos != 0) jj_lasttokens[(jj_endpos = pos) - 1] = kind;
     }
   }
 
-  /** Generate ParseException. */
   public ParseException generateParseException() {
-    jj_expentries.clear();
+    jj_expentries.removeAllElements();
     boolean[] la1tokens = new boolean[44];
+    for (int i = 0; i < 44; i++) {
+      la1tokens[i] = false;
+    }
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 18; i++) {
+    for (int i = 0; i < 14; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -1430,7 +1350,7 @@ public class QueryParser implements QueryParserConstants {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;
-        jj_expentries.add(jj_expentry);
+        jj_expentries.addElement(jj_expentry);
       }
     }
     jj_endpos = 0;
@@ -1438,22 +1358,20 @@ public class QueryParser implements QueryParserConstants {
     jj_add_error_token(0, 0);
     int[][] exptokseq = new int[jj_expentries.size()][];
     for (int i = 0; i < jj_expentries.size(); i++) {
-      exptokseq[i] = (int[])jj_expentries.get(i);
+      exptokseq[i] = (int[])jj_expentries.elementAt(i);
     }
     return new ParseException(token, exptokseq, tokenImage);
   }
 
-  /** Enable tracing. */
   final public void enable_tracing() {
   }
 
-  /** Disable tracing. */
   final public void disable_tracing() {
   }
 
-  private void jj_rescan_token() {
+  final private void jj_rescan_token() {
     jj_rescan = true;
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 5; i++) {
     try {
       JJCalls p = jj_2_rtns[i];
       do {
@@ -1465,7 +1383,6 @@ public class QueryParser implements QueryParserConstants {
             case 2: jj_3_3(); break;
             case 3: jj_3_4(); break;
             case 4: jj_3_5(); break;
-            case 5: jj_3_6(); break;
           }
         }
         p = p.next;
@@ -1475,7 +1392,7 @@ public class QueryParser implements QueryParserConstants {
     jj_rescan = false;
   }
 
-  private void jj_save(int index, int xla) {
+  final private void jj_save(int index, int xla) {
     JJCalls p = jj_2_rtns[index];
     while (p.gen > jj_gen) {
       if (p.next == null) { p = p.next = new JJCalls(); break; }
