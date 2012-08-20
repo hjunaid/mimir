@@ -131,13 +131,15 @@ public class FederatedQueryRunner implements QueryRunner {
    * @throws IndexOutOfBoundsException if rank is beyond the last document.
    */
   private final synchronized void checkRank(long rank) throws IndexOutOfBoundsException, IOException {
+    if(rank < 0) throw new IndexOutOfBoundsException(
+      "Document rank " + rank + " is negative.");
+    long maxRank = getDocumentsCount(); 
+    if(rank >= maxRank) throw new IndexOutOfBoundsException(
+        "Document rank too large (" + rank + " >= " + maxRank + ").");    
     // quick check to see if we need to do anything else
     if(rank < rank2runnerIndex.size64()) {
       return;
     }
-    long maxRank = getDocumentsCount(); 
-    if(rank >= maxRank) throw new IndexOutOfBoundsException(
-      "Document rank too large (" + rank + " >= " + maxRank + ").");
     for(long nextRank = rank2runnerIndex.size64(); nextRank <= rank; nextRank++) {
       boolean allOut = true;
       // start with the runner next the previously chosen one
