@@ -135,6 +135,9 @@ public class FederatedQueryRunner implements QueryRunner {
     if(rank < rank2runnerIndex.size64()) {
       return;
     }
+    long maxRank = getDocumentsCount(); 
+    if(rank >= maxRank) throw new IndexOutOfBoundsException(
+      "Document rank too large (" + rank + " >= " + maxRank + ").");
     for(long nextRank = rank2runnerIndex.size64(); nextRank <= rank; nextRank++) {
       boolean allOut = true;
       // start with the runner next the previously chosen one
