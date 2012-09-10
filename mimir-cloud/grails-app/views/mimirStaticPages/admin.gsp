@@ -142,7 +142,7 @@
 		</mimir:revealBlock>
 		<p>
 			<g:link controller="indexTemplate" action="list">
-				<span title="Click to edit index tempaltes">Click here</span>
+				<span title="Click to edit index templates">Click here</span>
 			</g:link>
 			to manage the index templates.
 		</p>
