@@ -186,6 +186,7 @@ class LocalIndexController {
             "admin page and try again."
         log.error("No instance of ${MimirConfiguration.class.name} could be found!")    
         redirect(controller:'mimirStaticPages', action: "admin")
+        return
       }
       
       def tempFile = File.createTempFile('index-', '.mimir',
