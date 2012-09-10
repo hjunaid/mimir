@@ -14,7 +14,7 @@ class UrlMappings {
 
   static mappings = {
     // all other mappings are handled by the MimirUrlMappings file.
-    // Here we only ned to take care of the actions we added to the ones 
+    // Here we only need to take care of the actions we added to the ones 
     // provided by the Mimir plugin
     "/admin/passwords"(controller:"mimirStaticPages", action:"passwords")
     "/admin/savePasswords"(controller:"mimirStaticPages", action:"savePasswords")
