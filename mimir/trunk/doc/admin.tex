@@ -296,6 +296,27 @@ grails.serverURL = "http://example.com/mimir"
 \end{lstlisting}
 
 
+\subsection{The {\tt mimir-cloud} Web Application}
+
+The {\tt mimir-cloud} web application is the actual version of the \Mimir\ 
+software that is used on the GATECloud\footnote{\url{https://gatecloud.net}} 
+platform. As such, it is configured for that particular usage scenario, where
+indexes have two different URLs (depending on whether they are accessed from 
+within the same cloud region or not), and where the local configuration page is
+not made avaialble to the user. 
+
+While we include this application as an example of a fully-fledged Grails
+application using the {\tt mimir-web} plugin, you may need to modify it slightly
+to make it mode suitable to your actual usage scenario. In particular, the
+default local configuration uses a known writeable location for the creation of
+local indexes (the {\it Index base directory} is set to be under {\tt /data}).
+If such a path does not exist on your system, or is not writeable by the system
+user running \Mimir{}, you will need to modify the configuration to provide a
+more suitable value. The web page for modifying the configuration is not linked
+from the administration page, but can still be accessed at a URL like {\tt
+http://localhost/:8080/mimir/admin/mimirConfiguration/edit}\footnote{You may
+need to change the host name and/or port number accordingly.}.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Indexes in \Mimir}
 
