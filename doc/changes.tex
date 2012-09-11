@@ -8,9 +8,10 @@ This appendix details the main changes in each \Mimir\ release.
 \end{itemize}
 \section{Version 4.1.2 (August 2012)}
 \begin{itemize}
-  \item Small bug fix to perform more input validation when using a federated 
-  index: calling methods with an invalid {\tt rank} parameter will now cause an 
-  exception. 
+  \item Bug fix to void null pointer exceptions when the API is used to access
+  query results in a federated index without first checking the number of
+  available documents. Calling methods with an invalid {\tt rank} parameter will
+  now cause an index out of bounds exception.
 \end{itemize}
 \section{Version 4.1.1 (May 2012)}
 \begin{itemize}
