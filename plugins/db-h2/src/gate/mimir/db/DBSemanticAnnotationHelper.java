@@ -288,7 +288,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     for(int i = 0; i < nomFeatNames.size(); i++) {
       String featName = nomFeatNames.get(i);
       stmt.append(", ").append(tableName(null, L1_TABLE_SUFFIX))
-          .append(".\"").append(featName).append("\" AS ").append(featName);
+          .append(".\"").append(featName).append("\" AS \"").append(featName).append("\"");
     }
     stmt.append(" FROM ")
         .append(tableName(null, MENTIONS_TABLE_SUFFIX))
@@ -317,12 +317,12 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       for(int i = 0; i < nomFeatNames.size(); i++) {
         String featName = nomFeatNames.get(i);
         stmt.append(", ").append(tableName(null, L1_TABLE_SUFFIX))
-            .append(".\"").append(featName).append("\" AS ").append(featName);
+            .append(".\"").append(featName).append("\" AS \"").append(featName).append('"');
       }
       for(int i = 0; i < nonNomFeatNames.size(); i++) {
         String featName = nonNomFeatNames.get(i);
         stmt.append(", ").append(tableName(null, L2_TABLE_SUFFIX))
-            .append(".\"").append(featName).append("\" AS ").append(featName);
+            .append(".\"").append(featName).append("\" AS \"").append(featName).append('"');
       }    
       stmt.append(" FROM ")
           .append(tableName(null, MENTIONS_TABLE_SUFFIX))
