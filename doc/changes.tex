@@ -1,5 +1,16 @@
 This appendix details the main changes in each \Mimir\ release.
 
+\section{Version 4.1.3 (September 2012)}
+\begin{itemize}
+  \item Bug fix in ranking query runner (used to search local indexes): when
+  obtaining metadata fields a document ID was used instead of a document rank.
+\end{itemize}
+\section{Version 4.1.2 (August 2012)}
+\begin{itemize}
+  \item Small bug fix to perform more input validation when using a federated 
+  index: calling methods with an invalid {\tt rank} parameter will now cause an 
+  exception. 
+\end{itemize}
 \section{Version 4.1.1 (May 2012)}
 \begin{itemize}
 \item It is now possible to specify an index ID for a newly created/imported
