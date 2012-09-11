@@ -88,7 +88,8 @@ public class AnnotationQuery implements QueryNode {
         for(int index = 0; index < trs.termStrings.length; index++) {
           // create a term query for the mention URI
           disjuncts[index] = new TermQuery(query.annotationType, 
-                  trs.termIds[index], trs.termLengths[index]);
+              trs.termStrings[index], trs.termIds[index], 
+              trs.termLengths[index]);
         }
         QueryNode underlyingQuery = new OrQuery(disjuncts);
         underlyingExecutor = underlyingQuery.getQueryExecutor(engine);        

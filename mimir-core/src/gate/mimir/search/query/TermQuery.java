@@ -119,6 +119,10 @@ public class TermQuery implements QueryNode {
       // if we have the term ID, use that
       if(query.termId != DocumentIterator.END_OF_LIST) {
         this.indexIterator = indexReader.documents(query.termId);
+        // set the term (used by rankers)
+        MutableString mutableString = new MutableString(query.getTerm());
+        indexReaderPool.getIndex().termProcessor.processTerm(mutableString);
+        this.indexIterator.term(mutableString);
       } else {
         //use the term processor for the query term
         MutableString mutableString = new MutableString(query.getTerm());
@@ -368,8 +372,8 @@ public class TermQuery implements QueryNode {
    * 
    * @see IndexConfig.TokenIndexerConfig
    */
-  public TermQuery(String indexName, long termId) {
-    this(IndexType.TOKENS, indexName, termId, 1);
+  public TermQuery(String indexName, String term, long termId) {
+    this(IndexType.TOKENS, indexName, term, termId, 1);
   }
   
   /**
@@ -398,8 +402,8 @@ public class TermQuery implements QueryNode {
    * 
    * @param length the length of the mention sought.
    */
-  public TermQuery(String annotationType, long mentionTermid, int length) {
-    this(IndexType.ANNOTATIONS, annotationType, mentionTermid, length);
+  public TermQuery(String annotationType, String term, long mentionTermid, int length) {
+    this(IndexType.ANNOTATIONS, annotationType, term, mentionTermid, length);
   }  
   
   /**
@@ -443,10 +447,11 @@ public class TermQuery implements QueryNode {
    * 
    * @param termId the term ID for sought term.
    */
-  public TermQuery(IndexType indexType, String indexName, long termId, int length) {
+  public TermQuery(IndexType indexType, String indexName, String term, long termId, int length) {
     this.indexType = indexType;
     this.indexName = indexName;
     this.termId = termId;
+    this.term = term;
     this.length = length;
   }
   
