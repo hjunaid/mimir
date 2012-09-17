@@ -15,4 +15,5 @@ Valentin Tablan, 17 Sep 2012
   Simple GWT module definition that allows other modules to import classes
   in this Java package without getting the default entry point as well.
 -->
+  <inherits name="com.google.gwt.user.User" />
 </module>

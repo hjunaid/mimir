@@ -22,11 +22,41 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  */
 public class DocumentData implements IsSerializable {
   
-  int documentRank;
+  protected int documentRank;
   
-  String documentTitle;
+  protected String documentTitle;
   
-  String documentUri;
+  protected String documentUri;
   
-  List<String[]> snippets;
+  protected List<String[]> snippets;
+
+  /**
+   * @return the documentRank
+   */
+  public int getDocumentRank() {
+    return documentRank;
+  }
+
+  /**
+   * @return the documentTitle
+   */
+  public String getDocumentTitle() {
+    return documentTitle;
+  }
+
+  /**
+   * @return the documentUri
+   */
+  public String getDocumentUri() {
+    return documentUri;
+  }
+
+  /**
+   * @return the snippets
+   */
+  public List<String[]> getSnippets() {
+    return snippets;
+  }
+  
+  
 }
