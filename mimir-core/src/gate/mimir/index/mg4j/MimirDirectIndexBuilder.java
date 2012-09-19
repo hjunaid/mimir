@@ -54,7 +54,7 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
    * @param indexDirectory the top level directory for the Mímir index being
    * modified.
    * @param subIndexName the name for the subindex being modified (e.g. 
-   * &quot;mimir-token-0&quot;).
+   * &quot;token-0&quot;, or &quot;mentions-0&quot;).
    * @throws IndexException 
    * @throws IOException 
    */
