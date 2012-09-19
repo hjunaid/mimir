@@ -49,7 +49,8 @@ import gate.util.GateException;
 public class Scratch {
 
   public static void main (String[] args) throws Exception {
-    mainSimple(args);
+     mainSimple(args);
+//    mainBuildDirectIndex(args);
   }
   
   
@@ -193,14 +194,19 @@ public class Scratch {
       new File("../plugins/sparql").toURI().toURL());
     
     // the Mímir index dir from params
-    if(args.length  != 2) {
+    if(args.length  < 2) {
       System.err.println(
-        "Parameters: <index directory> <sub-index basename>");
+        "Parameters: <index directory> <sub-index basename>...");
       return;
     }
     try {
-      MimirDirectIndexBuilder mdib = new MimirDirectIndexBuilder(new File(args[0]), args[1]);
-      mdib.run();
+      for(int i = 1; i <args.length; i++) {
+        System.out.println("Inverting index " + args[i]);
+        MimirDirectIndexBuilder mdib = new MimirDirectIndexBuilder(
+          new File(args[0]), args[i]);
+        mdib.run();
+        System.out.println("\n===============================\n");
+      }
     } catch(Exception e) {
       e.printStackTrace();
     }
