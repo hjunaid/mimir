@@ -93,7 +93,7 @@ class SearchService {
    */
   public String postQuery(String indexId, String queryString) 
       throws IOException, ParseException {
-    Index theIndex = Index.findByIndexId(params.indexId)
+    Index theIndex = Index.findByIndexId(indexId)
     if(theIndex){
      return postQuery (theIndex, queryString) 
     }
