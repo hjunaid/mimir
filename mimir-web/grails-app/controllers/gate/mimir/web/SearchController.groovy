@@ -830,6 +830,7 @@ class SearchController {
             //we have all the required parameters
             long documentRank = documentRankParam as long
             response.characterEncoding = "UTF-8"
+            response.contentType = "text/plain"
             response.writer.withWriter{ writer ->
               runner.renderDocument(documentRank, writer)
             }
@@ -854,13 +855,23 @@ class SearchController {
         try{
           docId = documentIdStr as long
         } catch (Exception e) {
+          log.error("Error in render", e)
           response.sendError(HttpServletResponse.SC_BAD_REQUEST,
             "Invalid value provided for parameter documentId (not an integer)!")
           return;
         }
-        response.characterEncoding = "UTF-8"
-        response.writer.withWriter{ writer ->
-          ((Index)request.theIndex).renderDocument(docId, writer)
+        try{
+          response.characterEncoding = "UTF-8"
+          response.contentType = "text/plain"
+          response.writer.withWriter{ writer ->
+            ((Index)request.theIndex).renderDocument(docId, writer)
+          }
+          return
+        } catch (Exception e) {
+          log.error("Error while rendering document", e)
+          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            "Error while rendering document: \"" +
+            e.getMessage() + "\"!")
         }
       } else {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST,
