@@ -118,7 +118,7 @@ class FederatedIndexService {
     def numIndexes = fedIndex.indexes.size()
     // map the supplied federated document IDs to the corresponding IDs in the
     // sub-indexes - first separate out the IDs that belong in each index
-    Map subIndexIds = documentIds.groupBy { it % numIndexes }
+    Map subIndexIds = documentIds.groupBy { (int)(it % numIndexes) }
     // and intdiv them by the number of indexes to get the sub-index document ID
     subIndexIds.each { i, fedIds ->
       fedIndex.indexes[i]."${method}Documents"(fedIds.collect { it.intdiv(numIndexes) })
@@ -134,14 +134,14 @@ class FederatedIndexService {
   }
   
   public DocumentData getDocumentData(FederatedIndex fedIndex, long documentId) {
-    Index subIndex = fedIndex.indexes[documentId % fedIndex.indexes.size()]
+    Index subIndex = fedIndex.indexes[(int)(documentId % fedIndex.indexes.size())]
     long idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
     return subIndex.getDocumentData(idWithinSubIndex)
   }
   
   public void renderDocument(FederatedIndex fedIndex, long documentId, 
       Appendable out) {
-    Index subIndex = fedIndex.indexes[documentId % fedIndex.indexes.size()]
+    Index subIndex = fedIndex.indexes[(int)(documentId % fedIndex.indexes.size())]
     long idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
     subIndex.renderDocument(idWithinSubIndex, out)
   }
