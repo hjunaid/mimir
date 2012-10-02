@@ -18,7 +18,9 @@ import gate.Document;
 import gate.mimir.index.Indexer;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
+import gate.mimir.util.DefaultMentionDescriber;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,8 +49,20 @@ import java.util.Map.Entry;
  * treat URI features as if they were simply text features with no semantics.</p>
  */
 public abstract class AbstractSemanticAnnotationHelper implements
-                                                      SemanticAnnotationHelper {
+    SemanticAnnotationHelper {
 	
+  /**
+   * Interface for supporting classes used by 
+   * {@link AbstractSemanticAnnotationHelper} and its sub-classes to provide a 
+   * pluggable implementation for 
+   * {@link SemanticAnnotationHelper#describeMention(String)}. 
+   */
+  public static interface MentionDescriber extends Serializable {
+    public String describeMention(AbstractSemanticAnnotationHelper helper, 
+        String mentionUri, String[] descriptiveFeatureNames, 
+        String[] descriptiveFeatureValues);
+  }
+  
 	private static final long serialVersionUID = -5432862771431426914L;
 
   private transient boolean isInited = false;
@@ -93,6 +107,9 @@ public abstract class AbstractSemanticAnnotationHelper implements
    * an annotation mention (see {@link #describeMention(String)}).
    */
   protected String[] descriptiveFeatures;
+  
+  protected MentionDescriber mentionDescriber;
+  
   
   /**
    * The working mode for this helper (defaults to {@link Mode#ANNOTATION}).
@@ -171,7 +188,7 @@ public abstract class AbstractSemanticAnnotationHelper implements
    *  
    * @return the descriptiveFeatures
    */
-  public String[] getDescriptiveFeatures() {
+  protected String[] getDescriptiveFeatures() {
     return descriptiveFeatures;
   }
 
@@ -187,6 +204,27 @@ public abstract class AbstractSemanticAnnotationHelper implements
    */
   public void setDescriptiveFeatures(String[] descriptiveFeatures) {
     this.descriptiveFeatures = descriptiveFeatures;
+  }
+
+  
+  
+  /**
+   * @return the mentionDescriber
+   */
+  public MentionDescriber getMentionDescriber() {
+    return mentionDescriber;
+  }
+
+  /**
+   * Sets the {@link MentionDescriber} to be used as the implementation of
+   * {@link SemanticAnnotationHelper#describeMention(String)}.
+   * If set to <code>null</code>, then an instance of 
+   * {@link DefaultMentionDescriber} is automatically created and used.
+   *  
+   * @param mentionDescriber the custom mentionDescriber to use
+   */
+  public void setMentionDescriber(MentionDescriber mentionDescriber) {
+    this.mentionDescriber = mentionDescriber;
   }
 
   /* (non-Javadoc)
@@ -217,20 +255,11 @@ public abstract class AbstractSemanticAnnotationHelper implements
    */
   @Override
   public String describeMention(String mentionUri) {
-    String[] values = getDescriptiveFeatureValues(mentionUri);
-    if(values == null) {
-      return mentionUri;
-    } else {
-      StringBuilder res = new StringBuilder("{").append(annotationType);
-      for(int i = 0; i < descriptiveFeatures.length; i++) {
-        if(values[i] != null && values[i].length() > 0) {
-          res.append(' ').append(descriptiveFeatures[i]).append(" = ");
-          res.append(values[i]);
-        }
-      }
-      res.append('}');
-      return res.toString();
+    if(mentionDescriber == null) {
+      mentionDescriber = new DefaultMentionDescriber();
     }
+    return mentionDescriber.describeMention(this, mentionUri, 
+      getDescriptiveFeatures(), getDescriptiveFeatureValues(mentionUri));
   }
   
   /**
