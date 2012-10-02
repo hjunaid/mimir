@@ -243,7 +243,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
               "jdbc:h2:file:" + dbDir.getAbsolutePath() + 
               "/" + tableBaseName + ";CACHE_SIZE=" + cacheSizeStr, "sa", "");
       dbConnection.close();
-      // now open the database in read-only mode, whjich speeds things up 
+      // now open the database in read-only mode, which speeds things up 
       // considerably.
       dbConnection = DriverManager.getConnection(
               "jdbc:h2:file:" + dbDir.getAbsolutePath() + 
@@ -764,7 +764,10 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
         try {
           Object sqlValue = res.getObject(descriptiveFeatures[i]);
           if(sqlValue != null) result[i] = sqlValue.toString();
-        } catch(Exception e) {
+        } catch(SQLException e) {
+          // non-nominal features are not available for level 1 mentions
+          result[i] = null;
+        } catch (Exception e) {
           logger.error("Error while obtaining description feature value.", e);
         }
       }
