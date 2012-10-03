@@ -41,7 +41,7 @@ public class DefaultMentionDescriber implements MentionDescriber {
     if(descriptiveFeatureValues == null || 
        descriptiveFeatureNames == null ||
        descriptiveFeatureValues.length < descriptiveFeatureNames.length) {
-      return mentionUri;
+      return helper.getAnnotationType();
     } else {
       StringBuilder res = new StringBuilder("{");
       res.append(helper.getAnnotationType());
