@@ -79,6 +79,13 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
   protected Set<String> stopWords = null;
   
   /**
+   * If set to true, term strings for annotation mentions are replaced with 
+   * their description (see 
+   * {@link SemanticAnnotationHelper#describeMention(String)}. 
+   */
+  protected boolean describeAnnotations = false;
+  
+  /**
    * The query engine used to execute this query.
    */
   protected QueryEngine engine;
@@ -192,7 +199,8 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
       throws IOException {
     // prepare local data
     LongArrayList termIds = new LongArrayList();
-    ObjectArrayList<String> termStrings = stringsEnabled ? 
+    ObjectArrayList<String> termStrings = stringsEnabled || 
+            (indexType == IndexType.ANNOTATIONS &&  describeAnnotations) ? 
         new ObjectArrayList<String>() : null;
     IntArrayList termCounts = countsEnabled ? new IntArrayList() : null;
     TermCollectionVisitor termCollectionVisitor = null;
@@ -215,6 +223,13 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
     long termId = documentIterator.nextDocument();
     terms:while(termId != DocumentIterator.END_OF_LIST && termId != -1 &&
         termIds.size() < limit) {
+      int termCount = -1;
+      if(countsEnabled){
+        counterSetupVisitor.clear();
+        documentIterator.acceptOnTruePaths( counterCollectionVisitor );
+        termCount = 0;
+        for (int aCount : counterSetupVisitor.count ) termCount +=  aCount;
+      }
       String termString = null;
       // get the term string, if required
       if(// if stop words are blocked, we need to check the term string  
@@ -226,26 +241,41 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
          indexType == IndexType.ANNOTATIONS) {
         termString = indirectIndexPool.getTerm(termId);
       }
+      
+      if(indexType == IndexType.ANNOTATIONS) {
+        if(!annotationHelper.isMentionUri(termString)){
+          // skip this term (not produced by our helper)
+          termId = documentIterator.nextDocument();
+          continue terms;
+        }
+        if(stringsEnabled && describeAnnotations) {
+          termString = annotationHelper.describeMention(termString);
+          // check if this term has the same description as a previous one
+          // which would make it appear as an indistinguishable duplicate
+          int pos = termStrings.indexOf(termString);
+          if(pos >= 0) {
+            if(countsEnabled){
+              // combine duplicate terms
+              termCounts.set(pos, termCounts.getInt(pos) + termCount);  
+            }
+            // and skip this term
+            termId = documentIterator.nextDocument();
+            continue terms;
+          }
+        }
+      }
+      
       if(stopWordsBlocked && stopWords.contains(termString)) {
         // skip this term
         termId = documentIterator.nextDocument();
         continue terms;
       }
-      if(indexType == IndexType.ANNOTATIONS && 
-         (!annotationHelper.isMentionUri(termString))){
-        // skip this term
-        termId = documentIterator.nextDocument();
-        continue terms;
-      }
+      
       termIds.add(termId);
       if(countsEnabled){
-        counterSetupVisitor.clear();
-        documentIterator.acceptOnTruePaths( counterCollectionVisitor );
-        int count = 0;
-        for (int aCount : counterSetupVisitor.count ) count +=  aCount;
-        termCounts.add(count);
+        termCounts.add(termCount);
       }
-      if(stringsEnabled){
+      if(termStrings != null){
         termStrings.add(termString);
       }
       termId = documentIterator.nextDocument();
@@ -304,5 +334,33 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
     this.stopWords = new HashSet<String>(stopWords.length);
     for(String sw : stopWords) this.stopWords.add(sw); 
   }
-  
+
+  /**
+   * Should annotation mentions be described? See 
+   * {@link #setDescribeAnnotations(boolean)} for a more detailed description.
+   * @return
+   */
+  public boolean isDescribeAnnotations() {
+    return describeAnnotations;
+  }
+
+  /**
+   * If the index being interrogated is of type {@link IndexType#ANNOTATIONS} 
+   * then the indexed term strings are URIs whose format depends on the actual 
+   * implementation of the index. These strings make little sense outside of the
+   * index. If term strings are enabled (see 
+   * {@link TermsQuery#isStringsEnabled()}, and this is set to 
+   * <code>true</code>, then the resulting term strings are replaced with their
+   * description as produced by {@link 
+   * SemanticAnnotationHelper#describeMention(String)}.
+   * 
+   * Setting this to <code>true</code> has no effect if the index being 
+   * interrogated is a {@link IndexType#TOKENS} index.
+   * 
+   * @param describeAnnotations <code>true</code> if the terms should be 
+   * replaced with their description.
+   */
+  public void setDescribeAnnotations(boolean describeAnnotations) {
+    this.describeAnnotations = describeAnnotations;
+  }
 }
