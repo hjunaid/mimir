@@ -28,6 +28,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Base class for terms queries that use an MG4J direct index for their search.
@@ -72,10 +73,10 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
   protected boolean stopWordsBlocked = false;
   
   /**
-   * Stop words list used for filtering out stop words. See 
+   * Stop words set used for filtering out stop words. See 
    * {@link #stopWordsBlocked}. 
    */
-  protected String[] stopWords = null;
+  protected Set<String> stopWords = null;
   
   /**
    * The query engine used to execute this query.
@@ -206,11 +207,9 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
       counterSetupVisitor.prepare();
       documentIterator.accept( counterSetupVisitor ); 
     }
-    HashSet<String> stopWordsSet = null;
     if(stopWordsBlocked) {
-      String[] sws = stopWords == null ?  DEFAULT_STOP_WORDS : stopWords;
-      stopWordsSet = new HashSet<String>(sws.length);
-      for(String sw : sws) stopWordsSet.add(sw);
+      // use the default list if no custom one was set
+      if(stopWords == null) setStopWords(DEFAULT_STOP_WORDS);
     }
     
     long termId = documentIterator.nextDocument();
@@ -227,7 +226,7 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
          indexType == IndexType.ANNOTATIONS) {
         termString = indirectIndexPool.getTerm(termId);
       }
-      if(stopWordsBlocked && stopWordsSet.contains(termString)) {
+      if(stopWordsBlocked && stopWords.contains(termString)) {
         // skip this term
         termId = documentIterator.nextDocument();
         continue terms;
@@ -284,10 +283,14 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
    * Gets the current custom list of stop words.
    * @return the stopWords
    */
-  public String[] getStopWords() {
+  public Set<String> getStopWords() {
     return stopWords;
   }
 
+  public void setStopWords(Set<String> stopWords) {
+    this.stopWords = new HashSet<String>(stopWords);
+  }
+  
   /**
    * Sets the custom list of stop words that should be blocked from query 
    * results. The actual blocking also needs to be enabled by calling 
@@ -298,7 +301,8 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
    * @param stopWords the stopWords to set
    */
   public void setStopWords(String[] stopWords) {
-    this.stopWords = stopWords;
+    this.stopWords = new HashSet<String>(stopWords.length);
+    for(String sw : stopWords) this.stopWords.add(sw); 
   }
   
 }
