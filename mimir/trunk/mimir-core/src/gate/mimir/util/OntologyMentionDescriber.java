@@ -96,7 +96,7 @@ public class OntologyMentionDescriber implements MentionDescriber {
         descriptiveFeatureValues.length < descriptiveFeatureNames.length ||
         descriptiveFeatureNames.length == 0 ||
         descriptiveFeatureValues[0] == null) {
-      return mentionUri;
+      return helper.getAnnotationType();
     } else {
       StringBuilder res = new StringBuilder(
         getName(descriptiveFeatureValues[0]));
