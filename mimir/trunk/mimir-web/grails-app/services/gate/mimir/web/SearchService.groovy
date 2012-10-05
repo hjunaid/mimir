@@ -129,7 +129,7 @@ class QueryRunnerHolder {
  * Implementation of a cache removal listener, so that we can close the query
  * runners as they get evicted.
  */
-class CacheRemovalListener implements RemovalListener<String, QueryRunner> {
+class CacheRemovalListener implements RemovalListener<String, QueryRunnerHolder> {
 
   def log
   
@@ -137,11 +137,10 @@ class CacheRemovalListener implements RemovalListener<String, QueryRunner> {
    * @see com.google.common.cache.RemovalListener#onRemoval(com.google.common.cache.RemovalNotification)
    */
   @Override
-  public void onRemoval(RemovalNotification<String, QueryRunner> notification) {
+  public void onRemoval(RemovalNotification<String, QueryRunnerHolder> notification) {
     log.debug("Evicting query ${notification.key}.")
-    notification.value.close()
+    notification.value.queryRunner.close()
   }
-  
 }
 
 /**
