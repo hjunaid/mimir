@@ -345,6 +345,41 @@ public class QueryEngine {
   }
 
   /**
+   * Finds the location for a given sub-index in the arrays returned by 
+   * {@link #getIndexes()} and {@link #getDirectIndexes()}.
+   * @param indexType the IndexType of the requested sub-index (tokens or 
+   * annotations).
+   * @param indexName the &quot;name&quot; of the requested sub-index (the 
+   * indexed feature name for {@link IndexType#TOKENS} indexes, or the 
+   * annotation type in the case of {@link IndexType#ANNOTATIONS} indexes). 
+   * @return the position in the indexes array for the requested index, or -1 if
+   * the requested index does not exist.
+   */
+  public int getSubIndexPosition(IndexType indexType, String indexName) {
+    if(indexType == IndexType.TOKENS) {
+      for(int i = 0; i < indexConfig.getTokenIndexers().length; i++) {
+        if(indexConfig.getTokenIndexers()[i].getFeatureName().equals(indexName)) {
+          return i; 
+        }
+      }
+      return -1;
+    } else if(indexType == IndexType.ANNOTATIONS) {
+      for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
+        for(String aType : 
+            indexConfig.getSemanticIndexers()[i].getAnnotationTypes()) {
+          if(aType.equals(indexType)) { 
+            return indexConfig.getTokenIndexers().length + i; 
+          }
+        }
+      }      
+      return -1;
+    } else {
+      throw new IllegalArgumentException(
+        "Don't understand sub-indexes of type " + indexType);
+    }
+  }
+  
+  /**
    * Returns the set of indexes in the Mimir composite index. The array contains
    * first the token indexes (in the same order as listed in the index
    * configuration), followed by the mentions indexes (in the same order as
