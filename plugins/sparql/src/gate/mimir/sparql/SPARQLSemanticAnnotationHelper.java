@@ -16,6 +16,7 @@ package gate.mimir.sparql;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectStreamException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -93,7 +94,13 @@ public class SPARQLSemanticAnnotationHelper extends
    * The name used for the synthetic feature used at query time to supply the
    * SPARQL query ({@value}).
    */
-  public static final String SPARQL_QUERY_FEATURE_NAME = "sparql";
+  public static final String DEFAULT_SPARQL_QUERY_FEATURE_NAME = "sparql";
+  
+  /**
+   * The name of the virtual feature used to encode the SPARQL query passed-on
+   * to this helper.
+   */
+  private String sparqlFeatureName = DEFAULT_SPARQL_QUERY_FEATURE_NAME;
   
   /**
    * The service endpoint where SPARQL queries are forwarded to.
@@ -168,6 +175,26 @@ public class SPARQLSemanticAnnotationHelper extends
     this.sparqlEndpointPassword = sparqlEndpointPassword;
   }
 
+  
+  /**
+   * Gets the name of the virtual features used to encode the SPARQL query.
+   * @return the sparqlFeatureName
+   */
+  public String getSparqlFeatureName() {
+    return sparqlFeatureName;
+  }
+
+  /**
+   * Sets the name of for the virtual feature used to encode the SPARQL query
+   * that should be executed on the SPARQL end-point. Defaults to 
+   * {@link #DEFAULT_SPARQL_QUERY_FEATURE_NAME} is not set to any other value.
+   *  
+   * @param sparqlFeatureName the new name for the virtual feature. 
+   */
+  public void setSparqlFeatureName(String sparqlFeatureName) {
+    this.sparqlFeatureName = sparqlFeatureName;
+  }
+
   /* (non-Javadoc)
    * @see gate.mimir.util.DelegatingSemanticAnnotationHelper#getNominalFeatures()
    */
@@ -179,7 +206,7 @@ public class SPARQLSemanticAnnotationHelper extends
     boolean sparqlAdded = false;
     
     for(String aFeat : oldNomFeats) {
-      if(aFeat.equals(SPARQL_QUERY_FEATURE_NAME)) {
+      if(aFeat.equals(sparqlFeatureName)) {
         sparqlAdded = true;
         break;
       }
@@ -188,13 +215,24 @@ public class SPARQLSemanticAnnotationHelper extends
       // add the virtual sparql feature (on the first position, to reduce the
       // cost of future calls to this method).
       String[] newNomFeats = new String[oldNomFeats.length + 1];
-      newNomFeats[0] = SPARQL_QUERY_FEATURE_NAME;
+      newNomFeats[0] = sparqlFeatureName;
       System.arraycopy(oldNomFeats, 0, newNomFeats, 1, oldNomFeats.length);
       nominalFeatureNames = newNomFeats;
     }
     return nominalFeatureNames;
   }
 
+  /**
+   * Custom de-serialisation method to ensure fields that did not exist in 
+   * previous versions are initialised to the correct default values.
+   */
+  private Object readResolve() throws ObjectStreamException {
+    if(sparqlFeatureName == null){
+      sparqlFeatureName = DEFAULT_SPARQL_QUERY_FEATURE_NAME;
+    }
+    return this;
+  }
+  
   @Override
   public void init(Indexer indexer) {
     super.init(indexer);
@@ -222,7 +260,7 @@ public class SPARQLSemanticAnnotationHelper extends
     String query = null;
     String originalQuery = null;
     for(Constraint aConstraint : constraints) {
-      if(SPARQL_QUERY_FEATURE_NAME.equals(aConstraint.getFeatureName())) {
+      if(sparqlFeatureName.equals(aConstraint.getFeatureName())) {
         originalQuery = (String)aConstraint.getValue(); 
         query = (queryPrefix != null ? queryPrefix : "") + 
             originalQuery + (querySuffix != null ? querySuffix : "");
