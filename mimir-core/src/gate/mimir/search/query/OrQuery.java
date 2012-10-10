@@ -110,7 +110,7 @@ public class OrQuery implements QueryNode {
 
     
     public long nextDocument(long greaterThan) throws IOException {
-      if(closed) return latestDocument = -1;
+      if(closed || queue.isEmpty()) return latestDocument = -1;
       if(latestDocument == -1) return latestDocument;
       // advance
       int first = queue.first();
@@ -125,7 +125,7 @@ public class OrQuery implements QueryNode {
         }
         first = queue.first();
       }
-      latestDocument = currentDoc[queue.first()];
+      latestDocument = currentDoc[first];
       // collect all the hits from the current document
       frontSize =  queue.front(front);
       hitsOnCurrentDocument.clear();
