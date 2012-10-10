@@ -232,7 +232,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
           // this will also start a second background job to collect the hits
           rankDocuments(docBlockSize -1);
         }
-      }catch (IOException e) {
+      } catch (Exception e) {
         logger.error("Exception while collecting document IDs", e);
         try {
           close();
