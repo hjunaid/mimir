@@ -367,7 +367,7 @@ public class QueryEngine {
       for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
         for(String aType : 
             indexConfig.getSemanticIndexers()[i].getAnnotationTypes()) {
-          if(aType.equals(indexType)) { 
+          if(aType.equals(indexName)) { 
             return indexConfig.getTokenIndexers().length + i; 
           }
         }
