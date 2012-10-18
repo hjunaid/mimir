@@ -798,7 +798,7 @@ public class QueryParser implements QueryParserConstants {
         break;
       case string:
         t1 = jj_consume_token(string);
-            tq.term = t.image.substring(1, t.image.length()-1);
+            tq.term = t1.image.substring(1, t1.image.length()-1);
         break;
       default:
         jj_la1[11] = jj_gen;
