@@ -880,7 +880,7 @@ Query TermOrNamedIndexQuery() :
         |
         (
           t1 = <string>
-          { tq.term = t.image.substring(1, t.image.length()-1); } 
+          { tq.term = t1.image.substring(1, t1.image.length()-1); } 
         )
       )
       { return tq; }
