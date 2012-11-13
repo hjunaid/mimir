@@ -22,15 +22,16 @@ public interface QueryParserConstants {
   int comma = 32;
   int or = 33;
   int and = 34;
-  int plus = 35;
-  int question = 36;
-  int in = 37;
-  int hyphen = 38;
-  int over = 39;
-  int leftsquarebracket = 40;
-  int rightsquarebracket = 41;
-  int regex = 42;
-  int tok = 43;
+  int minus = 35;
+  int plus = 36;
+  int question = 37;
+  int in = 38;
+  int hyphen = 39;
+  int over = 40;
+  int leftsquarebracket = 41;
+  int rightsquarebracket = 42;
+  int regex = 43;
+  int tok = 44;
 
   int DEFAULT = 0;
   int IN_STRING = 1;
@@ -71,6 +72,7 @@ public interface QueryParserConstants {
     "\",\"",
     "<or>",
     "<and>",
+    "<minus>",
     "\"+\"",
     "\"?\"",
     "\"IN\"",

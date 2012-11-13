@@ -525,6 +525,7 @@ TOKEN:{<colon: ":">}
 TOKEN:{<comma: ",">}
 TOKEN:{<or: "|" | "OR">}
 TOKEN:{<and: "&" | "AND">}
+TOKEN:{<minus: "-" | "MINUS">}
 TOKEN:{<plus: "+">}
 TOKEN:{<question: "?">}
 TOKEN:{<in: "IN">}
@@ -575,9 +576,12 @@ Query QueryPlus() :
     LOOKAHEAD(reserved())
     q1 = Query(q)
     { 
-      if(q1 instanceof InQuery || 
-         q1 instanceof OverQuery || q1 instanceof ORQuery || 
-         q1 instanceof ANDQuery || q1 instanceof KleneQuery) {
+      if(q1 instanceof InQuery ||  
+         q1 instanceof OverQuery ||
+         q1 instanceof MinusQuery ||
+         q1 instanceof ORQuery || 
+         q1 instanceof ANDQuery || 
+         q1 instanceof KleneQuery) {
         sq.removeLastElement();
       } 
       
@@ -612,8 +616,9 @@ boolean reserved() :
   | <or> 
   | <and> 
   | <in> 
-  | <over> 
-  | <plus> 
+  | <over>
+  | <minus>  
+  | <plus>  
   | <tok>
   | <leftsquarebracket>
   // hyphen or number to allow for negatives
@@ -641,13 +646,15 @@ Query Query(Query previousQuery) :
     | q = TermOrNamedIndexQuery() // both start with same type of token
     | q = QuotedTextQuery() // starts with "
     | q = GapQuery() // starts with [ and ends with ]
-    | q = InQuery(previousQuery)  // starts with "IN"; it starts where the 
-                                  // previous query ends
+    | q = InQuery(previousQuery)   // starts with "IN"; it starts where the 
+                                   // previous query ends
     | q = OverQuery(previousQuery) // starts with "OVER"; it starts where the 
-      
+                                   // previous query ends
+    | q = MinusQuery(previousQuery) // starts with "OVER"; it starts where the 
+                                    // previous query ends    
     | 
-        LOOKAHEAD(<or>) 
-        q = OrQuery(previousQuery) // starts with "|" or "OR"; it starts where the 
+      LOOKAHEAD(<or>) 
+      q = OrQuery(previousQuery) // starts with "|" or "OR"; it starts where the 
                                  //previous query ends
     | 
         LOOKAHEAD(<and>) 
@@ -1090,6 +1097,44 @@ Query OverQuery(Query previousQuery) :
   }
 }
 
+
+/** 
+ * MinusQuery
+ * e.g. Query MINUS Query
+ * In the example above, first "Query" is supplied in the previousQuery parameter.
+ * This method starts parsing tokens after the previousQuery has ended.
+ * i.e. first character after the previous query must be "MINUS" or "-"
+ */
+Query MinusQuery(Query previousQuery) :
+{
+  MinusQuery minusQuery = new MinusQuery();
+  Query q;
+  Token t;
+}
+{
+  t = <minus>
+  {
+    if(previousQuery instanceof GapQuery) 
+      throw new ParseException(
+        "First element cannot be Gap. See line:"+row+", column:"+column);
+
+    column = t.beginColumn;
+    row = t.beginLine;
+    
+    if(previousQuery == null)
+      throw new ParseException(
+         "Use of MINUS at the start of a query is not permitted. " + 
+         "See line:"+row+", column:"+column);
+    
+    minusQuery.leftQuery = previousQuery; 
+  }  
+  
+  q = QueryPlus()
+  { 
+    minusQuery.rightQuery = q;
+    return minusQuery; 
+  }
+}
 
 /** 
  * KleneQuery

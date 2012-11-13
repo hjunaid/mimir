@@ -119,6 +119,23 @@ class OverQuery implements Query {
 	}
 }
 
+
+class MinusQuery implements Query {
+  public Query leftQuery;
+  public Query rightQuery;
+
+  public String toString(String space) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(space + "MinusQuery:{\n");
+    sb.append(space + "  leftQuery=" + leftQuery.toString(space + "  ")
+        + "\n");
+    sb.append(space + "  rightQuery=" + rightQuery.toString(space + "  ")
+        + "\n");
+    sb.append(space + "}\n");
+    return sb.toString();
+  }
+}
+
 class ORQuery implements Query {
 	List<Query> queriesToOr = new ArrayList<Query>();
 

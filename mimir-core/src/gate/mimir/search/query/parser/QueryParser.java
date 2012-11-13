@@ -135,6 +135,8 @@ public class QueryParser implements QueryParserConstants {
       return toWithinQuery((InQuery)queryInst, space);
     } else if(queryInst instanceof OverQuery) {
       return toContainsQuery((OverQuery)queryInst, space);
+    } else if(queryInst instanceof MinusQuery) {
+      return toMinusQuery((MinusQuery)queryInst, space);
     } else if(queryInst instanceof KleneQuery) {
       return toRepeatsQuery((KleneQuery)queryInst, space);
     } else if(queryInst instanceof ORQuery) {
@@ -238,6 +240,20 @@ public class QueryParser implements QueryParserConstants {
     return new gate.mimir.search.query.ContainsQuery(targetQuery, nestedQuery);
   }
 
+  /**
+   * Conversion of the OverQuery into ContainsQuery
+   * @param query
+   * @return
+   * @throws ParseException
+   */
+  private QueryNode toMinusQuery(MinusQuery query, String space)
+                                                     throws ParseException {
+    if(debug) System.out.println(space + "MinusQuery");
+    QueryNode leftQuery = convert(query.leftQuery, space + " ");
+    QueryNode rightQuery = convert(query.rightQuery, space + " ");
+    return new gate.mimir.search.query.MinusQuery(leftQuery, rightQuery);
+  }  
+  
   /**
    * Conversion of the KleneQuery into RepeatsQuery
    * @param query
@@ -452,8 +468,11 @@ public class QueryParser implements QueryParserConstants {
       }
       q1 = Query(q);
       if(q1 instanceof InQuery ||
-         q1 instanceof OverQuery || q1 instanceof ORQuery ||
-         q1 instanceof ANDQuery || q1 instanceof KleneQuery) {
+         q1 instanceof OverQuery ||
+         q1 instanceof MinusQuery ||
+         q1 instanceof ORQuery ||
+         q1 instanceof ANDQuery ||
+         q1 instanceof KleneQuery) {
         sq.removeLastElement();
       }
 
@@ -498,6 +517,9 @@ public class QueryParser implements QueryParserConstants {
       break;
     case over:
       jj_consume_token(over);
+      break;
+    case minus:
+      jj_consume_token(minus);
       break;
     case plus:
       jj_consume_token(plus);
@@ -555,6 +577,9 @@ public class QueryParser implements QueryParserConstants {
       break;
     case over:
       q = OverQuery(previousQuery);
+      break;
+    case minus:
+      q = MinusQuery(previousQuery);
       break;
     default:
       jj_la1[1] = jj_gen;
@@ -981,6 +1006,37 @@ public class QueryParser implements QueryParserConstants {
   }
 
 /** 
+ * MinusQuery
+ * e.g. Query MINUS Query
+ * In the example above, first "Query" is supplied in the previousQuery parameter.
+ * This method starts parsing tokens after the previousQuery has ended.
+ * i.e. first character after the previous query must be "MINUS" or "-"
+ */
+  final public Query MinusQuery(Query previousQuery) throws ParseException {
+  MinusQuery minusQuery = new MinusQuery();
+  Query q;
+  Token t;
+    t = jj_consume_token(minus);
+    if(previousQuery instanceof GapQuery)
+      {if (true) throw new ParseException(
+        "First element cannot be Gap. See line:"+row+", column:"+column);}
+
+    column = t.beginColumn;
+    row = t.beginLine;
+
+    if(previousQuery == null)
+      {if (true) throw new ParseException(
+         "Use of MINUS at the start of a query is not permitted. " +
+         "See line:"+row+", column:"+column);}
+
+    minusQuery.leftQuery = previousQuery;
+    q = QueryPlus();
+    minusQuery.rightQuery = q;
+    {if (true) return minusQuery;}
+    throw new Error("Missing return statement in function");
+  }
+
+/** 
  * KleneQuery
  * e.g. Query+3, Query+3..5
  * In all the above examples, "Query" is supplied in the previousQuery parameter.
@@ -1061,19 +1117,40 @@ public class QueryParser implements QueryParserConstants {
     finally { jj_save(4, xla); }
   }
 
-  final private boolean jj_3R_5() {
-    if (jj_scan_token(number)) return true;
+  final private boolean jj_3_4() {
+    if (jj_3R_4()) return true;
     return false;
   }
 
-  final private boolean jj_3_2() {
-    if (jj_scan_token(or)) return true;
+  final private boolean jj_3_5() {
+    if (jj_scan_token(tok)) return true;
+    if (jj_scan_token(colon)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_3() {
+    if (jj_scan_token(and)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_1() {
+    if (jj_3R_3()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_5() {
+    if (jj_scan_token(number)) return true;
     return false;
   }
 
   final private boolean jj_3R_4() {
     if (jj_scan_token(period)) return true;
     if (jj_scan_token(regex)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_2() {
+    if (jj_scan_token(or)) return true;
     return false;
   }
 
@@ -1090,17 +1167,19 @@ public class QueryParser implements QueryParserConstants {
     jj_scanpos = xsp;
     if (jj_scan_token(34)) {
     jj_scanpos = xsp;
-    if (jj_scan_token(37)) {
-    jj_scanpos = xsp;
-    if (jj_scan_token(39)) {
-    jj_scanpos = xsp;
-    if (jj_scan_token(35)) {
-    jj_scanpos = xsp;
-    if (jj_scan_token(43)) {
+    if (jj_scan_token(38)) {
     jj_scanpos = xsp;
     if (jj_scan_token(40)) {
     jj_scanpos = xsp;
-    if (jj_scan_token(38)) {
+    if (jj_scan_token(35)) {
+    jj_scanpos = xsp;
+    if (jj_scan_token(36)) {
+    jj_scanpos = xsp;
+    if (jj_scan_token(44)) {
+    jj_scanpos = xsp;
+    if (jj_scan_token(41)) {
+    jj_scanpos = xsp;
+    if (jj_scan_token(39)) {
     jj_scanpos = xsp;
     if (jj_3R_5()) return true;
     }
@@ -1114,27 +1193,7 @@ public class QueryParser implements QueryParserConstants {
     }
     }
     }
-    return false;
-  }
-
-  final private boolean jj_3_1() {
-    if (jj_3R_3()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_4() {
-    if (jj_3R_4()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_5() {
-    if (jj_scan_token(tok)) return true;
-    if (jj_scan_token(colon)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_3() {
-    if (jj_scan_token(and)) return true;
+    }
     return false;
   }
 
@@ -1157,7 +1216,7 @@ public class QueryParser implements QueryParserConstants {
       jj_la1_0 = new int[] {0xa060000,0xa060000,0x0,0x20000000,0x0,0x20000000,0x0,0x0,0x41e00000,0x60000,0x41e00000,0x20000,0x40000,0x20000000,};
    }
    private static void jj_la1_1() {
-      jj_la1_1 = new int[] {0x9ee,0x9e0,0x8,0x0,0x40,0x0,0x1,0x800,0x0,0x840,0x0,0x800,0x840,0x0,};
+      jj_la1_1 = new int[] {0x13de,0x13c8,0x10,0x0,0x80,0x0,0x1,0x1000,0x0,0x1080,0x0,0x1000,0x1080,0x0,};
    }
   final private JJCalls[] jj_2_rtns = new JJCalls[5];
   private boolean jj_rescan = false;
@@ -1326,8 +1385,8 @@ public class QueryParser implements QueryParserConstants {
 
   public ParseException generateParseException() {
     jj_expentries.removeAllElements();
-    boolean[] la1tokens = new boolean[44];
-    for (int i = 0; i < 44; i++) {
+    boolean[] la1tokens = new boolean[45];
+    for (int i = 0; i < 45; i++) {
       la1tokens[i] = false;
     }
     if (jj_kind >= 0) {
@@ -1346,7 +1405,7 @@ public class QueryParser implements QueryParserConstants {
         }
       }
     }
-    for (int i = 0; i < 44; i++) {
+    for (int i = 0; i < 45; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;
