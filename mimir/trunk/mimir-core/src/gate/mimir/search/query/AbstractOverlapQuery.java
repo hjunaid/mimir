@@ -59,7 +59,6 @@ public abstract class AbstractOverlapQuery implements QueryNode{
                                 SubQuery target) throws IOException {
       super(engine, query);
       this.targetQuery = target;
-      this.query = query;
       
       innerExecutor = query.innerQuery.getQueryExecutor(engine);
       outerExecutor = query.outerQuery.getQueryExecutor(engine);
@@ -71,10 +70,7 @@ public abstract class AbstractOverlapQuery implements QueryNode{
     
     protected QueryExecutor outerExecutor;
 
-    /**
-     * The query being executed.
-     */
-    private AbstractOverlapQuery query;
+
     
     /* (non-Javadoc)
      * @see gate.mimir.search.query.QueryExecutor#close()
