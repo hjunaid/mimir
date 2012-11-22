@@ -21,14 +21,7 @@ class MimirUrlMappings {
     // action names that do not start "gus" are mapped to the search
     // controller (the XML search service and the back-end used by
     // RemoteQueryRunner)
-    "/$indexId/search/$action?"(controller:"search", parseRequest:true) {
-      constraints { action(matches:/^(?!gus).*$/) }
-    }
-
-    // action names that start "gus" are mapped to the GUS demo web UI
-    "/$indexId/search/$action?/$id?"(controller:"gus") {
-      constraints { action(matches:/^gus.*$/) }
-    }
+    "/$indexId/search/$action?"(controller:"search", parseRequest:true)
 
     // the top-level "index URL" for a given index *must* be mapped to this
     // action (the plugin assumes this and uses it to generate reverse
