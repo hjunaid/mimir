@@ -1,5 +1,5 @@
 /*
- *  Const.java
+ *  ConstQuery.java
  *
  *  Copyright (c) 2007-2011, The University of Sheffield.
  *
@@ -27,15 +27,20 @@ import java.io.IOException;
  * A query that returns a pre-defined (constant) list of document IDs. This 
  * query type does not support positions, so it returns no hits.
  */
-public class Const implements QueryNode {
+public class ConstQuery implements QueryNode {
   
+  /**
+   * Serialization ID. 
+   */
+  private static final long serialVersionUID = 4259330863001338150L;
+
   /**
    * Executor implementation for {@link ConstQuery}. It returns document IDs
    * from the predefined list, and no positions.
    */
   public static class ConstQueryExecutor extends AbstractQueryExecutor {
     
-    public ConstQueryExecutor(Const qNode, QueryEngine engine) {
+    public ConstQueryExecutor(ConstQuery qNode, QueryEngine engine) {
       super(engine, qNode);
       this.documentIds = qNode.documentIds;
       latestDocumentPosition = -1;
@@ -123,11 +128,11 @@ public class Const implements QueryNode {
   
   
   /**
-   * Creates a new Const query. 
+   * Creates a new ConstQuery query. 
    * @param documentIds the document IDs (in ascending order) that should be 
    * returned when this query is executed.
    */
-  public Const(long[] documentIds) {
+  public ConstQuery(long[] documentIds) {
     this.documentIds = documentIds;
   }
 
