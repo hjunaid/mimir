@@ -674,8 +674,8 @@ public class UI implements EntryPoint {
   
   protected String createHistoryToken(String queryId, String queryString, 
                                       int firstDocument) {
-    return "queryId=" + URL.encodeQueryString(queryId) + 
-        "&queryString=" + URL.encodeQueryString(queryString) + 
+    return "queryId=" + queryId + 
+        "&queryString=" + queryString + 
         "&firstDoc=" + firstDocument;
   }
   
