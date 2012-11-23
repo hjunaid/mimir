@@ -21,8 +21,6 @@ class MimirStaticPagesController extends gate.mimir.web.MimirStaticPagesControll
   
   def springSecurityService
   
-  def grailsApplication
-  
   def checkSecurity(){
     User adminUser = User.findByUsername('admin')
     if(adminUser) {

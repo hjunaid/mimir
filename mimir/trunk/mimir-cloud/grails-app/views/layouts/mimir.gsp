@@ -11,6 +11,7 @@
 	href="${resource(dir:'css',file:'mimir-cloud.css')}" />	
 <g:layoutHead />
 <g:javascript library="application" />
+<r:layoutResources />
 </head>
 <body>
 	<div id="spinner" class="spinner" style="display: none;">
@@ -45,5 +46,6 @@
 			</p>
 		</div>
 	</div>
+	<r:layoutResources />	
 </body>
 </html>
