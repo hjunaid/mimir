@@ -1,65 +1,53 @@
-/*
- *  BuildConfig.groovy
- *
- *  Copyright (c) 2007-2011, The University of Sheffield.
- *
- *  This file is part of GATE Mímir (see http://gate.ac.uk/family/mimir.html), 
- *  and is free software, licenced under the GNU Lesser General Public License,
- *  Version 3, June 2007 (also included with this distribution as file
- *  LICENCE-LGPL3.html).
- *
- *  $Id$
- */
-
 grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
-grails.project.test.reports.dir	= "target/test-reports"
-//grails.project.war.file = "target/${appName}-${appVersion}.war"
-grails.project.dependency.resolution = {
-  // inherit Grails' default dependencies
-  inherits( "global" ) {
-    // uncomment to disable ehcache
-    // excludes 'ehcache'
-  }
-  log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
-  repositories {        
-    grailsPlugins()
-    grailsHome()
-    grailsCentral()
-    mavenRepo 'http://repo.gate.ac.uk/content/groups/public/'
-    
-    // uncomment the below to enable remote dependency resolution
-    // from public Maven repositories
-    //mavenLocal()
-    mavenCentral()
-    //mavenRepo "http://snapshots.repository.codehaus.org"
-    //mavenRepo "http://repository.codehaus.org"
-    //mavenRepo "http://download.java.net/maven/2/"
-    //mavenRepo "http://repository.jboss.com/maven2/"
-  }
-  dependencies {
-    // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
+grails.project.test.reports.dir = "target/test-reports"
 
-    compile ('uk.ac.gate:gate-core:7.0', 
-            'it.unimi.dsi:mg4j-big:4.0.4',
-            'it.unimi.dsi:webgraph:3.0.7',
-            'com.google.guava:guava:12.0') {
-      // Exclude dependencies that conflict with Grails      
-      // GATE claims it needs ANT 1.8.1, but that's not compatible with 
-      // Grails 1.3.x. So we exclude it here.
-      excludes 'xml-apis', 'xmlbeans', 'ant'
+grails.project.dependency.resolution = {
+    // inherit Grails' default dependencies
+    inherits("global") {
+        // uncomment to disable ehcache
+        // excludes 'ehcache'
     }
+    log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
+    repositories {
+        grailsCentral()
+        mavenRepo 'http://repo.gate.ac.uk/content/groups/public/'
+        // uncomment the below to enable remote dependency resolution
+        // from public Maven repositories
+        //mavenLocal()
+        mavenCentral()
+        //mavenRepo "http://snapshots.repository.codehaus.org"
+        //mavenRepo "http://repository.codehaus.org"
+        //mavenRepo "http://download.java.net/maven/2/"
+        //mavenRepo "http://repository.jboss.com/maven2/"
+    }
+    dependencies {
+      // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
+      // runtime 'mysql:mysql-connector-java:5.1.18'
+      compile ('uk.ac.gate:gate-core:7.0', 
+              'it.unimi.dsi:mg4j-big:4.0.4',
+              'it.unimi.dsi:webgraph:3.0.7',
+              'com.google.guava:guava:12.0') {
+        // Exclude dependencies that conflict with Grails      
+        excludes 'xml-apis', 'xmlbeans', 'ant'
+      }
     
-    // For the kind of things we do in Mimir, ANT 1.7.1 (same as in Grails 
-    // 1.3.x) is good enough. So we include it explicitly here.
-    runtime 'org.apache.ant:ant:1.7.1'
-    
-    // runtime 'mysql:mysql-connector-java:5.1.5'
-  }
-  plugins {
-    compile ':gwt:0.6.1'
-    runtime ":webflow:$grailsVersion"
-  }
+      // We must use the same version of Ant as the one provided by Grails
+      // For Grails 2.1.1, this is Ant 1.8.2
+      runtime 'org.apache.ant:ant:1.8.2'                
+    }
+
+    plugins {
+      runtime ":resources:1.1.6"
+      build(":tomcat:$grailsVersion",
+            ":release:2.0.3",
+            ":rest-client-builder:1.0.2") {
+          export = false
+      }
+      compile(":hibernate:$grailsVersion")
+      compile(":webflow:2.0.0")
+      compile(":gwt:0.8")
+    }
 }
 
 gwt {
