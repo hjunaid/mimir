@@ -34,6 +34,11 @@ import gate.mimir.search.query.AnnotationQuery;
  */
 public class AnnotationTermsQuery extends AbstractTermsQuery {
   
+  /**
+   * Serialization ID.
+   */
+  private static final long serialVersionUID = 777418229209857720L;
+
   public AnnotationTermsQuery(AnnotationQuery annotationQuery, 
       boolean stringsEnabled, boolean countsEnabled, int limit) {
     super(stringsEnabled, countsEnabled, limit);

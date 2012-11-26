@@ -14,11 +14,18 @@
  */
 package gate.mimir.search.terms;
 
+import java.io.Serializable;
+
 /**
  * Class representing the results of a {@link TermsQuery}. 
  */
-public class TermsResultSet {
+public class TermsResultSet implements Serializable {
   
+  /**
+   * Serialization ID.
+   */
+  private static final long serialVersionUID = -7722325563637139625L;
+
   /**
    * The term IDs, as retrieved from the index. Array parallel with 
    * {@link #termStrings} and {@link #termCounts}.

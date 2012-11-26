@@ -20,6 +20,11 @@ package gate.mimir.search.terms;
  */
 public abstract class AbstractTermsQuery implements TermsQuery {
   
+  /**
+   * Serialization ID.
+   */
+  private static final long serialVersionUID = -8448110711378800097L;
+
   protected final boolean stringsEnabled;
   
   protected final boolean countsEnabled;

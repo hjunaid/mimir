@@ -31,6 +31,11 @@ import java.io.IOException;
 public class AndTermsQuery extends AbstractTermsQuery {
   
   /**
+   * Serialization ID.
+   */
+  private static final long serialVersionUID = -6757669202064075218L;
+  
+  /**
    * The sub-queries being AND'ed.
    */
   protected TermsQuery[] subQueries;

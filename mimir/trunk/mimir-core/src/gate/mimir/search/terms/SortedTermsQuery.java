@@ -28,6 +28,12 @@ import java.io.IOException;
  */
 public class SortedTermsQuery extends AbstractTermsQuery {
   
+  /**
+   * Serialization ID.
+   */
+  private static final long serialVersionUID = -4763084996036534582L;
+  
+
   public static enum SortOrder {
     /** Sort by ID, ascending. */
     ID,

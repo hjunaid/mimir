@@ -30,6 +30,10 @@ import java.io.IOException;
 public class DocumentsAndTermsQuery extends AbstractIndexTermsQuery {
 
   /**
+   * Serialization ID.
+   */
+  private static final long serialVersionUID = -5815729554557481213L;
+  /**
    * The document IDs for which the terms are sought.
    */
   protected long[] documentIds;

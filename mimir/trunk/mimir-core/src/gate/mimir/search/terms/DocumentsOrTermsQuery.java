@@ -31,6 +31,11 @@ public class DocumentsOrTermsQuery extends AbstractIndexTermsQuery {
   
 
   /**
+   * Serialization ID.
+   */
+  private static final long serialVersionUID = -3836472816480490578L;
+  
+  /**
    * The document IDs for which the terms are sought.
    */
   protected long[] documentIds;
