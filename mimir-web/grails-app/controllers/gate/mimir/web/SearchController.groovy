@@ -21,6 +21,8 @@ import groovy.xml.StreamingMarkupBuilder;
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.parser.ParseException;
+import gate.mimir.search.terms.TermsQuery;
+import gate.mimir.search.terms.TermsResultSet;
 
 import java.io.ObjectOutputStream;
 import java.util.HashSet;
@@ -549,6 +551,39 @@ class SearchController {
     }
   }
 
+  /**
+   * Binary version of post query
+   */
+  def postTermsQueryBin = {
+    def p = params["request"] ?: params
+    // read the serialized TermsQuery from the remote caller
+    TermsQuery theQuery = null
+    request.inputStream.withStream { stream ->
+      ObjectInputStream ois = new ObjectInputStream(stream) 
+      theQuery = ois.readObject()
+      // drain input stream
+      byte[] buf = new byte[1024];
+      while(ois.read(buf) >= 0) {
+        // do nothing
+      }
+      ois.close()
+    }
+    
+    try {
+      Index theIndex = request.theIndex
+      TermsResultSet trs = theIndex.postTermsQuery(theQuery)
+  
+      new ObjectOutputStream (response.outputStream).withStream {stream ->
+        stream.writeObject(trs)
+      }
+    } catch(Exception e) {
+      log.error("Exception posting query", e)
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+      "Problem posting query: \"" + e.getMessage() + "\"")
+    }
+  }
+  
+  
   /**
    * Gets the number of result documents found so far. After the search 
    * completes, the result returned by this call is identical to that of 

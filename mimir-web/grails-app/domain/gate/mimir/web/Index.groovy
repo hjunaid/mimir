@@ -14,6 +14,8 @@ package gate.mimir.web;
 
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.query.parser.ParseException
+import gate.mimir.search.terms.TermsQuery;
+import gate.mimir.search.terms.TermsResultSet;
 import gate.mimir.index.mg4j.zipcollection.DocumentData
 
 /**
@@ -102,6 +104,10 @@ class Index implements Serializable {
     throw new UnsupportedOperationException() 
   }
 
+  TermsResultSet postTermsQuery(TermsQuery query) {
+    throw new UnsupportedOperationException()
+  }
+  
   /**
    * Gets the {@link DocumentData} value for a given document ID.
    * @param documentID
