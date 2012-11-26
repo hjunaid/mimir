@@ -31,6 +31,11 @@ import java.io.IOException;
  */
 public class LimitTermsQuery extends AbstractTermsQuery {
   
+  /**
+   * Serialization ID.
+   */
+  private static final long serialVersionUID = -2853628566995944376L;
+  
   protected TermsQuery query;
   
   

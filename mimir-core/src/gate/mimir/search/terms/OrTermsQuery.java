@@ -28,6 +28,11 @@ import java.io.IOException;
 public class OrTermsQuery extends AbstractTermsQuery {
   
   /**
+   * Serialization ID.
+   */
+  private static final long serialVersionUID = 3293699315503739659L;
+  
+  /**
    * The sub-queries being OR'ed
    */
   protected TermsQuery[] subQueries;

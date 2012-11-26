@@ -36,6 +36,11 @@ import java.util.Set;
 public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
   
   /**
+   * Serialization ID.
+   */
+  private static final long serialVersionUID = 8382919427152317859L;
+
+  /**
    * The name of the subindex in which the terms are sought. Each Mímir 
    * index includes multiple sub-indexes (some storing tokens, other storing 
    * annotations), identified by a name. For token indexes, the index name is
@@ -53,19 +58,19 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
    * The direct index used for executing the query. This value is non-null only 
    * if a direct index was configured as part of the Mímir index being searched.
    */
-  protected IndexReaderPool directIndexPool;
+  protected transient IndexReaderPool directIndexPool;
   
   /**
    * The indirect index used for executing the query.
    */
-  protected IndexReaderPool indirectIndexPool;
+  protected transient IndexReaderPool indirectIndexPool;
   
   /**
    * The semantic annotation helper for the correct annotation type (as 
    * given by {@link #indexName}), if {@link #indexType} is 
    * {@link IndexType#ANNOTATIONS}, <code>null</code> otherwise. 
    */
-  protected SemanticAnnotationHelper annotationHelper;
+  protected transient SemanticAnnotationHelper annotationHelper;
   
   /**
    * Should stop words be filtered out of the results? 
@@ -88,7 +93,7 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
   /**
    * The query engine used to execute this query.
    */
-  protected QueryEngine engine;
+  protected transient QueryEngine engine;
 
   /**
    * The default set of stop words.

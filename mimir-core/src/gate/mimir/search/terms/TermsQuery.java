@@ -15,6 +15,7 @@
 package gate.mimir.search.terms;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 import gate.mimir.search.QueryEngine;
 
@@ -22,7 +23,7 @@ import gate.mimir.search.QueryEngine;
  * A query that returns terms. The terms returned must be sorted in ascending 
  * order of their term ID.
  */
-public interface TermsQuery {
+public interface TermsQuery extends Serializable {
   
   public static final int NO_LIMIT = Integer.MAX_VALUE;
   
