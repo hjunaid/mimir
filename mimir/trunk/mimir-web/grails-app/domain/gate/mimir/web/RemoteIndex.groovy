@@ -18,6 +18,8 @@ import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.RemoteQueryRunner
 import gate.mimir.search.query.parser.ParseException
+import gate.mimir.search.terms.TermsQuery;
+import gate.mimir.search.terms.TermsResultSet;
 import gate.mimir.tool.WebUtils
 import gate.mimir.util.WebUtilsManager
 
@@ -25,6 +27,8 @@ import gate.mimir.util.WebUtilsManager
  * A remote index, accessed via a web service, and published locally.
  */
 class RemoteIndex extends Index {
+  
+  protected static final String ACTION_POST_TERMS_QUERY_BIN = "search/postTermsQueryBin";
   
   static constraints = {
     remoteUrl(blank:false, nullable:false)
@@ -80,6 +84,19 @@ class RemoteIndex extends Index {
     return new RemoteQueryRunner(remoteUrl, query, searchThreadPool, 
       webUtilsManager.currentWebUtils(this))
   }
+
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.web.Index#postTermsQuery(gate.mimir.search.terms.TermsQuery)
+   */
+  @Override
+  public TermsResultSet postTermsQuery(TermsQuery query) {
+    String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) +
+      ACTION_POST_TERMS_QUERY_BIN;
+    
+    return webUtilsManager.currentWebUtils(this).rpcCall(urlStr, query)
+  }
+
 
   /**
    * Gets the {@link DocumentData} value for a given document ID.

@@ -18,6 +18,8 @@ import java.io.Writer;
 import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.query.parser.ParseException
+import gate.mimir.search.terms.TermsQuery;
+import gate.mimir.search.terms.TermsResultSet;
 import gate.Document
 import gate.Gate
 import gate.creole.ResourceData
@@ -106,6 +108,15 @@ class LocalIndex extends Index implements Serializable {
     return localIndexService.getQueryRunner(this, queryString)
   }
   
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.web.Index#postTermsQuery(gate.mimir.search.terms.TermsQuery)
+   */
+  @Override
+  public TermsResultSet postTermsQuery(TermsQuery query) {
+    return query.execute(localIndexService.getQueryEngine(this))
+  }
+
   /**
   * Gets the {@link DocumentData} value for a given document ID.
   * @param documentID
