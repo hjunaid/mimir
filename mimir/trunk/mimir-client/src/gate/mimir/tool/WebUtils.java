@@ -436,17 +436,7 @@ public class WebUtils {
       HttpURLConnection httpConn = (HttpURLConnection)conn;
       Object res;
       try {
-        httpConn.connect();
-        int code = httpConn.getResponseCode();
-        if(code == HttpURLConnection.HTTP_OK) {
-          res = new ObjectInputStream(httpConn.getInputStream()).readObject();
-        }else{
-          // try to get more details
-          String message = httpConn.getResponseMessage();
-          throw new IOException(code
-                  + (message != null ? " (" + message + ")" : "")
-                  + " Remote connection failed.");
-        }
+        res = readRemoteObject(httpConn);
       } finally {
         // make sure the connection is drained, to allow connection keepalive
         drainConnection(httpConn);
@@ -458,6 +448,30 @@ public class WebUtils {
     }
   }
 
+  /**
+   * Reads an Object  value from a HTTP connection.  
+   * @param httpConn the connection to read from
+   * @return the value sent from the remote endpoint
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  private Object readRemoteObject(HttpURLConnection httpConn)
+    throws IOException, ClassNotFoundException {
+    httpConn.connect();
+    int code = httpConn.getResponseCode();
+    if(code == HttpURLConnection.HTTP_OK) {
+      return new ObjectInputStream(httpConn.getInputStream()).readObject();
+    }else{
+      // try to get more details
+      String message = httpConn.getResponseMessage();
+      throw new IOException(code
+              + (message != null ? " (" + message + ")" : "")
+              + " Remote connection failed.");
+    }
+  }
+  
+  
+  
   /**
    * Calls a web service action (i.e. it connects to a URL) using the POST HTTP
    * method, sending the given object in Java serialized format as the request
@@ -519,6 +533,68 @@ public class WebUtils {
               + " Connection class: " + conn.getClass().getCanonicalName());
     }
   }
+  
+  /**
+   * Calls a web service action (i.e. it connects to a URL) using the POST HTTP
+   * method, sending the given object in Java serialized format as the request
+   * body.  The request is sent using chunked transfer encoding, and the
+   * request's Content-Type is set to application/octet-stream.  If the
+   * connection fails, for whatever reason, or the response code is different
+   * from {@link HttpURLConnection#HTTP_OK}, then an IOException is raised.
+   * The response from the server is read and Java-deserialized, the resulting 
+   * Object being returned.
+   * 
+   * This method will then drain (and discard) all the remaining content 
+   * available from either the input and error streams of the resulting 
+   * connection (which should permit connection keepalives).
+   *   
+   * @param baseUrl the constant part of the URL to be accessed.
+   * @param object the object to serialize and send in the POST body
+   * @param params an array of String values, that contain an alternation of
+   * parameter name, and parameter values.
+   * @return the de-serialized value sent by the remote endpoint.
+   * @throws IOException if the connection fails.
+   * @throws ClassNotFoundException if the data sent from the remote endpoint 
+   * cannot be deserialized to a class locally known.
+   */
+  public Object rpcCall(String baseUrl, Serializable object,
+          String... params) throws IOException, ClassNotFoundException {
+    URL actionUrl = new URL(buildUrl(baseUrl, params));
+    URLConnection conn = openURLConnection(actionUrl);
+    if(conn instanceof HttpURLConnection) {
+      HttpURLConnection httpConn = (HttpURLConnection)conn;
+      try {
+        // enable output and set HTTP method
+        httpConn.setDoOutput(true);
+        httpConn.setRequestMethod("POST");
+        // turn on chunking (we don't want to buffer the output if we don't
+        // have to). 0 means use default chunk size.
+        httpConn.setChunkedStreamingMode(0);
+        // don't time out
+        httpConn.setConnectTimeout(0);
+        httpConn.setReadTimeout(0);
+        
+        // MIME type (defaults to form encoded, so must change it)
+        httpConn.setRequestProperty("Content-Type", "application/octet-stream");
+
+        // connect and send the object
+        httpConn.connect();
+        OutputStream httpOutputStream = httpConn.getOutputStream();
+        ObjectOutputStream objectStream = new ObjectOutputStream(httpOutputStream);
+        objectStream.writeObject(object);
+        objectStream.close();
+
+        return readRemoteObject(httpConn);
+      } finally {
+        // make sure the connection is drained, to allow connection keepalive
+        drainConnection(httpConn);
+      }
+    } else {
+      throw new IOException("Connection received is not HTTP!"
+              + " Connection class: " + conn.getClass().getCanonicalName());
+    }
+  }
+  
   
   /**
    * Read and discard the response body from an HttpURLConnection. This first
