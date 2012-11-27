@@ -39,10 +39,4 @@ public interface TermsQuery extends Serializable {
    */
   public TermsResultSet execute(QueryEngine engine) throws IOException;
   
-  /**
-   * Does this terms query return term counts?
-   * @return
-   */
-  public boolean isCountsEnabled();
-  
 }

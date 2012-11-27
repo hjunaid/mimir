@@ -35,14 +35,6 @@ public abstract class AbstractWrapperTermsQuery extends AbstractTermsQuery {
     super(limit);
     this.wrappedQuery = wrappedQuery;
   }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.terms.TermsQuery#isCountsEnabled()
-   */
-  @Override
-  public boolean isCountsEnabled() {
-    return wrappedQuery != null && wrappedQuery.isCountsEnabled();
-  }
   
   /**
    * The wrapped wrappedQuery
