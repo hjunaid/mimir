@@ -19,6 +19,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongHeapSemiIndirectPriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectHeapSemiIndirectPriorityQueue;
 
 import java.io.IOException;
 
@@ -37,6 +38,9 @@ public class OrTermsQuery extends AbstractTermsQuery {
    */
   protected TermsQuery[] subQueries;
 
+  protected boolean countsAvailable;
+  
+  
   /**
    * Constructs a new OR terms query.
    * @param stringsEnabled should terms strings be returned.
@@ -46,10 +50,16 @@ public class OrTermsQuery extends AbstractTermsQuery {
    * @param limit the maximum number of terms to be returned. 
    * @param subQueries the term queries that form the disjunction.
    */
-  public OrTermsQuery(boolean stringsEnabled, boolean countsEnabled,
-                       int limit, TermsQuery... subQueries) {
-    super(stringsEnabled, countsEnabled, limit);
+  public OrTermsQuery(int limit, TermsQuery... subQueries) {
+    super(limit);
     this.subQueries = subQueries;
+    countsAvailable = true;
+    for(TermsQuery aQuery : subQueries) {
+      if(!aQuery.isCountsEnabled()) {
+        countsAvailable = false;
+        break;
+      }
+    }    
   }
   
   /* (non-Javadoc)
@@ -58,68 +68,72 @@ public class OrTermsQuery extends AbstractTermsQuery {
   @Override
   public TermsResultSet execute(QueryEngine engine) throws IOException {
     TermsResultSet[] resSets = new TermsResultSet[subQueries.length];
-    long[] currentTerm = new long[resSets.length];
-    LongHeapSemiIndirectPriorityQueue queue = 
-        new LongHeapSemiIndirectPriorityQueue(currentTerm);
+    String[] currentTerm = new String[resSets.length];
+    ObjectHeapSemiIndirectPriorityQueue<String> queue = 
+        new ObjectHeapSemiIndirectPriorityQueue<String>(currentTerm);
     int[] termIndex = new int[resSets.length];
+    boolean lengthsAvailable = true;
     for(int i = 0; i < subQueries.length; i++) {
       resSets[i] = subQueries[i].execute(engine);
-      if(resSets[i].termIds.length > 0){
+      // this implementation requires that all sub-queries return terms in a 
+      // consistent order, so we sort them lexicographically by termString
+      sortTermsResultSetByTermString(resSets[i]);
+      if(resSets[i].termStrings.length > 0){
         termIndex[i] = 0;
-        currentTerm[i] = resSets[i].termIds[termIndex[i]];
+        currentTerm[i] = resSets[i].termStrings[termIndex[i]];
         queue.enqueue(i);
       }
+      // we need *all* sub-queries to provide lengths, because we don't know
+      // which one will provide any of the results.
+      if(resSets[i].termLengths == null) lengthsAvailable = false;
     }
     
     // prepare local data
-    LongArrayList termIds = new LongArrayList();
-    ObjectArrayList<String> termStrings = stringsEnabled ? 
-        new ObjectArrayList<String>() : null;
-    IntArrayList termCounts = countsEnabled ? new IntArrayList() : null;
-    int front[] = null;
-    if(stringsEnabled || countsEnabled) front = new int[resSets.length];
+    ObjectArrayList<String> termStrings = new ObjectArrayList<String>();
+    IntArrayList termLengths = lengthsAvailable ? new IntArrayList() : null;
+    IntArrayList termCounts = countsAvailable ? new IntArrayList() : null;
+    int front[] = new int[resSets.length];
     // enumerate all terms
     top:while(!queue.isEmpty()) {
       int first = queue.first();
-      long termId = resSets[first].termIds[termIndex[first]];
-      termIds.add(termId);
-      if(countsEnabled || stringsEnabled) {
+      String termString = resSets[first].termStrings[termIndex[first]];
+      termStrings.add(termString);
+      if(countsAvailable) {
         int frontSize = queue.front(front);
-        String termString = null;
         int count = 0;
         for(int i = 0;  i < frontSize; i++) {
           int subRunnerId = front[i];
-          if(stringsEnabled &&
-             termString == null &&
-             resSets[subRunnerId].termStrings != null) {
-            termString = resSets[subRunnerId].termStrings[termIndex[subRunnerId]];
-          }
-          if(resSets[subRunnerId].termCounts != null) {
-            count += resSets[subRunnerId].termCounts[termIndex[subRunnerId]];
-          }
+          count += resSets[subRunnerId].termCounts[termIndex[subRunnerId]];
         }
-        if(stringsEnabled) termStrings.add(termString);
-        if(countsEnabled) termCounts.add(count);
+        termCounts.add(count);
       }
       // consume all equal terms
-      while(resSets[first].termIds[termIndex[first]] == termId) {
+      while(resSets[first].termStrings[termIndex[first]].equals(termString)) {
         // advance this subRunner
         termIndex[first]++;
-        if(termIndex[first] == resSets[first].termIds.length) {
+        if(termIndex[first] == resSets[first].termStrings.length) {
           // 'first' is out
           queue.dequeue();
           if(queue.isEmpty()) break top;
         } else {
-          currentTerm[first] = resSets[first].termIds[termIndex[first]];
+          currentTerm[first] = resSets[first].termStrings[termIndex[first]];
           queue.changed();
         }
         first = queue.first();
       }
     }
     // construct the result
-    return new TermsResultSet(termIds.toLongArray(),
-      stringsEnabled ? termStrings.toArray(new String[termStrings.size()]) : null,
-      null,
-      countsEnabled ? termCounts.toIntArray() : null);
+    return new TermsResultSet(
+        termStrings.toArray(new String[termStrings.size()]),
+        lengthsAvailable ? termLengths.toIntArray() : null,
+        countsAvailable ? termCounts.toIntArray() : null);
+  }
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.search.terms.TermsQuery#isCountsEnabled()
+   */
+  @Override
+  public boolean isCountsEnabled() {
+    return countsAvailable;
   }
 }

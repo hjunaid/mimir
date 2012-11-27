@@ -57,9 +57,9 @@ public class DocumentTermsQuery extends AbstractIndexTermsQuery {
    * @param limit the maximum number of results to be returned.
    */
   public DocumentTermsQuery(String indexName, 
-      IndexType indexType, boolean stringsEnabled, boolean countsEnabled, 
+      IndexType indexType, boolean countsEnabled, 
       int limit, long documentId) {
-    super(indexName, indexType, stringsEnabled, countsEnabled, limit);
+    super(indexName, indexType, countsEnabled, limit);
     this.documentId = documentId;
   }
 
@@ -83,7 +83,7 @@ public class DocumentTermsQuery extends AbstractIndexTermsQuery {
    */
   public DocumentTermsQuery(String indexName, IndexType indexType, 
                             long documentId) {
-    this(indexName, indexType, false, true, NO_LIMIT, documentId);
+    this(indexName, indexType, true, NO_LIMIT, documentId);
   }
 
   /**
@@ -107,7 +107,7 @@ public class DocumentTermsQuery extends AbstractIndexTermsQuery {
    */
   public DocumentTermsQuery(String indexName, IndexType indexType, int limit,
                             long documentId) {
-    this(indexName, indexType, false, true, limit, documentId);
+    this(indexName, indexType, true, limit, documentId);
   }
 
   

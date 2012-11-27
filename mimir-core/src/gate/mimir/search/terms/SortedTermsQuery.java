@@ -26,7 +26,7 @@ import java.io.IOException;
  * A wrapper for another terms query that simply sorts the returned terms based
  * on some criteria.
  */
-public class SortedTermsQuery extends AbstractTermsQuery {
+public class SortedTermsQuery extends AbstractWrapperTermsQuery {
   
   /**
    * Serialization ID.
@@ -35,11 +35,6 @@ public class SortedTermsQuery extends AbstractTermsQuery {
   
 
   public static enum SortOrder {
-    /** Sort by ID, ascending. */
-    ID,
-    
-    /** Sort by ID (descending) */
-    ID_DESC,
     
     /** Sort by counts */
     COUNT,
@@ -52,8 +47,6 @@ public class SortedTermsQuery extends AbstractTermsQuery {
     STRING_DESC
   }
   
-  protected TermsQuery query;
-  
   protected SortOrder[] criteria;
   
   /**
@@ -65,7 +58,7 @@ public class SortedTermsQuery extends AbstractTermsQuery {
    * </ul> 
    */
   public static final SortOrder[] DEFAULT_SORT_CRITERIA = new SortOrder[]
-      { SortOrder.COUNT_DESC, SortOrder.STRING, SortOrder.ID };
+      { SortOrder.COUNT_DESC, SortOrder.STRING};
   
   /**
    * Creates a new sorted terms query, wrapping the provided query, and using 
@@ -74,8 +67,7 @@ public class SortedTermsQuery extends AbstractTermsQuery {
    * @param criteria
    */
   public SortedTermsQuery(TermsQuery query, SortOrder... criteria) {
-    super(query.isStringsEnabled(), query.isCountsEnabled(), NO_LIMIT);
-    this.query = query;
+    super(query);
     this.criteria = criteria;
   }
 
@@ -93,8 +85,8 @@ public class SortedTermsQuery extends AbstractTermsQuery {
    */
   @Override
   public TermsResultSet execute(QueryEngine engine) throws IOException {
-    final TermsResultSet trs = query.execute(engine);
-    Arrays.quickSort(0, trs.termIds.length, new IntComparator() {
+    final TermsResultSet trs = wrappedQuery.execute(engine);
+    Arrays.quickSort(0, trs.termStrings.length, new IntComparator() {
       @Override
       public int compare(Integer o1, Integer o2) {
         return compare(o1.intValue(), o2.intValue());
@@ -105,12 +97,6 @@ public class SortedTermsQuery extends AbstractTermsQuery {
         int retval = 0;
         for(SortOrder crit: criteria) {
           switch(crit) {
-            case ID:
-              retval = Long.signum(trs.termIds[k1] - trs.termIds[k2]);
-              break;
-            case ID_DESC:
-              retval = -Long.signum(trs.termIds[k1] - trs.termIds[k2]);
-              break;
             case COUNT:
               if(trs.termCounts != null){
                 retval = trs.termCounts[k1] - trs.termCounts[k2];
@@ -143,9 +129,6 @@ public class SortedTermsQuery extends AbstractTermsQuery {
     }, new Swapper() {
       @Override
       public void swap(int a, int b) {
-        long termId = trs.termIds[a];
-        trs.termIds[a] = trs.termIds[b];
-        trs.termIds[b] = termId;
         if(trs.termStrings != null) {
           String termString = trs.termStrings[a];
           trs.termStrings[a] = trs.termStrings[b];

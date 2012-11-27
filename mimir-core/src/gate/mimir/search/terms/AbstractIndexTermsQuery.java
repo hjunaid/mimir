@@ -23,7 +23,6 @@ import it.unimi.dsi.big.mg4j.search.visitor.CounterCollectionVisitor;
 import it.unimi.dsi.big.mg4j.search.visitor.CounterSetupVisitor;
 import it.unimi.dsi.big.mg4j.search.visitor.TermCollectionVisitor;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.IOException;
@@ -95,6 +94,15 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
    */
   protected transient QueryEngine engine;
 
+  
+  protected final boolean countsEnabled;
+  /**
+   * @return the countsEnabled
+   */
+  public boolean isCountsEnabled() {
+    return countsEnabled;
+  }
+  
   /**
    * The default set of stop words.
    */
@@ -160,8 +168,9 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
    * @param limit the maximum number of terms to return.
    */
   public AbstractIndexTermsQuery(String indexName, IndexType indexType, 
-      boolean stringsEnabled, boolean countsEnabled, int limit) {
-    super(stringsEnabled, countsEnabled, limit);
+      boolean countsEnabled, int limit) {
+    super(limit);
+    this.countsEnabled = countsEnabled;
     this.indexName = indexName;
     this.indexType = indexType;
   }
@@ -203,10 +212,7 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
   protected TermsResultSet buildResultSet(DocumentIterator documentIterator) 
       throws IOException {
     // prepare local data
-    LongArrayList termIds = new LongArrayList();
-    ObjectArrayList<String> termStrings = stringsEnabled || 
-            (indexType == IndexType.ANNOTATIONS &&  describeAnnotations) ? 
-        new ObjectArrayList<String>() : null;
+    ObjectArrayList<String> termStrings =  new ObjectArrayList<String>();
     IntArrayList termCounts = countsEnabled ? new IntArrayList() : null;
     TermCollectionVisitor termCollectionVisitor = null;
     CounterSetupVisitor counterSetupVisitor = null;
@@ -227,7 +233,7 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
     
     long termId = documentIterator.nextDocument();
     terms:while(termId != DocumentIterator.END_OF_LIST && termId != -1 &&
-        termIds.size() < limit) {
+        termStrings.size() < limit) {
       int termCount = -1;
       if(countsEnabled){
         counterSetupVisitor.clear();
@@ -236,16 +242,8 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
         for (int aCount : counterSetupVisitor.count ) termCount +=  aCount;
       }
       String termString = null;
-      // get the term string, if required
-      if(// if stop words are blocked, we need to check the term string  
-         isStopWordsBlocked() || 
-         // if strings enabled, we need the term string so we can return it
-         stringsEnabled ||
-         // if annotation index, we need the term to check for the right 
-         // annotation type inside the index (which may include multiple types)
-         indexType == IndexType.ANNOTATIONS) {
-        termString = indirectIndexPool.getTerm(termId);
-      }
+      // get the term string
+      termString = indirectIndexPool.getTerm(termId);
       
       if(indexType == IndexType.ANNOTATIONS) {
         if(!annotationHelper.isMentionUri(termString)){
@@ -253,7 +251,7 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
           termId = documentIterator.nextDocument();
           continue terms;
         }
-        if(stringsEnabled && describeAnnotations) {
+        if(describeAnnotations) {
           termString = annotationHelper.describeMention(termString);
           // check if this term has the same description as a previous one
           // which would make it appear as an indistinguishable duplicate
@@ -276,20 +274,18 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
         continue terms;
       }
       
-      termIds.add(termId);
+      termStrings.add(termString);
       if(countsEnabled){
         termCounts.add(termCount);
       }
-      if(termStrings != null){
-        termStrings.add(termString);
-      }
+        
       termId = documentIterator.nextDocument();
     }
     // construct the result
-    return new TermsResultSet(termIds.toLongArray(),
-      stringsEnabled ? termStrings.toArray(new String[termStrings.size()]) : null,
-      null,
-      countsEnabled ? termCounts.toIntArray() : null);
+    return new TermsResultSet(
+        termStrings.toArray(new String[termStrings.size()]),
+        null,
+        countsEnabled ? termCounts.toIntArray() : null);
   }
 
   /**
