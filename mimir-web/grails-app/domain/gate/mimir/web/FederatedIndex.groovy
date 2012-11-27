@@ -18,6 +18,8 @@ import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.FederatedQueryRunner
 import gate.mimir.search.query.parser.ParseException
+import gate.mimir.search.terms.TermsQuery;
+import gate.mimir.search.terms.TermsResultSet;
 
 /**
  * An index exposing a collection of other indexes.
@@ -76,6 +78,14 @@ class FederatedIndex extends Index {
     return federatedIndexService.getQueryRunner(this, query)
   }
   
+  /* (non-Javadoc)
+   * @see gate.mimir.web.Index#postTermsQuery(gate.mimir.search.terms.TermsQuery)
+   */
+  @Override
+  public TermsResultSet postTermsQuery(TermsQuery query) {
+    return federatedIndexService.postTermsQuery(this, query);
+  }
+
   /**
    * Gets the {@link DocumentData} value for a given document ID.
    * @param documentID

@@ -18,6 +18,9 @@ import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.FederatedQueryRunner
 import gate.mimir.search.query.parser.ParseException
+import gate.mimir.search.terms.OrTermsQuery;
+import gate.mimir.search.terms.TermsQuery;
+import gate.mimir.search.terms.TermsResultSet;
 import gate.mimir.web.FederatedIndex
 import gate.mimir.web.Index
 
@@ -114,6 +117,13 @@ class FederatedIndexService {
     }
   }
 
+  public TermsResultSet postTermsQuery(FederatedIndex index, query) {
+    TermsResultSet[] resSets = index.indexes.collect{ Index subIndex ->
+      subIndex.postTermsQuery(query)
+    }
+    return OrTermsQuery.orResultsSets(resSets)
+  }    
+      
   private void deleteOrUndelete(String method, FederatedIndex fedIndex, Collection<Long> documentIds) {
     def numIndexes = fedIndex.indexes.size()
     // map the supplied federated document IDs to the corresponding IDs in the
