@@ -18,6 +18,7 @@ import gate.mimir.search.QueryEngine;
 
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.Swapper;
+import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -41,6 +42,12 @@ public class AndTermsQuery extends AbstractTermsQuery {
   protected TermsQuery[] subQueries;
   
   /**
+   * A boolean flag that is set to true if all sub-queries support counts, which
+   * allows this query to also provide them.
+   */
+  protected boolean countsAvailable;
+  
+  /**
    * Constructs a new AND term query.
    * 
    * @param stringsEnabled should terms strings be returned.
@@ -50,10 +57,16 @@ public class AndTermsQuery extends AbstractTermsQuery {
    * @param limit the maximum number of terms to be returned. 
    * @param subQueries the term queries that form the disjunction.
    */
-  public AndTermsQuery(boolean stringsEnabled, boolean countsEnabled,
-                       int limit, TermsQuery... subQueries) {
-    super(stringsEnabled, countsEnabled, limit);
+  public AndTermsQuery(int limit, TermsQuery... subQueries) {
+    super(limit);
     this.subQueries = subQueries;
+    countsAvailable = true;
+    for(TermsQuery aQuery : subQueries) {
+      if(!aQuery.isCountsEnabled()) {
+        countsAvailable = false;
+        break;
+      }
+    }
   }
 
   /* (non-Javadoc)
@@ -62,9 +75,15 @@ public class AndTermsQuery extends AbstractTermsQuery {
   @Override
   public TermsResultSet execute(QueryEngine engine) throws IOException {
     final TermsResultSet[] resSets = new TermsResultSet[subQueries.length];
+    boolean lengthsAvailable = false;
     for(int i = 0; i < subQueries.length; i++) {
       resSets[i] = subQueries[i].execute(engine);
-      if(resSets[i].termIds.length == 0) return TermsResultSet.EMPTY;
+      if(resSets[i].termStrings.length == 0) return TermsResultSet.EMPTY;
+      // this implementation requires that all sub-queries return terms in a 
+      // consistent order, so we sort them lexicographically by termString
+      sortTermsResultSetByTermString(resSets[i]);
+      // at least one sub-query must provide lengths
+      if(resSets[i].termLengths != null) lengthsAvailable = true;
     }
     // optimisation: sort sub-runners by increasing sizes
     Arrays.quickSort(0, resSets.length, new IntComparator() {
@@ -74,7 +93,7 @@ public class AndTermsQuery extends AbstractTermsQuery {
       }
       @Override
       public int compare(int k1, int k2) {
-        return resSets[k1].termIds.length - resSets[k2].termIds.length; 
+        return resSets[k1].termStrings.length - resSets[k2].termStrings.length; 
       }
     }, new Swapper() {
       @Override
@@ -86,35 +105,25 @@ public class AndTermsQuery extends AbstractTermsQuery {
     });
     
     // prepare local data
-    LongArrayList termIds = new LongArrayList();
-    ObjectArrayList<String> termStrings = stringsEnabled ? 
-        new ObjectArrayList<String>() : null;
-    IntArrayList termCounts = countsEnabled ? new IntArrayList() : null;
+    ObjectArrayList<String> termStrings = new ObjectArrayList<String>();
+    IntArrayList termCounts = countsAvailable ? new IntArrayList() : null;
+    IntArrayList termLengths = lengthsAvailable ? new IntArrayList() : null;
     // merge the inputs
     int[] indexes = new int[subQueries.length]; // initialised with 0s
     int currRunner = 0;
-    long termId = resSets[currRunner].termIds[indexes[currRunner]];
+    String termString = resSets[currRunner].termStrings[indexes[currRunner]];
     top:while(currRunner < subQueries.length) {
       currRunner++;
       while(currRunner < subQueries.length &&
-            resSets[currRunner].termIds[indexes[currRunner]] == termId) {
+            resSets[currRunner].termStrings[indexes[currRunner]].equals(termString)) {
         currRunner++;
       }
       if(currRunner == subQueries.length) {
-        // all heads agree
-        termIds.add(termId);
-        if(stringsEnabled) {
-          String termString = null;
-          for(int i = 0; 
-              i < subQueries.length && termString == null; 
-              i++) {
-            if(resSets[i].termStrings != null){
-              termString = resSets[i].termStrings[indexes[i]]; 
-            }
-          }
-          termStrings.add(termString);
-        }
-        if(countsEnabled) {
+        // all heads agree:
+        // store the term string
+        termStrings.add(termString);
+        // calculate the term count
+        if(countsAvailable) {
           int count = 0;
           for(int i = 0; i < subQueries.length; i++) {
             if(resSets[i].termCounts != null) {
@@ -123,27 +132,41 @@ public class AndTermsQuery extends AbstractTermsQuery {
           }
           termCounts.add(count);
         }
+        // calculate the term length
+        if(lengthsAvailable) {
+          int termLength = -1;
+          for(int i = 0; 
+              i < subQueries.length && termLength == -1; 
+              i++) {
+            if(resSets[i].termLengths != null){
+              termLength = resSets[i].termLengths[indexes[i]]; 
+            }
+          }
+          termLengths.add(termLength);
+        }
+        
+        
         // and start fresh
         currRunner = 0;
         indexes[currRunner]++;
-        if(indexes[currRunner] == resSets[currRunner].termIds.length) {
+        if(indexes[currRunner] == resSets[currRunner].termStrings.length) {
           // we're out
           break top;
         } else {
-          termId  = resSets[currRunner].termIds[indexes[currRunner]];
+          termString  = resSets[currRunner].termStrings[indexes[currRunner]];
           continue top;
         }
       } else {
         // current runner is wrong
-        while(resSets[currRunner].termIds[indexes[currRunner]] < termId) {
+        while(resSets[currRunner].termStrings[indexes[currRunner]].compareTo(termString) < 0) {
           indexes[currRunner]++;
-          if(indexes[currRunner] == resSets[currRunner].termIds.length) {
+          if(indexes[currRunner] == resSets[currRunner].termStrings.length) {
             // this runner has run out
             break top;
           } else {
-            if(resSets[currRunner].termIds[indexes[currRunner]] > termId) {
+            if(resSets[currRunner].termStrings[indexes[currRunner]].compareTo(termString)  > 0) {
               // new term ID
-              termId = resSets[currRunner].termIds[indexes[currRunner]];
+              termString = resSets[currRunner].termStrings[indexes[currRunner]];
               currRunner = -1;
               continue top;
             }
@@ -152,10 +175,17 @@ public class AndTermsQuery extends AbstractTermsQuery {
       }
     } // top while
     // construct the result
-    return new TermsResultSet(termIds.toLongArray(),
-      stringsEnabled ? termStrings.toArray(new String[termStrings.size()]) : null,
-      null,
-      countsEnabled ? termCounts.toIntArray() : null);
+    return new TermsResultSet(
+        termStrings.toArray(new String[termStrings.size()]),
+        lengthsAvailable? termLengths.toIntArray() : null,
+        countsAvailable ? termCounts.toIntArray() : null);
   }
-  
+
+  /* (non-Javadoc)
+   * @see gate.mimir.search.terms.TermsQuery#isCountsEnabled()
+   */
+  @Override
+  public boolean isCountsEnabled() {
+    return countsAvailable;
+  }
 }

@@ -20,11 +20,14 @@ import java.io.Serializable;
 import gate.mimir.search.QueryEngine;
 
 /**
- * A query that returns terms. The terms returned must be sorted in ascending 
- * order of their term ID.
+ * A query that returns terms rather than documents.
  */
 public interface TermsQuery extends Serializable {
   
+  /**
+   * Constant used to mark that no limit is applied to the number of returned 
+   * results. 
+   */
   public static final int NO_LIMIT = Integer.MAX_VALUE;
   
   /**
@@ -37,13 +40,7 @@ public interface TermsQuery extends Serializable {
   public TermsResultSet execute(QueryEngine engine) throws IOException;
   
   /**
-   * Does this query return term strings?
-   * @return
-   */
-  public boolean isStringsEnabled();
-  
-  /**
-   * Does this query return term counts?
+   * Does this terms query return term counts?
    * @return
    */
   public boolean isCountsEnabled();

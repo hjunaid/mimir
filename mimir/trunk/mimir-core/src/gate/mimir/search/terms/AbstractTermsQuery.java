@@ -14,6 +14,10 @@
  */
 package gate.mimir.search.terms;
 
+import it.unimi.dsi.fastutil.Arrays;
+import it.unimi.dsi.fastutil.Swapper;
+import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
+
 
 /**
  * Base class for term queries.
@@ -24,45 +28,49 @@ public abstract class AbstractTermsQuery implements TermsQuery {
    * Serialization ID.
    */
   private static final long serialVersionUID = -8448110711378800097L;
-
-  protected final boolean stringsEnabled;
-  
-  protected final boolean countsEnabled;
-
   
   /**
    * The maximum number of results to be returned.
    */
   protected final int limit;
   
-  public AbstractTermsQuery(boolean stringsEnabled, boolean countsEnabled, 
-                            int limit) {
-    this.stringsEnabled = stringsEnabled;
-    this.countsEnabled = countsEnabled;
+  public AbstractTermsQuery(int limit) {
     this.limit = limit;
   }
   
-  public AbstractTermsQuery(boolean stringsEnabled, boolean countsEnabled) {
-    this(stringsEnabled, countsEnabled, NO_LIMIT);
-  }  
-  
   public AbstractTermsQuery() {
-    this(false, false, NO_LIMIT);
+    this(NO_LIMIT);
   }
-
-  /**
-   * @return the stringsEnabled
-   */
-  public boolean isStringsEnabled() {
-    return stringsEnabled;
-  }
-
-  /**
-   * @return the countsEnabled
-   */
-  public boolean isCountsEnabled() {
-    return countsEnabled;
-  }
-
   
+  
+  /**
+   * Sorts the arrays inside a {@link TermsResultSet} using the termString for
+   * comparison.
+   * @param trs
+   */
+  public static void sortTermsResultSetByTermString(final TermsResultSet trs) {
+    Arrays.quickSort(0, trs.termStrings.length, new AbstractIntComparator() {
+      @Override
+      public int compare(int k1, int k2) {
+        return trs.termStrings[k1].compareTo(trs.termStrings[k2]);
+      }
+    }, new Swapper() {
+      @Override
+      public void swap(int a, int b) {
+        String termString = trs.termStrings[a];
+        trs.termStrings[a] = trs.termStrings[b];
+        trs.termStrings[b] = termString;
+        if(trs.termCounts != null) {
+          int termCount = trs.termCounts[a];
+          trs.termCounts[a] = trs.termCounts[b];
+          trs.termCounts[b] = termCount;
+        }
+        if(trs.termLengths != null) {
+          int termLength = trs.termLengths[a];
+          trs.termLengths[a] = trs.termLengths[b];
+          trs.termLengths[b] = termLength;
+        }
+      }
+    });
+  }
 }

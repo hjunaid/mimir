@@ -39,20 +39,20 @@ public class DocumentsAndTermsQuery extends AbstractIndexTermsQuery {
   protected long[] documentIds;
 
   public DocumentsAndTermsQuery(String indexName, IndexType indexType,
-                                boolean stringsEnabled, boolean countsEnabled,
+                                boolean countsEnabled,
                                 int limit, long... documentIds) {
-    super(indexName, indexType, stringsEnabled, countsEnabled, limit);
+    super(indexName, indexType, countsEnabled, limit);
     this.documentIds = documentIds;
   }
 
   public DocumentsAndTermsQuery(String indexName, IndexType indexType, 
                                 long... documentIds) {
-    this(indexName, indexType, false, false, NO_LIMIT, documentIds);
+    this(indexName, indexType, false, NO_LIMIT, documentIds);
   }
 
   public DocumentsAndTermsQuery(String indexName, IndexType indexType, 
                                 int limit, long... documentIds) {
-    this(indexName, indexType, false, false, limit, documentIds);
+    this(indexName, indexType, false, limit, documentIds);
   }
   
   /* (non-Javadoc)

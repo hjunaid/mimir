@@ -29,19 +29,15 @@ import java.io.IOException;
  * {@link SortedTermsQuery} (to change the results order) and 
  * <strong>then</strong> limit the number of results. 
  */
-public class LimitTermsQuery extends AbstractTermsQuery {
+public class LimitTermsQuery extends AbstractWrapperTermsQuery {
   
   /**
    * Serialization ID.
    */
   private static final long serialVersionUID = -2853628566995944376L;
   
-  protected TermsQuery query;
-  
-  
   public LimitTermsQuery(TermsQuery query, int limit) {
-    super(query.isStringsEnabled(), query.isCountsEnabled(), limit);
-    this.query = query;
+    super(query, limit);
   }
 
 
@@ -50,26 +46,24 @@ public class LimitTermsQuery extends AbstractTermsQuery {
    */
   @Override
   public TermsResultSet execute(QueryEngine engine) throws IOException {
-    TermsResultSet trs = query.execute(engine);
-    if(trs.termIds.length > limit) {
-      long[] termIds = new long[limit];
-      System.arraycopy(trs.termIds, 0, termIds, 0, limit);
+    TermsResultSet trs = wrappedQuery.execute(engine);
+    if(trs.termStrings != null && trs.termStrings.length > limit) {
+      
+      String[] termStrings = new String[limit];
+      System.arraycopy(trs.termStrings, 0, termStrings, 0, limit);
+      
       int[] termCounts = null;
       if(trs.termCounts != null) {
         termCounts = new int[limit];
         System.arraycopy(trs.termCounts, 0, termCounts, 0, limit);
       }
-      String[] termStrings = null;
-      if(trs.termStrings != null) {
-        termStrings = new String[limit];
-        System.arraycopy(trs.termStrings, 0, termStrings, 0, limit);
-      }
+      
       int[] termLengths = null;
       if(trs.termLengths != null) {
         termLengths = new int[limit];
         System.arraycopy(trs.termLengths, 0, termLengths, 0, limit);
       }
-      return new TermsResultSet(termIds, termStrings, termLengths, termCounts);
+      return new TermsResultSet(termStrings, termLengths, termCounts);
     } else {
       return trs;  
     }

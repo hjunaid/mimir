@@ -18,6 +18,9 @@ import java.io.Serializable;
 
 /**
  * Class representing the results of a {@link TermsQuery}. 
+ * A terms result set is a set of terms, represented by their 
+ * {@link #termStrings}. Optionally {@link #termCounts}, and 
+ * {@link #termLengths} may also be available.
  */
 public class TermsResultSet implements Serializable {
   
@@ -26,11 +29,6 @@ public class TermsResultSet implements Serializable {
    */
   private static final long serialVersionUID = -7722325563637139625L;
 
-  /**
-   * The term IDs, as retrieved from the index. Array parallel with 
-   * {@link #termStrings} and {@link #termCounts}.
-   */
-  public final long[] termIds;
   
   /**
    * The lengths (number of tokens) for the terms.
@@ -50,10 +48,9 @@ public class TermsResultSet implements Serializable {
    */
   public final int[] termCounts;
 
-  public TermsResultSet(long[] termIds, String[] termStrings,int[] termLengths, 
+  public TermsResultSet(String[] termStrings,int[] termLengths, 
                         int[] termCounts) {
     super();
-    this.termIds = termIds;
     this.termStrings = termStrings;
     this.termLengths = termLengths;
     this.termCounts = termCounts;
@@ -63,6 +60,6 @@ public class TermsResultSet implements Serializable {
    * Constant representing the empty result set.
    */
   public static final TermsResultSet EMPTY = new TermsResultSet(
-      new long[] {}, new String[]{}, new int[] {}, new int[]{}); 
+      new String[]{}, new int[] {}, new int[]{});
   
 }

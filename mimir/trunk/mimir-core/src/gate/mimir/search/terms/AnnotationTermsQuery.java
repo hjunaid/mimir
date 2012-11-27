@@ -14,11 +14,8 @@
  */
 package gate.mimir.search.terms;
 
-import it.unimi.dsi.big.mg4j.index.BitStreamIndex;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.util.StringMap;
-import it.unimi.dsi.lang.MutableString;
-
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -40,8 +37,8 @@ public class AnnotationTermsQuery extends AbstractTermsQuery {
   private static final long serialVersionUID = 777418229209857720L;
 
   public AnnotationTermsQuery(AnnotationQuery annotationQuery, 
-      boolean stringsEnabled, boolean countsEnabled, int limit) {
-    super(stringsEnabled, countsEnabled, limit);
+      boolean countsEnabled, int limit) {
+    super(limit);
     this.annotationQuery = annotationQuery;
   }
   
@@ -69,35 +66,31 @@ public class AnnotationTermsQuery extends AbstractTermsQuery {
         annotationQuery.getConstraints(), engine);
     logger.debug(mentions.size() + " mentions obtained in " + 
       (System.currentTimeMillis() - start) + " ms");
-    StringMap<? extends CharSequence> termMap = null;
-    Index mg4jIndex = engine.getAnnotationIndex(
-      annotationQuery.getAnnotationType()).getIndex();
-    if(mg4jIndex instanceof BitStreamIndex) {
-      termMap = ((BitStreamIndex)mg4jIndex).termMap;
-    } else {
-      // this indicates major changes in the underlying MG4J implementation
-      throw new IllegalStateException(
-        "Underlying MG4J index is not a bitstream index.");
-    }
   
     if(mentions.size() > 0) {
-      long[] termIds = new long[mentions.size()];
       String[] terms = new String[mentions.size()];
       int[] lengths = new int[mentions.size()];
       int index = 0;
       for(Mention m : mentions) {
         terms[index] = m.getUri();
         lengths[index] = m.getLength();
-        // find the term ID
-        //use the term processor for the query term
-        MutableString mutableString = new MutableString(m.getUri());
-        mg4jIndex.termProcessor.processTerm(mutableString);
-        termIds[index] = termMap.getLong( mutableString);
         index++;
       }
-      return new TermsResultSet(termIds, terms, lengths, null);
+      return new TermsResultSet(terms, lengths, null);
     } else {
       return TermsResultSet.EMPTY;
     }
   }
+
+  /**
+   * This type of terms query does not use the index, all the results are 
+   * obtained from the semantic annotation helpers. Because of this, counts are
+   * not available: this method always returns <code>false</code>.
+   */
+  @Override
+  public boolean isCountsEnabled() {
+    return false;
+  }
+  
+  
 }
