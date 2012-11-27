@@ -81,16 +81,5 @@ public class AnnotationTermsQuery extends AbstractTermsQuery {
       return TermsResultSet.EMPTY;
     }
   }
-
-  /**
-   * This type of terms query does not use the index, all the results are 
-   * obtained from the semantic annotation helpers. Because of this, counts are
-   * not available: this method always returns <code>false</code>.
-   */
-  @Override
-  public boolean isCountsEnabled() {
-    return false;
-  }
-  
   
 }

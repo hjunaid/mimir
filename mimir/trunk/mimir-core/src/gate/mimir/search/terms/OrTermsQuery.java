@@ -38,9 +38,6 @@ public class OrTermsQuery extends AbstractTermsQuery {
    */
   protected TermsQuery[] subQueries;
 
-  protected boolean countsAvailable;
-  
-  
   /**
    * Constructs a new OR terms query.
    * @param stringsEnabled should terms strings be returned.
@@ -53,13 +50,6 @@ public class OrTermsQuery extends AbstractTermsQuery {
   public OrTermsQuery(int limit, TermsQuery... subQueries) {
     super(limit);
     this.subQueries = subQueries;
-    countsAvailable = true;
-    for(TermsQuery aQuery : subQueries) {
-      if(!aQuery.isCountsEnabled()) {
-        countsAvailable = false;
-        break;
-      }
-    }    
   }
   
   /* (non-Javadoc)
@@ -68,13 +58,27 @@ public class OrTermsQuery extends AbstractTermsQuery {
   @Override
   public TermsResultSet execute(QueryEngine engine) throws IOException {
     TermsResultSet[] resSets = new TermsResultSet[subQueries.length];
+    for(int i = 0; i < subQueries.length; i++) {
+      resSets[i] = subQueries[i].execute(engine);
+    }
+    return orResultsSets(resSets);
+  }
+  
+  /**
+   * Given a set of {@link TermsResultSet} values, this method combines them
+   * into a single {@link TermsResultSet} representing the disjunction of all
+   * the provided results sets. 
+   * @param resSets 
+   * @return
+   */
+  public static TermsResultSet orResultsSets(TermsResultSet... resSets) {
     String[] currentTerm = new String[resSets.length];
     ObjectHeapSemiIndirectPriorityQueue<String> queue = 
         new ObjectHeapSemiIndirectPriorityQueue<String>(currentTerm);
     int[] termIndex = new int[resSets.length];
     boolean lengthsAvailable = true;
-    for(int i = 0; i < subQueries.length; i++) {
-      resSets[i] = subQueries[i].execute(engine);
+    boolean countsAvailable = true;
+    for(int i = 0; i < resSets.length; i++) {
       // this implementation requires that all sub-queries return terms in a 
       // consistent order, so we sort them lexicographically by termString
       sortTermsResultSetByTermString(resSets[i]);
@@ -86,6 +90,7 @@ public class OrTermsQuery extends AbstractTermsQuery {
       // we need *all* sub-queries to provide lengths, because we don't know
       // which one will provide any of the results.
       if(resSets[i].termLengths == null) lengthsAvailable = false;
+      if(resSets[i].termCounts == null) countsAvailable = false;
     }
     
     // prepare local data
@@ -127,13 +132,5 @@ public class OrTermsQuery extends AbstractTermsQuery {
         termStrings.toArray(new String[termStrings.size()]),
         lengthsAvailable ? termLengths.toIntArray() : null,
         countsAvailable ? termCounts.toIntArray() : null);
-  }
-  
-  /* (non-Javadoc)
-   * @see gate.mimir.search.terms.TermsQuery#isCountsEnabled()
-   */
-  @Override
-  public boolean isCountsEnabled() {
-    return countsAvailable;
   }
 }

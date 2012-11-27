@@ -42,12 +42,6 @@ public class AndTermsQuery extends AbstractTermsQuery {
   protected TermsQuery[] subQueries;
   
   /**
-   * A boolean flag that is set to true if all sub-queries support counts, which
-   * allows this query to also provide them.
-   */
-  protected boolean countsAvailable;
-  
-  /**
    * Constructs a new AND term query.
    * 
    * @param stringsEnabled should terms strings be returned.
@@ -60,13 +54,6 @@ public class AndTermsQuery extends AbstractTermsQuery {
   public AndTermsQuery(int limit, TermsQuery... subQueries) {
     super(limit);
     this.subQueries = subQueries;
-    countsAvailable = true;
-    for(TermsQuery aQuery : subQueries) {
-      if(!aQuery.isCountsEnabled()) {
-        countsAvailable = false;
-        break;
-      }
-    }
   }
 
   /* (non-Javadoc)
@@ -76,14 +63,17 @@ public class AndTermsQuery extends AbstractTermsQuery {
   public TermsResultSet execute(QueryEngine engine) throws IOException {
     final TermsResultSet[] resSets = new TermsResultSet[subQueries.length];
     boolean lengthsAvailable = false;
+    boolean countsAvailable = true;
     for(int i = 0; i < subQueries.length; i++) {
       resSets[i] = subQueries[i].execute(engine);
       if(resSets[i].termStrings.length == 0) return TermsResultSet.EMPTY;
       // this implementation requires that all sub-queries return terms in a 
       // consistent order, so we sort them lexicographically by termString
       sortTermsResultSetByTermString(resSets[i]);
-      // at least one sub-query must provide lengths
+      // at least one sub-query must provide lengths, for us to be able to
       if(resSets[i].termLengths != null) lengthsAvailable = true;
+      // all sub-queries must provide counts, for us to be able to
+      if(resSets[i].termCounts == null) countsAvailable = false;
     }
     // optimisation: sort sub-runners by increasing sizes
     Arrays.quickSort(0, resSets.length, new IntComparator() {
@@ -179,13 +169,5 @@ public class AndTermsQuery extends AbstractTermsQuery {
         termStrings.toArray(new String[termStrings.size()]),
         lengthsAvailable? termLengths.toIntArray() : null,
         countsAvailable ? termCounts.toIntArray() : null);
-  }
-
-  /* (non-Javadoc)
-   * @see gate.mimir.search.terms.TermsQuery#isCountsEnabled()
-   */
-  @Override
-  public boolean isCountsEnabled() {
-    return countsAvailable;
   }
 }
