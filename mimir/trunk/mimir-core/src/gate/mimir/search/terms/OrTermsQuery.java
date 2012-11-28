@@ -26,17 +26,13 @@ import java.io.IOException;
 /**
  * Boolean OR operator for term queries.
  */
-public class OrTermsQuery extends AbstractTermsQuery {
+public class OrTermsQuery extends AbstractCompoundTermsQuery {
   
   /**
    * Serialization ID.
    */
   private static final long serialVersionUID = 3293699315503739659L;
-  
-  /**
-   * The sub-queries being OR'ed
-   */
-  protected TermsQuery[] subQueries;
+
 
   /**
    * Constructs a new OR terms query.
@@ -47,23 +43,18 @@ public class OrTermsQuery extends AbstractTermsQuery {
    * @param limit the maximum number of terms to be returned. 
    * @param subQueries the term queries that form the disjunction.
    */
-  public OrTermsQuery(int limit, TermsQuery... subQueries) {
-    super(limit);
-    this.subQueries = subQueries;
+  public OrTermsQuery(TermsQuery... subQueries) {
+    super(subQueries);
   }
   
   /* (non-Javadoc)
-   * @see gate.mimir.search.terms.TermsQuery#execute(gate.mimir.search.QueryEngine)
+   * @see gate.mimir.search.terms.CompoundTermsQuery#combine(gate.mimir.search.terms.TermsResultSet[])
    */
   @Override
-  public TermsResultSet execute(QueryEngine engine) throws IOException {
-    TermsResultSet[] resSets = new TermsResultSet[subQueries.length];
-    for(int i = 0; i < subQueries.length; i++) {
-      resSets[i] = subQueries[i].execute(engine);
-    }
+  public TermsResultSet combine(TermsResultSet... resSets) {
     return orResultsSets(resSets);
   }
-  
+
   /**
    * Given a set of {@link TermsResultSet} values, this method combines them
    * into a single {@link TermsResultSet} representing the disjunction of all

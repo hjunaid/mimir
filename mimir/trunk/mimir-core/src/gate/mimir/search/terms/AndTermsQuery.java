@@ -29,18 +29,13 @@ import java.io.IOException;
 /**
  * Performs Boolean AND between multiple {@link TermsQuery} instances.
  */
-public class AndTermsQuery extends AbstractTermsQuery {
+public class AndTermsQuery extends AbstractCompoundTermsQuery {
   
   /**
    * Serialization ID.
    */
   private static final long serialVersionUID = -6757669202064075218L;
-  
-  /**
-   * The sub-queries being AND'ed.
-   */
-  protected TermsQuery[] subQueries;
-  
+
   /**
    * Constructs a new AND term query.
    * 
@@ -51,21 +46,22 @@ public class AndTermsQuery extends AbstractTermsQuery {
    * @param limit the maximum number of terms to be returned. 
    * @param subQueries the term queries that form the disjunction.
    */
-  public AndTermsQuery(int limit, TermsQuery... subQueries) {
-    super(limit);
-    this.subQueries = subQueries;
+  public AndTermsQuery(TermsQuery... subQueries) {
+    super(subQueries);
   }
-
+  
   /* (non-Javadoc)
-   * @see gate.mimir.search.terms.TermsQuery#execute(gate.mimir.search.QueryEngine)
+   * @see gate.mimir.search.terms.CompoundTermsQuery#combine(gate.mimir.search.terms.TermsResultSet[])
    */
   @Override
-  public TermsResultSet execute(QueryEngine engine) throws IOException {
-    final TermsResultSet[] resSets = new TermsResultSet[subQueries.length];
+  public TermsResultSet combine(TermsResultSet... resSets) {
+    return andResultSets(resSets);
+  }
+
+  public static TermsResultSet andResultSets(final TermsResultSet[] resSets) {
     boolean lengthsAvailable = false;
     boolean countsAvailable = true;
-    for(int i = 0; i < subQueries.length; i++) {
-      resSets[i] = subQueries[i].execute(engine);
+    for(int i = 0; i < resSets.length; i++) {
       if(resSets[i].termStrings.length == 0) return TermsResultSet.EMPTY;
       // this implementation requires that all sub-queries return terms in a 
       // consistent order, so we sort them lexicographically by termString
@@ -99,23 +95,23 @@ public class AndTermsQuery extends AbstractTermsQuery {
     IntArrayList termCounts = countsAvailable ? new IntArrayList() : null;
     IntArrayList termLengths = lengthsAvailable ? new IntArrayList() : null;
     // merge the inputs
-    int[] indexes = new int[subQueries.length]; // initialised with 0s
+    int[] indexes = new int[resSets.length]; // initialised with 0s
     int currRunner = 0;
     String termString = resSets[currRunner].termStrings[indexes[currRunner]];
-    top:while(currRunner < subQueries.length) {
+    top:while(currRunner < resSets.length) {
       currRunner++;
-      while(currRunner < subQueries.length &&
+      while(currRunner < resSets.length &&
             resSets[currRunner].termStrings[indexes[currRunner]].equals(termString)) {
         currRunner++;
       }
-      if(currRunner == subQueries.length) {
+      if(currRunner == resSets.length) {
         // all heads agree:
         // store the term string
         termStrings.add(termString);
         // calculate the term count
         if(countsAvailable) {
           int count = 0;
-          for(int i = 0; i < subQueries.length; i++) {
+          for(int i = 0; i < resSets.length; i++) {
             if(resSets[i].termCounts != null) {
               count += resSets[i].termCounts[indexes[i]];
             }
@@ -126,7 +122,7 @@ public class AndTermsQuery extends AbstractTermsQuery {
         if(lengthsAvailable) {
           int termLength = -1;
           for(int i = 0; 
-              i < subQueries.length && termLength == -1; 
+              i < resSets.length && termLength == -1; 
               i++) {
             if(resSets[i].termLengths != null){
               termLength = resSets[i].termLengths[indexes[i]]; 
@@ -134,7 +130,6 @@ public class AndTermsQuery extends AbstractTermsQuery {
           }
           termLengths.add(termLength);
         }
-        
         
         // and start fresh
         currRunner = 0;

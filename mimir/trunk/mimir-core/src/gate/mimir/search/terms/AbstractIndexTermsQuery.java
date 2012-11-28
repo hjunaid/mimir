@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * Base class for terms queries that use an MG4J direct index for their search.
  */
-public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
+public abstract class AbstractIndexTermsQuery extends AbstractDocumentsBasedTermsQuery {
   
   /**
    * Serialization ID.
@@ -167,9 +167,9 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
    * 
    * @param limit the maximum number of terms to return.
    */
-  public AbstractIndexTermsQuery(String indexName, IndexType indexType, 
-      boolean countsEnabled, int limit) {
-    super(limit);
+  public AbstractIndexTermsQuery(String indexName, IndexType indexType,
+                                 boolean countsEnabled, long... documentIDs) {
+    super(documentIDs);
     this.countsEnabled = countsEnabled;
     this.indexName = indexName;
     this.indexType = indexType;
@@ -232,8 +232,7 @@ public abstract class AbstractIndexTermsQuery extends AbstractTermsQuery {
     }
     
     long termId = documentIterator.nextDocument();
-    terms:while(termId != DocumentIterator.END_OF_LIST && termId != -1 &&
-        termStrings.size() < limit) {
+    terms:while(termId != DocumentIterator.END_OF_LIST && termId != -1) {
       int termCount = -1;
       if(countsEnabled){
         counterSetupVisitor.clear();

@@ -31,11 +31,6 @@ public class DocumentTermsQuery extends AbstractIndexTermsQuery {
    */
   private static final long serialVersionUID = 8020471303382533080L;
   
-  /**
-   * The ID of the document for which the terms are being sought.
-   */
-  protected final long documentId;
-  
   
   /**
    * Creates a new document term query.
@@ -58,9 +53,8 @@ public class DocumentTermsQuery extends AbstractIndexTermsQuery {
    */
   public DocumentTermsQuery(String indexName, 
       IndexType indexType, boolean countsEnabled, 
-      int limit, long documentId) {
-    super(indexName, indexType, countsEnabled, limit);
-    this.documentId = documentId;
+      long documentId) {
+    super(indexName, indexType, countsEnabled, documentId);
   }
 
   /**
@@ -83,34 +77,8 @@ public class DocumentTermsQuery extends AbstractIndexTermsQuery {
    */
   public DocumentTermsQuery(String indexName, IndexType indexType, 
                             long documentId) {
-    this(indexName, indexType, true, NO_LIMIT, documentId);
+    this(indexName, indexType, true, documentId);
   }
-
-  /**
-   * Creates a new document term query.
-   * The returned result set will contain term IDs and term counts, but not
-   * term strings. If a different result set configuration is required, use the
-   * {@link #DocumentTermQuery(long, String, boolean, boolean, boolean)} 
-   * constructor variant.
-   * 
-   * @param documentId the ID of the document for which the terms are sought
-   * 
-   * @param indexName the name of the sub-index to be searched. Each Mímir 
-   * index includes multiple sub-indexes (some storing tokens, other storing 
-   * annotations), identified by a name. For token indexes, the index name is
-   * the name of the token feature being indexed; for annotation indexes, the
-   * index name is the annotation type.
-   * 
-   * @param indexType the type of the index being searched.
-   * 
-   * @param limit the maximum number of results to be returned.
-   */
-  public DocumentTermsQuery(String indexName, IndexType indexType, int limit,
-                            long documentId) {
-    this(indexName, indexType, true, limit, documentId);
-  }
-
-  
   
   /* (non-Javadoc)
    * @see gate.mimir.search.terms.TermsQuery#execute(gate.mimir.search.QueryEngine)
@@ -122,7 +90,7 @@ public class DocumentTermsQuery extends AbstractIndexTermsQuery {
     try{
       indexReader = directIndexPool.borrowReader();
       return buildResultSet(
-        indexReader.documents(MimirDirectIndexBuilder.longToTerm(documentId)));
+        indexReader.documents(MimirDirectIndexBuilder.longToTerm(documentIds[0])));
     } finally {
       if(indexReader != null) directIndexPool.returnReader(indexReader);
     }

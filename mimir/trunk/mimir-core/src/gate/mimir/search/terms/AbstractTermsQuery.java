@@ -29,17 +29,7 @@ public abstract class AbstractTermsQuery implements TermsQuery {
    */
   private static final long serialVersionUID = -8448110711378800097L;
   
-  /**
-   * The maximum number of results to be returned.
-   */
-  protected final int limit;
-  
-  public AbstractTermsQuery(int limit) {
-    this.limit = limit;
-  }
-  
   public AbstractTermsQuery() {
-    this(NO_LIMIT);
   }
   
   

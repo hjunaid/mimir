@@ -35,28 +35,19 @@ public class DocumentsOrTermsQuery extends AbstractIndexTermsQuery {
    */
   private static final long serialVersionUID = -3836472816480490578L;
   
-  /**
-   * The document IDs for which the terms are sought.
-   */
-  protected long[] documentIds;
-  
   public DocumentsOrTermsQuery(String indexName, IndexType indexType,
                                boolean countsEnabled, 
-                               int limit, long... documentIds) {
-    super(indexName, indexType, countsEnabled, limit);
+                               long... documentIds) {
+    super(indexName, indexType, countsEnabled, documentIds);
     this.documentIds = documentIds;
   }
 
 
   public DocumentsOrTermsQuery(String indexName, IndexType indexType,
                                long... documentIds) {
-    this(indexName, indexType, false, NO_LIMIT, documentIds);
+    this(indexName, indexType, false, documentIds);
   }
   
-  public DocumentsOrTermsQuery(String indexName, IndexType indexType, int limit,
-                               long... documentIds) {
-    this(indexName, indexType, false, limit, documentIds);
-  }
   
   /* (non-Javadoc)
    * @see gate.mimir.search.terms.TermsQuery#execute(gate.mimir.search.QueryEngine)
