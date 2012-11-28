@@ -18,6 +18,8 @@ import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.FederatedQueryRunner
 import gate.mimir.search.query.parser.ParseException
+import gate.mimir.search.terms.CompoundTermsQuery;
+import gate.mimir.search.terms.DocumentsBasedTermsQuery;
 import gate.mimir.search.terms.OrTermsQuery;
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
@@ -98,13 +100,15 @@ class FederatedIndexService {
   public QueryRunner getQueryRunner(FederatedIndex index, String query) 
       throws ParseException {
     QueryRunner[] subRunners = new QueryRunner[index.indexes.size()]
+log.error("Federated index $index.name has ${index.indexes.size()} sub indexes")
     try {
       index.indexes.eachWithIndex { Index subIndex, i ->
         subRunners[i] = subIndex.startQuery(query)
+log.error("Posting query to sub-index $subIndex.name")        
       }
       return new FederatedQueryRunner(subRunners)
     } catch(Throwable t) {
-      log.debug("Error creating query runner for sub-index: ${t.message}")
+      log.error("Error creating query runner for sub-index: ${t.message}")
       for(QueryRunner subRunner in subRunners){ 
         try {
           subRunner?.close()
@@ -117,11 +121,44 @@ class FederatedIndexService {
     }
   }
 
-  public TermsResultSet postTermsQuery(FederatedIndex index, query) {
-    TermsResultSet[] resSets = index.indexes.collect{ Index subIndex ->
-      subIndex.postTermsQuery(query)
-    }
-    return OrTermsQuery.orResultsSets(resSets)
+  public TermsResultSet postTermsQuery(FederatedIndex index, TermsQuery query) {
+    if(query instanceof CompoundTermsQuery) {
+      // if query is compound, split by sub-query, then combine results
+      CompoundTermsQuery compQ = (CompoundTermsQuery)query
+      // split by components
+      TermsResultSet[] resSets = compQ.getSubQueries().collect { 
+        TermsQuery subQ -> postTermsQuery(index, subQ)
+      }
+      // combine the results
+      return compQ.combine(resSets)
+    } else {
+      // query is not compound: split by sub-indexes
+      if(query instanceof DocumentsBasedTermsQuery) {
+        // if query is documents based, split by sub-index, rewrite the docIDs
+        // then OR the results
+        DocumentsBasedTermsQuery docsQ = (DocumentsBasedTermsQuery)query
+        // split by sub-index
+        TermsResultSet[] resSets = docsQ.getDocumentIds().toList().groupBy { 
+          long docId -> getSubIndex(index, docId)
+        }.collect { Index subIndex, long[] docIds ->
+          DocumentsBasedTermsQuery copyQ = docsQ.clone()
+          // rewrite the docIDs
+          copyQ.setDocumentIds(docIds.collect {getDocIdInSubIndex(index, it)})
+          // post the modified query copy 
+          return subIndex.postTermsQuery(copyQ)
+        }
+        // OR the results
+        return OrTermsQuery.orResultsSets(resSets)
+      } else {
+        // query is not compound, nor documents based: just pass it to the 
+        //  sub-index and OR the results 
+        return OrTermsQuery.orResultsSets(
+          index.indexes.collect{ 
+            Index subIndex -> subIndex.postTermsQuery(query)
+          }
+        )
+      }
+    }   
   }    
       
   private void deleteOrUndelete(String method, FederatedIndex fedIndex, Collection<Long> documentIds) {
@@ -144,16 +181,38 @@ class FederatedIndexService {
   }
   
   public DocumentData getDocumentData(FederatedIndex fedIndex, long documentId) {
-    Index subIndex = fedIndex.indexes[(int)(documentId % fedIndex.indexes.size())]
-    long idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
-    return subIndex.getDocumentData(idWithinSubIndex)
+    return getSubIndex(fedIndex, documentId).getDocumentData(
+      getDocIdInSubIndex(fedIndex, documentId))
   }
   
   public void renderDocument(FederatedIndex fedIndex, long documentId, 
       Appendable out) {
-    Index subIndex = fedIndex.indexes[(int)(documentId % fedIndex.indexes.size())]
-    long idWithinSubIndex = documentId.intdiv(fedIndex.indexes.size())
-    subIndex.renderDocument(idWithinSubIndex, out)
+    getSubIndex(fedIndex, documentId).renderDocument(
+      getDocIdInSubIndex(fedIndex, documentId), out)
+  }
+   
+  /**
+   * Given a federated index and document ID, finds the sub-index the document
+   * belongs to.       
+   * @param fedIndex the federated index to use 
+   * @param documentId the document ID to look-up
+   * @return the sub index of the federated index to which the provided
+   * documentID belongs.
+   */
+  private Index getSubIndex(FederatedIndex fedIndex, long documentId) {
+    return fedIndex.indexes[(int)(documentId % fedIndex.indexes.size())]
+  }
+  
+  /**
+   * Given a federated index and document ID, finds the document ID local to 
+   * the sub-index the document belongs to.       
+   * @param fedIndex the federated index to use 
+   * @param documentId the document ID to look-up
+   * @return the document ID correct inside the sub index to which the provided
+   * documentId belongs.
+   */
+  private long getDocIdInSubIndex(FederatedIndex fedIndex, long documentId) {
+    return documentId.intdiv(fedIndex.indexes.size())
   }
 }
 

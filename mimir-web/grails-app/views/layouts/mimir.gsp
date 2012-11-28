@@ -5,7 +5,8 @@
         <link rel="stylesheet" href="${resource(dir:'css',file:'mimir.css')}" />
         <link rel="shortcut icon" href="${resource(dir:'images',file:'favicon.ico')}" type="image/x-icon" />
         <g:layoutHead />
-        <g:javascript library="application" />				
+        <g:javascript library="application" />
+        <r:layoutResources/>				
     </head>
     <body>
         <div id="spinner" class="spinner" style="display:none;">
@@ -29,5 +30,6 @@
 				    <p>M&iacute;mir <mimir:version />,  &copy; <a href="http://gate.ac.uk">GATE</a> 2012.</p>
 				  </div>
         </div>
+        <r:layoutResources/>
     </body>
 </html>
