@@ -49,7 +49,8 @@ import gate.util.GateException;
 public class Scratch {
 
   public static void main (String[] args) throws Exception {
-     mainSimple(args);
+//     mainSimple(args);
+     mainDirectIndexes(args);
 //    mainBuildDirectIndex(args);
   }
   
@@ -261,9 +262,10 @@ public class Scratch {
 //    
 //    query = new LimitTermsQuery(new SortedTermsQuery(query), 100);
     
-    query = new LimitTermsQuery(new SortedTermsQuery(
-      new DocumentsOrTermsQuery("root", IndexType.TOKENS, 
-      true, TermsQuery.NO_LIMIT, 0, 1)) , 100);
+    query = new LimitTermsQuery(
+      new SortedTermsQuery(
+      new DocumentsOrTermsQuery("root", IndexType.TOKENS, true, 0, 1, 2))
+      , 100);
     printTermQuery(query, qEngine);
     
     System.out.println("\n=======================================");
