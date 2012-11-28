@@ -18,7 +18,7 @@ package gate.mimir.search.terms;
  * Interface for {@link TermsQuery} types that use documents as part of the
  * query specification.
  */
-public interface DocumentsBasedTermsQuery extends TermsQuery {
+public interface DocumentsBasedTermsQuery extends TermsQuery, Cloneable {
   
   /**
    * Gets the IDs of the documents that are part of this query specification.
@@ -33,6 +33,6 @@ public interface DocumentsBasedTermsQuery extends TermsQuery {
    * different at the federated index level and at the member sub-index. 
    * @param newDocIds
    */
-  public void setDocumentIds(long[] newDocIds);
+  public void setDocumentIds(long... newDocIds);
   
 }
