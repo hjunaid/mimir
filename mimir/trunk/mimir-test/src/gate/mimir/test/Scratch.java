@@ -263,7 +263,7 @@ public class Scratch {
     
     query = new LimitTermsQuery(new SortedTermsQuery(
       new DocumentsOrTermsQuery("root", IndexType.TOKENS, 
-      true, true, TermsQuery.NO_LIMIT, 0, 1)) , 100);
+      true, TermsQuery.NO_LIMIT, 0, 1)) , 100);
     printTermQuery(query, qEngine);
     
     System.out.println("\n=======================================");
@@ -278,11 +278,8 @@ public class Scratch {
 
     long start = System.currentTimeMillis();
     TermsResultSet res = query.execute(qEngine);
-    for(int  i = 0; i < res.termIds.length; i++) {
-      System.out.print(res.termIds[i] + "\t");
-      if(res.termStrings != null) {
-        System.out.print("\"" + res.termStrings[i] + "\"\t");
-      }      
+    for(int  i = 0; i < res.termStrings.length; i++) {
+      System.out.print(res.termStrings[i] + "\"\t");
       if(res.termLengths != null) {
         System.out.print("len:" + res.termLengths[i] + "\t");
       }
@@ -292,7 +289,7 @@ public class Scratch {
       System.out.println();
     }
     
-    System.out.println("Found " + nf.format(res.termIds.length)
+    System.out.println("Found " + nf.format(res.termStrings.length)
         + " hits in " + 
         nf.format(System.currentTimeMillis() - start) + " ms.");
   }
