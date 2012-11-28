@@ -140,10 +140,11 @@ log.error("Posting query to sub-index $subIndex.name")
         // split by sub-index
         TermsResultSet[] resSets = docsQ.getDocumentIds().toList().groupBy { 
           long docId -> getSubIndex(index, docId)
-        }.collect { Index subIndex, long[] docIds ->
+        }.collect { subIndex, docIds ->
           DocumentsBasedTermsQuery copyQ = docsQ.clone()
           // rewrite the docIDs
-          copyQ.setDocumentIds(docIds.collect {getDocIdInSubIndex(index, it)})
+          long[] newDocIds = docIds.collect{getDocIdInSubIndex(index, it)}
+          copyQ.setDocumentIds(newDocIds)
           // post the modified query copy 
           return subIndex.postTermsQuery(copyQ)
         }
