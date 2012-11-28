@@ -25,12 +25,6 @@ import gate.mimir.search.QueryEngine;
 public interface TermsQuery extends Serializable {
   
   /**
-   * Constant used to mark that no limit is applied to the number of returned 
-   * results. 
-   */
-  public static final int NO_LIMIT = Integer.MAX_VALUE;
-  
-  /**
    * Runs the term query (in the calling thread) and returns the matched terms.
    * The terms returned must be sorted in ascending order of their term ID. 
    * @return a {@link TermsResultSet} containing the matched terms.

@@ -29,15 +29,18 @@ import java.io.IOException;
  * {@link SortedTermsQuery} (to change the results order) and 
  * <strong>then</strong> limit the number of results. 
  */
-public class LimitTermsQuery extends AbstractWrapperTermsQuery {
+public class LimitTermsQuery extends AbstractCompoundTermsQuery {
   
   /**
    * Serialization ID.
    */
   private static final long serialVersionUID = -2853628566995944376L;
   
+  protected int limit;
+  
   public LimitTermsQuery(TermsQuery query, int limit) {
-    super(query, limit);
+    super(query);
+    this.limit = limit;
   }
 
 
@@ -45,8 +48,10 @@ public class LimitTermsQuery extends AbstractWrapperTermsQuery {
    * @see gate.mimir.search.terms.TermsQuery#execute(gate.mimir.search.QueryEngine)
    */
   @Override
-  public TermsResultSet execute(QueryEngine engine) throws IOException {
-    TermsResultSet trs = wrappedQuery.execute(engine);
+  public TermsResultSet combine(TermsResultSet... resSets) {
+    if(resSets.length != 1) throw new IllegalArgumentException(
+      getClass().getName() + " can only combine arrays of length 1.");
+    TermsResultSet trs = resSets[0];
     if(trs.termStrings != null && trs.termStrings.length > limit) {
       
       String[] termStrings = new String[limit];

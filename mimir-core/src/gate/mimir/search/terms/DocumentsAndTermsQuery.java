@@ -33,26 +33,16 @@ public class DocumentsAndTermsQuery extends AbstractIndexTermsQuery {
    * Serialization ID.
    */
   private static final long serialVersionUID = -5815729554557481213L;
-  /**
-   * The document IDs for which the terms are sought.
-   */
-  protected long[] documentIds;
 
   public DocumentsAndTermsQuery(String indexName, IndexType indexType,
                                 boolean countsEnabled,
-                                int limit, long... documentIds) {
-    super(indexName, indexType, countsEnabled, limit);
-    this.documentIds = documentIds;
+                                long... documentIds) {
+    super(indexName, indexType, countsEnabled, documentIds);
   }
 
   public DocumentsAndTermsQuery(String indexName, IndexType indexType, 
                                 long... documentIds) {
-    this(indexName, indexType, false, NO_LIMIT, documentIds);
-  }
-
-  public DocumentsAndTermsQuery(String indexName, IndexType indexType, 
-                                int limit, long... documentIds) {
-    this(indexName, indexType, false, limit, documentIds);
+    this(indexName, indexType, false, documentIds);
   }
   
   /* (non-Javadoc)

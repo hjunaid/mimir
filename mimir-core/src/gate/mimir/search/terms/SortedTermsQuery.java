@@ -26,7 +26,7 @@ import java.io.IOException;
  * A wrapper for another terms query that simply sorts the returned terms based
  * on some criteria.
  */
-public class SortedTermsQuery extends AbstractWrapperTermsQuery {
+public class SortedTermsQuery extends AbstractCompoundTermsQuery {
   
   /**
    * Serialization ID.
@@ -84,8 +84,10 @@ public class SortedTermsQuery extends AbstractWrapperTermsQuery {
    * @see gate.mimir.search.terms.TermsQuery#execute(gate.mimir.search.QueryEngine)
    */
   @Override
-  public TermsResultSet execute(QueryEngine engine) throws IOException {
-    final TermsResultSet trs = wrappedQuery.execute(engine);
+  public TermsResultSet combine(TermsResultSet... resSets) {
+    if(resSets.length != 1) throw new IllegalArgumentException(
+      getClass().getName() + " can only combine arrays of length 1.");
+    final TermsResultSet trs = resSets[0];
     Arrays.quickSort(0, trs.termStrings.length, new IntComparator() {
       @Override
       public int compare(Integer o1, Integer o2) {

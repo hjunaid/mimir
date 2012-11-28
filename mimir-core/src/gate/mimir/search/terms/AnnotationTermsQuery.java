@@ -37,8 +37,7 @@ public class AnnotationTermsQuery extends AbstractTermsQuery {
   private static final long serialVersionUID = 777418229209857720L;
 
   public AnnotationTermsQuery(AnnotationQuery annotationQuery, 
-      boolean countsEnabled, int limit) {
-    super(limit);
+      boolean countsEnabled) {
     this.annotationQuery = annotationQuery;
   }
   
