@@ -3,8 +3,6 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="layout" content="mimir" />
-    <link rel="stylesheet" href="${resource(dir:'css',file:'progressbar.css')}" />
-    <g:javascript library="prototype" />
     <title>Manage deleted documents - Mimir index &quot;${indexInstance.name}&quot;</title>
   </head>
   <body>

@@ -33,7 +33,7 @@ class FederatedIndex extends Index {
    * Turn off lazy loading of the indexes relation
    */
   static mapping = {
-    indexes(fetch:"join")
+    //indexes(fetch:"join")
   }
 
   // behaviour

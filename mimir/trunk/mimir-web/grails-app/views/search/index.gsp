@@ -6,10 +6,10 @@
   <title>M&iacute;mir Index &quot;${index?.name}&quot;</title>
 
   <!-- Pass some variable to the GWT code -->
-  <g:javascript>
+  <r:script>
     var indexId = '${index?.indexId?.encodeAsJavaScript()}';
     var uriIsLink = '${index?.uriIsExternalLink}';
-  </g:javascript>
+  </r:script>
   
   <!--                                           -->
   <!-- This script loads your compiled module.   -->
