@@ -48,7 +48,12 @@ public abstract class AbstractDocumentsBasedTermsQuery
    * @see gate.mimir.search.terms.DocumentsBasedTermsQuery#setDocumentIds(long[])
    */
   @Override
-  public void setDocumentIds(long[] newDocIds) {
+  public void setDocumentIds(long... newDocIds) {
     this.documentIds = newDocIds;
+  }
+  
+  @Override
+  public Object clone() throws CloneNotSupportedException {
+    return super.clone();
   }
 }

@@ -14,6 +14,9 @@
  */
 package gate.mimir.search.terms;
 
+import java.io.IOException;
+
+import gate.mimir.search.QueryEngine;
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
@@ -22,7 +25,7 @@ import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
 /**
  * Base class for term queries.
  */
-public abstract class AbstractTermsQuery implements TermsQuery {
+public abstract class AbstractTermsQuery implements TermsQuery{
   
   /**
    * Serialization ID.
@@ -32,6 +35,13 @@ public abstract class AbstractTermsQuery implements TermsQuery {
   public AbstractTermsQuery() {
   }
   
+  
+  
+  @Override
+  public TermsResultSet execute(QueryEngine engine) throws IOException {
+    // TODO Auto-generated method stub
+    return null;
+  }
   
   /**
    * Sorts the arrays inside a {@link TermsResultSet} using the termString for
