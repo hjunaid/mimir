@@ -264,7 +264,7 @@ public class Scratch {
     
     query = new LimitTermsQuery(
       new SortedTermsQuery(
-      new DocumentsOrTermsQuery("root", IndexType.TOKENS, true, 0, 1, 2))
+      new DocumentsOrTermsQuery("root", IndexType.TOKENS, true, false, 0, 1, 2))
       , 100);
     printTermQuery(query, qEngine);
     

@@ -14,9 +14,6 @@
  */
 package gate.mimir.search.terms;
 
-import gate.mimir.search.QueryEngine;
-
-import java.io.IOException;
 
 /**
  * A wrapper for another terms query that limit the number of returned terms
@@ -68,7 +65,14 @@ public class LimitTermsQuery extends AbstractCompoundTermsQuery {
         termLengths = new int[limit];
         System.arraycopy(trs.termLengths, 0, termLengths, 0, limit);
       }
-      return new TermsResultSet(termStrings, termLengths, termCounts);
+      
+      String[] termDescriptions = null;
+      if(trs.termDescriptions != null) {
+        termDescriptions = new String[limit];
+        System.arraycopy(trs.termDescriptions, 0, termDescriptions, 0, limit);
+      }
+      return new TermsResultSet(termStrings, termLengths, termCounts, 
+          termDescriptions);
     } else {
       return trs;  
     }

@@ -14,17 +14,11 @@
  */
 package gate.mimir.search.terms;
 
-import gate.mimir.search.QueryEngine;
-
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.Swapper;
-import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparator;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.io.IOException;
 
 /**
  * Performs Boolean AND between multiple {@link TermsQuery} instances.
@@ -61,6 +55,7 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
   public static TermsResultSet andResultSets(final TermsResultSet[] resSets) {
     boolean lengthsAvailable = false;
     boolean countsAvailable = true;
+    boolean descriptionsAvaialble = false;
     for(int i = 0; i < resSets.length; i++) {
       if(resSets[i].termStrings.length == 0) return TermsResultSet.EMPTY;
       // this implementation requires that all sub-queries return terms in a 
@@ -68,6 +63,8 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
       sortTermsResultSetByTermString(resSets[i]);
       // at least one sub-query must provide lengths, for us to be able to
       if(resSets[i].termLengths != null) lengthsAvailable = true;
+      // at least one sub-query must provide descriptions, for us to be able to
+      if(resSets[i].termDescriptions != null) descriptionsAvaialble = true;      
       // all sub-queries must provide counts, for us to be able to
       if(resSets[i].termCounts == null) countsAvailable = false;
     }
@@ -92,6 +89,8 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
     
     // prepare local data
     ObjectArrayList<String> termStrings = new ObjectArrayList<String>();
+    ObjectArrayList<String> termDescriptions = descriptionsAvaialble ? 
+        new ObjectArrayList<String>() : null;
     IntArrayList termCounts = countsAvailable ? new IntArrayList() : null;
     IntArrayList termLengths = lengthsAvailable ? new IntArrayList() : null;
     // merge the inputs
@@ -130,7 +129,18 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
           }
           termLengths.add(termLength);
         }
-        
+        // extract description
+        if(descriptionsAvaialble) {
+          String termDescription = null;
+          for(int i = 0; 
+              i < resSets.length && termDescription == null; 
+              i++) {
+            if(resSets[i].termDescriptions != null){
+              termDescription = resSets[i].termDescriptions[indexes[i]]; 
+            }
+          }
+          termDescriptions.add(termDescription);          
+        }
         // and start fresh
         currRunner = 0;
         indexes[currRunner]++;
@@ -163,6 +173,8 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
     return new TermsResultSet(
         termStrings.toArray(new String[termStrings.size()]),
         lengthsAvailable? termLengths.toIntArray() : null,
-        countsAvailable ? termCounts.toIntArray() : null);
+        countsAvailable ? termCounts.toIntArray() : null,
+        descriptionsAvaialble ? 
+          termDescriptions.toArray(new String[termDescriptions.size()]): null);
   }
 }

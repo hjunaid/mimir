@@ -14,16 +14,14 @@
  */
 package gate.mimir.search.terms;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import org.apache.log4j.Logger;
-
 import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.AnnotationQuery;
+
+import java.util.List;
+
+import org.apache.log4j.Logger;
 
 /**
  * Given an {@link AnnotationQuery}, this finds the set of terms that satisfy 
@@ -75,7 +73,7 @@ public class AnnotationTermsQuery extends AbstractTermsQuery {
         lengths[index] = m.getLength();
         index++;
       }
-      return new TermsResultSet(terms, lengths, null);
+      return new TermsResultSet(terms, lengths, null, null);
     } else {
       return TermsResultSet.EMPTY;
     }

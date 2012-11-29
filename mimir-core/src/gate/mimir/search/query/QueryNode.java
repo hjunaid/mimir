@@ -16,11 +16,9 @@
 package gate.mimir.search.query;
 
 import gate.mimir.search.QueryEngine;
-import it.unimi.dsi.big.mg4j.index.Index;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Map;
 
 
 /**

@@ -14,6 +14,7 @@
  */
 package gate.mimir.search.terms;
 
+import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
@@ -34,17 +35,38 @@ public class DocumentsAndTermsQuery extends AbstractIndexTermsQuery {
    */
   private static final long serialVersionUID = -5815729554557481213L;
 
+  
+  /**
+   * Creates a new Documents-AND terms query.
+   * @param indexName
+   *          the name of the sub-index to be searched. Each Mímir index
+   *          includes multiple sub-indexes (some storing tokens, other storing
+   *          annotations), identified by a name. For token indexes, the index
+   *          name is the name of the token feature being indexed; for
+   *          annotation indexes, the index name is the annotation type.
+   * @param indexType
+   *          The type of index to be searched (tokens or annotations).          
+   * @param countsEnabled
+   *          should term counts be returned.
+   * @param describeAnnotations
+   *          If the index being interrogated is of type
+   *          {@link IndexType#ANNOTATIONS} then the indexed term strings are
+   *          URIs whose format depends on the actual implementation of the
+   *          index. These strings make little sense outside of the index. If
+   *          this is set to <code>true</code>, then term descriptions are also
+   *          included in the results set. See
+   *          {@link TermsResultSet#termDescriptions} and
+   *          {@link SemanticAnnotationHelper#describeMention(String)}. Setting
+   *          this to <code>true</code> has no effect if the index being
+   *          interrogated is a {@link IndexType#TOKENS} index.
+   * @param documentIds the ID for the documents for which terms are sought.   */
   public DocumentsAndTermsQuery(String indexName, IndexType indexType,
                                 boolean countsEnabled,
+                                boolean describeAnnotations,
                                 long... documentIds) {
-    super(indexName, indexType, countsEnabled, documentIds);
+    super(indexName, indexType, countsEnabled, describeAnnotations, documentIds);
   }
-
-  public DocumentsAndTermsQuery(String indexName, IndexType indexType, 
-                                long... documentIds) {
-    this(indexName, indexType, false, documentIds);
-  }
-  
+ 
   /* (non-Javadoc)
    * @see gate.mimir.search.terms.TermsQuery#execute(gate.mimir.search.QueryEngine)
    */
