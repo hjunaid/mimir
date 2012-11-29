@@ -17,6 +17,7 @@ package gate.mimir.search;
 import gate.mimir.index.IndexException;
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.Binding;
+import gate.mimir.search.query.QueryNode;
 import gate.mimir.tool.WebUtils;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleBigArrayBigList;
@@ -196,17 +197,37 @@ public class RemoteQueryRunner implements QueryRunner {
     this.closed = false;
     // submit the remote query
     try {
-      this.queryId = (String) webUtils.getObject(
+      init((String) webUtils.getObject(
               getActionBaseUrl(ACTION_POST_QUERY_BIN), 
               "queryString", 
-              URLEncoder.encode(queryString, "UTF-8"));
+              URLEncoder.encode(queryString, "UTF-8")), threadSource);
     } catch(ClassNotFoundException e) {
       //we were expecting a String but got some object of unknown class
       throw (IOException) new IOException(
           "Was expecting a String query ID value, but got " +
           "an unknown object type!").initCause(e);
     }
-    
+  }
+
+  public RemoteQueryRunner(String remoteUrl, QueryNode query, 
+      Executor threadSource,  WebUtils webUtils) throws IOException {
+    this.remoteUrl = remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/");
+    this.webUtils = webUtils;
+    this.closed = false;
+    // submit the remote query
+    try {
+      init((String) webUtils.rpcCall(
+              getActionBaseUrl(ACTION_POST_QUERY_BIN),
+              query), threadSource);
+    } catch(ClassNotFoundException e) {
+      //we were expecting a String but got some object of unknown class
+      throw (IOException) new IOException(
+          "Was expecting a String query ID value, but got " +
+          "an unknown object type!").initCause(e);
+    }
+  }
+  
+  protected void init(String queryId, Executor threadSource) {
     // init the caches
     this.documentIds = new LongBigArrayBigList();
     this.documentScores = new DoubleBigArrayBigList();
@@ -221,7 +242,7 @@ public class RemoteQueryRunner implements QueryRunner {
     } else {
       new Thread(docDataUpdater, 
         DocumentDataUpdater.class.getCanonicalName()).start();
-    }
+    }    
   }
 
   protected String getActionBaseUrl(String action) throws IOException{
