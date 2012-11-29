@@ -14,13 +14,9 @@
  */
 package gate.mimir.search.terms;
 
-import gate.mimir.search.QueryEngine;
-
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.IntComparator;
-
-import java.io.IOException;
 
 /**
  * A wrapper for another terms query that simply sorts the returned terms based
@@ -41,10 +37,18 @@ public class SortedTermsQuery extends AbstractCompoundTermsQuery {
     
     /** Sort by counts (descending). */
     COUNT_DESC,
+    
     /** Sort by term string */
     STRING,
+    
     /** Sort by term string (descending) */
-    STRING_DESC
+    STRING_DESC,
+    
+    /** Sort by term string */
+    DESCRIPTION,
+    
+    /** Sort by term string (descending) */
+    DESCRIPTION_DESC
   }
   
   protected SortOrder[] criteria;
@@ -122,7 +126,21 @@ public class SortedTermsQuery extends AbstractCompoundTermsQuery {
                  trs.termStrings[k2] != null) {
                 retval = trs.termStrings[k2].compareTo(trs.termStrings[k1]);
               }
-           break;
+              break;
+            case DESCRIPTION:
+              if(trs.termDescriptions != null &&
+                 trs.termDescriptions[k1] != null &&
+                 trs.termDescriptions[k2] != null) {
+                retval = trs.termDescriptions[k1].compareTo(trs.termDescriptions[k2]);
+              }
+              break;
+            case DESCRIPTION_DESC:
+              if(trs.termDescriptions != null &&
+                 trs.termDescriptions[k1] != null &&
+                 trs.termDescriptions[k2] != null) {
+                retval = trs.termDescriptions[k2].compareTo(trs.termDescriptions[k1]);
+              }
+           break;         
           }
           if(retval != 0) return retval;
         }
@@ -146,6 +164,11 @@ public class SortedTermsQuery extends AbstractCompoundTermsQuery {
           trs.termCounts[a] = trs.termCounts[b];
           trs.termCounts[b] = termCount;
         }
+        if(trs.termDescriptions != null) {
+          String termDescription = trs.termDescriptions[a];
+          trs.termDescriptions[a] = trs.termDescriptions[b];
+          trs.termDescriptions[b] = termDescription;
+        }        
       }
     });
     return trs;

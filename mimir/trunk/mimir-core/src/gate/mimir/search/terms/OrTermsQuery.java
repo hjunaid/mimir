@@ -14,14 +14,9 @@
  */
 package gate.mimir.search.terms;
 
-import gate.mimir.search.QueryEngine;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongHeapSemiIndirectPriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectHeapSemiIndirectPriorityQueue;
-
-import java.io.IOException;
 
 /**
  * Boolean OR operator for term queries.
@@ -68,6 +63,7 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
         new ObjectHeapSemiIndirectPriorityQueue<String>(currentTerm);
     int[] termIndex = new int[resSets.length];
     boolean lengthsAvailable = true;
+    boolean descriptionsAvailable = true;
     boolean countsAvailable = true;
     for(int i = 0; i < resSets.length; i++) {
       // this implementation requires that all sub-queries return terms in a 
@@ -82,10 +78,13 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
       // which one will provide any of the results.
       if(resSets[i].termLengths == null) lengthsAvailable = false;
       if(resSets[i].termCounts == null) countsAvailable = false;
+      if(resSets[i].termDescriptions == null) descriptionsAvailable = false;
     }
     
     // prepare local data
     ObjectArrayList<String> termStrings = new ObjectArrayList<String>();
+    ObjectArrayList<String> termDescriptions = descriptionsAvailable ? 
+        new ObjectArrayList<String>() : null;
     IntArrayList termLengths = lengthsAvailable ? new IntArrayList() : null;
     IntArrayList termCounts = countsAvailable ? new IntArrayList() : null;
     int front[] = new int[resSets.length];
@@ -94,7 +93,14 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
       int first = queue.first();
       String termString = resSets[first].termStrings[termIndex[first]];
       termStrings.add(termString);
+      if(lengthsAvailable) {
+        termLengths.add(resSets[first].termLengths[termIndex[first]]);
+      }
+      if(descriptionsAvailable) {
+        termDescriptions.add(resSets[first].termDescriptions[termIndex[first]]);
+      }
       if(countsAvailable) {
+        // sum all counts
         int frontSize = queue.front(front);
         int count = 0;
         for(int i = 0;  i < frontSize; i++) {
@@ -122,6 +128,8 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
     return new TermsResultSet(
         termStrings.toArray(new String[termStrings.size()]),
         lengthsAvailable ? termLengths.toIntArray() : null,
-        countsAvailable ? termCounts.toIntArray() : null);
+        countsAvailable ? termCounts.toIntArray() : null,
+        descriptionsAvailable ? 
+          termDescriptions.toArray(new String[termDescriptions.size()]) : null);
   }
 }
