@@ -17,6 +17,7 @@ import java.io.Writer;
 
 import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
+import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
@@ -108,6 +109,9 @@ class LocalIndex extends Index implements Serializable {
     return localIndexService.getQueryRunner(this, queryString)
   }
   
+  QueryRunner startQuery(QueryNode query) {
+    return localIndexService.getQueryEngine(this).getQueryRunner(query)
+  }
   
   /* (non-Javadoc)
    * @see gate.mimir.web.Index#postTermsQuery(gate.mimir.search.terms.TermsQuery)

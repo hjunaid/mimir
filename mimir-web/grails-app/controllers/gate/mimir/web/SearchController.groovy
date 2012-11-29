@@ -20,6 +20,7 @@ import gate.mimir.web.SearchService;
 import groovy.xml.StreamingMarkupBuilder;
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.Binding;
+import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException;
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
@@ -537,17 +538,50 @@ class SearchController {
    */
   def postQueryBin = {
     def p = params["request"] ?: params
-    //get the query string
+    //get the query string or binary representation
     String queryString = p["queryString"]
-    try {
-      String runnerId = searchService.postQuery(request.theIndex, queryString)
-      new ObjectOutputStream (response.outputStream).withStream {stream -> 
-        stream.writeObject(runnerId)
+    QueryNode queryNode = null;
+    if(!queryString) {
+      // no query string was given: maybe we got a serialized QueryNode instead
+      request.inputStream.withStream { stream ->
+        ObjectInputStream ois = new ObjectInputStream(stream)
+        queryNode = ois.readObject()
+        // drain input stream
+        byte[] buf = new byte[1024];
+        while(ois.read(buf) >= 0) {
+          // do nothing
+        }
+        ois.close()
       }
-    } catch(Exception e) {
-      log.error("Exception posting query", e)
-      response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-      "Problem posting query: \"" + e.getMessage() + "\"")
+    }
+    
+    if(queryString) {
+      try {
+        String runnerId = searchService.postQuery(request.theIndex, queryString)
+        new ObjectOutputStream (response.outputStream).withStream {stream ->
+          stream.writeObject(runnerId)
+        }
+      } catch(Exception e) {
+        log.error("Exception posting query", e)
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+        "Problem posting query: \"" + e.getMessage() + "\"")
+      }
+    } else if(queryNode) {
+      try {
+        String runnerId = searchService.postQuery(request.theIndex, queryNode)
+        new ObjectOutputStream (response.outputStream).withStream {stream ->
+          stream.writeObject(runnerId)
+        }
+      } catch(Exception e) {
+        log.error("Exception posting query", e)
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+        "Problem posting query: \"" + e.getMessage() + "\"")
+      }
+    } else {
+      // no query provided at all
+      log.error("No query given")
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+        "Did not receive any query to post")
     }
   }
 

@@ -26,6 +26,7 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 
 import gate.mimir.search.QueryRunner
+import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException;
 
 class SearchService {
@@ -86,6 +87,24 @@ class SearchService {
     } 
   }
   
+  /**
+   * Posts a query to a specified index. Creates a query runner for it, stores
+   * the query runner in the internal runners map, starts the query executions
+   *  and returns the ID for the query runner.
+   */
+  public String postQuery(Index theIndex, QueryNode queryNode)
+      throws IOException, ParseException {
+    QueryRunner aRunner = theIndex.startQuery(queryNode)
+    if(aRunner){
+      String runnerId = UUID.randomUUID()
+      queryRunners.put(runnerId,
+        new QueryRunnerHolder(queryRunner:aRunner, index:theIndex))
+      return runnerId
+    } else {
+      throw new RuntimeException("Could not start query")
+    }
+  }
+      
   /**
    * Posts a query to a specified index. Creates a query runner for it, stores
    * the query runner in the internal runners map, starts the query executions

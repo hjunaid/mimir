@@ -17,6 +17,7 @@ import org.hibernate.proxy.HibernateProxy;
 import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.FederatedQueryRunner
+import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
@@ -75,6 +76,14 @@ class FederatedIndex extends Index {
    * delegating to the returned sub-query runners.
    */
   QueryRunner startQuery(String query) throws ParseException {
+    return federatedIndexService.getQueryRunner(this, query)
+  }
+  
+  /**
+   * Hand off the query to the sub-indexes and return a federated runner
+   * delegating to the returned sub-query runners.
+   */
+  QueryRunner startQuery(QueryNode query) {
     return federatedIndexService.getQueryRunner(this, query)
   }
   
