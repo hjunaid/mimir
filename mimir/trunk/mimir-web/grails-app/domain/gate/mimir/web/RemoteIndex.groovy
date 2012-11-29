@@ -17,6 +17,7 @@ package gate.mimir.web;
 import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.RemoteQueryRunner
+import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
@@ -85,6 +86,16 @@ class RemoteIndex extends Index {
       webUtilsManager.currentWebUtils(this))
   }
 
+  /**
+   * Start running the given query.
+   */
+  QueryRunner startQuery(QueryNode query) {
+    //create a local RemoteQueryRunner and store the service URL, index ID,
+    //and query ID in it.
+    return new RemoteQueryRunner(remoteUrl, query, searchThreadPool,
+      webUtilsManager.currentWebUtils(this))
+  }
+  
   
   /* (non-Javadoc)
    * @see gate.mimir.web.Index#postTermsQuery(gate.mimir.search.terms.TermsQuery)

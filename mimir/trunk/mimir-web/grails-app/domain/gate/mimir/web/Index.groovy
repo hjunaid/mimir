@@ -13,6 +13,7 @@
 package gate.mimir.web;
 
 import gate.mimir.search.QueryRunner
+import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
@@ -104,6 +105,13 @@ class Index implements Serializable {
     throw new UnsupportedOperationException() 
   }
 
+  /**
+   * Start running the given query.
+   */
+  QueryRunner startQuery(QueryNode query) {
+    throw new UnsupportedOperationException()
+  }
+  
   TermsResultSet postTermsQuery(TermsQuery query) {
     throw new UnsupportedOperationException()
   }

@@ -17,6 +17,7 @@ package gate.mimir.web
 import gate.mimir.index.mg4j.zipcollection.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.FederatedQueryRunner
+import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException
 import gate.mimir.search.terms.CompoundTermsQuery;
 import gate.mimir.search.terms.DocumentsBasedTermsQuery;
@@ -100,11 +101,9 @@ class FederatedIndexService {
   public QueryRunner getQueryRunner(FederatedIndex index, String query) 
       throws ParseException {
     QueryRunner[] subRunners = new QueryRunner[index.indexes.size()]
-log.error("Federated index $index.name has ${index.indexes.size()} sub indexes")
     try {
       index.indexes.eachWithIndex { Index subIndex, i ->
         subRunners[i] = subIndex.startQuery(query)
-log.error("Posting query to sub-index $subIndex.name")        
       }
       return new FederatedQueryRunner(subRunners)
     } catch(Throwable t) {
@@ -121,6 +120,27 @@ log.error("Posting query to sub-index $subIndex.name")
     }
   }
 
+  public QueryRunner getQueryRunner(FederatedIndex index, QueryNode query) {
+    QueryRunner[] subRunners = new QueryRunner[index.indexes.size()]
+    try {
+      index.indexes.eachWithIndex { Index subIndex, i ->
+        subRunners[i] = subIndex.startQuery(query)
+      }
+      return new FederatedQueryRunner(subRunners)
+    } catch(Throwable t) {
+      log.error("Error creating query runner for sub-index: ${t.message}")
+      for(QueryRunner subRunner in subRunners){
+        try {
+          subRunner?.close()
+        } catch(Throwable t2) {
+          // ignore
+        }
+      }
+      // and re-throw
+      throw t
+    }
+  }
+      
   public TermsResultSet postTermsQuery(FederatedIndex index, TermsQuery query) {
     if(query instanceof CompoundTermsQuery) {
       // if query is compound, split by sub-query, then combine results
