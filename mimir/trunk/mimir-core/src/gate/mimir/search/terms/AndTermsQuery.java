@@ -56,13 +56,16 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
     boolean lengthsAvailable = false;
     boolean countsAvailable = true;
     boolean descriptionsAvaialble = false;
+    boolean origTermsAvailable = false;
     for(int i = 0; i < resSets.length; i++) {
       if(resSets[i].termStrings.length == 0) return TermsResultSet.EMPTY;
       // this implementation requires that all sub-queries return terms in a 
       // consistent order, so we sort them lexicographically by termString
-      sortTermsResultSetByTermString(resSets[i]);
+      TermsResultSet.sortTermsResultSetByTermString(resSets[i]);
       // at least one sub-query must provide lengths, for us to be able to
       if(resSets[i].termLengths != null) lengthsAvailable = true;
+      // at least one sub-query must provide original terms, for us to be able to
+      if(resSets[i].originalTermStrings != null) origTermsAvailable = true;      
       // at least one sub-query must provide descriptions, for us to be able to
       if(resSets[i].termDescriptions != null) descriptionsAvaialble = true;      
       // all sub-queries must provide counts, for us to be able to
@@ -91,6 +94,8 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
     ObjectArrayList<String> termStrings = new ObjectArrayList<String>();
     ObjectArrayList<String> termDescriptions = descriptionsAvaialble ? 
         new ObjectArrayList<String>() : null;
+    ObjectArrayList<String[][]> origTerms = origTermsAvailable ? 
+          new ObjectArrayList<String[][]>() : null;        
     IntArrayList termCounts = countsAvailable ? new IntArrayList() : null;
     IntArrayList termLengths = lengthsAvailable ? new IntArrayList() : null;
     // merge the inputs
@@ -141,6 +146,18 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
           }
           termDescriptions.add(termDescription);          
         }
+        // extract original terms
+        if(origTermsAvailable) {
+          String[][] origTerm = null;
+          for(int i = 0; 
+              i < resSets.length && origTerm == null; 
+              i++) {
+            if(resSets[i].originalTermStrings != null){
+              origTerm = resSets[i].originalTermStrings[indexes[i]]; 
+            }
+          }
+          origTerms.add(origTerm);          
+        }
         // and start fresh
         currRunner = 0;
         indexes[currRunner]++;
@@ -170,11 +187,16 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
       }
     } // top while
     // construct the result
-    return new TermsResultSet(
+    TermsResultSet res = new TermsResultSet(
         termStrings.toArray(new String[termStrings.size()]),
         lengthsAvailable? termLengths.toIntArray() : null,
         countsAvailable ? termCounts.toIntArray() : null,
         descriptionsAvaialble ? 
           termDescriptions.toArray(new String[termDescriptions.size()]): null);
+    if(origTermsAvailable){
+      res.originalTermStrings = origTerms.toArray(
+        new String[origTerms.size()][][]);
+    }
+    return res;
   }
 }

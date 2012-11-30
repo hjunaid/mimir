@@ -15,7 +15,6 @@
 package gate.mimir.search.terms;
 
 import it.unimi.dsi.fastutil.Arrays;
-import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 
 /**
@@ -146,31 +145,7 @@ public class SortedTermsQuery extends AbstractCompoundTermsQuery {
         }
         return retval;
       }
-    }, new Swapper() {
-      @Override
-      public void swap(int a, int b) {
-        if(trs.termStrings != null) {
-          String termString = trs.termStrings[a];
-          trs.termStrings[a] = trs.termStrings[b];
-          trs.termStrings[b] = termString;
-        }
-        if(trs.termLengths != null) {
-          int termLen = trs.termLengths[a];
-          trs.termLengths[a] = trs.termLengths[b];
-          trs.termLengths[b] = termLen;
-        }
-        if(trs.termCounts != null) {
-          int termCount = trs.termCounts[a];
-          trs.termCounts[a] = trs.termCounts[b];
-          trs.termCounts[b] = termCount;
-        }
-        if(trs.termDescriptions != null) {
-          String termDescription = trs.termDescriptions[a];
-          trs.termDescriptions[a] = trs.termDescriptions[b];
-          trs.termDescriptions[b] = termDescription;
-        }        
-      }
-    });
+    }, new TermsResultSet.Swapper(trs));
     return trs;
   }
 }

@@ -64,11 +64,12 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
     int[] termIndex = new int[resSets.length];
     boolean lengthsAvailable = true;
     boolean descriptionsAvailable = true;
+    boolean origTermsAvailable = true;
     boolean countsAvailable = true;
     for(int i = 0; i < resSets.length; i++) {
       // this implementation requires that all sub-queries return terms in a 
       // consistent order, so we sort them lexicographically by termString
-      sortTermsResultSetByTermString(resSets[i]);
+      TermsResultSet.sortTermsResultSetByTermString(resSets[i]);
       if(resSets[i].termStrings.length > 0){
         termIndex[i] = 0;
         currentTerm[i] = resSets[i].termStrings[termIndex[i]];
@@ -79,12 +80,15 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
       if(resSets[i].termLengths == null) lengthsAvailable = false;
       if(resSets[i].termCounts == null) countsAvailable = false;
       if(resSets[i].termDescriptions == null) descriptionsAvailable = false;
+      if(resSets[i].originalTermStrings == null) origTermsAvailable = false;
     }
     
     // prepare local data
     ObjectArrayList<String> termStrings = new ObjectArrayList<String>();
     ObjectArrayList<String> termDescriptions = descriptionsAvailable ? 
         new ObjectArrayList<String>() : null;
+    ObjectArrayList<String[][]> origTerms = origTermsAvailable ? 
+          new ObjectArrayList<String[][]>() : null;        
     IntArrayList termLengths = lengthsAvailable ? new IntArrayList() : null;
     IntArrayList termCounts = countsAvailable ? new IntArrayList() : null;
     int front[] = new int[resSets.length];
@@ -98,6 +102,9 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
       }
       if(descriptionsAvailable) {
         termDescriptions.add(resSets[first].termDescriptions[termIndex[first]]);
+      }
+      if(origTermsAvailable) {
+        origTerms.add(resSets[first].originalTermStrings[termIndex[first]]);
       }
       if(countsAvailable) {
         // sum all counts
@@ -125,11 +132,16 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
       }
     }
     // construct the result
-    return new TermsResultSet(
+    TermsResultSet res = new TermsResultSet(
         termStrings.toArray(new String[termStrings.size()]),
         lengthsAvailable ? termLengths.toIntArray() : null,
         countsAvailable ? termCounts.toIntArray() : null,
         descriptionsAvailable ? 
           termDescriptions.toArray(new String[termDescriptions.size()]) : null);
+    if(origTermsAvailable){
+      res.originalTermStrings = origTerms.toArray(
+        new String[origTerms.size()][][]);
+    }
+    return res;    
   }
 }

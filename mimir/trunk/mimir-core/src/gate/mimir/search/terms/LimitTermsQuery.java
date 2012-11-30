@@ -71,8 +71,15 @@ public class LimitTermsQuery extends AbstractCompoundTermsQuery {
         termDescriptions = new String[limit];
         System.arraycopy(trs.termDescriptions, 0, termDescriptions, 0, limit);
       }
-      return new TermsResultSet(termStrings, termLengths, termCounts, 
+      
+      TermsResultSet res = new TermsResultSet(termStrings, termLengths, termCounts, 
           termDescriptions);
+      if(trs.originalTermStrings != null) {
+        res.originalTermStrings = new String[limit][][];
+        System.arraycopy(trs.originalTermStrings, 0, 
+            res.originalTermStrings, 0, limit);
+      }
+      return res;
     } else {
       return trs;  
     }
