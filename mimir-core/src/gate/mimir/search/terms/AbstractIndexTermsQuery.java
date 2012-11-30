@@ -279,12 +279,14 @@ public abstract class AbstractIndexTermsQuery extends
       termId = documentIterator.nextDocument();
     }
     // construct the result
-    return new TermsResultSet(
+    TermsResultSet res = new TermsResultSet(
       termStrings.toArray(new String[termStrings.size()]),
       null, 
       countsEnabled ? termCounts.toIntArray() : null,
       describeAnnotations ? 
         termDescriptions.toArray(new String[termDescriptions.size()]) : null);
+    if(describeAnnotations) res = TermsResultSet.groupByDescription(res);
+    return res;
   }
 
   /**
