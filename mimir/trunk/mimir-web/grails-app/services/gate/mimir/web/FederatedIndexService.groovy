@@ -169,11 +169,11 @@ class FederatedIndexService {
           return subIndex.postTermsQuery(copyQ)
         }
         // OR the results
-        return OrTermsQuery.orResultsSets(resSets)
+        return TermsResultSet.groupByDescription(resSets)
       } else {
         // query is not compound, nor documents based: just pass it to the 
         //  sub-index and OR the results 
-        return OrTermsQuery.orResultsSets(
+        return TermsResultSet.groupByDescription(
           index.indexes.collect{ 
             Index subIndex -> subIndex.postTermsQuery(query)
           }
