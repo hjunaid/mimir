@@ -182,7 +182,7 @@ public class UI implements EntryPoint {
       ArrayList<MultiWordSuggestion> suggestions =
         new ArrayList<MultiWordSuggestion>();
       String query = request.getQuery();
-      int caretIndex = searchBox.getTextBox().getCursorPos();
+      int caretIndex = searchBox.getValueBox().getCursorPos();
       int startIndex = query.lastIndexOf('{', caretIndex - 1);
       int endIndex = query.indexOf('{', caretIndex);
       if (endIndex == -1) { endIndex = caretIndex; }
