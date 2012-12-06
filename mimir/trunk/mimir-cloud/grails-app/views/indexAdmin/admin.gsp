@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="layout" content="mimir" />
     <link rel="stylesheet" href="${resource(dir:'css',file:'progressbar.css',plugin:'mimir-web')}" />
-    <g:javascript library="prototype" />
+    <r:require  module="jquery" />
     <title>Mimir index &quot;${indexInstance.name}&quot;</title>
     <mimir:load/>
 
