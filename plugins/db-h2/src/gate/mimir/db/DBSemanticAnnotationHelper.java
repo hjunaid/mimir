@@ -908,6 +908,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
         break;
       }
     }
+    List<Object> params = new ArrayList<Object>();
     StringBuilder selectStr = new StringBuilder(
         "SELECT DISTINCT " + tableName(null, MENTIONS_TABLE_SUFFIX) + ".ID, " +
         tableName(null, MENTIONS_TABLE_SUFFIX) + ".Length FROM " + 
@@ -953,14 +954,16 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
                   selectStr.append(" REGEXP");
               }
               if(aConstraint.getValue() instanceof String) {
-                selectStr.append(" '" + aConstraint.getValue() +"'");
+                selectStr.append(" ?");
+                params.add(aConstraint.getValue());
               } else if(aConstraint.getValue() instanceof String[]) {
                 // this only makes sense for REGEX
                 if(aConstraint.getPredicate() != ConstraintType.REGEX) {
                   throw new IllegalArgumentException("Got a two-valued constraint that is not a REGEXP!");
                 }
-                selectStr.append(" '(?" + ((String[])aConstraint.getValue())[1] + ")"
-                        + ((String[])aConstraint.getValue())[0] + "'");
+                selectStr.append(" ?");
+                params.add("(?" + ((String[])aConstraint.getValue())[1] + ")"
+                        + ((String[])aConstraint.getValue())[0]);
               }
             }
           }
@@ -1008,10 +1011,11 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
                 case REGEX:
                   throw new IllegalArgumentException("Cannot use a REGEX predicate for numeric features!");
               }
+              selectStr.append(" ?");
               if(aConstraint.getValue() instanceof Number) {
-                selectStr.append(" " + ((Number)aConstraint.getValue()).longValue());
+                params.add(Long.valueOf(((Number)aConstraint.getValue()).longValue()));
               } else {
-                selectStr.append(" " +  Long.parseLong(aConstraint.getValue().toString()));
+                params.add(Long.valueOf(aConstraint.getValue().toString()));
               }
             }
           }
@@ -1048,11 +1052,12 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
                 case REGEX:
                   throw new IllegalArgumentException("Cannot use a REGEX predicate for numeric features!");
               }
+              selectStr.append(" ?");
               if(aConstraint.getValue() instanceof Number) {
-                selectStr.append(" " + ((Number)aConstraint.getValue()).doubleValue());
+                params.add(Double.valueOf(((Number)aConstraint.getValue()).doubleValue()));
               } else {
-                selectStr.append(" " +  Double.parseDouble(aConstraint.getValue().toString()));
-              }
+                params.add(Double.valueOf(aConstraint.getValue().toString()));
+              }              
             }
           }
         }        
@@ -1088,15 +1093,17 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
                 case REGEX:
                   selectStr.append(" REGEXP");
               }
+              selectStr.append(" ?");
+              
               if(aConstraint.getValue() instanceof String) {
-                selectStr.append(" '" + aConstraint.getValue() +"'");
+                params.add(aConstraint.getValue());
               } else if(aConstraint.getValue() instanceof String[]) {
                 // this only makes sense for REGEX
                 if(aConstraint.getPredicate() != ConstraintType.REGEX) {
                   throw new IllegalArgumentException("Got a two-valued constraint that is not a REGEXP!");
                 }
-                selectStr.append(" '(?" + ((String[])aConstraint.getValue())[1] + ")"
-                        + ((String[])aConstraint.getValue())[0] + "'");
+                params.add("(?" + ((String[])aConstraint.getValue())[1] + ")"
+                        + ((String[])aConstraint.getValue())[0]);
               }
             }
           }
@@ -1115,12 +1122,18 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     
     logger.debug("Select query:\n" + selectStr.toString());
     try {
-      ResultSet res = dbConnection.createStatement().executeQuery(selectStr.toString());
+      PreparedStatement stmt = dbConnection.prepareStatement(selectStr.toString());
+      int pos = 1;
+      for(Object val : params) {
+        stmt.setObject(pos++, val);
+      }
+      ResultSet res = stmt.executeQuery();
       while(res.next()) {
         long id = res.getLong(1);
         int length = getMode() == Mode.DOCUMENT? Mention.NO_LENGTH : res.getInt(2);
         mentions.add(new Mention(annotationType + ":" + id, length));
       }
+      stmt.close();
     } catch(SQLException e) {
       logger.error("DB error", e);
       throw new RuntimeException("DB error", e);
