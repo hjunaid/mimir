@@ -15,17 +15,18 @@
 package gate.mimir.search.terms;
 
 import gate.mimir.SemanticAnnotationHelper;
-
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Class representing the results of a {@link TermsQuery}. 
@@ -144,6 +145,49 @@ public class TermsResultSet implements Serializable {
     }, new Swapper(trs));
   }
 
+  /**
+   * Enumerates a result set and produces a new one after removing all the terms
+   * with descriptions in the banned list.
+   * @param bannedDescriptions A String array containing all the banned term 
+   * descriptions.
+   * @param setToFilter the terms result set to filter
+   * @return the filtered result set.
+   */
+  public static TermsResultSet filterByDescriptionNot(TermsResultSet setToFilter, String... bannedDescriptions) {
+    final boolean descriptionsAvailable = setToFilter.termDescriptions != null;
+    if(!descriptionsAvailable) return setToFilter;
+    
+    final boolean countsAvailable = setToFilter.termCounts != null;
+    final boolean lengthsAvailable = setToFilter.termLengths != null;
+    final boolean origTermsAvailable = setToFilter.originalTermStrings != null;
+    
+    IntArrayList counts = countsAvailable ? new IntArrayList() : null;
+    IntArrayList lengths = lengthsAvailable ? new IntArrayList() : null;
+    ObjectArrayList<String> strings = new ObjectArrayList<String>();
+    ObjectArrayList<String> descriptions = new ObjectArrayList<String>();
+    ObjectArrayList<String[][]> origTerms = new ObjectArrayList<String[][]>();
+    ObjectOpenHashSet<String> bannedSet = new ObjectOpenHashSet<String>(bannedDescriptions);
+    
+    for(int i = 0; i < setToFilter.termDescriptions.length; i++) {
+      if(!bannedSet.contains(setToFilter.termDescriptions[i])) {
+        descriptions.add(setToFilter.termDescriptions[i]);
+        strings.add(setToFilter.termStrings[i]);
+        if(countsAvailable) counts.add(setToFilter.termCounts[i]);
+        if(lengthsAvailable) lengths.add(setToFilter.termLengths[i]);
+        if(origTermsAvailable)origTerms.add(setToFilter.originalTermStrings[i]);
+      }
+    }
+    int size = descriptions.size();
+    TermsResultSet res = new TermsResultSet(
+      strings.toArray(new String[size]),
+      lengthsAvailable ? lengths.toArray(new int[size]) : null,
+      countsAvailable ? counts.toArray(new int[size]) : null,
+      descriptions.toArray(new String[size]));
+    if(origTermsAvailable) res.originalTermStrings = 
+        origTerms.toArray(new String[size][][]);
+    return res;
+  }
+  
   /**
    * This method re-arranges the data included in one or more 
    * {@link TermsResultSet} values so that each term description occurs only
