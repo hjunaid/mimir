@@ -15,20 +15,14 @@
  */
 package gate.mimir.search;
 
-import gate.mimir.DocumentMetadataHelper;
 import gate.mimir.index.IndexException;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.score.MimirScorer;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleBigArrayBigList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
 import it.unimi.dsi.fastutil.longs.LongBigList;
-import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
@@ -45,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -324,6 +319,12 @@ public class RankingQueryRunnerImpl implements QueryRunner {
   protected volatile boolean allDocIdsCollected = false;
   
   /**
+   * The task that's working on collecting all the document IDs. When this 
+   * activity has finished, the precise documents count is known.
+   */
+  protected volatile FutureTask<Object> docIdCollectorFuture;
+  
+  /**
    * Creates a query runner in ranking mode.
    * @param qNode the {@link QueryNode} for the query being executed.
    * @param scorer the {@link MimirScorer} to use for ranking.
@@ -370,16 +371,14 @@ public class RankingQueryRunnerImpl implements QueryRunner {
 
     // queue a job for collecting all document ids
     try {
+      docIdCollectorFuture = new FutureTask<Object>(new DocIdsCollector(), null);
+      backgroundTasks.put(docIdCollectorFuture);
       if(!ranking) {
         // if not ranking, the doc IDs collector will all collect the
         // hits for the first docBlockSize number of documents
-        FutureTask<Object> future = new FutureTask<Object>(new DocIdsCollector(), null);
         synchronized(hitCollectors) {
-          hitCollectors.put(new long[]{0, docBlockSize}, future);
+          hitCollectors.put(new long[]{0, docBlockSize}, docIdCollectorFuture);
         }
-        backgroundTasks.put(future);
-      } else {
-        backgroundTasks.put(new DocIdsCollector());
       }
     } catch(InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -394,6 +393,24 @@ public class RankingQueryRunnerImpl implements QueryRunner {
   public long getDocumentsCount() {
     if(allDocIdsCollected) return documentIds.size64();
     else return -1;
+  }
+  
+  /**
+   * Synchronous version of {@link #getDocumentsCount()} that waits if necessary
+   * before returning the correct result (instead of returning  <code>-1</code>
+   * of the value is not yet known).
+   * @return the total number of documents found to match the query.
+   */
+  @Override
+  public long getDocumentsCountSync() {
+    try {
+      docIdCollectorFuture.get();
+    } catch(Exception e) {
+      logger.error("Exception while getting all document IDs", e);
+      throw new IllegalStateException(
+        "Exception while getting all document IDs", e);
+    }
+    return getDocumentsCount();
   }
 
   /* (non-Javadoc)

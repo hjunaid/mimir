@@ -110,6 +110,19 @@ public class FederatedQueryRunner implements QueryRunner {
     return documentsCount;
   }
 
+  
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getDocumentsCountSync()
+   */
+  @Override
+  public long getDocumentsCountSync() {
+    for(QueryRunner subRunner : subRunners) {
+      subRunner.getDocumentsCountSync();
+    }
+    return getDocumentsCount();
+  }
+
   /* (non-Javadoc)
    * @see gate.mimir.search.QueryRunner#getCurrentDocumentsCount()
    */

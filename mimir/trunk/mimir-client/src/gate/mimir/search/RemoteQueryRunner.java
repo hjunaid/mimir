@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.FutureTask;
 
 import org.apache.log4j.Logger;
 
@@ -164,6 +165,12 @@ public class RemoteQueryRunner implements QueryRunner {
    */
   private volatile long currentDocumentsCount;
   
+  /**
+   * The task that's working on collecting all the document IDs. When this 
+   * activity has finished, the precise documents count is known.
+   */
+  private volatile FutureTask<Object> docDataUpdaterFuture;
+  
   private volatile boolean closed;
   
   /**
@@ -236,11 +243,11 @@ public class RemoteQueryRunner implements QueryRunner {
     // start the background action
     documentsCount = -1;
     currentDocumentsCount = 0;
-    DocumentDataUpdater docDataUpdater = new DocumentDataUpdater(); 
+    docDataUpdaterFuture = new FutureTask<Object>( new DocumentDataUpdater(), null); 
     if(threadSource != null) {
-      threadSource.execute(docDataUpdater);
+      threadSource.execute(docDataUpdaterFuture);
     } else {
-      new Thread(docDataUpdater, 
+      new Thread(docDataUpdaterFuture, 
         DocumentDataUpdater.class.getCanonicalName()).start();
     }    
   }
@@ -304,6 +311,23 @@ public class RemoteQueryRunner implements QueryRunner {
   @Override
   public long getDocumentsCount() {
     return documentsCount;
+  }
+
+  
+  
+  /* (non-Javadoc)
+   * @see gate.mimir.search.QueryRunner#getDocumentsCountSync()
+   */
+  @Override
+  public long getDocumentsCountSync() {
+    try{
+      docDataUpdaterFuture.get();
+    } catch(Exception e) {
+      logger.error("Exception while getting all document IDs", e);
+      throw new IllegalStateException(
+        "Exception while getting all document IDs", e);
+    }    
+    return getDocumentsCount();
   }
 
   /* (non-Javadoc)
