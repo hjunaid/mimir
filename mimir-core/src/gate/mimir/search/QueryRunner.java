@@ -56,6 +56,14 @@ public interface QueryRunner {
   public long getDocumentsCount();
 
   /**
+   * Synchronous version of {@link #getDocumentsCount()} that waits if necessary
+   * before returning the correct result (instead of returning  <code>-1</code>
+   * of the value is not yet known).
+   * @return the total number of documents found to match the query.
+   */
+  public long getDocumentsCountSync();
+  
+  /**
    * Gets the number of result documents found so far. After the search 
    * completes, the result returned by this call is identical to that of 
    * {@link #getDocumentsCount()}. 
