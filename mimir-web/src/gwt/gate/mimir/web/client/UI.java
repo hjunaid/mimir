@@ -590,7 +590,7 @@ public class UI implements EntryPoint {
           
           String[] elems = historyToken.split("\\&");
           for(String elem : elems) {
-            String[] keyVal = elem.split("=");
+            String[] keyVal = elem.split("=", 2);
             String key = keyVal[0].trim();
             String value = keyVal[1].trim();
             if(key.equalsIgnoreCase("queryId")) {
