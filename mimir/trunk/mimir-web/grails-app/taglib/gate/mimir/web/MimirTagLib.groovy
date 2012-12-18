@@ -36,6 +36,11 @@ class MimirTagLib implements ApplicationContextAware {
    * Pointer to the Grails plugin manager.
    */
   def pluginManager
+
+  /**
+   * Autowired
+   */
+  def mimirIndexService
   
   static NumberFormat percentNumberInstance = NumberFormat.getPercentInstance(Locale.US)
 
@@ -73,34 +78,14 @@ class MimirTagLib implements ApplicationContextAware {
    * the scheme, host name, and port parts of the produced URL.
    */
   def createIndexUrl = { attrs, body ->
-    if(attrs.urlBase) {
-      String urlBase = attrs.urlBase.toString()
-      out << (urlBase.endsWith('/') ? urlBase.substring(0, urlBase.length() -1) : urlBase)
-    } else {
-      out << request.getScheme()
-      out << "://"
-      out << (attrs?.serverName?: request.getServerName())
-      if((request.getScheme() == "https" && request.getServerPort() != 443) ||
-         (request.getScheme() == "http" && request.getServerPort() != 80)) {
-        out << ":${request.getServerPort()}"
-      }
-    }
-    out << g.createLink(controller:"indexManagement", action:"index",
-                        params:[indexId:attrs.indexId])
+    out << mimirIndexService.createIndexUrl(attrs)
   }
 
   /**
    * Creates an absolute URL pointing to the home page of the web app.
    */
   def createRootUrl = { attrs, body ->
-    out << request.scheme
-    out << "://"
-    out << request.serverName
-    if((request.scheme == "https" && request.serverPort != 443) ||
-    (request.scheme == "http" && request.severPort != 80)) {
-      out << ":${request.serverPort}"
-    }
-    out << request.contextPath
+    out << mimirIndexService.createRootUrl()
   }
 
   /**
