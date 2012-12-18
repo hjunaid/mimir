@@ -26,11 +26,6 @@ import gate.Gate
 import gate.creole.ResourceData
 import gate.creole.ResourceInstantiationException
 
-import org.springframework.web.context.request.RequestContextHolder
-import grails.util.GrailsWebUtil
-
-
-
 /**
  * Index stored locally on disk.
  */
@@ -59,16 +54,10 @@ class LocalIndex extends Index implements Serializable {
    */
   transient localIndexService
 
-  String indexUrl() {
-    // We want to use the createLink tag to generate the URL, but domain
-    // objects can't call taglibs, so we fetch the currently-executing
-    // controller - this will throw an IllegalStateException if called outside
-    // the scope of a request.
-    def controller = GrailsWebUtil.getControllerFromRequest(
-        RequestContextHolder.currentRequestAttributes().currentRequest)
+  transient mimirIndexService
 
-    // call the createIndexUrl tag through the current controller
-    return controller.mimir.createIndexUrl([indexId:indexId]) + 
+  String indexUrl() {
+    return mimirIndexService.createIndexUrl([indexId:indexId]) + 
         '/manage/addDocuments'
   }
 
