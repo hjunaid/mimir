@@ -22,7 +22,7 @@ of software installed on your system:
   \url{http://ant.apache.org/}. Once installed, make sure your \verb!ANT_HOME!
   environment variable points to the top-level directory of your installation.
   Make  sure that the \verb!$ANT_HOME/bin! location is on your \verb!PATH!.
-  \item[Grails] version 1.3.7. You can download this from
+  \item[Grails] version 2.1.1. You can download this from
   \url{http://grails.org}. Once installed, make sure your \verb!GRAILS_HOME!
   environment variable points to the top-level directory of your installation.
   Make sure that the \verb!$GRAILS_HOME/bin! location is on your \verb!PATH!.
@@ -42,52 +42,39 @@ of software installed on your system:
 \section{Build and Run a \Mimir{} Web Application}
 %
 After all the prerequisites are installed, we can move to building a \Mimir{}
-application. For the purposes of this demo, we will build the {\tt mimir-demo}
-application. In a real deployment you may find the alternative application ({\tt
-mimir-cloud}) more suitable.
+application. For the purposes of this demo, we will build the {\tt mimir-cloud}
+application, which is included in the source tree.
 
-The following steps will help you build the {\tt mimir-demo} application.
+The following steps will help you build the {\tt mimir-cloud} application.
 Commands that you have to execute are formatted in a distinctive font
 \cmd{like this}.
 \begin{enumerate}
   \item {\bf Download the \Mimir{} sources}, if you do not already have a copy.
-  Pick the appropriate version from one of the tag directories listed in the
-  {\tt tags} directory at
-  \url{http://gate.svn.sourceforge.net/viewvc/gate/mimir/}, then click on the
-  {\em Download GNU tarball} link. If you want to use the latest development
-  version (which could be unstable!), use the {\tt trunk} directory instead of a
-  tag. Unpack the downloaded file to a location on your computer. If using
-  Windows we recommend not using the popular Winzip utility, as that sometimes
-  mangles the file names. 7-Zip\footnote{\url{http://www.7-zip.org/}} and the
-  Cygwin ``tar'' utility are known to work correctly in this respect, and other
-  free archiving tools are available that support the {\tt .tar.gz} format.
-  
-  Alternatively, if 
-  Subversion\footnote{\url{http://subversion.apache.org/}} is installed on your
-  system, you can check out the sources directly from our SourceForge repository
-  by executing the following command:\\\cmd{svn co 
-  https://gate.svn.sourceforge.net/svnroot/gate/mimir/trunk\\mimir}.
-  The URL used in the command is for the {\tt trunk} version; adjust accordingly
-  to point to one of the tags, if you require a release version instead. This
-  will create a new directory called {\tt mimir} containing all the source
-  files.
-  \item {\bf Build the library:} change to the top level directory where you
+  Instructions for doing so are available on \Mimir{}'s web page at:
+  \url{http://gate.ac.uk/mimir/index.html}.
+  If using a .tar.gz source tree archive on Windows we recommend not using the
+  popular Winzip utility, as that sometimes mangles the file names. 
+  7-Zip\footnote{\url{http://www.7-zip.org/}} and the Cygwin ``tar'' utility are
+  known to work correctly in this respect, and other free archiving tools are 
+  available that support the {\tt .tar.gz} format.
+  Unpacking a source archive (or checking the source code out with subversion)
+  will create a new directory called {\tt mimir} containing all the source files.
+  \item {\bf Build \Mimir{}:} change to the top level directory where you
   unpacked the downloaded \Mimir{} sources. If you can see the {\tt mimir-core},
   {\tt mimir-client}, {\em etc.} directories, then you are in the correct
   directory. Execute the \cmd{ant} command. This will download all the
   required dependencies, compile all the \Mimir{} libraries, and build the {\tt
   mimir-web} Grails plugin.
-  \item {\bf Generate the demo application:} to use \Mimir{} you need a web
-  application that you can access from your browser. The simplest \Mimir{}-based
-  web application is {\tt mimir-demo}, which can be automatically generated
-  and built by executing the \cmd{ant mimir-demo} command. This will produce a
-  new directory, named {\tt mimir-demo}, located under the top level \Mimir{}
-  directory.
-  \item {\bf Run the demo application:}  change to the newly created {\tt
-  mimir-demo} directory (\cmd{cd mimir-demo}) and execute the \cmd{grails prod
+  If you have multiple Grails versions installed, and Grails 2.1.1 is not the
+  default, you must give priority to Grails 2.1.1.  Do so by executing
+  \cmd{export GRAILS\_HOME=/path/to/grails-2.1.1} +  and then 
+  \cmd{ant -Dgrails.bin=\$GRAILS\_HOME/bin/grails} (instead of \cmd{ant}) to
+  override the default Grails settings.
+  \item {\bf Run the mimir-cloud application:}  change to the {\tt
+  mimir-cloud} directory (\cmd{cd mimir-cloud}) and execute the \cmd{grails prod
   run-app} command. This will start the application and will notify you which
   URL you should use in your browser to access it (normally
-  \url{http://localhost:8080/mimir-demo/}).
+  \url{http://localhost:8080/mimir-cloud/}).
 \end{enumerate}
 %
 \section{Create, Populate, and Search an Index}
