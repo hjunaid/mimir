@@ -46,7 +46,9 @@ grails.project.dependency.resolution = {
       }
       compile(":hibernate:$grailsVersion")
       compile(":webflow:2.0.0")
-      compile(":gwt:0.8")
+      compile(":gwt:0.8") {
+        excludes 'resources'
+      }
     }
 }
 

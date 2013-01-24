@@ -26,7 +26,7 @@ environments {
     production {
         dataSource {
             dbCreate = "update"
-            url = "jdbc:hsqldb:file:/data/home/gate/mimir-db;shutdown=true"
+            url = "jdbc:hsqldb:file:prodDb;shutdown=true"
         }
     }
 }

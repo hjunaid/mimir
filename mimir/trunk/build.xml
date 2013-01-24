@@ -6,12 +6,9 @@
   <property name="mimir-client.dir" location="${mimir-client.dirname}" />
   <property name="plugins.dir" location="${plugins.dirname}" />
   <property name="grails-plugin.dir" location="${grails-plugin.dirname}" />
-  <property name="grails-demo-webapp.dir"
-            location="${grails-demo-webapp.dirname}" />
   <property name="grails-cloud-webapp.dir"
             location="${grails-cloud-webapp.dirname}" />
   <property name="mimir-guide.dir" location="doc" />  
-  <property file="mimir-web/application.properties"  prefix="mimir.web." />
 
   <property name="generated-header.java" location="etc/generated-header.java" />
   <property name="generated-header.tex" location="etc/generated-header.tex" />
@@ -138,83 +135,6 @@
       <arg value="set-version ${app.version}" />
     </grails>
   </target>
-
-  <target name="check-demo-app">
-    <!-- If the directory already exists, exit -->
-    <available property="app-exists" file="${grails-demo-webapp.dir}" />  
-  </target>
-  
-  <target name="fail-if-exists" if="app-exists" depends="check-demo-app">
-<echo>===========================================================
-
-Target directory already exists:
-  ${grails-demo-webapp.dir}	
-Please delete/move it manually and try again!
-
-===========================================================</echo>
-    <fail message="Application already exists."/>
-  </target>
-  
-  <target name="mimir-demo" depends="grails.command, fail-if-exists">
-    <echo>This will create a new Grails application at ${grails-demo-webapp.dir}...</echo>
-    
-    <xmlproperty prefix="mimir.web" file="${grails-plugin.dir}/plugin.xml" />
-  	
-    <grails dir=".">
-      <arg value="create-app" />
-      <arg value="${grails-demo-webapp.name}" />
-    </grails>
-    
-    <replace file="${grails-demo-webapp.dir}/grails-app/conf/BuildConfig.groovy"
-      token="//mavenCentral()" value="mavenCentral()" />
-    
-    <echo file="${grails-demo-webapp.dir}/grails-app/conf/UrlMappings.groovy"
-      >class UrlMappings { static mappings = {} }</echo>
-    <echo file="${grails-demo-webapp.dir}/grails-app/conf/BuildConfig.groovy"
-      append="true">
-
-// version of GWT to use - this will be downloaded automatically using ivy
-gwt.version = "${gwt.version}"
-</echo>
-  	
-    <grails dir="${grails-demo-webapp.dir}">
-      <arg value="clean" />
-    </grails>
-    
-  	<grails dir="${grails-demo-webapp.dir}">
-      <arg value="set-version" />
-      <arg value="${app.version}" />
-    </grails>
-    	
-    <grails dir="${grails-demo-webapp.dir}">
-      <arg value="install-plugin" />
-      <arg file="${grails-plugin.dir}/grails-${mimir.web.plugin(name)}-${mimir.web.plugin(version)}.zip" />
-    </grails>
-    
-    <!-- The first compile always fails due to GWT classes being added to the
-    classpath too late. When that happens, we need to run compile a second time.
-    -->
-    <trycatch>
-      <try>
-      <grails dir="${grails-demo-webapp.dir}">
-        <arg value="compile" />
-      </grails>
-    </try>
-      <catch>
-        <echo>First Grails compilation failed (GWT not on the classpath?); re-trying...</echo>
-        <grails dir="${grails-demo-webapp.dir}">
-          <arg value="compile" />
-        </grails>
-      </catch>
-    </trycatch>
-
-    <echo>
-    A new Grails application was created at ${grails-demo-webapp.name}.
-    Please edit the configuration according to your local set-up (see in
-    particular /grails-app/conf/MimirConfig.groovy). Check the user manual (in
-    doc/mimir-guide.pdf) for details of what the various configuration options
-    mean.</echo>
-  </target>  
   
   <target name="all" 
     depends="core, plugins, grails-plugin, prepare-cloud-app, resolve-tex-templates" />
