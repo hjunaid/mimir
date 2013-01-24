@@ -61,6 +61,8 @@ ROLE_MANAGER > ROLE_USER
   }
 }
 
+gate.mimir.runningOnCloud = false
+
 // If supplied, this value is used to override the scheme, server name, and port
 // parts of the index URL. This can be used to make cloud-based installations 
 // show their private URl here instead of the one obtained from the current 

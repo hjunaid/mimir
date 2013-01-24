@@ -2,6 +2,7 @@
 <%@ page import="gate.mimir.web.LocalIndex" %>
 <%@ page import="gate.mimir.web.RemoteIndex" %>
 <%@ page import="gate.mimir.web.FederatedIndex" %>
+<%@ page import="gate.mimir.web.MimirConfiguration" %>
 <%@ page import="gate.mimir.cloud.IndexDownloadController" %>
 
 <g:set var="localIdxCnt" value="${LocalIndex.count()}" />
@@ -30,6 +31,17 @@
 				${flash.message}
 			</div>
 		</g:if>
+
+    <g:if test="${MimirConfiguration.count() == 0}">
+      <h2>Configuration</h2>
+      <p>You need to <g:link controller="mimirConfiguration" action="edit" id="">configure</g:link> your local M&iacute;mir instance.</p>
+    </g:if>
+    <g:else>
+    <g:if test="${!grailsApplication.config.gate.mimir.runningOnCloud}">
+	    <h2>Configuration</h2>
+	    <p><g:link controller="mimirConfiguration" action="show" id="">Show/edit</g:link> 
+	    the configuration for your M&iacute;mir instance.</p>
+    </g:if>
 
 		<h2>
 			Indexes <span style="font-size: small;"
@@ -164,25 +176,28 @@
 		</p>
 	
 		<%
-		File dataPartition = new File("/data");
-		if(dataPartition.isDirectory()) {
-		  try {
-		    long total = dataPartition.getTotalSpace();
-		    long free = dataPartition.getFreeSpace();
-		    long used = total - free;
-		%><h2>Data volume details</h2>
-		<table border="0">
-		  <tr><td>Total size</td><td>${IndexDownloadController.fileSize(total)}</td></tr>
-		  <tr><td>Free space</td><td>${IndexDownloadController.fileSize(free)}</td></tr>
-		  <tr><td>Usage</td><td><%= (int)(((double)used) / total * 100) %>%</td></tr>
-		</table>
-		<%
-		  }
-		  catch(Exception e) {
-		    e.printStackTrace();
-		  }
-		}
+    if(grailsApplication.config.gate.mimir.runningOnCloud){
+		  File dataPartition = new File("/data");
+			if(dataPartition.isDirectory()) {
+			  try {
+			    long total = dataPartition.getTotalSpace();
+			    long free = dataPartition.getFreeSpace();
+			    long used = total - free;
+			%><h2>Data volume details</h2>
+			<table border="0">
+			  <tr><td>Total size</td><td>${IndexDownloadController.fileSize(total)}</td></tr>
+			  <tr><td>Free space</td><td>${IndexDownloadController.fileSize(free)}</td></tr>
+			  <tr><td>Usage</td><td><%= (int)(((double)used) / total * 100) %>%</td></tr>
+			</table>
+			<%
+			  }
+			  catch(Exception e) {
+			    e.printStackTrace();
+			  }
+			}
+    }
 		%>
+		</g:else>
 	</div>
 </body>
 </html>
