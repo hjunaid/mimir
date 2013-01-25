@@ -2,11 +2,11 @@ The standard semantic annotation helpers provided by \Mimir\ are adequate for
 many use cases, but if your application needs more functionality that they
 cannot provide it is easy to add your own custom helper implementations using a
 plugin mechanism.  This process is described in
-section~\ref{sec:extend:helpers}.  Similarly, the basic \Mimir\ demo
-application shows the simplest way to use the \Mimir\ Grails plugin, but it
-provides no authentication or security, for example.  To add these kinds of
-features you can install the \Mimir\ plugin into your own custom Grails
-application, as described in section~\ref{sec:extend:customapp}.
+section~\ref{sec:extend:helpers}.  Similarly, the basic \Mimir\ cloud
+application shows a simple way to use the \Mimir\ Grails plugin, but it provides
+no other features.  If you have different requirements, you can install the
+\Mimir\ plugin into your own custom Grails application, as described in
+section~\ref{sec:extend:customapp}.
 
 \section{Creating New Semantic Annotation Helpers}\label{sec:extend:helpers}
 
@@ -250,11 +250,10 @@ additional plugins.
 \section{Embedding \Mimir\ in a Custom Grails Application}
 \label{sec:extend:customapp}
 
-The demo Grails application provided with \Mimir\ provides access to the
-functionality of the \Mimir\ Grails plugin but is deliberately kept simple.  It
-does not address concerns such as security and authentication, but these can be
-handled by installing the \Mimir\ plugin into a custom Grails application and
-adding these functions there.
+The {\tt mimir-cloud} Grails application provided with \Mimir\ provides access
+to the functionality of the \Mimir\ Grails plugin but is deliberately kept
+simple. For more complex needs, you can install the \Mimir\ plugin into a custom
+Grails application.
 
 \subsection{Installing the \Mimir\ Plugin}
 
@@ -315,9 +314,9 @@ library, then you must make sure that:
 
 There are a number of established and mature Grails plugins that implement user
 registration, authentication and security in various ways for Grails
-applications.  By design, the \Mimir\ plugin and demo app do not provide any
-security of their own, but for production deployments you may wish to consider
-any or all of the following.
+applications.  By design, the \Mimir\ plugin does not provide any
+security of its own, allowing it to integrate with any security solution. For
+production deployments you may wish to consider any or all of the following.
 
 \begin{itemize}
 \item Place your application behind an Apache HTTPD or other similar front-end

@@ -190,6 +190,49 @@ then the renderer object must be included in the list of metadata helpers in
 order to function correctly.  Other metadata helpers may be added to the list
 if required.
 
+\subsection*{Direct Indexes}
+\label{sec:direct-indexes}
+Starting with version 5, \Mimir{} can build direct indexes as well as inverted
+ones. By default only inverted indexes are created, which are used to associate
+terms to documents. Direct indexes encode the inverse relation from documents to
+terms, hence a direct index can be used to find out which terms occur in any
+given document.
+
+To enable direct indexes for tokens, the configuration in the index template
+needs to be modified like in the following example:
+\begin{lstlisting}
+tokenFeatures = {
+  string(directIndex:true)
+  category(directIndex:true)
+  root()
+}
+\end{lstlisting}
+
+In this case, direct indexes will be built for the {\tt string} and {\tt
+category} features of \verb!{Token}! annotations, but not for the {\tt root}
+feature.
+
+In the case of semantic annotations, direct indexes are enabled in a similar
+fashion:
+\begin{lstlisting}
+index(directIndex:true) {
+  annotation helper:new DefaultHelper(...)
+  ...
+}
+\end{lstlisting}
+
+Note that direct indexes can only be enabled at the level of a {\tt index}
+element in the template, and not for individual annotation types.
+
+Direct indexes are built during the closing of the index, so enabling them will
+slightly increase the time taken for the close operation, but will not affect
+the indexing time. They are stored in separate files from the default indirect
+indexes, so they will not affect the functionality that does not require direct
+indexes at all.
+
+Direct indexes can currently only be searched via the Java API provided by the
+{\tt gate.mimir.search.terms} package.
+
 \section{Adding Documents to an Index}\label{sec:indexing:add-docs}
 
 Once an index has been created in {\em indexing} mode, the next stage is to add
