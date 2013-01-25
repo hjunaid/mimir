@@ -142,7 +142,7 @@ overlapping) a hit of {\tt Query2}.
 \subsection{MINUS Operator: ``{\tt -}''}\label{sec:minus-query}
 
 The {\tt MINUS} (also `-`) operator is a binary operator that takes a left and
-a right operand. It returns the hits from the left sub-query that are anot also
+a right operand. It returns the hits from the left sub-query that are not also
 valid hits for right sub-query. For example:
 \begin{description}
 \item[Query1 - Query2] will match all the hits of {\tt Query1} that are
@@ -266,11 +266,11 @@ The \Mimir\ web application exposes the search functionality as a web service
 that can be accessed through a simple HTTP interface. All requests are performed
 by calling an action with a set of parameters; the results of a call are encoded
 in XML and returned as the response to the request.  All the example URLs in
-this section assume the {\tt mimir-demo} application with its
+this section assume the {\tt mimir-cloud} application with its
 default URL mappings, running on {\tt localhost} port 8080.
 
 The \Mimir\ web service can be accessed at a URL like:\\
-{\tt http://localhost:8080/mimir-demo/\{index ID\}/search/\{action\}},
+{\tt http://localhost:8080/mimir-cloud/\{index ID\}/search/\{action\}},
 where the {\tt action} value is the name of one of the supported actions,
 described below. The actual URL (with the correct index ID included) can be
 obtained from the {\em index information page} presented by  the \Mimir\ web
@@ -324,7 +324,7 @@ An XML message with the ID of the new query,
 or an error message if there were any problems while parsing the query.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/postQuery?queryString=%22the%22!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/postQuery?queryString=%22the%22!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -357,7 +357,7 @@ any problems. The value returned is {\tt -1} if the search has not yet
 completed, or the total number of result documents otherwise.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentsCount?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentsCount?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -399,7 +399,7 @@ any problems. After the search completes, the value returned is identical to
 that returned by calling {\tt documentsCount}.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentsCurrentCount?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentsCurrentCount?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -443,7 +443,7 @@ An XML message encapsulating a numeric value, or an error message if there were
 any problems.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentId?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=3!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentId?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=3!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -478,7 +478,7 @@ An XML message encapsulating a numeric value, or an error message if there were
 any problems.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentScore?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=3!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentScore?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=3!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -513,7 +513,7 @@ An XML message encapsulating a set of {\tt <hit>} elements, one for
 each individual hit.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentHits?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=3!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentHits?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=3!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -567,7 +567,7 @@ This action could be used, for example, to obtain text snippets around a query
 hit.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentText?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=1&termPosition=100&length=10!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentText?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=1&termPosition=100&length=10!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -617,7 +617,7 @@ An XML message encapsulating the several string values, or an error message if
 there were any problems.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentMetadata?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&documentId=1!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/documentMetadata?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&documentId=1!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -655,7 +655,7 @@ HTML content. The hits are rendered as
 \lstinline[language=HTML]!<span class="mimir-hit">...</span>!.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/renderDocument?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=1!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/renderDocument?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0&rank=1!
 
 \end{minipage}\\
 \hline
@@ -680,7 +680,7 @@ HTML content. No hits are highlighted, as there is no query context
 available.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/renderDocument?documentId=11!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/renderDocument?documentId=11!
 
 \end{minipage}\\
 \hline
@@ -708,7 +708,7 @@ Returns & \begin{minipage}[t]{10.2cm}
 An XML message with a success or failure value.
 
 Example request:\\
-\lstinline[language=XML]!http://localhost:8080/mimir-demo/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/close?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
+\lstinline[language=XML]!http://localhost:8080/mimir-cloud/a4300d00-2dd1-4797-8eaa-e65b0c7d879b/search/close?queryId=a28656e2-18f4-4b58-b9d3-9a9378eb14d0!
 
 Example response:
 \begin{lstlisting}[language=XML]
@@ -743,14 +743,14 @@ the capabilities of the \Mimir\ framework and API.  It is written using the
 Google Web Toolkit, and the source code is included in the \Mimir\ Grails
 plugin.
 
-In the demo web application with its default URL mappings, the Web UI interface
-for an index in searching mode is available at\\
-\verb!http://localhost:8080/mimir-demo/{index ID}/search/index!.  The initial
+In the {\tt mimir-cloud} web application with its default URL mappings, the Web
+UI interface for an index in searching mode is available at\\
+\verb!http://localhost:8080/mimir-cloud/{index ID}/search/index!.  The initial
 page, shown in figure~\ref{fig:gus:front-page}, provides a text area into which
-you can type queries in the \Mimir\ query language.  It provides
-auto-completion for annotation types and features (by asking the index what
-types it was configured with when it was created). Clicking the Search button
-starts a search on the server.
+you can type queries in the \Mimir\ query language.  It provides auto-completion
+for annotation types and features (by asking the index what types it was
+configured with when it was created). Clicking the Search button starts a search
+on the server.
 
 \begin{figure}[tbp]
 \begin{center}

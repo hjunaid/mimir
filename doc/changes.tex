@@ -6,10 +6,23 @@ This appendix details the main changes in each \Mimir\ release.
   \item The {\em mimir-demo} example web application has been removed.
   \item The {\em mimir-cloud} has been modified to make it more suitable as a
   generic example web application.
-  \item \Mimir{} now uses Grails 2.1.1 to build the mimir-cloud web
-  application.
+  \item New query operator: {\bf MINUS} (also -) performs the set minus
+  operation on result sets (see Section~\ref{sec:minus-query}).  
   \item \Mimir{} now supports the construction of direct indexes (see
-  Section~\ref{sec:direct-indexes}).
+  Section~\ref{sec:direct-indexes}). Direct indexes are used to support a new
+  family of queries, that use document ID as query terms, and which return terms
+  as results. Currently these are only available as a Java API, and can be found
+  in the {\tt gate.mimir.search.terms} package.
+  \item Semantic annotation helpers are now capable of 'describing' a matched
+  mention. The S-A-H implementations included in the main distribution provide
+  default implementations for this functionality, which can be replaced by
+  pluggin-in alternative versions.
+  \item \Mimir{} now uses Grails 2.1.1 and GWT 2.5.0 to build the mimir-cloud
+  web application.
+  \item Bugfix: you can now use a string on the right hand side of a \verb!<!,
+  \verb!>!, \verb!<=! and \verb!>=! in annotation queries. This was always
+  documented, but did not work before.
+  \item Many other bugfixes.
 \end{itemize}
 \section{Version 4.1.3 (September 2012)}
 \begin{itemize}
@@ -66,7 +79,7 @@ This appendix details the main changes in each \Mimir\ release.
   \item Replaced the old GWT based UI with a new implementation (see
   Section~\ref{sec:search:gus}).
   \item Added the mimir-cloud web application to the source tree (see
-  Section~\ref{sec:webapps}).
+  Section~\ref{sec:mimir-cloud}).
 \end{itemize}
 
 \section{Version 3.4.0 (November 2011)}
