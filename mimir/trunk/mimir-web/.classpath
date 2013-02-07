@@ -107,18 +107,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.grails.ide.eclipse.core.CLASSPATH_CONTAINER"/>
-	<classpathentry kind="lib" path="/home/valyt/apps/gwt-2.5.0/gwt-user.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="file:/home/valyt/apps/gwt-2.5.0/doc/javadoc/"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="/home/valyt/apps/gwt-2.5.0/gwt-dev.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="file:/home/valyt/apps/gwt-2.5.0/doc/javadoc/"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="/home/valyt/apps/gwt-2.5.0/validation-api-1.0.0.GA.jar" sourcepath="/home/valyt/apps/gwt-2.5.0/validation-api-1.0.0.GA-sources.jar"/>
-	<classpathentry kind="lib" path="/home/valyt/apps/gwt-2.5.0/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER/gwt-2.4.0"/>
 	<classpathentry kind="output" path="target-eclipse/classes"/>
 </classpath>
