@@ -33,11 +33,6 @@ public class AnnotationTermsQuery extends AbstractTermsQuery {
    * Serialization ID.
    */
   private static final long serialVersionUID = 777418229209857720L;
-
-  public AnnotationTermsQuery(AnnotationQuery annotationQuery, 
-      boolean countsEnabled) {
-    this.annotationQuery = annotationQuery;
-  }
   
   public AnnotationTermsQuery(AnnotationQuery annotationQuery) {
     super();
