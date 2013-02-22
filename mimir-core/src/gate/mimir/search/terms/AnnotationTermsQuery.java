@@ -16,9 +16,14 @@ package gate.mimir.search.terms;
 
 import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.Mention;
+import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.AnnotationQuery;
 
+import it.unimi.dsi.big.mg4j.index.IndexIterator;
+import it.unimi.dsi.big.mg4j.index.IndexReader;
+
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -35,11 +40,32 @@ public class AnnotationTermsQuery extends AbstractTermsQuery {
   private static final long serialVersionUID = 777418229209857720L;
   
   public AnnotationTermsQuery(AnnotationQuery annotationQuery) {
-    super();
-    this.annotationQuery = annotationQuery;
+    this(annotationQuery, false, false);
   }
 
+  public AnnotationTermsQuery(AnnotationQuery annotationQuery,
+                              boolean countsEnabled,
+                              boolean describeAnnotations) {
+    super();
+    this.annotationQuery = annotationQuery;
+    this.countsEnabled = countsEnabled;
+    this.describeAnnotations = describeAnnotations;
+  }
+  
   protected AnnotationQuery annotationQuery;
+  
+  /**
+   * If set to true, term strings for annotation mentions are replaced with
+   * their description (see
+   * {@link SemanticAnnotationHelper#describeMention(String)}.
+   */
+  protected final boolean describeAnnotations;
+  
+  /**
+   * If set to true, for each returned term (i.e mention URI) the inverted 
+   * index is used to provide the number of occurrences. 
+   */
+  protected final boolean countsEnabled;
   
   private static final Logger logger = Logger.getLogger(AnnotationTermsQuery.class);
   
@@ -47,7 +73,7 @@ public class AnnotationTermsQuery extends AbstractTermsQuery {
    * @see gate.mimir.search.terms.TermQuery#execute()
    */
   @Override
-  public TermsResultSet execute(QueryEngine engine) {
+  public TermsResultSet execute(QueryEngine engine) throws IOException {
     // find the semantic annotation helper for the right annotation type
     SemanticAnnotationHelper helper = 
         engine.getAnnotationHelper(annotationQuery);
@@ -61,14 +87,42 @@ public class AnnotationTermsQuery extends AbstractTermsQuery {
   
     if(mentions.size() > 0) {
       String[] terms = new String[mentions.size()];
-      int[] lengths = new int[mentions.size()];
-      int index = 0;
-      for(Mention m : mentions) {
-        terms[index] = m.getUri();
-        lengths[index] = m.getLength();
-        index++;
+      String[] termDescriptions = describeAnnotations ? 
+          new String[mentions.size()] : null;
+      int[] counts = null;
+      IndexReaderPool annotationIndexReaderPool = null;
+      IndexReader annotationIndexReader = null;
+      try {
+        if(countsEnabled) {
+          counts = new int[mentions.size()];
+          annotationIndexReaderPool = engine.getAnnotationIndex(
+            annotationQuery.getAnnotationType());
+          annotationIndexReader = annotationIndexReaderPool.borrowReader();
+        }
+        
+        int[] lengths = new int[mentions.size()];
+        int index = 0;
+        for(Mention m : mentions) {
+          terms[index] = m.getUri();
+          lengths[index] = m.getLength();
+          if(countsEnabled) {
+            counts[index] = 0;
+            IndexIterator iIter = annotationIndexReader.documents(terms[index]);
+            while(iIter.nextDocument() >= 0) {
+              counts[index] += iIter.count();
+            }
+          }
+          if(describeAnnotations) {
+            termDescriptions[index] = helper.describeMention(terms[index]);
+          }
+          index++;
+        }
+        return new TermsResultSet(terms, lengths, counts, termDescriptions);
+      } finally {
+        if(annotationIndexReader != null) {
+          annotationIndexReaderPool.returnReader(annotationIndexReader);
+        }
       }
-      return new TermsResultSet(terms, lengths, null, null);
     } else {
       return TermsResultSet.EMPTY;
     }
