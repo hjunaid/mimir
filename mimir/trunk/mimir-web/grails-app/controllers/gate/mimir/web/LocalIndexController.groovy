@@ -138,7 +138,7 @@ class LocalIndexController {
       localIndexInstance.properties = params
       if(localIndexInstance.scorer == 'null') localIndexInstance.scorer = null
       if(!localIndexInstance.hasErrors() && localIndexInstance.save()) {
-        flash.message = "LocalIndex ${params.id} updated"
+        flash.message = "LocalIndex ${localIndexInstance.name} updated"
         redirect(controller:"indexAdmin", action:"admin", 
           params:[indexId:localIndexInstance.indexId])
       }
