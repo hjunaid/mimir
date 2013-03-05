@@ -79,6 +79,17 @@
             <mimir:revealBlock id="annotsConf"><mimir:indexAnnotationsConfig index="${indexInstance}"/></mimir:revealBlock>
             </td>
           </tr>
+          <tr style="vertical-align:top">
+            <td>Custom CSS styles:</td>
+            <td>
+            <g:if test="${indexInstance.css}">
+              <mimir:revealAnchor id="customCss">Detail...</mimir:revealAnchor>
+              <mimir:revealBlock id="customCss"><pre>${indexInstance.css}</pre></mimir:revealBlock>            
+            </g:if>
+            <g:else>none</g:else>
+            </td>
+          </tr>
+                    
           <g:if test="${indexInstance instanceof LocalIndex}" >
             <tr class="prop">
               <td valign="top" class="name">Scorer:</td>

@@ -38,6 +38,8 @@ class Index implements Serializable {
    */
   String state
   
+  String css
+  
   /**
    * Are document URIs in this index actually valid URLs that can be linked
    * to?  If true, an extra external link to the original document is shown
@@ -50,6 +52,7 @@ class Index implements Serializable {
     indexId(unique:true)
     state()
     uriIsExternalLink()
+    css(nullable:true, maxSize:20480, blank: true)
   }
 
   // Abstract methods defining behaviour - these should be implemented by

@@ -34,39 +34,32 @@
 			${fieldValue(bean:localIndexInstance,
 								field:'name')}
 			</td>
-
 		</tr>
 
 		<tr class="prop">
 			<td valign="top" class="name">Index UUID:</td>
-
 			<td valign="top" class="value">
 			${fieldValue(bean:localIndexInstance,
 								field:'indexId')}
 			</td>
-
 		</tr>
 
 		<tr class="prop">
 			<td valign="top" class="name">Index URL:</td>
-
 			<td valign="top" class="value"><mimir:createIndexUrl
 				indexId="${localIndexInstance.indexId}" /></td>
 		</tr>
 
 		<tr class="prop">
 			<td valign="top" class="name">State:</td>
-
 			<td valign="top" class="value">
 			${fieldValue(bean:localIndexInstance,
 								field:'state')}
 			</td>
-
 		</tr>
 
 		<tr class="prop">
 			<td valign="top" class="name">Index Directory:</td>
-
 			<td valign="top" class="value">
 			${fieldValue(bean:localIndexInstance,
 								field:'indexDirectory')}

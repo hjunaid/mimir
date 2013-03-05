@@ -116,7 +116,7 @@ class SearchController {
    if(runner){
      Index index = Index.findByIndexId(params.indexId)
      return [
-         indexId:params.indexId,
+         index:index,
          documentRank: params.documentRank,
          queryId:params.queryId,
          documentTitle:runner.getDocumentTitle(params.documentRank as int),
