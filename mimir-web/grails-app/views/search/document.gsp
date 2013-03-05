@@ -10,7 +10,7 @@
     <body>
       <g:if test="${documentTitle != null}">
        <h1><g:message code="gus.document.heading" args="${[documentTitle]}" /></h1>
-        <mimir:documentContent indexId="${index?.id}" documentRank="${documentRank}"
+        <mimir:documentContent indexId="${index?.indexId}" documentRank="${documentRank}"
             queryId="${queryId}" />
       </g:if>
       <g:else>
