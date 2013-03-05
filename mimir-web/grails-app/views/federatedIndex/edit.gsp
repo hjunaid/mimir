@@ -77,6 +77,15 @@
           value="${federatedIndexInstance.uriIsExternalLink}" /></td>
       </tr>
 
+      <tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
+        <td valign="top" class="name"><label for="css">Custom CSS styles:</label></td>
+        <td valign="top"
+          class="value ${hasErrors(bean:federatedIndexInstance,field:'css','errors')}">
+        <textarea id="css" name="css" rows="20" cols="50"
+          placeholder="CSS styles used when displaying search results"
+          >${fieldValue(bean:federatedIndexInstance,field:'css')}</textarea>
+        </td>
+      </tr>
 		</tbody>
 	</table>
 	</div>

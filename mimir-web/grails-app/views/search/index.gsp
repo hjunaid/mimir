@@ -1,6 +1,6 @@
 <html>
 <head>
-  <!-- Integrate with Sitemesh layouts           -->
+  <%-- Integrate with Sitemesh layouts           --%>
   <meta name="layout" content="mimir" />
 
   <title>M&iacute;mir Index &quot;${index?.name}&quot;</title>
@@ -11,12 +11,17 @@
     var uriIsLink = '${index?.uriIsExternalLink}';
   </r:script>
   
-  <!--                                           -->
-  <!-- This script loads your compiled module.   -->
-  <!-- If you add any GWT meta tags, they must   -->
-  <!-- be added before this line.                -->
-  <!--                                           -->
+  <%--                                           --%>
+  <%-- This script loads your compiled module.   --%>
+  <%-- If you add any GWT meta tags, they must   --%>
+  <%-- be added before this line.                --%>
+  <%--                                           --%>
   <script type="text/javascript" src="${resource(dir: 'gwt/gate.mimir.web.UI', file: 'gate.mimir.web.UI.nocache.js')}"></script>
+  
+  <%-- Add any custom CSS from the current index --%>
+  <g:if test="${index?.css}">
+  <content tag="customCss">${index?.css}</content>
+  </g:if>
 </head>
 
 <!--                                           -->

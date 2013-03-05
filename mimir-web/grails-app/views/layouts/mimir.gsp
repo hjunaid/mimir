@@ -6,7 +6,11 @@
         <link rel="shortcut icon" href="${resource(dir:'images',file:'favicon.ico')}" type="image/x-icon" />
         <g:layoutHead />
         <g:javascript library="application" />
-        <r:layoutResources/>				
+        <r:layoutResources/>
+        <%-- Add any custom CSS content provided by the page. --%>
+        <style type="text/css">
+        <g:pageProperty name="page.customCss" default="" />
+        </style>
     </head>
     <body>
         <div id="spinner" class="spinner" style="display:none;">
