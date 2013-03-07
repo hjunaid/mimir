@@ -22,12 +22,10 @@ import it.unimi.dsi.big.util.ImmutableExternalPrefixMap;
 import it.unimi.dsi.big.util.SemiExternalGammaBigList;
 import it.unimi.dsi.fastutil.longs.LongBigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigList;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.io.InputBitStream;
 import it.unimi.dsi.lang.MutableString;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -37,6 +35,25 @@ import java.util.concurrent.atomic.AtomicInteger;
  * A pool for IndexReader values associated with a given index.
  */
 public class IndexReaderPool {
+  
+  public class IndexDictionary extends ImmutableExternalPrefixMap {
+
+    private static final long serialVersionUID = 3350171413268036811L;
+
+    public IndexDictionary(Iterable<? extends CharSequence> terms)
+      throws IOException {
+      super(terms);
+    }
+
+    /**
+     * Gets the term string for a given term ID.
+     * @param termId the ID for the term being sought.
+     * @return the string for the given term.
+     */
+    public String getTerm(long termId) {
+      return super.getTerm(termId, new MutableString()).toString();
+    }
+  }
   
   private static final int DEFAULT_CAPACITY = 100000;
   
@@ -69,7 +86,7 @@ public class IndexReaderPool {
    * An external map that holds the index terms. Allows the retrieval of a 
    * term's text given a term ID.
    */
-  private transient ImmutableExternalPrefixMap dictionary;
+  private transient IndexDictionary dictionary;
   
   /**
    * A semi-external list holding the global counts for the terms in this 
@@ -137,12 +154,12 @@ public class IndexReaderPool {
    * @throws IOException
    * @return the index dictionary 
    */
-  public ImmutableExternalPrefixMap getDictionary() throws IOException {
+  public IndexDictionary getDictionary() throws IOException {
     if(dictionary == null) {
       FileLinesCollection dictionaryLines = new FileLinesCollection(
               new File(URI.create(indexURI.toString() + 
                 DiskBasedIndex.TERMS_EXTENSION)).getAbsolutePath(), "UTF-8");
-            dictionary = new ImmutableExternalPrefixMap(dictionaryLines);
+      dictionary = new IndexDictionary(dictionaryLines);
     }
     return dictionary;
   }
@@ -154,16 +171,7 @@ public class IndexReaderPool {
    * @throws IOException
    */
   public String getTerm(long termId) throws IOException {
-    return getDictionary().list().get(termId).toString();
-  }
-  
-  /**
-   * Gets the list of terms in this index. 
-   * @return a list of terms represented as {@link MutableString} values.
-   * @throws IOException
-   */
-  public ObjectBigList<MutableString> getTermsList() throws IOException {
-    return getDictionary().list();
+    return getDictionary().getTerm(termId).toString();
   }
   
   /**

@@ -129,7 +129,13 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
       while(inputTermIterator != null) {
         try { // Start: process output document
           // the current input term ID is an output document ID.
+          // BUG? This value seems to be wrong on large indexes. Maybe we should
+          // just count them instead?
           long outputDocId = inputTermIterator.termNumber();
+          if(outputDocId != termsProcessed) {
+            logger.warn("Mismatch between term ID from index " + outputDocId + 
+                ", counted ID: " + termsProcessed + ".");
+          }
           //zero document related counters
           tokenPosition = -1;
           // for each input term, we iterate over its documents
