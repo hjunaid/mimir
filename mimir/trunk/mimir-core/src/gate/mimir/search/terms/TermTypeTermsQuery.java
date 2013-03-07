@@ -185,8 +185,8 @@ public class TermTypeTermsQuery extends AbstractTermsQuery {
     }
     
     // once we have the index reader, we scan the whole dictionary
-    termId:for(long i = 0; i < indirectIndexPool.getDictionary().size(); i++) {
-      String termString = indirectIndexPool.getTermsList().get(i).toString();
+    termId:for(long i = 0; i < indirectIndexPool.getDictionary().size64(); i++) {
+      String termString = indirectIndexPool.getTerm(i);
       // check this term should be returned
       if(indexType == IndexType.ANNOTATIONS &&
          !annotationHelper.isMentionUri(termString)) continue termId;

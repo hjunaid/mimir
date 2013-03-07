@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 /**
  * Base class for terms queries that use an MG4J direct index for their search.
  */
@@ -39,6 +41,7 @@ public abstract class AbstractIndexTermsQuery extends
    */
   private static final long serialVersionUID = 8382919427152317859L;
 
+  private static final Logger logger = Logger.getLogger(AbstractIndexTermsQuery.class);
   /**
    * The name of the subindex in which the terms are sought. Each Mímir index
    * includes multiple sub-indexes (some storing tokens, other storing
@@ -255,7 +258,14 @@ public abstract class AbstractIndexTermsQuery extends
       }
       String termString = null;
       // get the term string
-      termString = indirectIndexPool.getTerm(termId);
+      try{
+        termString = indirectIndexPool.getTerm(termId);
+      } catch (Exception e) {
+        System.err.println("Error reading indirect index term with ID " + termId);
+        e.printStackTrace();
+        termId = documentIterator.nextDocument();
+        continue terms;
+      }
       if(stopWordsBlocked && stopWords.contains(termString)) {
         // skip this term
         termId = documentIterator.nextDocument();
