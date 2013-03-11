@@ -205,8 +205,8 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
         inputTermIterator = inputIndexReader.nextIterator();
         termsProcessed++;
         buildProgress = (double)termsProcessed / inputIndex.numberOfTerms;
-        if(buildProgress - lastProgress >= 1) {
-          logger.debug("Direct index  " +  percentNF.format(buildProgress) + 
+        if(buildProgress - lastProgress >= 0.05) {
+          logger.debug("Direct index " +  percentNF.format(buildProgress) + 
               " built.");
           lastProgress = buildProgress;
         }
