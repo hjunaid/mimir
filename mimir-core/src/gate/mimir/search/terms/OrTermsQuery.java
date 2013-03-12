@@ -20,6 +20,8 @@ import it.unimi.dsi.fastutil.objects.ObjectHeapSemiIndirectPriorityQueue;
 
 /**
  * Boolean OR operator for term queries.
+ * The default count strategy used is 
+ * {@link AbstractCompoundTermsQuery.CompoundCountsStrategy#FIRST}. 
  */
 public class OrTermsQuery extends AbstractCompoundTermsQuery {
   
@@ -40,6 +42,7 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
    */
   public OrTermsQuery(TermsQuery... subQueries) {
     super(subQueries);
+    setCountsStrategy(AbstractCompoundTermsQuery.CompoundCountsStrategy.FIRST);
   }
   
   /* (non-Javadoc)
@@ -47,7 +50,7 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
    */
   @Override
   public TermsResultSet combine(TermsResultSet... resSets) {
-    return orResultsSets(resSets);
+    return orResultsSets(resSets, countsStrategy);
   }
 
   /**
@@ -57,7 +60,9 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
    * @param resSets 
    * @return
    */
-  public static TermsResultSet orResultsSets(TermsResultSet... resSets) {
+  public static TermsResultSet orResultsSets(TermsResultSet[] resSets, 
+      AbstractCompoundTermsQuery.CompoundCountsStrategy countsStrategy) {
+    if(countsStrategy == null) countsStrategy = AbstractCompoundTermsQuery.CompoundCountsStrategy.FIRST;
     String[] currentTerm = new String[resSets.length];
     ObjectHeapSemiIndirectPriorityQueue<String> queue = 
         new ObjectHeapSemiIndirectPriorityQueue<String>(currentTerm);
@@ -109,12 +114,12 @@ public class OrTermsQuery extends AbstractCompoundTermsQuery {
       if(countsAvailable) {
         // sum all counts
         int frontSize = queue.front(front);
-        int count = 0;
+        int[] counts = new int[frontSize];
         for(int i = 0;  i < frontSize; i++) {
           int subRunnerId = front[i];
-          count += resSets[subRunnerId].termCounts[termIndex[subRunnerId]];
+          counts[i]= resSets[subRunnerId].termCounts[termIndex[subRunnerId]];
         }
-        termCounts.add(count);
+        termCounts.add(AbstractCompoundTermsQuery.computeCompoundCount(counts, countsStrategy));
       }
       // consume all equal terms
       while(resSets[first].termStrings[termIndex[first]].equals(termString)) {

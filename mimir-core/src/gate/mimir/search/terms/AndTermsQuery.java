@@ -14,6 +14,7 @@
  */
 package gate.mimir.search.terms;
 
+import gate.mimir.search.terms.AbstractCompoundTermsQuery.CompoundCountsStrategy;
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -22,6 +23,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
  * Performs Boolean AND between multiple {@link TermsQuery} instances.
+ * The default count strategy used is 
+ * {@link AbstractCompoundTermsQuery.CompoundCountsStrategy#FIRST}.
  */
 public class AndTermsQuery extends AbstractCompoundTermsQuery {
   
@@ -42,6 +45,7 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
    */
   public AndTermsQuery(TermsQuery... subQueries) {
     super(subQueries);
+    setCountsStrategy(AbstractCompoundTermsQuery.CompoundCountsStrategy.FIRST);
   }
   
   /* (non-Javadoc)
@@ -49,10 +53,12 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
    */
   @Override
   public TermsResultSet combine(TermsResultSet... resSets) {
-    return andResultSets(resSets);
+    return andResultSets(resSets, countsStrategy);
   }
 
-  public static TermsResultSet andResultSets(final TermsResultSet[] resSets) {
+  public static TermsResultSet andResultSets(final TermsResultSet[] resSets,
+      AbstractCompoundTermsQuery.CompoundCountsStrategy countsStrategy) {
+    if(countsStrategy == null) countsStrategy = AbstractCompoundTermsQuery.CompoundCountsStrategy.FIRST;
     boolean lengthsAvailable = false;
     boolean countsAvailable = true;
     boolean descriptionsAvaialble = false;
@@ -71,25 +77,28 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
       // all sub-queries must provide counts, for us to be able to
       if(resSets[i].termCounts == null) countsAvailable = false;
     }
-    // optimisation: sort sub-runners by increasing sizes
-    Arrays.quickSort(0, resSets.length, new IntComparator() {
-      @Override
-      public int compare(Integer o1, Integer o2) { 
-        return compare(o1.intValue(), o2.intValue());
-      }
-      @Override
-      public int compare(int k1, int k2) {
-        return resSets[k1].termStrings.length - resSets[k2].termStrings.length; 
-      }
-    }, new Swapper() {
-      @Override
-      public void swap(int a, int b) {
-        TermsResultSet trs = resSets[a];
-        resSets[a] = resSets[b];
-        resSets[b] = trs;
-      }
-    });
-    
+    if(!countsAvailable || countsStrategy != AbstractCompoundTermsQuery.CompoundCountsStrategy.FIRST) {
+      // the sorting of sub-queries is irrelevant
+      // optimisation: sort sub-runners by increasing sizes
+      Arrays.quickSort(0, resSets.length, new IntComparator() {
+        @Override
+        public int compare(Integer o1, Integer o2) { 
+          return compare(o1.intValue(), o2.intValue());
+        }
+        @Override
+        public int compare(int k1, int k2) {
+          return resSets[k1].termStrings.length - resSets[k2].termStrings.length; 
+        }
+      }, new Swapper() {
+        @Override
+        public void swap(int a, int b) {
+          TermsResultSet trs = resSets[a];
+          resSets[a] = resSets[b];
+          resSets[b] = trs;
+        }
+      });      
+    }
+
     // prepare local data
     ObjectArrayList<String> termStrings = new ObjectArrayList<String>();
     ObjectArrayList<String> termDescriptions = descriptionsAvaialble ? 
@@ -114,13 +123,12 @@ public class AndTermsQuery extends AbstractCompoundTermsQuery {
         termStrings.add(termString);
         // calculate the term count
         if(countsAvailable) {
-          int count = 0;
+          int[] counts = new int[resSets.length];
           for(int i = 0; i < resSets.length; i++) {
-            if(resSets[i].termCounts != null) {
-              count += resSets[i].termCounts[indexes[i]];
-            }
+            counts[i] = (resSets[i].termCounts != null) ? 
+              (resSets[i].termCounts[indexes[i]]): -1;
           }
-          termCounts.add(count);
+          termCounts.add(AbstractCompoundTermsQuery.computeCompoundCount(counts, countsStrategy));
         }
         // calculate the term length
         if(lengthsAvailable) {

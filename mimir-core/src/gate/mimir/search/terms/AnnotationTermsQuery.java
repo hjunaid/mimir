@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
  * Given an {@link AnnotationQuery}, this finds the set of terms that satisfy 
  * it.
  */
-public class AnnotationTermsQuery extends AbstractTermsQuery {
+public class AnnotationTermsQuery implements TermsQuery {
   
   /**
    * Serialization ID.
