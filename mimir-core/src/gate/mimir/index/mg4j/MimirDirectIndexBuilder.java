@@ -125,17 +125,11 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
       // we are iterating over the input terms (output 'documents')
       NumberFormat percentNF = NumberFormat.getPercentInstance();
       IndexIterator inputTermIterator = inputIndexReader.nextIterator();
+      // document pointer is actually the current input term ID
+      documentPointer = 0;
       long termsProcessed = 0;
       while(inputTermIterator != null) {
         try { // Start: process output document
-          // the current input term ID is an output document ID.
-          // BUG? This value seems to be wrong on large indexes. Maybe we should
-          // just count them instead?
-          long outputDocId = inputTermIterator.termNumber();
-          if(outputDocId != termsProcessed) {
-            logger.warn("Mismatch between term ID from index " + outputDocId + 
-                ", counted ID: " + termsProcessed + ".");
-          }
           //zero document related counters
           tokenPosition = -1;
           // for each input term, we iterate over its documents
@@ -153,7 +147,7 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
               termMap.put(currentTerm.copy(), termPostings = new PostingsList(
                   new byte[ 32 ], true, Completeness.COUNTS));
             }
-            termPostings.setDocumentPointer(outputDocId);
+            termPostings.setDocumentPointer(documentPointer);
             termPostings.setCount(count);
             occurrencesInTheCurrentBatch += count;
             if(termPostings.outOfMemoryError) {
@@ -162,7 +156,7 @@ public class MimirDirectIndexBuilder extends MimirIndexBuilder {
             }
             // and move to the next output term (input document)
             outputTermId = inputTermIterator.nextDocument();
-          }          
+          }
         } finally {
           //write the size of the current document to the sizes stream
           try {
