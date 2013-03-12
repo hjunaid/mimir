@@ -20,7 +20,7 @@ package gate.mimir.search.terms;
  * search. 
  */
 public abstract class AbstractDocumentsBasedTermsQuery 
-    extends AbstractTermsQuery implements DocumentsBasedTermsQuery {
+    implements DocumentsBasedTermsQuery {
 
   /**
    * Serialization ID.

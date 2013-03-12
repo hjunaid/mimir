@@ -32,7 +32,7 @@ import gate.mimir.search.QueryEngine.IndexType;
  * A {@link TermsQuery} that enumerates all terms of a given type. The type of
  * a term is the name of a token feature, or an annotation type. 
  */
-public class TermTypeTermsQuery extends AbstractTermsQuery {
+public class TermTypeTermsQuery implements TermsQuery {
 
   
   /**

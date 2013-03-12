@@ -14,6 +14,7 @@
  */
 package gate.mimir.search.terms;
 
+import gate.mimir.search.terms.AbstractCompoundTermsQuery.CompoundCountsStrategy;
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 
@@ -148,4 +149,12 @@ public class SortedTermsQuery extends AbstractCompoundTermsQuery {
     }, new TermsResultSet.Swapper(trs));
     return trs;
   }
+  
+  /**
+   * This method has no effect, as the number of sub-queries is always 1.
+   */
+  @Override
+  public void setCountsStrategy(AbstractCompoundTermsQuery.CompoundCountsStrategy countsStrategy) {
+    super.setCountsStrategy(countsStrategy);
+  }  
 }

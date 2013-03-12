@@ -84,4 +84,13 @@ public class LimitTermsQuery extends AbstractCompoundTermsQuery {
       return trs;  
     }
   }
+
+
+  /**
+   * This method has no effect, as the number of sub-queries is always 1.
+   */
+  @Override
+  public void setCountsStrategy(AbstractCompoundTermsQuery.CompoundCountsStrategy countsStrategy) {
+    super.setCountsStrategy(countsStrategy);
+  }
 }
