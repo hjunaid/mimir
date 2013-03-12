@@ -136,6 +136,10 @@
     </grails>
   </target>
   
+  <target name="mimir-demo">
+    <echo>Tme mimir-demo Grails application is not supported any more. Please
+use mimir-cloud instead.</echo>
+  </target>
   <target name="all" 
     depends="core, plugins, grails-plugin, prepare-cloud-app, resolve-tex-templates" />
 
