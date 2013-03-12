@@ -7,6 +7,9 @@ import it.unimi.dsi.fastutil.ints.IntHeapIndirectPriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntHeapPriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntIndirectPriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntPriorityQueue;
+import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.dsi.big.mg4j.index.IndexIterator;
+import it.unimi.dsi.big.mg4j.index.IndexReader;
 import it.unimi.dsi.big.mg4j.search.score.BM25FScorer;
 import it.unimi.dsi.big.mg4j.search.score.BM25Scorer;
 import it.unimi.dsi.big.mg4j.search.score.CountScorer;
@@ -18,13 +21,19 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 
+import org.apache.commons.configuration.ConfigurationException;
+
 import gate.Gate;
 import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
+import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
 import gate.mimir.search.QueryRunner;
@@ -44,16 +53,87 @@ import gate.mimir.search.terms.OrTermsQuery;
 import gate.mimir.search.terms.SortedTermsQuery;
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
+import gate.mimir.util.MG4JTools;
 import gate.util.GateException;
 
 public class Scratch {
 
   public static void main (String[] args) throws Exception {
 //     mainSimple(args);
-     mainDirectIndexes(args);
-//    mainBuildDirectIndex(args);
+//     mainDirectIndexes(args);
+    mainBuildDirectIndex(args);
+//    mainQueryIndex(args);
   }
   
+  /**
+   * Interactive tool for querying a MG4J index (e.g. a Mímir sub-index, or a 
+   * Mímir sub-index batch).
+   * 
+   * @param args
+   * @throws NoSuchMethodException 
+   * @throws InvocationTargetException 
+   * @throws IllegalAccessException 
+   * @throws InstantiationException 
+   * @throws ClassNotFoundException 
+   * @throws URISyntaxException 
+   * @throws IOException 
+   * @throws SecurityException 
+   * @throws ConfigurationException 
+   */
+  public static void mainQueryIndex(String[] args) throws ConfigurationException, SecurityException, IOException, URISyntaxException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    IndexReaderPool termSource = null;
+    
+    // open the term supplying index
+    URI termsIndexUri = new File("/home/data/mimir-indexes/index-fastvac-1M.work/mg4j/mimir-token-2").toURI();
+    Index termsIndex = MG4JTools.openMg4jIndex(termsIndexUri);
+    termSource = new IndexReaderPool(termsIndex, termsIndexUri);
+
+    
+    if(args == null || args.length < 2) {
+      System.out.println("Usage:\njava Scratch indexDir indexName...\n" +
+      		"where indexDir is a mimir index directory, indexName is the basename of an index file (the file name without any extension).");
+      return;
+    }
+    // open the MG4J index
+    URI[] indexURIs = new URI[args.length - 1];
+    File mg4jDir = new File(new File(args[0]), "mg4j");
+    IndexReaderPool[] readerPools = new IndexReaderPool[args.length - 1];
+    for(int i = 0; i < indexURIs.length; i++) {
+      indexURIs[i] = new File(mg4jDir, args[i + 1]).toURI();
+      Index theIndex = MG4JTools.openMg4jIndex(indexURIs[i]);
+      readerPools[i] = new IndexReaderPool(theIndex, indexURIs[i]);      
+    }
+    
+    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+    System.out.print("Query:");
+    String line = in.readLine();
+    while(line != null && line.length() > 0) {
+      for(int i = 0; i < readerPools.length; i++) {
+        System.out.print("From " + indexURIs[i] + ":\n\t");
+        
+        IndexReader indexReader = readerPools[i].borrowReader();
+        try {
+          IndexIterator indexIter = indexReader.documents(Long.parseLong(line));
+          long docId = indexIter.nextDocument();
+          boolean first = true;
+          while(docId > 0 && docId != IndexIterator.END_OF_LIST) {
+            if(first) first = false;
+            else System.out.print(", ");
+            System.out.print(Long.toString(docId));
+            if(termSource != null) {
+              System.out.print("('" + termSource.getTerm(docId) + "')");
+            }
+            docId = indexIter.nextDocument();
+          }
+          System.out.println("\n");
+        } finally {
+          readerPools[i].returnReader(indexReader);
+        }
+      }
+      System.out.print("Query:");
+      line = in.readLine();
+    }
+  }
   
   public static void mainSimple(String[] args) throws Exception {
     Gate.setGateHome(new File("gate-home"));
