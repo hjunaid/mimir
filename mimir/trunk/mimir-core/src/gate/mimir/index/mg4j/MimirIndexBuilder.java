@@ -1019,7 +1019,7 @@ public abstract class MimirIndexBuilder implements Runnable {
    * Combines a set of batches. If the provided number of input batches is 
    * greater than {@link #MAXIMUM_BATCHES_TO_COMBINE}, then this method will 
    * start hierarchical batch combination: it will combine 
-   * {@link #MAXIMUM_BATCHES_TO_COMBINE} at one time, then combining the ouputs
+   * {@link #MAXIMUM_BATCHES_TO_COMBINE} at one time, then combining the outputs
    * of those processes, until a single result index is created. 
    * @param inputBasenames
    * @param ouputBaseName
