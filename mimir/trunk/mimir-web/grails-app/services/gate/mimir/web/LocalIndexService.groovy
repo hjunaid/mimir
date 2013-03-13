@@ -176,10 +176,16 @@ class LocalIndexService {
         throw new IllegalStateException(
         "Index ${index.indexId} is not open for searching")
       }
-      engine = new QueryEngine(new File(index.indexDirectory))
-      engine.queryTokeniser = queryTokeniser
-      engine.executor = searchThreadPool
-      queryEngines[index.id] = engine
+      try {
+        engine = new QueryEngine(new File(index.indexDirectory))
+        engine.queryTokeniser = queryTokeniser
+        engine.executor = searchThreadPool
+        queryEngines[index.id] = engine
+      } catch (Exception e) {
+        log.error("Cannot open local index at ${index?.indexDirectory}", e)
+        index.state = Index.FAILED
+        return null
+      }
     }
     // the scorer may have changed, so we update it every time
     if(index.scorer) {
