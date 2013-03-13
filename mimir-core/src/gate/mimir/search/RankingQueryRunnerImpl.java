@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -74,7 +73,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
     @Override
     public void run() {
       try {
-        while(true) {
+        while(!closed) {
           Runnable job = backgroundTasks.take();
           if(job == NO_MORE_TASKS) break;
           else  job.run();
@@ -151,12 +150,17 @@ public class RankingQueryRunnerImpl implements QueryRunner {
             }
             documentHits.set(docIndex, hits);
           } else {
+            // this could happen if we've been closed in the mean time
+            if(closed) return;
             // we got the wrong document ID
             logger.error("Unexpected document ID returned by executor " +
             		"(got " + newDoc + " while expecting " + docId + "!");
           }
         }
       } catch(IOException e) {
+        // this could happen if we've been closed in the mean time
+        if(closed) return;
+        // otherwise, it's an error
         logger.error("Exception while restarting the query executor.", e);
         try {
           close();
@@ -228,6 +232,9 @@ public class RankingQueryRunnerImpl implements QueryRunner {
           rankDocuments(docBlockSize -1);
         }
       } catch (Exception e) {
+        // this could happen if we've been closed in the mean time
+        if(closed) return;
+        // otherwise, it's an error
         logger.error("Exception while collecting document IDs", e);
         try {
           close();
@@ -325,6 +332,11 @@ public class RankingQueryRunnerImpl implements QueryRunner {
   protected volatile FutureTask<Object> docIdCollectorFuture;
   
   /**
+   * Internal flag used to mark when this query runner has been closed.
+   */
+  protected volatile boolean closed;
+  
+  /**
    * Creates a query runner in ranking mode.
    * @param qNode the {@link QueryNode} for the query being executed.
    * @param scorer the {@link MimirScorer} to use for ranking.
@@ -334,6 +346,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
   public RankingQueryRunnerImpl(QueryExecutor executor, MimirScorer scorer) throws IOException {
     this.queryExecutor = executor;
     this.scorer = scorer;
+    this.closed = false;
     ranking = scorer != null;
     queryEngine = queryExecutor.getQueryEngine();
     docBlockSize = queryEngine.getDocumentBlockSize();
@@ -706,6 +719,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
    */
   @Override
   public void close() throws IOException {
+    this.closed = true;
     try{
       if(queryEngine != null) queryEngine.releaseQueryRunner(this);
       if(queryExecutor != null) queryExecutor.close();
