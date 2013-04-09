@@ -33,6 +33,7 @@ import it.unimi.dsi.fastutil.longs.LongBigList;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.net.CookieHandler;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
@@ -197,6 +198,27 @@ public class RemoteQueryRunner implements QueryRunner {
    */
   protected DoubleBigList documentScores;
   
+  
+  /**
+   * Creates a new remote query runner instance which executes a search on a 
+   * Mímir server and makes the results available locally.
+   * 
+   * @param remoteUrl the index URL for the index being searched. This can be 
+   * obtained from the admin interface of the remote Mímir server.
+   * 
+   * @param queryString the Mímir query to be executed, represented as a string.
+   * 
+   * @param threadSource a source of threads  (such as a thread pool) used for
+   * background processes. If <code>null</code> is given then new threads are
+   * started as required.
+   * 
+   * @param webUtils an instance of {@link WebUtils}. If the remote server
+   * requires authentication, the correct user name and password should be set
+   * on the WebUtils instance before being used for the creation of remote query
+   * runners. WebUtils instances can be reused for multiple query runners.
+   * 
+   * @throws IOException
+   */
   public RemoteQueryRunner(String remoteUrl, String queryString, 
       Executor threadSource,  WebUtils webUtils) throws IOException {
     this.remoteUrl = remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/");
@@ -216,6 +238,28 @@ public class RemoteQueryRunner implements QueryRunner {
     }
   }
 
+  /**
+   * Creates a new remote query runner instance which executes a search on a 
+   * Mímir server and makes the results available locally.
+   * 
+   * @param remoteUrl the index URL for the index being searched. This can be 
+   * obtained from the admin interface of the remote Mímir server.
+   *  
+   * @param query the query to be executed. This constructor variant takes a
+   * {@link QueryNode}  value; for queries expressed as strings, use the other
+   * constructor.
+   * 
+   * @param threadSource a source of threads  (such as a thread pool) used for
+   * background processes. If <code>null</code> is given then new threads are
+   * started as required.
+   * 
+   * @param webUtils an instance of {@link WebUtils}. If the remote server
+   * requires authentication, the correct user name and password should be set
+   * on the WebUtils instance before being used for the creation of remote query
+   * runners. WebUtils instances can be reused for multiple query runners.      
+   * 
+   * @throws IOException
+   */
   public RemoteQueryRunner(String remoteUrl, QueryNode query, 
       Executor threadSource,  WebUtils webUtils) throws IOException {
     this.remoteUrl = remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/");
