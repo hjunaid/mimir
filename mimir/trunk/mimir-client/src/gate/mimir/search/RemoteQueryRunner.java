@@ -106,7 +106,10 @@ public class RemoteQueryRunner implements QueryRunner {
             // ...and we're done!
             documentsCount = newDocumentsCount;
           }
-        } catch(IOException e) {
+        } catch(InterruptedException e) {
+          Thread.currentThread().interrupt();
+          logger.warn("Interrupted while waiting", e);
+        } catch (Exception e) {
           if(failuresAllowed > 0) {
             failuresAllowed --;
             logger.error("Exception while obtaining remote document data (will retry)", e);
@@ -119,10 +122,7 @@ public class RemoteQueryRunner implements QueryRunner {
             logger.error("Exception while obtaining remote document data.", e);
             exceptionInBackgroundThread = e;
             return;
-          }
-        } catch(InterruptedException e) {
-          Thread.currentThread().interrupt();
-          logger.warn("Interrupted while waiting", e);
+          }          
         }
       }
     }
@@ -279,6 +279,7 @@ public class RemoteQueryRunner implements QueryRunner {
   }
   
   protected void init(String queryId, Executor threadSource) {
+    this.queryId = queryId;
     // init the caches
     this.documentIds = new LongBigArrayBigList();
     this.documentScores = new DoubleBigArrayBigList();
