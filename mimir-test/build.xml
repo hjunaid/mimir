@@ -8,6 +8,8 @@
   <property environment="env"/>
 	
 	<property name="core-home" location="../${mimir-core.dirname}"/>
+	<property name="client-home" location="../${mimir-client.dirname}"/>
+	
   <!-- Load Ivy support -->
   <property name="build.dir" location="${core-home}/build" />
   <path id="ivy.lib.path">
@@ -31,6 +33,7 @@
     <fileset dir="lib" includes="**/*.jar" />
     <fileset dir="${core-home}/lib" includes="**/*.jar" />
   	<fileset dir="${core-home}" includes="mimir-core-${app.version}.jar" />
+  	<fileset dir="${client-home}" includes="mimir-client-${app.version}.jar" />
     <path refid="ivylibs" />
   </path>
   
