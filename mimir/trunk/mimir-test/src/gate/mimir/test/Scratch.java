@@ -38,6 +38,7 @@ import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
 import gate.mimir.search.QueryRunner;
 import gate.mimir.search.RankingQueryRunnerImpl;
+import gate.mimir.search.RemoteQueryRunner;
 import gate.mimir.search.query.QueryExecutor;
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.QueryParser;
@@ -53,6 +54,7 @@ import gate.mimir.search.terms.OrTermsQuery;
 import gate.mimir.search.terms.SortedTermsQuery;
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
+import gate.mimir.tool.WebUtils;
 import gate.mimir.util.MG4JTools;
 import gate.util.GateException;
 
@@ -61,8 +63,9 @@ public class Scratch {
   public static void main (String[] args) throws Exception {
 //     mainSimple(args);
 //     mainDirectIndexes(args);
-    mainBuildDirectIndex(args);
+//    mainBuildDirectIndex(args);
 //    mainQueryIndex(args);
+    mainRemote(args);
   }
   
   /**
@@ -352,6 +355,27 @@ public class Scratch {
     
     
     qEngine.close();
+  }
+  
+  /**
+   * Scratch code for using the remote query runner
+   * @param args 2 string: index URL and query
+   * @throws Exception
+   */
+  public static void mainRemote(String[] args) throws Exception {
+    if(args.length != 2) {
+      System.out.println("Usage: Scratch indexUrl queryString");
+      return;
+    }
+    RemoteQueryRunner rqr = new RemoteQueryRunner(args[0], args[1], null, new WebUtils());
+    long docCount = rqr.getDocumentsCount();
+    while(docCount < 0) {
+      System.out.println("Working (found " + rqr.getDocumentsCurrentCount() + 
+        " documents so far)");
+      Thread.sleep(1000);
+      docCount = rqr.getDocumentsCount();
+    }
+    System.out.println("Search complete; found: " + docCount + " documents.");
   }
   
   private static NumberFormat nf = NumberFormat.getNumberInstance();
