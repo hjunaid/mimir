@@ -153,7 +153,7 @@ public class RemoteQueryRunner implements QueryRunner {
   /**
    * The query ID for the actual query runner, local to the remote index.
    */
-  private String queryId;
+  protected String queryId;
 
   /**
    * The total number of result documents (or -1 if not yet known).
@@ -534,5 +534,11 @@ public class RemoteQueryRunner implements QueryRunner {
       throw new RuntimeException("Error communicating to remote endpoint", e);
     }
   }
-  
+
+  /**
+   * Returns the query ID that this instance is working over.
+   */
+  public String getQueryId() {
+    return queryId;
+  } 
 }
