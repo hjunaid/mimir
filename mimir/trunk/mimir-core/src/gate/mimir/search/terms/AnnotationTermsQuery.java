@@ -20,8 +20,8 @@ import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.AnnotationQuery;
 
-import it.unimi.dsi.big.mg4j.index.IndexIterator;
-import it.unimi.dsi.big.mg4j.index.IndexReader;
+import it.unimi.di.big.mg4j.index.IndexIterator;
+import it.unimi.di.big.mg4j.index.IndexReader;
 
 import java.io.IOException;
 import java.util.List;

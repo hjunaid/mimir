@@ -18,10 +18,10 @@ import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
-import it.unimi.dsi.big.mg4j.search.DocumentIterator;
-import it.unimi.dsi.big.mg4j.search.visitor.CounterCollectionVisitor;
-import it.unimi.dsi.big.mg4j.search.visitor.CounterSetupVisitor;
-import it.unimi.dsi.big.mg4j.search.visitor.TermCollectionVisitor;
+import it.unimi.di.big.mg4j.search.DocumentIterator;
+import it.unimi.di.big.mg4j.search.visitor.CounterCollectionVisitor;
+import it.unimi.di.big.mg4j.search.visitor.CounterSetupVisitor;
+import it.unimi.di.big.mg4j.search.visitor.TermCollectionVisitor;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 

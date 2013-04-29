@@ -36,27 +36,29 @@ import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.io.OutputBitStream;
 import it.unimi.dsi.lang.MutableString;
 import it.unimi.dsi.logging.ProgressLogger;
-import it.unimi.dsi.big.mg4j.index.BitStreamIndex;
-import it.unimi.dsi.big.mg4j.index.BitStreamIndexWriter;
-import it.unimi.dsi.big.mg4j.index.CompressionFlags;
-import it.unimi.dsi.big.mg4j.index.CompressionFlags.Coding;
-import it.unimi.dsi.big.mg4j.index.CompressionFlags.Component;
-import it.unimi.dsi.big.mg4j.index.DiskBasedIndex;
-import it.unimi.dsi.big.mg4j.index.FileIndex;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.index.IndexWriter;
-import it.unimi.dsi.big.mg4j.index.NullTermProcessor;
-import it.unimi.dsi.big.mg4j.index.SkipBitStreamIndexWriter;
-import it.unimi.dsi.big.mg4j.index.TermProcessor;
-import it.unimi.dsi.big.mg4j.index.cluster.ContiguousDocumentalStrategy;
-import it.unimi.dsi.big.mg4j.index.cluster.DocumentalCluster;
-import it.unimi.dsi.big.mg4j.index.cluster.DocumentalConcatenatedCluster;
-import it.unimi.dsi.big.mg4j.index.cluster.IndexCluster;
-import it.unimi.dsi.big.mg4j.io.ByteArrayPostingList;
-import it.unimi.dsi.big.mg4j.tool.Combine;
-import it.unimi.dsi.big.mg4j.tool.Concatenate;
-import it.unimi.dsi.big.mg4j.tool.Scan;
-import it.unimi.dsi.big.mg4j.tool.Scan.Completeness;
+import it.unimi.di.big.mg4j.index.BitStreamIndex;
+import it.unimi.di.big.mg4j.index.BitStreamIndexWriter;
+import it.unimi.di.big.mg4j.index.CompressionFlags;
+import it.unimi.di.big.mg4j.index.CompressionFlags.Coding;
+import it.unimi.di.big.mg4j.index.CompressionFlags.Component;
+import it.unimi.di.big.mg4j.index.DiskBasedIndex;
+import it.unimi.di.big.mg4j.index.FileIndex;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.index.IndexWriter;
+import it.unimi.di.big.mg4j.index.NullTermProcessor;
+import it.unimi.di.big.mg4j.index.SkipBitStreamIndexWriter;
+import it.unimi.di.big.mg4j.index.TermProcessor;
+import it.unimi.di.big.mg4j.index.cluster.ContiguousDocumentalStrategy;
+import it.unimi.di.big.mg4j.index.cluster.DocumentalCluster;
+import it.unimi.di.big.mg4j.index.cluster.DocumentalConcatenatedCluster;
+import it.unimi.di.big.mg4j.index.cluster.IndexCluster;
+import it.unimi.di.big.mg4j.io.ByteArrayPostingList;
+import it.unimi.di.big.mg4j.io.IOFactory;
+import it.unimi.di.big.mg4j.tool.Combine;
+import it.unimi.di.big.mg4j.tool.Combine.IndexType;
+import it.unimi.di.big.mg4j.tool.Concatenate;
+import it.unimi.di.big.mg4j.tool.Scan;
+import it.unimi.di.big.mg4j.tool.Scan.Completeness;
 import it.unimi.dsi.sux4j.mph.LcpMonotoneMinimalPerfectHashFunction;
 import it.unimi.dsi.util.Properties;
 
@@ -661,18 +663,23 @@ public abstract class MimirIndexBuilder implements Runnable {
         new OutputBitStream( getBatchFile(DiskBasedIndex.FREQUENCIES_EXTENSION));
       
       final OutputBitStream globCountsStream = new OutputBitStream(
-              getBatchFile(DiskBasedIndex.GLOBCOUNTS_EXTENSION));
+              getBatchFile(DiskBasedIndex.OCCURRENCIES_EXTENSION));
   
       final OutputBitStream indexStream = new OutputBitStream(
               getBatchFile(DiskBasedIndex.INDEX_EXTENSION));
       
       final OutputBitStream offsetsStream = new OutputBitStream(
               getBatchFile(DiskBasedIndex.OFFSETS_EXTENSION));
+      
       final OutputBitStream posLengthsStream = savePositions ?
           new OutputBitStream(
             getBatchFile(DiskBasedIndex.POSITIONS_NUMBER_OF_BITS_EXTENSION)) :
           null;
-
+            
+      final OutputBitStream sumsMaxPosStream = savePositions ?
+          new OutputBitStream(
+              getBatchFile(DiskBasedIndex.SUMS_MAX_POSITION_EXTENSION)) : 
+          null;
       
       ByteArrayPostingList postingsList;
       int maxCount = 0;
@@ -702,9 +709,12 @@ public abstract class MimirIndexBuilder implements Runnable {
         } else indexStream.write(postingsList.buffer, bitLength );
   
         frequenciesStream.writeLongGamma( frequency );
-        globCountsStream.writeLongGamma( postingsList.globCount );
+        globCountsStream.writeLongGamma(postingsList.occurrency);
         offsetsStream.writeLongGamma( indexStream.writtenBits() - prevOffset );
-        if(savePositions) posLengthsStream.writeLongGamma( postingsList.posNumBits );
+        if(savePositions){
+          posLengthsStream.writeLongGamma( postingsList.posNumBits );
+          sumsMaxPosStream.writeLongDelta( postingsList.sumMaxPos );
+        }
         prevOffset = indexStream.writtenBits();
       }
   
@@ -736,7 +746,10 @@ public abstract class MimirIndexBuilder implements Runnable {
       indexStream.close();
       offsetsStream.close();
       globCountsStream.close();
-      if(savePositions) posLengthsStream.close();
+      if(savePositions){
+        posLengthsStream.close();
+        sumsMaxPosStream.close();
+      }
       frequenciesStream.close();
       termMap.clear();
       termMap.trim( INITIAL_TERM_MAP_SIZE );
@@ -837,11 +850,12 @@ public abstract class MimirIndexBuilder implements Runnable {
         logger.info( "Generating empty index " + getBatchFile(""));
         makeEmpty(getBatchFile(DiskBasedIndex.TERMS_EXTENSION));
         makeEmpty(getBatchFile(DiskBasedIndex.FREQUENCIES_EXTENSION));
-        makeEmpty(getBatchFile(DiskBasedIndex.GLOBCOUNTS_EXTENSION));
+        makeEmpty(getBatchFile(DiskBasedIndex.OCCURRENCIES_EXTENSION));
         makeEmpty(getBatchFile(DiskBasedIndex.SIZES_EXTENSION));
         
         final IndexWriter indexWriter = new BitStreamIndexWriter(
-                getBatchFile("").getAbsolutePath(), totalDocuments, true, flags );
+            IOFactory.FILESYSTEM_FACTORY,
+            getBatchFile("").getAbsolutePath(), totalDocuments, true, flags );
         indexWriter.close();
         final Properties properties = indexWriter.properties();
         properties.setProperty( Index.PropertyKeys.TERMPROCESSOR, 
@@ -1135,23 +1149,26 @@ public abstract class MimirIndexBuilder implements Runnable {
       
       Map<Component,Coding> codingFlags;
       if(savePositions) {
-        codingFlags = CompressionFlags.DEFAULT_STANDARD_INDEX; 
+        codingFlags = CompressionFlags.DEFAULT_QUASI_SUCCINCT_INDEX; 
       } else {
-        codingFlags = new EnumMap<Component, Coding>(CompressionFlags.DEFAULT_STANDARD_INDEX);
+        codingFlags = new EnumMap<Component, Coding>(CompressionFlags.DEFAULT_QUASI_SUCCINCT_INDEX);
         codingFlags.remove(Component.POSITIONS);
       }
       
-      new Concatenate(outputBaseName,
-              inputBasenames, false, 
-              Combine.DEFAULT_BUFFER_SIZE, 
-              codingFlags,
-              false, true, 
-              // BitStreamIndex.DEFAULT_QUANTUM,
-              // replaced with optimised automatic calculation
-              -5, 
-              BitStreamIndex.DEFAULT_HEIGHT, 
-              SkipBitStreamIndexWriter.DEFAULT_TEMP_BUFFER_SIZE, 
-              ProgressLogger.DEFAULT_LOG_INTERVAL).run();
+      new Concatenate(
+          IOFactory.FILESYSTEM_FACTORY,
+          outputBaseName,
+          inputBasenames, false, 
+          Combine.DEFAULT_BUFFER_SIZE, 
+          codingFlags,
+          IndexType.QUASI_SUCCINCT,
+          true, 
+          // BitStreamIndex.DEFAULT_QUANTUM,
+          // replaced with optimised automatic calculation
+          -5, 
+          BitStreamIndex.DEFAULT_HEIGHT, 
+          SkipBitStreamIndexWriter.DEFAULT_TEMP_BUFFER_SIZE, 
+          ProgressLogger.DEFAULT_LOG_INTERVAL).run();
       //clean up the used batch files
       for(String batchBasename : inputBasenames){
         cleanBatchFiles(batchBasename);
@@ -1169,16 +1186,19 @@ public abstract class MimirIndexBuilder implements Runnable {
    */
   protected void cleanBatchFiles(String basename){
     new File( basename + DiskBasedIndex.FREQUENCIES_EXTENSION ).delete();
-    new File( basename + DiskBasedIndex.GLOBCOUNTS_EXTENSION ).delete();
-    new File( basename + DiskBasedIndex.POSITIONS_NUMBER_OF_BITS_EXTENSION).delete();
+    new File( basename + DiskBasedIndex.OCCURRENCIES_EXTENSION ).delete();
     new File( basename + DiskBasedIndex.INDEX_EXTENSION ).delete();
     new File( basename + DiskBasedIndex.OFFSETS_EXTENSION ).delete();
     new File( basename + DiskBasedIndex.SIZES_EXTENSION ).delete();
     new File( basename + DiskBasedIndex.STATS_EXTENSION ).delete();
     new File( basename + DiskBasedIndex.PROPERTIES_EXTENSION ).delete();
+    new File( basename + DiskBasedIndex.POSITIONS_NUMBER_OF_BITS_EXTENSION).delete();
     new File( basename + DiskBasedIndex.POSITIONS_EXTENSION ).delete();
     new File( basename + DiskBasedIndex.TERMS_EXTENSION ).delete();
     new File( basename + DiskBasedIndex.UNSORTED_TERMS_EXTENSION ).delete();
+    new File( basename + DiskBasedIndex.SUMS_MAX_POSITION_EXTENSION ).delete();
+    
+
   }
 
 }

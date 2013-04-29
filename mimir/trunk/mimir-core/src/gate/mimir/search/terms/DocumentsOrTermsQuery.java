@@ -18,9 +18,9 @@ import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
-import it.unimi.dsi.big.mg4j.index.IndexIterator;
-import it.unimi.dsi.big.mg4j.index.IndexReader;
-import it.unimi.dsi.big.mg4j.search.OrDocumentIterator;
+import it.unimi.di.big.mg4j.index.IndexIterator;
+import it.unimi.di.big.mg4j.index.IndexReader;
+import it.unimi.di.big.mg4j.search.OrDocumentIterator;
 
 import java.io.IOException;
 

@@ -7,15 +7,15 @@ import it.unimi.dsi.fastutil.ints.IntHeapIndirectPriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntHeapPriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntIndirectPriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntPriorityQueue;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.index.IndexIterator;
-import it.unimi.dsi.big.mg4j.index.IndexReader;
-import it.unimi.dsi.big.mg4j.search.score.BM25FScorer;
-import it.unimi.dsi.big.mg4j.search.score.BM25Scorer;
-import it.unimi.dsi.big.mg4j.search.score.CountScorer;
-import it.unimi.dsi.big.mg4j.search.score.DelegatingScorer;
-import it.unimi.dsi.big.mg4j.search.score.Scorer;
-import it.unimi.dsi.big.mg4j.search.score.TfIdfScorer;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.index.IndexIterator;
+import it.unimi.di.big.mg4j.index.IndexReader;
+import it.unimi.di.big.mg4j.search.score.BM25FScorer;
+import it.unimi.di.big.mg4j.search.score.BM25Scorer;
+import it.unimi.di.big.mg4j.search.score.CountScorer;
+import it.unimi.di.big.mg4j.search.score.DelegatingScorer;
+import it.unimi.di.big.mg4j.search.score.Scorer;
+import it.unimi.di.big.mg4j.search.score.TfIdfScorer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -61,11 +61,11 @@ import gate.util.GateException;
 public class Scratch {
 
   public static void main (String[] args) throws Exception {
-//     mainSimple(args);
+     mainSimple(args);
 //     mainDirectIndexes(args);
 //    mainBuildDirectIndex(args);
 //    mainQueryIndex(args);
-    mainRemote(args);
+//    mainRemote(args);
   }
   
   /**
@@ -87,7 +87,7 @@ public class Scratch {
     IndexReaderPool termSource = null;
     
     // open the term supplying index
-    URI termsIndexUri = new File("/home/data/mimir-indexes/index-fastvac-1M.work/mg4j/mimir-token-2").toURI();
+    URI termsIndexUri = new File("/data/mimir-indexes/index-fastvac-1M.mimir/mg4j/mimir-token-2").toURI();
     Index termsIndex = MG4JTools.openMg4jIndex(termsIndexUri);
     termSource = new IndexReaderPool(termsIndex, termsIndexUri);
 

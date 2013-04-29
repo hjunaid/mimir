@@ -20,7 +20,7 @@ import gate.mimir.IndexConfig;
 import gate.util.OffsetComparator;
 import it.unimi.dsi.io.WordReader;
 import it.unimi.dsi.lang.MutableString;
-import it.unimi.dsi.big.mg4j.document.Document;
+import it.unimi.di.big.mg4j.document.Document;
 
 import java.io.*;
 import java.util.Arrays;

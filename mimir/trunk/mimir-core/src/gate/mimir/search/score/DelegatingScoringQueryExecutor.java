@@ -17,9 +17,9 @@ package gate.mimir.search.score;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
 import it.unimi.dsi.fastutil.objects.Reference2DoubleMap;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.search.DocumentIterator;
-import it.unimi.dsi.big.mg4j.search.score.DelegatingScorer;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.search.DocumentIterator;
+import it.unimi.di.big.mg4j.search.score.DelegatingScorer;
 
 import java.io.IOException;
 

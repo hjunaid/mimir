@@ -21,10 +21,10 @@ import gate.mimir.index.Indexer;
 import gate.mimir.util.MG4JTools;
 import gate.util.GateRuntimeException;
 import it.unimi.dsi.Util;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.index.IndexIterator;
-import it.unimi.dsi.big.mg4j.index.IndexReader;
-import it.unimi.dsi.big.mg4j.tool.Scan.Completeness;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.index.IndexIterator;
+import it.unimi.di.big.mg4j.index.IndexReader;
+import it.unimi.di.big.mg4j.tool.Scan.Completeness;
 import it.unimi.dsi.logging.ProgressLogger;
 
 import java.io.File;

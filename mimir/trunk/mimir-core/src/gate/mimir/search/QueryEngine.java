@@ -39,7 +39,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.index.Index;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
