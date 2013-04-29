@@ -18,8 +18,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 
-import it.unimi.dsi.big.mg4j.document.DocumentFactory;
-import it.unimi.dsi.big.mg4j.document.ZipDocumentCollection;
+import it.unimi.di.big.mg4j.document.DocumentFactory;
+import it.unimi.di.big.mg4j.document.ZipDocumentCollection;
 
 /**
  * Holder class allowing us to store a zipped document collection with

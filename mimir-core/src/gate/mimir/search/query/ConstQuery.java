@@ -16,8 +16,8 @@ package gate.mimir.search.query;
 
 import gate.mimir.search.QueryEngine;
 
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.search.visitor.DocumentIteratorVisitor;
 import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 
@@ -88,7 +88,7 @@ public class ConstQuery implements QueryNode {
 
     /**
      * Returns an empty set of indices.
-     * @see it.unimi.dsi.big.mg4j.search.DocumentIterator#indices()
+     * @see it.unimi.di.big.mg4j.search.DocumentIterator#indices()
      */
     @Override
     public ReferenceSet<Index> indices() {
@@ -100,7 +100,7 @@ public class ConstQuery implements QueryNode {
 
     /**
      * Always returns null.
-     * @see it.unimi.dsi.big.mg4j.search.DocumentIterator#accept(it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor)
+     * @see it.unimi.di.big.mg4j.search.DocumentIterator#accept(it.unimi.di.big.mg4j.search.visitor.DocumentIteratorVisitor)
      */
     @Override
     public <T> T accept(DocumentIteratorVisitor<T> visitor) throws IOException {
@@ -109,7 +109,7 @@ public class ConstQuery implements QueryNode {
 
     /**
      * Always returns null
-     * @see it.unimi.dsi.big.mg4j.search.DocumentIterator#acceptOnTruePaths(it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor)
+     * @see it.unimi.di.big.mg4j.search.DocumentIterator#acceptOnTruePaths(it.unimi.di.big.mg4j.search.visitor.DocumentIteratorVisitor)
      */
     @Override
     public <T> T acceptOnTruePaths(DocumentIteratorVisitor<T> visitor)

@@ -16,8 +16,8 @@ package gate.mimir.index.mg4j;
 
 import gate.mimir.IndexConfig;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-import it.unimi.dsi.big.mg4j.document.Document;
-import it.unimi.dsi.big.mg4j.document.DocumentFactory;
+import it.unimi.di.big.mg4j.document.Document;
+import it.unimi.di.big.mg4j.document.DocumentFactory;
 
 import java.io.IOException;
 import java.io.InputStream;

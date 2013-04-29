@@ -17,9 +17,9 @@ package gate.mimir.search.query;
 import gate.mimir.search.QueryEngine;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.search.DocumentIterator;
-import it.unimi.dsi.big.mg4j.search.IntervalIterator;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.search.DocumentIterator;
+import it.unimi.di.big.mg4j.search.IntervalIterator;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
@@ -140,11 +140,6 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
   @Override
   public void dispose() throws IOException {
     close();
-  }
-
-  @Override
-  public IntervalIterator iterator() {
-    throw new UnsupportedOperationException("This method is not implemented.");
   }
 
   @Override

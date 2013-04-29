@@ -15,9 +15,9 @@
 package gate.mimir.search;
 
 import it.unimi.dsi.big.io.FileLinesCollection;
-import it.unimi.dsi.big.mg4j.index.DiskBasedIndex;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.index.IndexReader;
+import it.unimi.di.big.mg4j.index.DiskBasedIndex;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.index.IndexReader;
 import it.unimi.dsi.big.util.ImmutableExternalPrefixMap;
 import it.unimi.dsi.big.util.SemiExternalGammaBigList;
 import it.unimi.dsi.fastutil.longs.LongBigList;
@@ -56,6 +56,11 @@ public class IndexReaderPool {
   }
   
   private static final int DEFAULT_CAPACITY = 100000;
+  
+  /**
+   * Old (i.e. pre MG4J-5) extension used for the global counts file.
+   */
+  public static final String GLOBCOUNTS_EXTENSION = ".globcounts";
   
   /**
    * How many readers are normally kept. The actual size can be much larger than
@@ -183,12 +188,11 @@ public class IndexReaderPool {
   public LongBigList getTermOccurenceCounts() throws IOException {
     if(termOccurrenceCounts == null) {
       File countsFile = new File(URI.create(indexURI.toString() + 
-              DiskBasedIndex.GLOBCOUNTS_EXTENSION));
+              GLOBCOUNTS_EXTENSION));
       if(!countsFile.exists()) {
-        // when we change to MG4J 5+ indexes, this will have to change to use
-        // the new .occurrences extension
-        throw new IOException("Could not find occurrences file at " + 
-            countsFile.getAbsolutePath() + "!");
+        // is this a mg4j-5+ index?
+        countsFile = new File(URI.create(indexURI.toString() + 
+          DiskBasedIndex.OCCURRENCIES_EXTENSION));
       }
       termOccurrenceCounts = new SemiExternalGammaBigList(
           new InputBitStream(countsFile), -1, getDictionary().size64());

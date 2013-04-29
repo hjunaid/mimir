@@ -22,13 +22,14 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import it.unimi.dsi.lang.MutableString;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.index.IndexIterator;
-import it.unimi.dsi.big.mg4j.index.IndexReader;
-import it.unimi.dsi.big.mg4j.index.payload.Payload;
-import it.unimi.dsi.big.mg4j.search.DocumentIterator;
-import it.unimi.dsi.big.mg4j.search.IntervalIterator;
-import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.index.IndexIterator;
+import it.unimi.di.big.mg4j.index.IndexIterators;
+import it.unimi.di.big.mg4j.index.IndexReader;
+import it.unimi.di.big.mg4j.index.payload.Payload;
+import it.unimi.di.big.mg4j.search.DocumentIterator;
+import it.unimi.di.big.mg4j.search.IntervalIterator;
+import it.unimi.di.big.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 
@@ -145,17 +146,16 @@ public class TermQuery implements QueryNode {
       if (from >= latestDocument){
         //we do need to skip
         latestDocument = indexIterator.skipTo(from + 1);
-        if(latestDocument == DocumentIterator.END_OF_LIST){
-          //no more documents available
-          latestDocument = -1;
-        }
       }else{
         //from is lower than latest document, 
         //so we just return the next document
         latestDocument = indexIterator.nextDocument();
       }
-      if(latestDocument != -1){
-        positionsIterator = indexIterator.positions();
+      if(latestDocument == DocumentIterator.END_OF_LIST){
+        //no more documents available
+        latestDocument = -1;
+      } else {
+        positionsIterator = IndexIterators.positionIterator(indexIterator);
       }
       return latestDocument;
     }
@@ -165,7 +165,8 @@ public class TermQuery implements QueryNode {
      */
     public Binding nextHit() throws IOException{
       if(closed) return null;
-      if(positionsIterator == null) positionsIterator = indexIterator.positions();
+      if(positionsIterator == null) positionsIterator = 
+          IndexIterators.positionIterator(indexIterator);
       if(latestDocument >= 0 && positionsIterator.hasNext()){
         int position = positionsIterator.nextInt();
         return new Binding(query, latestDocument, position, query.length, null);
@@ -186,6 +187,15 @@ public class TermQuery implements QueryNode {
     }
 
     
+    /* (non-Javadoc)
+     * @see it.unimi.di.big.mg4j.index.IndexIterator#nextPosition()
+     */
+    @Override
+    public int nextPosition() throws IOException {
+      // TODO Auto-generated method stub
+      throw new UnsupportedOperationException("Method not implemented!");
+    }
+
     public boolean hasNext() {
       throw new UnsupportedOperationException("Method not implemented!");
     }
@@ -222,21 +232,9 @@ public class TermQuery implements QueryNode {
       return indexIterator.count();
     }
 
-    public IntIterator positions() throws IOException {
-      return indexIterator.positions();
-    }
-
-    public int positions(int[] positions) throws IOException {
-      return indexIterator.positions(positions);
-    }
-
     public Reference2ReferenceMap<Index, IntervalIterator> intervalIterators()
       throws IOException {
       return indexIterator.intervalIterators();
-    }
-
-    public int[] positionArray() throws IOException {
-      return indexIterator.positionArray();
     }
 
     public ReferenceSet<Index> indices() {
@@ -270,10 +268,6 @@ public class TermQuery implements QueryNode {
 
     public void dispose() throws IOException {
       indexIterator.dispose();
-    }
-
-    public IntervalIterator iterator() {
-      return indexIterator.iterator();
     }
 
     public long termNumber() {

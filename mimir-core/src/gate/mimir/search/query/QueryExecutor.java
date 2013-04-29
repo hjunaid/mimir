@@ -15,7 +15,7 @@
 package gate.mimir.search.query;
 
 import gate.mimir.search.QueryEngine;
-import it.unimi.dsi.big.mg4j.search.DocumentIterator;
+import it.unimi.di.big.mg4j.search.DocumentIterator;
 
 import java.io.IOException;
 

@@ -19,8 +19,8 @@ import gate.mimir.search.QueryEngine;
 
 import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.search.visitor.DocumentIteratorVisitor;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.search.visitor.DocumentIteratorVisitor;
 
 import java.io.IOException;
 import java.util.*;

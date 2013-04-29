@@ -25,8 +25,8 @@ import gate.mimir.SemanticAnnotationHelper.Mode;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.*;
 
-import it.unimi.dsi.big.mg4j.index.DowncaseTermProcessor;
-import it.unimi.dsi.big.mg4j.index.NullTermProcessor;
+import it.unimi.di.big.mg4j.index.DowncaseTermProcessor;
+import it.unimi.di.big.mg4j.index.NullTermProcessor;
 
 import java.io.*;
 import java.lang.reflect.Constructor;

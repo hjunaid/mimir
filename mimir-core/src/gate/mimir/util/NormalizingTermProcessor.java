@@ -15,8 +15,8 @@
 package gate.mimir.util;
 
 import it.unimi.dsi.lang.MutableString;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.index.TermProcessor;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.index.TermProcessor;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;

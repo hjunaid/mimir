@@ -16,9 +16,9 @@ package gate.mimir.util;
 
 import gate.mimir.index.mg4j.MimirIndexBuilder;
 import gate.mimir.search.QueryEngine;
-import it.unimi.dsi.big.mg4j.index.DiskBasedIndex;
-import it.unimi.dsi.big.mg4j.index.Index;
-import it.unimi.dsi.big.mg4j.index.Index.UriKeys;
+import it.unimi.di.big.mg4j.index.DiskBasedIndex;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.di.big.mg4j.index.Index.UriKeys;
 import it.unimi.dsi.fastutil.io.BinIO;
 import it.unimi.dsi.util.Properties;
 
@@ -142,10 +142,19 @@ public class MG4JTools {
       if(aFile.exists()) {
         size += aFile.length();
       } else {
-        // no index file!
-        throw new IllegalArgumentException(
-                "Could not locate the index file at " + aFile.getAbsolutePath()
-                + "!");
+        // mg4j-5+ may use quasi-succinct indexes
+        File anotherFile =
+            new File(URI.create(basename + DiskBasedIndex.POINTERS_EXTENSIONS));
+        if(anotherFile.exists()) {
+          size += anotherFile.length();
+        } else {
+          // mg4j-5+ may use quasi-succinct indexes
+          // no index file!
+          throw new IllegalArgumentException(
+              "Could not locate the index file at " +
+              aFile.getAbsolutePath() + ", nor at " +
+              anotherFile.getAbsolutePath() + "!");
+        }
       }
       aFile =
         new File(URI.create(basename + DiskBasedIndex.POSITIONS_EXTENSION));
