@@ -1,6 +1,6 @@
-import it.unimi.dsi.big.mg4j.search.score.BM25Scorer
-import it.unimi.dsi.big.mg4j.search.score.CountScorer
-import it.unimi.dsi.big.mg4j.search.score.TfIdfScorer
+import it.unimi.di.big.mg4j.search.score.BM25Scorer
+import it.unimi.di.big.mg4j.search.score.CountScorer
+import it.unimi.di.big.mg4j.search.score.TfIdfScorer
 import gate.mimir.search.score.BindingScorer
 import gate.mimir.search.score.DelegatingScoringQueryExecutor
 

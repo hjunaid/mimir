@@ -13,16 +13,16 @@
 
   <dependencies defaultconf="*->master(default),runtime(default)" >
     <!-- GATE -->
-    <dependency name="gate-core" org="uk.ac.gate" rev="7.0">
+    <dependency name="gate-core" org="uk.ac.gate" rev="7.1">
       <artifact name="gate-core" type="jar" />
     </dependency>
     <!-- MG4J -->
     <dependency org="it.unimi.di" name="mg4j-big" rev="5.2.1" >
       <artifact name="mg4j-big" type="jar"  />
+      <exclude org="org.apache.hadoop" module="hadoop-common"/>
     </dependency>
-    <!--  Force Ivy to use the correct version -->    
-    <dependency org="commons-configuration" name="commons-configuration" rev="1.8"/>
-            
+    <!-- Don't bring transitive deps, as we don't actually use hadoop for anything -->
+    <dependency org="org.apache.hadoop" name="hadoop-common" rev="0.23.6" transitive="false" />  
     
     <!-- Exclude xmlbeans as it includes forbidden classes 
       (a copy excluding the offending classes is included in lib/ -->
