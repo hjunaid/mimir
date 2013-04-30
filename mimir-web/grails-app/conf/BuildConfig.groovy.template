@@ -24,12 +24,18 @@ grails.project.dependency.resolution = {
     dependencies {
       // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
       // runtime 'mysql:mysql-connector-java:5.1.18'
-      compile ('uk.ac.gate:gate-core:7.0', 
-              'it.unimi.dsi:mg4j-big:4.0.4',
-              'it.unimi.dsi:webgraph:3.0.7',
-              'com.google.guava:guava:12.0') {
+      compile ('uk.ac.gate:gate-core:7.1', 
+              'com.google.guava:guava:12.0',
+              "org.grails:grails-webflow:$grailsVersion") {
         // Exclude dependencies that conflict with Grails      
         excludes 'xml-apis', 'xmlbeans', 'ant'
+      }
+      // exclude hadoop here, and bring it in later, without transitive deps.
+      compile ('it.unimi.di:mg4j-big:5.2.1') {
+        excludes 'hadoop-common'
+      }
+      compile('org.apache.hadoop:hadoop-common:0.23.6') {
+        transitive = false
       }
     
       // We must use the same version of Ant as the one provided by Grails
@@ -45,8 +51,10 @@ grails.project.dependency.resolution = {
           export = false
       }
       compile(":hibernate:$grailsVersion")
-      compile(":webflow:2.0.0")
-      compile(":gwt:0.8") {
+      compile(':webflow:2.0.0'){
+        exclude 'grails-webflow'
+      }
+      compile(':gwt:0.8') {
         excludes 'resources'
       }
     }

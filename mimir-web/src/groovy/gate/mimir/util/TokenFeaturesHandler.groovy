@@ -13,9 +13,9 @@
 package gate.mimir.util
 
 import gate.mimir.IndexConfig.TokenIndexerConfig
-import it.unimi.dsi.big.mg4j.index.TermProcessor
-import it.unimi.dsi.big.mg4j.index.DowncaseTermProcessor
-import it.unimi.dsi.big.mg4j.index.NullTermProcessor
+import it.unimi.di.big.mg4j.index.TermProcessor
+import it.unimi.di.big.mg4j.index.DowncaseTermProcessor
+import it.unimi.di.big.mg4j.index.NullTermProcessor
 
 /**
  * Class used as closure delegate to handle the mimir.rpcIndexer.tokenFeatures
