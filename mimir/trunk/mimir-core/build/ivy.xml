@@ -12,17 +12,33 @@
   </configurations>
 
   <dependencies defaultconf="*->master(default),runtime(default)" >
-    <!-- GATE -->
+    <!-- GATE (minus unused deps) -->
     <dependency name="gate-core" org="uk.ac.gate" rev="7.1">
       <artifact name="gate-core" type="jar" />
+      <exclude org="org.apache.tika" module="tika-core"/>
+      <exclude org="org.apache.tika" module="tika-parsers"/>
+      <exclude org="org.apache.ivy" module="ivy"/>
+      <exclude org="org.apache.lucene" module="lucene-core"/>
+      <exclude org="org.codehaus.woodstox" module="woodstox-core-lgpl"/>
+      <exclude org="xmlunit" module="xmlunit"/>
+      <exclude org="xpp3" module="xpp3"/>
     </dependency>
-    <!-- MG4J -->
+    <!-- Load some libraries needed by GATE classes, but drop transitive deps. -->
+    <dependency org="org.apache.tika" name="tika-core" rev="1.0" transitive="false" />
+    <dependency org="org.apache.tika" name="tika-parsers" rev="1.0" transitive="false" />
+    
+    <!-- MG4J (minus unused deps) -->
     <dependency org="it.unimi.di" name="mg4j-big" rev="5.2.1" >
       <artifact name="mg4j-big" type="jar"  />
+      <exclude org="org.apache.tika" module="tika-core"/>
+      <exclude org="org.apache.tika" module="tika-parsers"/>
       <exclude org="org.apache.hadoop" module="hadoop-common"/>
+      <exclude org="ch.qos.logback" module="logback-classic"/>
+      <exclude org="mysql" module="mysql-connector-java"/>
+      <exclude org="org.apache.velocity" module="velocity"/>
+      <exclude org="org.apache.velocity" module="velocity-tools"/>
+      <exclude org="org.mortbay.jetty" module="jetty"/>
     </dependency>
-    <!-- Don't bring transitive deps, as we don't actually use hadoop for anything -->
-    <dependency org="org.apache.hadoop" name="hadoop-common" rev="0.23.6" transitive="false" />  
     
     <!-- Exclude xmlbeans as it includes forbidden classes 
       (a copy excluding the offending classes is included in lib/ -->
