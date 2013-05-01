@@ -22,20 +22,29 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.jboss.com/maven2/"
     }
     dependencies {
-      // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
-      // runtime 'mysql:mysql-connector-java:5.1.18'
-      compile ('uk.ac.gate:gate-core:7.1', 
-              'com.google.guava:guava:12.0',
+      
+      // GATE(-core), minus unused deps
+      compile ('uk.ac.gate:gate-core:7.1') {
+        excludes 'tika-core', 'tika-parsers', 'ivy', 'lucene-core', 
+            'woodstox-core-lgpl', 'xmlunit', 'xpp3'
+      }
+      // bring in some of the excluded dependencies, but non-transitively
+      compile('org.apache.tika:tika-core:1.0', 
+              'org.apache.tika:tika-parsers:1.0') {
+        transitive = false
+      }
+      
+      // MG4J, minus unused deps
+      compile ('it.unimi.di:mg4j-big:5.2.1') {
+        excludes 'hadoop-common', 'logback-classic' , 'tika-core', 
+            'tika-parsers', 'mysql-connector-java', 'velocity', 
+            'velocity-tools', 'jetty'
+      }
+      
+      compile ('com.google.guava:guava:14.0',
               "org.grails:grails-webflow:$grailsVersion") {
         // Exclude dependencies that conflict with Grails      
         excludes 'xml-apis', 'xmlbeans', 'ant'
-      }
-      // exclude hadoop here, and bring it in later, without transitive deps.
-      compile ('it.unimi.di:mg4j-big:5.2.1') {
-        excludes 'hadoop-common'
-      }
-      compile('org.apache.hadoop:hadoop-common:0.23.6') {
-        transitive = false
       }
     
       // We must use the same version of Ant as the one provided by Grails
