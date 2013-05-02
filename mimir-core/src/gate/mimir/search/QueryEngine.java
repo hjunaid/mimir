@@ -905,7 +905,7 @@ public class QueryEngine {
     
     try {
       File mg4JIndexDir = new File(indexDir, Indexer.MG4J_INDEX_DIRNAME);
-      // Load the token indexes as memory mapped, if possible
+      // Load the token indexes
       for(int i = 0; i < indexConfig.getTokenIndexers().length; i++) {
         File indexBasename =
           new File(mg4JIndexDir, Indexer.MG4J_INDEX_BASENAME + "-"
