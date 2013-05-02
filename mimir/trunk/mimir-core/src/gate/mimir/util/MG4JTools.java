@@ -133,42 +133,9 @@ public class MG4JTools {
     Index theIndex = null;
     String basename = indexUri.toString();
     try {
-      // Optimisations: if the index size (i.e. index + positions files) is
-      // less than 64MB, then we load the index in memory,
-      // otherwise we memory-map it.
-      long size = 0;
-      File aFile =
-        new File(URI.create(basename + DiskBasedIndex.INDEX_EXTENSION));
-      if(aFile.exists()) {
-        size += aFile.length();
-      } else {
-        // mg4j-5+ may use quasi-succinct indexes
-        File anotherFile =
-            new File(URI.create(basename + DiskBasedIndex.POINTERS_EXTENSIONS));
-        if(anotherFile.exists()) {
-          size += anotherFile.length();
-        } else {
-          // mg4j-5+ may use quasi-succinct indexes
-          // no index file!
-          throw new IllegalArgumentException(
-              "Could not locate the index file at " +
-              aFile.getAbsolutePath() + ", nor at " +
-              anotherFile.getAbsolutePath() + "!");
-        }
-      }
-      aFile =
-        new File(URI.create(basename + DiskBasedIndex.POSITIONS_EXTENSION));
-      if(aFile.exists()) {
-        size += aFile.length();
-      } else {
-        // probably a direct index with no positions
-      }
-      String options = "?" + (size <= QueryEngine.MAX_IN_MEMORY_INDEX ? 
-          UriKeys.INMEMORY.toString().toLowerCase() + "=1" : 
-          (UriKeys.MAPPED.name().toLowerCase() + "=1;" + 
-           UriKeys.OFFSETSTEP.toString().toLowerCase() + "=-" + 
-           DiskBasedIndex.DEFAULT_OFFSET_STEP ));
-      
+      String options = "?" + UriKeys.MAPPED.name().toLowerCase() + "=1;" + 
+          UriKeys.OFFSETSTEP.toString().toLowerCase() + "=-" + 
+          DiskBasedIndex.DEFAULT_OFFSET_STEP;
       logger.debug("Opening index: " + basename + options);
       theIndex = Index.getInstance(basename + options, true, true);
     } catch(IOException e) {
