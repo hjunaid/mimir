@@ -46,6 +46,7 @@ import it.unimi.di.big.mg4j.index.FileIndex;
 import it.unimi.di.big.mg4j.index.Index;
 import it.unimi.di.big.mg4j.index.IndexWriter;
 import it.unimi.di.big.mg4j.index.NullTermProcessor;
+import it.unimi.di.big.mg4j.index.QuasiSuccinctIndex;
 import it.unimi.di.big.mg4j.index.SkipBitStreamIndexWriter;
 import it.unimi.di.big.mg4j.index.TermProcessor;
 import it.unimi.di.big.mg4j.index.cluster.ContiguousDocumentalStrategy;
@@ -102,7 +103,11 @@ import org.apache.log4j.Logger;
  * {@link #initIndex()} and {@link #flush()} to perform actions at the
  * beginning and end of the whole indexing process (in these cases you
  * <em>must</em> call the super method).
- * @author ian
+ * 
+ * This class generates batches, each being a <em>high performance</em> MG4J 
+ * index (i.e. a {@link BitStreamIndex}). All batches produced are combined 
+ * when the index builder is closed. The resulting index is a 
+ * <em>quasi-succinct</em> MG4J index (see {@link QuasiSuccinctIndex}). 
  */
 public abstract class MimirIndexBuilder implements Runnable {
   /**
