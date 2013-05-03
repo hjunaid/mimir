@@ -14,7 +14,6 @@
  */
 package gate.mimir.db;
 
-import static gate.mimir.db.AnnotationTemplateCache.Tag.NO_ID;
 import gate.Annotation;
 import gate.Document;
 import gate.FeatureMap;
@@ -23,7 +22,6 @@ import gate.mimir.Constraint;
 import gate.mimir.ConstraintType;
 import gate.mimir.IndexConfig;
 import gate.mimir.SemanticAnnotationHelper;
-import gate.mimir.db.AnnotationTemplateCache.Tag;
 import gate.mimir.index.Indexer;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
@@ -43,6 +41,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
 
@@ -52,6 +51,183 @@ import org.apache.log4j.Logger;
  */
 public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper{
 
+  /**
+   * A callable that generates Level 1 IDs given a set of features.
+   */
+  protected class Level1IdGenerator implements Callable<Long> {
+    
+    public Level1IdGenerator(FeatureMap features) {
+      this.features = features;
+    }
+
+    protected FeatureMap features;
+    
+    /**
+     * Retrieves the level1 ID for the given set of features. If no ID can be 
+     * found (i.e. this combination of features has not been seen before), it 
+     * inserts a new row in the level 1 table, and returns the ID for it.  
+     * @see java.util.concurrent.Callable#call()
+     */
+    @Override
+    public Long call() throws Exception {
+      setStatementParameters(level1SelectStmt, features);
+      ResultSet res = level1SelectStmt.executeQuery();
+      if(!res.next()) {
+        // no results found -> insert the new row
+        setStatementParameters(level1InsertStmt, features);
+        if(level1InsertStmt.executeUpdate() != 1) {
+          // the update failed
+          throw new RuntimeException("Error while inserting into database. Annotation was lost!");
+        }
+        res = level1InsertStmt.getGeneratedKeys();
+        if(!res.next()) throw new RuntimeException(
+          "Could not insert new Level 1 row for features: " + features);
+      }
+      
+      // we have found the level 1 ID
+      Long level1id = res.getLong(1);
+      // sanity check
+      if(res.next()) throw new RuntimeException(
+              "Multiple Unique IDs foud in Level 1 table for features: " + 
+              features.toString());      
+      return level1id;
+    }
+  }
+  
+  /**
+   * A callable that generates Level 2 IDs given a set of features.
+   */
+  protected class Level2IdGenerator implements Callable<Long> {
+    
+    private Long level1Id;
+    
+    public Level2IdGenerator(Long level1Id, FeatureMap features) {
+      this.level1Id = level1Id;
+      this.features = features;
+    }
+
+    protected FeatureMap features;
+    
+    /**
+     * Retrieves the level2 ID for the given set of features. If no ID can be 
+     * found (i.e. this combination of features has not been seen before), it 
+     * inserts a new row in the level 2 table, and returns the ID for it.  
+     * @see java.util.concurrent.Callable#call()
+     */
+    @Override
+    public Long call() throws Exception {
+      level2SelectStmt.setLong(1, level1Id);
+      setStatementParameters(level2SelectStmt, features);
+      ResultSet res = level2SelectStmt.executeQuery();
+      if(!res.next()) {
+        // no results -> insert new row
+        level2InsertStmt.setLong(1, level1Id);
+        setStatementParameters(level2InsertStmt, features);
+        if(level2InsertStmt.executeUpdate() != 1) {
+          // the update failed
+          throw new RuntimeException(
+            "Could not insert new Level 2 row for Level 1 ID: \"" + level1Id + 
+            "\" and features: " + features);
+        }
+        res = level2InsertStmt.getGeneratedKeys();
+        if(!res.next()) throw new RuntimeException(
+          "Could not insert new Level 2 row for Level 1 ID: \"" + level1Id + 
+          "\" and features: " + features);
+      }
+      
+      // we have found the level 2 ID
+      Long level2Id = res.getLong(1);
+      // sanity check
+      if(res.next()) {
+        throw new RuntimeException(
+          "Multiple Unique IDs found in Level 2 table for  Level 1 ID: \"" + 
+          level1Id + "\" and features: " + features);
+      }
+      return level2Id;
+    }
+  }
+  
+  /**
+   * A callable that generates Level 3 IDs (i.e. mention IDs) given a Level 1 
+   * ID and/or a Level 2 ID, and a mention length.
+   */
+  protected class Level3IdGenerator implements Callable<Long> {
+
+    private Long level1Id;
+    
+    private Long level2Id;
+    
+    private int mentionLength;
+    
+    public Level3IdGenerator(Long level1Id, Long level2Id, int mentionLength) {
+      super();
+      this.level1Id = level1Id;
+      this.level2Id = level2Id;
+      this.mentionLength = mentionLength;
+    }
+
+
+    /* (non-Javadoc)
+     * @see java.util.concurrent.Callable#call()
+     */
+    @Override
+    public Long call() throws Exception {
+      mentionsSelectStmt.setLong(1, level1Id);
+      if(level2Used) {
+        if(level2Id != null) {
+          mentionsSelectStmt.setLong(2, level1Id);  
+        } else {
+          mentionsSelectStmt.setNull(2, Types.BIGINT);
+        }
+        mentionsSelectStmt.setInt(3, mentionLength);        
+      } else {
+        mentionsSelectStmt.setInt(2, mentionLength);
+      }
+
+      ResultSet res = mentionsSelectStmt.executeQuery(); 
+      if(!res.next()) {
+        // no results -> insert new row
+        mentionsInsertStmt.setLong(1, level1Id);
+        if(level2Used) {
+          if(level2Id != null) {
+            mentionsInsertStmt.setLong(2, level2Id);  
+          } else {
+            mentionsInsertStmt.setNull(2, Types.BIGINT);
+          } 
+          mentionsInsertStmt.setInt(3, mentionLength);          
+        } else {
+          mentionsInsertStmt.setInt(2, mentionLength);          
+        }
+
+        if(mentionsInsertStmt.executeUpdate() != 1) {
+          // the update failed
+          throw new RuntimeException(
+            "Could not insert new mention ID for Level 1 ID: " + level1Id + 
+            ", Level 2 ID: " + level2Id + ", and mention length: " + 
+            mentionLength);
+        }
+        res = mentionsInsertStmt.getGeneratedKeys();
+        if(!res.next()) {
+          throw new RuntimeException(
+            "Could not insert new mention ID for Level 1 ID: " + level1Id + 
+            ", Level 2 ID: " + level2Id + ", and mention length: " + 
+            mentionLength);
+        }
+      }
+      
+      // we have found the level 3 (mention) ID
+      Long mentionId = res.getLong(1);
+      // sanity check
+      if(res.next()){ 
+        throw new RuntimeException(
+            "Multiple Unique IDs foud in mentions table for  Level 1 ID: " + 
+             level1Id +  ", Level 2 ID: " + level2Id + 
+             ", and mention length: " + mentionLength);
+      }
+      return mentionId;
+    }
+  }
+  
   private static final long serialVersionUID = 2734946594117068194L;
 
   /**
@@ -574,133 +750,34 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     
     try {
       // find the level 1 ID
-      Tag level1Tag = cache.getLevel1Tag(featuresToIndex);
-      while(level1Tag.getId() == NO_ID){
-        setStatementParameters(level1SelectStmt, featuresToIndex);
-        ResultSet res = level1SelectStmt.executeQuery();
-        if(res.next()) {
-          // we have found the level 1 ID
-          level1Tag.setId(res.getLong(1));
-          // sanity check
-          if(res.next()) throw new RuntimeException(
-                  "Multiple Unique IDs foud in level 1 table for annotation " + 
-                  ann.toString());
-        } else {
-          // insert the new row
-          setStatementParameters(level1InsertStmt, featuresToIndex);
-          if(level1InsertStmt.executeUpdate() != 1) {
-            // the update failed
-            logger.error("Error while inserting into database. Annotation was lost!");
-            return new String[]{};
-          }
-          dbConnection.commit();
-        }
-      }
+      Long level1Tag = cache.getLevel1Id(featuresToIndex, 
+          new Level1IdGenerator(featuresToIndex));
       
       // find the Level-1 Mention ID (ignoring the L2 values)
-      Tag mentionL1Tag = cache.getLevel3Tag(level1Tag, null, length);
-      Tag mentionL2Tag = null;
-      while(mentionL1Tag.getId() == NO_ID){
-        mentionsSelectStmt.setLong(1, level1Tag.getId());
-        if(level2Used) {
-          mentionsSelectStmt.setNull(2, Types.BIGINT);
-          mentionsSelectStmt.setInt(3,length);
-        } else {
-          mentionsSelectStmt.setInt(2,length);
-        }
-        ResultSet res = mentionsSelectStmt.executeQuery(); 
-        if(res.next()) {
-          // we have found the level 2 ID
-          mentionL1Tag.setId(res.getLong(1));
-          // sanity check
-          if(res.next()) throw new RuntimeException(
-                  "Multiple Unique IDs foud in mentions table for annotation " + 
-                  "(of length "+ length + "):\n" +ann.toString());
-        } else {
-          // insert the new row
-          mentionsInsertStmt.setLong(1, level1Tag.getId());
-          if(level2Used) {
-            mentionsInsertStmt.setNull(2, Types.BIGINT);
-            mentionsInsertStmt.setInt(3,length);
-          } else {
-            mentionsInsertStmt.setInt(2,length);
-          }   
-          if(mentionsInsertStmt.executeUpdate() != 1) {
-            // the update failed
-            logger.error("Error while inserting into database. Annotation was lost!");
-            return new String[]{};
-          }
-          dbConnection.commit();
-        }
-      }
+      Long mentionL1Tag = cache.getLevel3Id(level1Tag, null, length, 
+          new Level3IdGenerator(level1Tag, null, length));
       
+      Long mentionL2Tag = null;
       if(level2Used){
         // find the level 2 ID
-        Tag level2Tag = cache.getLevel2Tag(featuresToIndex, level1Tag);
-        while(level2Tag.getId() == NO_ID){
-          level2SelectStmt.setLong(1, level1Tag.getId());
-          setStatementParameters(level2SelectStmt, featuresToIndex);
-
-          ResultSet res = level2SelectStmt.executeQuery();
-          if(res.next()) {
-            // we have found the level 2 ID
-            level2Tag.setId(res.getLong(1));
-            // sanity check
-            if(res.next()) throw new RuntimeException(
-                    "Multiple Unique IDs found in level 2 table for annotation " + 
-                    ann.toString());
-          } else {
-            // insert the new row
-            level2InsertStmt.setLong(1, level1Tag.getId());
-            setStatementParameters(level2InsertStmt, featuresToIndex);
-            if(level2InsertStmt.executeUpdate() != 1) {
-              // the update failed
-              logger.error("Error while inserting into database. Annotation was lost!");
-              return new String[]{};
-            }
-            dbConnection.commit();
-          }
-        }
+        Long level2Tag = cache.getLevel2Id(level1Tag, featuresToIndex, 
+            new Level2IdGenerator(level1Tag, featuresToIndex));
+        
         // find the Level-2 Mention ID
-        mentionL2Tag = cache.getLevel3Tag(level1Tag, level2Tag, length);
-        while(mentionL2Tag.getId() == NO_ID){
-          mentionsSelectStmt.setLong(1,level1Tag.getId());
-          mentionsSelectStmt.setLong(2, level2Tag.getId());
-          mentionsSelectStmt.setInt(3,length);
-
-          ResultSet res = mentionsSelectStmt.executeQuery();
-          if(res.next()) {
-            // we have found the level 2 ID
-            mentionL2Tag.setId(res.getLong(1));
-            // sanity check
-            if(res.next()) throw new RuntimeException(
-                    "Multiple Unique IDs foud in mentions table for annotation " + 
-                    "(of length "+ length + "):\n" +ann.toString());
-          } else {
-            // insert the new row
-            mentionsInsertStmt.setLong(1, level1Tag.getId());
-            mentionsInsertStmt.setLong(2, level2Tag.getId());
-            mentionsInsertStmt.setInt(3,length);
-            if(mentionsInsertStmt.executeUpdate() != 1) {
-              // the update failed
-              logger.error("Error while inserting into database. Annotation was lost!");
-              return new String[]{};
-            }
-            dbConnection.commit();
-          }
-        }
+        mentionL2Tag = cache.getLevel3Id(level1Tag, level2Tag, length,
+            new Level3IdGenerator(level1Tag, level2Tag, length));
       }
       
       // now we finally have the mention ID
       if(level2Used) {
         return new String[] {
-                annotationType + ":" + mentionL1Tag.getId(), 
-                annotationType + ":" + mentionL2Tag.getId()};
+                annotationType + ":" + mentionL1Tag, 
+                annotationType + ":" + mentionL2Tag};
       } else {
         return new String[] {
-                annotationType + ":" + mentionL1Tag.getId()};
+                annotationType + ":" + mentionL1Tag};
       }
-    } catch(SQLException e) {
+    } catch(Exception e) {
       // something went bad: we can't fix it :(
       logger.error("Error while interogating database. Annotation was lost!", e);
       return new String[]{};
@@ -1168,10 +1245,6 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
               + ", "
               + (Double.isNaN(l3ratio) ? "N/A" : percentFormat.format(l3ratio)));
       docsSoFar++;
-      if(docsSoFar % 200 == 0) {
-        // every 200 docs, adjust the cache sizes
-        cache.adjustCacheSizes();
-      }
     } else {
       logger.debug("Cache size(" + annotationType + "): null");
     }
@@ -1221,4 +1294,26 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   
     return null;
   }
+  
+  /**
+   * Sets the size for the three level caches used by this helper.
+   * 
+   * A negative value for each cache size sets the cache size to its default
+   * value.
+   * 
+   * @param level1 the size for the Level 1 cache. The Level 1 cache stores 
+   * previously seen combinations of nominal feature values.
+   *  
+   * @param level2 the size for the Level 2 cache. The Level 2 cache stores 
+   * previously seen combinations of non-nominal feature values.
+   * 
+   * @param level3 the size for the Level 3 cache. The Level 1 cache stores 
+   * previously seen mention IDs.
+   */
+  public void setCacheSizes(int level1, int level2, int level3) {
+    cache.setL1CacheSize(level1);
+    cache.setL2CacheSize(level2);
+    cache.setL3CacheSize(level3);
+  }
+  
 }
