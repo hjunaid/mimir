@@ -8,7 +8,7 @@ allows queries that arbitrarily mix full-text, structural, linguistic and
 semantic queries and that can scale to gigabytes of text. A typical semantic
 annotation project deals with large quantities of data of different kinds.
 Mímir provides a framework for implementing indexing and search functionality
-across all these data type."
+across all these data types."
 
 Some documentation:
 - %(doc/mimir-guide.pdf, a users and 
