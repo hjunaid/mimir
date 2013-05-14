@@ -164,8 +164,8 @@ log4j = {
 
   info 'gate'
   
-  debug 'grails.app.service.gate.mimir',
-        'grails.app.controller.gate.mimir',
+  debug 'grails.app.services.gate.mimir',
+        'grails.app.controllers.gate.mimir',
         'grails.app.domain.gate.mimir',
         'grails.app.taglib.gate.mimir'
         
