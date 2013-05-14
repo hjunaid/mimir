@@ -271,6 +271,11 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
    */
   protected boolean level2Used = true;
   
+  
+  protected int level1CacheSize = -1;
+  protected int level2CacheSize = -1;
+  protected int level3CacheSize = -1;
+  
   /**
    * Prepared statement used to obtain the Level-1 ID based on the values of 
    * nominal features. Only used at indexing time. 
@@ -364,6 +369,10 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     setUriFeatures(new String[0]);
 
     cache = new AnnotationTemplateCache(this);
+    cache.setL1CacheSize(level1CacheSize);
+    cache.setL2CacheSize(level2CacheSize);
+    cache.setL3CacheSize(level3CacheSize);
+    
     // calculate the basename
     // to avoid inter-locking between the multiple SB-based indexers, they each 
     // create their ow database.
@@ -1311,9 +1320,14 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
    * previously seen mention IDs.
    */
   public void setCacheSizes(int level1, int level2, int level3) {
-    cache.setL1CacheSize(level1);
-    cache.setL2CacheSize(level2);
-    cache.setL3CacheSize(level3);
+    this.level1CacheSize = level1;
+    this.level2CacheSize = level2;
+    this.level3CacheSize = level3;
+    if(cache != null) {
+      cache.setL1CacheSize(level1CacheSize);
+      cache.setL2CacheSize(level2CacheSize);
+      cache.setL3CacheSize(level3CacheSize);
+    }
   }
   
 }
