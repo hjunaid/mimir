@@ -17,7 +17,6 @@
       <artifact name="gate-core" type="jar" />
       <exclude org="org.apache.tika" module="tika-core"/>
       <exclude org="org.apache.tika" module="tika-parsers"/>
-      <exclude org="org.apache.ivy" module="ivy"/>
       <exclude org="org.apache.lucene" module="lucene-core"/>
       <exclude org="org.codehaus.woodstox" module="woodstox-core-lgpl"/>
       <exclude org="xmlunit" module="xmlunit"/>

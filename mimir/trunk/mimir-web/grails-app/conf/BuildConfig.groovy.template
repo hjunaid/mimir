@@ -25,7 +25,7 @@ grails.project.dependency.resolution = {
       
       // GATE(-core), minus unused deps
       compile ('uk.ac.gate:gate-core:7.1') {
-        excludes 'tika-core', 'tika-parsers', 'ivy', 'lucene-core', 
+        excludes 'tika-core', 'tika-parsers', 'lucene-core', 
             'woodstox-core-lgpl', 'xmlunit', 'xpp3'
       }
       // bring in some of the excluded dependencies, but non-transitively
