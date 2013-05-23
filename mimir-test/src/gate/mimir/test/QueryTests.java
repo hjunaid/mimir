@@ -52,6 +52,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -67,6 +68,9 @@ public class QueryTests {
   private static final String resultsPath = "reports/query-results";
   private static final String NEW_LINE = System.getProperty("line.separator");
 
+  private static Logger logger = Logger.getLogger(QueryTests.class.getName());
+  
+  
   public static final String[] helperTypes = System.getProperty(
     "helpers.to.test", "gate.mimir.db.DBSemanticAnnotationHelper").split(
       "\\s*,\\s*");
@@ -513,7 +517,7 @@ public class QueryTests {
 
   /**
    * Compares the files resulting from the execution of two or more queries. 
-   * The queris must have been performed previously, by calling 
+   * The queries must have been performed previously, by calling 
    * {@link #performQuery(String, QueryNode, QueryEngine)}.
    * @param queryNames the names of the queries to compare.
    * @return
@@ -531,9 +535,19 @@ public class QueryTests {
       for(int  i = 1; i < readers.length; i++) {
         String anotherLine = readers[i].readLine();
         if(line != null) {
-          if(anotherLine == null || !line.equals(anotherLine)) return false;
+          if(anotherLine == null || !line.equals(anotherLine)){
+            logger.warning("Assersion error: result sets not identical. " +
+            		"First difference:\n Line (0):" + line + 
+            		"\nLine (" + i + "):" + (anotherLine == null ? "null" : anotherLine));
+            return false;
+          }
         } else {
-          if(anotherLine != null) return false;
+          if(anotherLine != null){
+            logger.warning("Assersion error: result sets not identical. " +
+                    "First difference:\n Line (0): null" + line + 
+                    "\nLine (" + i + "):" + anotherLine);               
+            return false;
+          }
         }
       }
     } while(line != null);
