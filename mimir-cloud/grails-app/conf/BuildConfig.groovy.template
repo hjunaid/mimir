@@ -35,7 +35,9 @@ grails.project.dependency.resolution = {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
         // runtime 'mysql:mysql-connector-java:5.1.20'
       compile 'org.apache.commons:commons-compress:1.1'
-      runtime 'org.hsqldb:hsqldb:2.2.9'    
+      runtime 'org.hsqldb:hsqldb:2.2.9'
+      // bring the correct library version for groovy 2
+      test "org.spockframework:spock-grails-support:0.7-groovy-2.0"
     }
 
     plugins {
@@ -45,6 +47,10 @@ grails.project.dependency.resolution = {
         build ":tomcat:$grailsVersion"
         compile ":background-thread:1.6"
         compile ":spring-security-core:1.2.7.3"
+        test(":spock:0.7") {
+          // exclude default dependency, as that's unsuitable for groovy 2
+          exclude "spock-grails-support"
+        }
     }
 }
 

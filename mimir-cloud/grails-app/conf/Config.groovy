@@ -167,7 +167,8 @@ log4j = {
   debug 'grails.app.services.gate.mimir',
         'grails.app.controllers.gate.mimir',
         'grails.app.domain.gate.mimir',
-        'grails.app.taglib.gate.mimir'
+        'grails.app.taglib.gate.mimir',
+        'gate.mimir.db'
         
 //        'grails.app.service.grails.plugins.springsecurity',
 //        'grails.app.controller.grails.plugins.springsecurity',
