@@ -175,7 +175,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       mentionsSelectStmt.setLong(1, level1Id);
       if(level2Used) {
         if(level2Id != null) {
-          mentionsSelectStmt.setLong(2, level1Id);  
+          mentionsSelectStmt.setLong(2, level2Id);  
         } else {
           mentionsSelectStmt.setNull(2, Types.BIGINT);
         }
