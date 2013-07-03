@@ -24,6 +24,8 @@
     <ivy:configure file="${build.dir}/ivysettings.xml"/>
     <ivy:resolve file="${build.dir}/ivy.xml" log="quiet"/>
     <ivy:cachepath pathid="ivylibs"/>
+
+    <ivy:cachepath organisation="org.codehaus.groovy" module="groovy-all" revision="2.0.8" inline="true" conf="default" pathid="groovylibs"/>
   </target>	
   
 	<property name="helpers.to.test"
@@ -35,6 +37,7 @@
   	<fileset dir="${core-home}" includes="mimir-core-${app.version}.jar" />
   	<fileset dir="${client-home}" includes="mimir-client-${app.version}.jar" />
     <path refid="ivylibs" />
+    <path refid="groovylibs" />
   </path>
   
   <property name="classes.dir" location="classes" />
@@ -119,5 +122,17 @@
         <fileset dir="${src.dir}" includes="**/*Tests.java" />
       </batchtest>
     </junit>
+  </target>
+
+  <target name="runconsole" depends="compile">
+    <java fork="true" classname="gate.mimir.test.ScratchConsole" maxmemory="8G">
+      <jvmarg value="-XX:MaxPermSize=512M" />
+      <classpath>
+        <pathelement location="${conf.dir}" />
+        <pathelement location="${classes.dir}" />
+        <path refid="compile.classpath" />
+      </classpath>
+      <arg line="${console.args}" />
+    </java>
   </target>
 </project>
