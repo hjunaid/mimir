@@ -46,6 +46,9 @@ public class RenderZipCollection {
 
     File indexDir = new File(args[0]);
     File outputDir = new File(args[1]);
+    // renumbering rules if required
+    int multiplier = Integer.getInteger("federatedIndex.size", 1);
+    int offset = Integer.getInteger("federatedIndex.offset", 0);
     // load the IndexConfig to obtain the right renderer
     IndexConfig indexConfig =
             IndexConfig.readConfigFromFile(new File(indexDir,
@@ -78,7 +81,7 @@ public class RenderZipCollection {
           }
           if(dd != null) {
             // and write the rendered form to the new zip (in UTF-8)
-            ZipEntry outEntry = new ZipEntry(inEntry.getName());
+            ZipEntry outEntry = new ZipEntry(renumber(inEntry.getName(), multiplier, offset));
             rendOut.putNextEntry(outEntry);
             try(BufferedWriter w = new BufferedWriter(new OutputStreamWriter(new FilterOutputStream(rendOut) {
               @Override
@@ -96,6 +99,16 @@ public class RenderZipCollection {
         }
       }
     }
+  }
+  
+  /**
+   * Renumber the original name to match the ID it would have in a federated index
+   * if this were the (0-based) <code>offset</code>th index in a federation of size
+   * <code>multiplier</code>.
+   * @throws NumberFormatException
+   */
+  public static String renumber(String originalName, int multiplier, int offset) throws NumberFormatException {
+    return String.valueOf((Integer.parseInt(originalName) * multiplier) + offset);
   }
 
 }
