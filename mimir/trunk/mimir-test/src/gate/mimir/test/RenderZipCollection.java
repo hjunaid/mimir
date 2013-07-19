@@ -20,6 +20,8 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 
 public class RenderZipCollection {
   
@@ -49,6 +51,7 @@ public class RenderZipCollection {
     // renumbering rules if required
     int multiplier = Integer.getInteger("federatedIndex.size", 1);
     int offset = Integer.getInteger("federatedIndex.offset", 0);
+    long minId = Long.getLong("minDocId", 0);
     // load the IndexConfig to obtain the right renderer
     IndexConfig indexConfig =
             IndexConfig.readConfigFromFile(new File(indexDir,
@@ -70,31 +73,53 @@ public class RenderZipCollection {
     for(File zf : zipCollectionFiles) {
       // for each input file, create a corresponding output file
       File outFile = new File(outputDir, "rendered-" + zf.getName());
+      File metaFile = new File(outputDir, "meta-" + zf.getName());
       try(ZipInputStream collIn = new ZipInputStream(new FileInputStream(zf));
-          ZipOutputStream rendOut = new ZipOutputStream(new FileOutputStream(outFile))) {
+          ZipOutputStream rendOut = new ZipOutputStream(new FileOutputStream(outFile));
+          ZipOutputStream metaOut = new ZipOutputStream(new FileOutputStream(metaFile))) {
         ZipEntry inEntry;
         while((inEntry = collIn.getNextEntry()) != null) {
-          // for each document, load the DocumentData from the original zip
-          DocumentData dd = null;
-          try(ObjectInputStream ois = new ObjectInputStream(new CloseShieldInputStream(collIn))) {
-            dd = (DocumentData)ois.readObject();
-          }
-          if(dd != null) {
-            // and write the rendered form to the new zip (in UTF-8)
-            ZipEntry outEntry = new ZipEntry(renumber(inEntry.getName(), multiplier, offset));
-            rendOut.putNextEntry(outEntry);
-            try(BufferedWriter w = new BufferedWriter(new OutputStreamWriter(new FilterOutputStream(rendOut) {
-              @Override
-              public void close() throws IOException {
-                flush();
-                ((ZipOutputStream)out).closeEntry();
-              }
-              
-            }, "UTF-8"))) {
-              renderer.render(dd, null, w);
+          long docId = renumber(inEntry.getName(), multiplier, offset);
+          if(docId >= minId) {
+            // for each document, load the DocumentData from the original zip
+            DocumentData dd = null;
+            try(ObjectInputStream ois = new ObjectInputStream(new CloseShieldInputStream(collIn))) {
+              dd = (DocumentData)ois.readObject();
             }
-          } else {
-            System.out.println("Error converting document " + inEntry.getName());
+            if(dd != null) {
+              // and write the rendered form to the new zip (in UTF-8)
+              ZipEntry outEntry = new ZipEntry(String.valueOf(docId));
+              rendOut.putNextEntry(outEntry);
+              try(BufferedWriter w = new BufferedWriter(new OutputStreamWriter(new FilterOutputStream(rendOut) {
+                @Override
+                public void close() throws IOException {
+                  flush();
+                  ((ZipOutputStream)out).closeEntry();
+                }
+                
+              }, "UTF-8"))) {
+                renderer.render(dd, null, w);
+              }
+              // write the metadata entry as JSON
+              ZipEntry metaEntry = new ZipEntry(docId + ".meta");
+              metaOut.putNextEntry(metaEntry);
+              try(BufferedWriter w = new BufferedWriter(new OutputStreamWriter(new FilterOutputStream(metaOut) {
+                @Override
+                public void close() throws IOException {
+                  flush();
+                  ((ZipOutputStream)out).closeEntry();
+                }
+                
+              }, "UTF-8"))) {
+                w.write("{\"uri\":\"");
+                StringEscapeUtils.escapeJavaScript(w, dd.getDocumentURI());
+                w.write("\",\"title\":\"");
+                StringEscapeUtils.escapeJavaScript(w, dd.getDocumentTitle());
+                w.write("\"}");
+              }            
+            } else {
+              System.out.println("Error converting document " + inEntry.getName());
+            }
           }
         }
       }
@@ -107,8 +132,8 @@ public class RenderZipCollection {
    * <code>multiplier</code>.
    * @throws NumberFormatException
    */
-  public static String renumber(String originalName, int multiplier, int offset) throws NumberFormatException {
-    return String.valueOf((Integer.parseInt(originalName) * multiplier) + offset);
+  public static long renumber(String originalName, int multiplier, int offset) throws NumberFormatException {
+    return (Long.parseLong(originalName) * multiplier) + offset;
   }
 
 }
