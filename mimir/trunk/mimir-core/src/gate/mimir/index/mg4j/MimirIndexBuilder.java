@@ -1199,11 +1199,16 @@ public abstract class MimirIndexBuilder implements Runnable {
     new File( basename + DiskBasedIndex.PROPERTIES_EXTENSION ).delete();
     new File( basename + DiskBasedIndex.POSITIONS_NUMBER_OF_BITS_EXTENSION).delete();
     new File( basename + DiskBasedIndex.POSITIONS_EXTENSION ).delete();
+    new File( basename + DiskBasedIndex.POSITIONS_EXTENSION + 
+            DiskBasedIndex.OFFSETS_POSTFIX ).delete();
     new File( basename + DiskBasedIndex.TERMS_EXTENSION ).delete();
     new File( basename + DiskBasedIndex.UNSORTED_TERMS_EXTENSION ).delete();
     new File( basename + DiskBasedIndex.SUMS_MAX_POSITION_EXTENSION ).delete();
-    
-
+    new File( basename + DiskBasedIndex.COUNTS_EXTENSION ).delete();
+    new File( basename + DiskBasedIndex.COUNTS_EXTENSION + 
+            DiskBasedIndex.OFFSETS_POSTFIX ).delete();
+    new File( basename + DiskBasedIndex.POINTERS_EXTENSIONS ).delete();
+    new File( basename + DiskBasedIndex.POINTERS_EXTENSIONS + 
+            DiskBasedIndex.OFFSETS_POSTFIX ).delete();
   }
-
 }
