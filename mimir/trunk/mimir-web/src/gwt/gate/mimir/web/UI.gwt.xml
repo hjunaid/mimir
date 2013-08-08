@@ -12,7 +12,6 @@ Valentin Tablan, 23 Nov 2011
 -->
     <!-- Inherit the core Web Toolkit stuff.                  -->
     <inherits name="com.google.gwt.user.User"/>
-    
     <inherits name="com.google.gwt.user.theme.chrome.Chrome"/>
     <!-- Specify the module entry point class.                   -->
     <entry-point class="gate.mimir.web.client.UI"/>

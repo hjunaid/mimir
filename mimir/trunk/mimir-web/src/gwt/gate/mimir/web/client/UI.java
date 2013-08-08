@@ -16,6 +16,7 @@ package gate.mimir.web.client;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -56,6 +57,8 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class UI implements EntryPoint {
  
+  private static final Logger logger = Logger.getLogger(UI.class.getName());
+  
   /**
    * A Timer implementation that fetches the latest results information from the 
    * server and updates the results display accordingly.
@@ -583,6 +586,7 @@ public class UI implements EntryPoint {
       @Override
       public void onValueChange(ValueChangeEvent<String> event) {
         String historyToken = event.getValue();
+        logger.info("History token " + historyToken);
         if(historyToken != null && historyToken.length() > 0) {
           String newQueryId = null;
           String newQueryString = null;
@@ -674,8 +678,8 @@ public class UI implements EntryPoint {
   
   protected String createHistoryToken(String queryId, String queryString, 
                                       int firstDocument) {
-    return "queryId=" + queryId + 
-        "&queryString=" + queryString + 
+    return "queryId=" + URL.encodeQueryString(queryId) + 
+        "&queryString=" + URL.encodeQueryString(queryString) + 
         "&firstDoc=" + firstDocument;
   }
   
