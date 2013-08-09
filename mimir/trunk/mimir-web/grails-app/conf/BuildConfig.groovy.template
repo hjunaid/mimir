@@ -67,7 +67,7 @@ grails.project.dependency.resolution = {
         exclude 'grails-webflow'
       }
       compile(':gwt:0.8') {
-        excludes 'resources'
+        excludes 'resources', 'release'
       }
       test(":spock:0.7") {
           // exclude default dependency, as that's unsuitable for groovy 2
