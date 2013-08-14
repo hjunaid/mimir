@@ -26,6 +26,8 @@ import java.io.IOException;
 /**
  * A query that returns a pre-defined (constant) list of document IDs. This 
  * query type does not support positions, so it returns no hits.
+ * One example usage for this type of query is as an operand to an AND operator 
+ * in order to restrict the results to a given set of documents.
  */
 public class ConstQuery implements QueryNode {
   
