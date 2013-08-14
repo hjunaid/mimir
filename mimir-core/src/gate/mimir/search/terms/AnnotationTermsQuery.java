@@ -21,6 +21,7 @@ import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.AnnotationQuery;
 
 import it.unimi.di.big.mg4j.index.IndexIterator;
+import it.unimi.di.big.mg4j.search.DocumentIterator;
 import it.unimi.di.big.mg4j.index.IndexReader;
 
 import java.io.IOException;
@@ -108,7 +109,7 @@ public class AnnotationTermsQuery implements TermsQuery {
           if(countsEnabled) {
             counts[index] = 0;
             IndexIterator iIter = annotationIndexReader.documents(terms[index]);
-            while(iIter.nextDocument() >= 0) {
+            while(iIter.nextDocument() != DocumentIterator.END_OF_LIST) {
               counts[index] += iIter.count();
             }
           }
