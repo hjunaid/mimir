@@ -145,7 +145,7 @@ public abstract class AbstractCompoundTermsQuery implements CompoundTermsQuery{
             if(aCount > count) count = aCount;
             break;
           case MIN:
-            if(aCount < count) count = aCount;
+            if(count == 0 || aCount < count) count = aCount;
             break;
           case SUM:
             count += aCount;
