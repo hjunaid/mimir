@@ -25,7 +25,11 @@ import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -288,9 +292,26 @@ public class TermsResultSet implements Serializable {
       if(descriptionsAvaialble) {
         newDescriptions[pos] = tData.description;
         originalTermStrings[pos] = tData.getStrings();
-        // term string does not actually mean anything; we use the term position
-        // instead
-        newStrings[pos] = Integer.toString(pos);
+        // term string does not actually mean anything; 
+        // we use the term position instead
+        // newStrings[pos] = Integer.toString(pos);
+        Set<String> uniq = new HashSet<String>();
+        for(String[] terms : tData.getStrings()) {
+          for(String term : terms) {
+            uniq.add(term);
+          }
+        }
+        if(uniq.isEmpty()) {
+          newStrings[pos] = Integer.toString(pos);
+        } else {
+          List<String> termList= new ArrayList<String>(uniq);
+          Collections.sort(termList);
+          StringBuilder strb = new StringBuilder(termList.get(0));
+          for(int i = 1; i < termList.size(); i++) {
+            strb.append(" | ").append(termList.get(i));
+          }
+          newStrings[pos] = strb.toString();          
+        }
       } else {
         newStrings[pos] = tData.description;
       }
