@@ -36,8 +36,7 @@ public class AnnotationTemplateCache {
       // as owner.getNominalFeatureNames() (i.e. 0, if no nominal features)
       features = new short[nominalvalues.length];
       for(int i = 0; i < nominalvalues.length; i++) {
-        String value =
-                (String)annFeats.get(owner.getNominalFeatures()[i]);
+        Object value = annFeats.get(owner.getNominalFeatures()[i]);
         if(value == null) {
           features[i] = NULL;
         } else {
