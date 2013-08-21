@@ -5,7 +5,7 @@
         <link rel="stylesheet" href="${resource(dir:'css',file:'mimir.css')}" />
         <link rel="shortcut icon" href="${resource(dir:'images',file:'favicon.ico')}" type="image/x-icon" />
         <g:layoutHead />
-        <g:javascript library="application" />
+        <g:javascript src="application.js" />
         <r:layoutResources/>
         <%-- Add any custom CSS content provided by the page. --%>
         <style type="text/css">
