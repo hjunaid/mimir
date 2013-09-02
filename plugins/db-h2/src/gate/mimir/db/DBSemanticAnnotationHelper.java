@@ -1201,9 +1201,15 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
           tableName(null, MENTIONS_TABLE_SUFFIX) + ".L2_ID");
     }
     
-    if(!hasLevel1Constraints && !hasLevel2Constraints && level2Used) {
-      // no constraints at all!
-      selectStr.append(" WHERE " + tableName(null, MENTIONS_TABLE_SUFFIX) + ".L2_ID IS NULL");
+    if(!hasLevel2Constraints && level2Used) {
+      // no level 2 constraints
+      if(firstWhere){
+        firstWhere = false;
+        selectStr.append(" WHERE ");
+      } else {
+        selectStr.append(" AND ");
+      }
+      selectStr.append(tableName(null, MENTIONS_TABLE_SUFFIX) + ".L2_ID IS NULL");
     }
     
     logger.debug("Select query:\n" + selectStr.toString());
