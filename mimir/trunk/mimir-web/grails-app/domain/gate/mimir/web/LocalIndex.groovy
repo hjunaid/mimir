@@ -41,10 +41,17 @@ class LocalIndex extends Index implements Serializable {
    */
   String scorer
   
+  /**
+   * Should sub-bindings be included when the search engine returns hits.
+   * Defaults to null (equivalent to false in Groovy-truth), to supports 
+   * backwards compatibility with old DBs.
+   */
+  Boolean subBindingsEnabled = null
   
   static constraints = {
     indexDirectory (nullable:false, blank:false)
     scorer (nullable:true, blank:true)
+    subBindingsEnabled(nullable:true) 
   }
   
   // behaviour

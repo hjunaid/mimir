@@ -83,6 +83,12 @@
 			<td valign="top" class="value"><g:formatBoolean
 				boolean="${localIndexInstance.uriIsExternalLink}" /></td>
 		</tr>
+		
+		<tr class="prop">
+			<td valign="top" class="name"><label for="subBindingsEnabled">Sub-bindings enabled:</label></td>
+			<td valign="top" class="value"><g:formatBoolean
+				boolean="${localIndexInstance.subBindingsEnabled?:false}" /></td>
+		</tr>
 	</tbody>
 </table>
 </div>
