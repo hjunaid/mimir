@@ -180,6 +180,7 @@ class LocalIndexService {
         engine = new QueryEngine(new File(index.indexDirectory))
         engine.queryTokeniser = queryTokeniser
         engine.executor = searchThreadPool
+        engine.setSubBindingsEnabled(index.subBindingsEnabled?:false) 
         queryEngines[index.id] = engine
       } catch (Exception e) {
         log.error("Cannot open local index at ${index?.indexDirectory}", e)

@@ -85,6 +85,13 @@
       </tr>
 
       <tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
+        <td valign="top" class="name"><label for="subBindingsEnabled">Sub-bindings enabled:</label></td>
+        <td valign="top" class="value"><g:checkBox
+          name="subBindingsEnabled"
+          value="${localIndexInstance.subBindingsEnabled?:false}" /></td>
+      </tr>
+      
+      <tr class="prop ${(++i % 2) ? 'even' : 'odd'}">
         <td valign="top" class="name"><label for="css">Custom CSS styles:</label></td>
         <td valign="top"
           class="value ${hasErrors(bean:localIndexInstance,field:'css','errors')}">
