@@ -6,9 +6,9 @@
         <%-- The query string is ignored but causes the browsers to refresh the 
              cached version. The query value should be changed whenever the 
              favicon changes. --%>
-        <link rel="shortcut icon" href="${resource(dir:'images',file:'favicon.ico')}?v=2" type="image/x-icon" />
-				<link rel="apple-touch-icon" href="${resource(dir: 'images', file: 'apple-touch-icon.png')}?v=2">
-				<link rel="apple-touch-icon" sizes="114x114" href="${resource(dir: 'images', file: 'apple-touch-icon-retina.png')}?v=2">        
+        <link rel="shortcut icon" href="${resource(dir:'images',file:'mimir-favicon.ico')}?v=1" type="image/x-icon" />
+				<link rel="apple-touch-icon" href="${resource(dir: 'images', file: 'mimir-apple-touch-icon.png')}?v=1">
+				<link rel="apple-touch-icon" sizes="114x114" href="${resource(dir: 'images', file: 'mimir-apple-touch-icon-retina.png')}?v=1">        
         <g:layoutHead />
         <g:javascript src="application.js" />
         <r:layoutResources/>
