@@ -3,7 +3,12 @@
     <head>
         <title><g:layoutTitle default="Mimir" /></title>
         <link rel="stylesheet" href="${resource(dir:'css',file:'mimir.css')}" />
-        <link rel="shortcut icon" href="${resource(dir:'images',file:'favicon.ico')}" type="image/x-icon" />
+        <%-- The query string is ignored but causes the browsers to refresh the 
+             cached version. The query value should be changed whenever the 
+             favicon changes. --%>
+        <link rel="shortcut icon" href="${resource(dir:'images',file:'favicon.ico')}?v=2" type="image/x-icon" />
+				<link rel="apple-touch-icon" href="${resource(dir: 'images', file: 'apple-touch-icon.png')}?v=2">
+				<link rel="apple-touch-icon" sizes="114x114" href="${resource(dir: 'images', file: 'apple-touch-icon-retina.png')}?v=2">        
         <g:layoutHead />
         <g:javascript src="application.js" />
         <r:layoutResources/>
