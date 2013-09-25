@@ -8,11 +8,14 @@
   </g:if>        
     </head>
     <body>
-      <g:if test="${documentTitle != null}">
+      <g:if test="${documentTitle}">
        <h1><g:message code="gus.document.heading" args="${[documentTitle]}" /></h1>
-        <mimir:documentContent indexId="${index?.indexId}" documentRank="${documentRank}"
-            queryId="${queryId}" />
       </g:if>
+			<g:if test="${queryId}">
+				<mimir:documentContent queryId="${queryId}" documentRank="${documentRank}"/></g:if>
+			<g:elseif test="${documentId}">
+				<mimir:documentContent indexId="${index?.indexId}" documentId="${documentId}" />
+		  </g:elseif>         
       <g:else>
         <p>Cannot find query with given ID; perhaps your session expired. Please try your search again!</p>
       </g:else>

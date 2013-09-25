@@ -20,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.codehaus.groovy.grails.web.mapping.LinkGenerator;
+
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.Cache
 import com.google.common.cache.RemovalListener;
@@ -36,6 +38,9 @@ class SearchService {
    * true.
    */
   static transactional = true
+  
+  
+  LinkGenerator grailsLinkGenerator
   
   /**
    * The Search service is a singleton.
@@ -119,6 +124,62 @@ class SearchService {
     throw new IllegalArgumentException("Index with specified ID not found!")
   }
   
+      
+  /**
+   * This method produces CSV text representing the documents found by a given 
+   * query. For each document a link will be generated that will display the
+   * document contents at a later time. If the index also stores original URLs,
+   * then a second column is used to include the external document links. If 
+   * any metadata fields are requested, each such field will be included into an
+   * additional column.
+   *     
+   * @param queryId the query for which the results are requested
+   * @param out an Appendable to which the resulting CSV data is streamed.
+   * @param metadataFields which document metadata fields should be included in
+   * the produced output. By default this is empty, so no additional columns are
+   * generated.
+   */
+  public void downloadQueryResults(String queryId, Appendable out, 
+      List<String> metadataFields = []) {
+    QueryRunnerHolder qrh = queryRunners.getIfPresent(queryId)
+    if(!qrh) throw new IllegalArgumentException("No query found with ID $queryId")
+    QueryRunner qRunner = qrh.queryRunner
+    boolean externalLinks = qrh.index.uriIsExternalLink
+    boolean fields = metadataFields
+    Set<String> fieldNames = metadataFields as Set<String>
+    
+    //wait for the query runner to complete
+    while(qRunner.getDocumentsCount() < 0) {
+      Thread.sleep(20)
+    }
+    // write the header row
+    out.append('"Document URL"')
+    if(externalLinks) out.append(',"Original document URL"')
+    metadataFields.each{ out.append(",\"${it}\"") }
+    out.append("\n")
+    // for each document, write the row
+    for(long rank = 0; rank < qRunner.getDocumentsCount(); rank++) {
+      long docId = qRunner.getDocumentID(rank)
+      out.append('"' + 
+          grailsLinkGenerator.link(controller:"search", 
+              action:"document", params:[documentId:docId, 
+                indexId:qrh.index.indexId], 
+          absolute:true) + 
+          '"')
+      if(externalLinks) {
+        out.append(",\"${qRunner.getDocumentURI(rank)}\"")
+      }
+      if(fields) {
+        Map<String, Serializable> fieldValues = 
+            qRunner.getDocumentMetadataFields(rank, fieldNames)
+        metadataFields.each{
+          out.append(",\"${fieldValues[it]}\"")
+        }
+      }
+      out.append("\n")
+    }
+  }
+      
   @PostConstruct
   public void setUp() {
     // construct the runners cache
