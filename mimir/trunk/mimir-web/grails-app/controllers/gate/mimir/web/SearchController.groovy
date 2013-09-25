@@ -112,21 +112,28 @@ class SearchController {
   * the documentContent tag of the GusTagLib.
   */
  def document = {
-   QueryRunner runner = searchService.getQueryRunner(params.queryId)
-   if(runner){
+   if(params.queryId && params.documentRank) {
+     QueryRunner runner = searchService.getQueryRunner(params.queryId)
+     if(runner){
+       Index index = Index.findByIndexId(params.indexId)
+       return [
+           index:index,
+           documentRank: params.documentRank,
+           queryId:params.queryId,
+           documentTitle:runner.getDocumentTitle(params.documentRank as int),
+           baseHref:index?.isUriIsExternalLink() ? runner.getDocumentURI(params.documentRank as int) : null
+           ]
+     } else {
+       //query has expired
+       return [ queryId:params.queryId ]
+     }
+   } else if(params.indexId && params.documentId) {
      Index index = Index.findByIndexId(params.indexId)
      return [
-         index:index,
-         documentRank: params.documentRank,
-         queryId:params.queryId,
-         documentTitle:runner.getDocumentTitle(params.documentRank as int),
-         baseHref:index?.isUriIsExternalLink() ? runner.getDocumentURI(params.documentRank as int) : null
-         ]
-   } else {
-     //query has expired
-     return [
-       queryId:params.queryId
-     ]
+       index:index,
+       documentId: params.documentId,
+       documentTitle:"",
+       baseHref: null]
    }
  }
   
@@ -946,6 +953,29 @@ class SearchController {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST,
           "You must supply either a documentId or the queryId and rank!")
       }
+    }
+  }
+  
+  
+  def downloadDocumentList = {
+    def p = params["request"] ?: params
+    //get the query ID
+    String queryId = p["queryId"]
+    
+    if(searchService.getQueryRunner(queryId)) {
+      response.characterEncoding = "UTF-8"
+      response.contentType = "text/csv"
+      try {
+        response.writer.withWriter{ writer ->
+          searchService.downloadQueryResults(queryId, writer, params.list('fields'))
+        }
+      } catch (Exception e) {
+        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          "Error while preparing document list: \"" + e.getMessage() + "\"!")
+      }
+    } else {
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+        "The provided query ID $queryId was invalid.")
     }
   }
   

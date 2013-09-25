@@ -15,7 +15,6 @@ package gate.mimir.web;
 import gate.mimir.search.QueryRunner;
 
 import java.util.Locale;
-
 import java.text.NumberFormat;
 
 import org.springframework.context.ApplicationContext;
@@ -208,16 +207,38 @@ class MimirTagLib implements ApplicationContextAware {
     }
   }
   
+  /**
+   * Renders the contents of a document.
+   * Parameters are either:
+   * <ul>
+   *   <li>queryId, and documentRank</li>
+   *   <li>indexId, and documentId</li>
+   * </ul>
+   */
   def documentContent = { attrs, body ->
-    def queryId = attrs.queryId
-    def documentRank = attrs.documentRank as int
     try {
-      QueryRunner qRunner =  applicationContext.searchService.getQueryRunner(queryId)
-      if(qRunner) {
-        qRunner.renderDocument(documentRank, out)
+      if(attrs.queryId) {
+        def queryId = attrs.queryId
+        def documentRank = attrs.documentRank as long
+        QueryRunner qRunner =  applicationContext.searchService.getQueryRunner(queryId)
+        if(qRunner) {
+          qRunner.renderDocument(documentRank, out)
+        } else {
+          out << g.message(code:"gus.bad.query.id", args:[queryId])
+        }
+      } else if(attrs.indexId) {
+        def indexId = attrs.indexId
+        def documentId = attrs.documentId as long
+        Index theIndex = Index.findByIndexId(indexId)
+        if(theIndex) {
+          theIndex.renderDocument(documentId, out)
+        } else {
+          out << g.message(code:"gus.bad.indexId", args:[indexId])
+        }
       } else {
-        out << g.message(code:"gus.bad.query.id", args:[queryId])
+        out << g.message(code:"gus.no.query.index.id")
       }
+      
     } catch(Exception ex) {
       log.error("Exception rendering document ${documentRank}", ex)
       out << g.message(code:"gus.renderDocument.exception", args:[ex.message])
