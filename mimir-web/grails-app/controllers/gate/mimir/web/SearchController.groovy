@@ -965,6 +965,7 @@ class SearchController {
     if(searchService.getQueryRunner(queryId)) {
       response.characterEncoding = "UTF-8"
       response.contentType = "text/csv"
+      response.setHeader("Content-Disposition", "attachment; filename=document-list.csv")
       try {
         response.writer.withWriter{ writer ->
           searchService.downloadQueryResults(queryId, writer, params.list('fields'))
