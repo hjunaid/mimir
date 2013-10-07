@@ -135,14 +135,14 @@ public class QueryParser implements QueryParserConstants {
       return toWithinQuery((InQuery)queryInst, space);
     } else if(queryInst instanceof OverQuery) {
       return toContainsQuery((OverQuery)queryInst, space);
-    } else if(queryInst instanceof MinusQuery) {
-      return toMinusQuery((MinusQuery)queryInst, space);
     } else if(queryInst instanceof KleneQuery) {
       return toRepeatsQuery((KleneQuery)queryInst, space);
     } else if(queryInst instanceof ORQuery) {
       return toOrQuery((ORQuery)queryInst, space);
     } else if(queryInst instanceof ANDQuery) {
       return toAndQuery((ANDQuery)queryInst, space);
+    } else if(queryInst instanceof MinusQuery) {
+      return toMinusQuery((MinusQuery)queryInst, space);
     } else if(queryInst instanceof SequenceQuery) {
       return toSequenceQuery((SequenceQuery)queryInst, space);
     }
@@ -241,20 +241,6 @@ public class QueryParser implements QueryParserConstants {
   }
 
   /**
-   * Conversion of the OverQuery into ContainsQuery
-   * @param query
-   * @return
-   * @throws ParseException
-   */
-  private QueryNode toMinusQuery(MinusQuery query, String space)
-                                                     throws ParseException {
-    if(debug) System.out.println(space + "MinusQuery");
-    QueryNode leftQuery = convert(query.leftQuery, space + " ");
-    QueryNode rightQuery = convert(query.rightQuery, space + " ");
-    return new gate.mimir.search.query.MinusQuery(leftQuery, rightQuery);
-  }  
-  
-  /**
    * Conversion of the KleneQuery into RepeatsQuery
    * @param query
    * @return
@@ -302,6 +288,20 @@ public class QueryParser implements QueryParserConstants {
     return new gate.mimir.search.query.AndQuery(andQueries);
   }
 
+  /**
+   * Conversion of the MinusQuery
+   * @param query
+   * @return
+   * @throws ParseException
+   */
+  private QueryNode toMinusQuery(MinusQuery query, String space)
+                                             throws ParseException {
+    if(debug) System.out.println(space + "MinusQuery:");
+    QueryNode leftQuery = convert(query.leftQuery, space + " ");
+    QueryNode rightQuery = convert(query.rightQuery, space + " ");
+    return new gate.mimir.search.query.MinusQuery(leftQuery,
+                                                    rightQuery);
+  }
 
   /**
    * Conversion of the SequenceQuery
@@ -485,7 +485,8 @@ public class QueryParser implements QueryParserConstants {
 
     if(sq.size() == 1 && !(q instanceof InQuery ||
          q instanceof OverQuery || q instanceof ORQuery ||
-         q instanceof ANDQuery || q instanceof KleneQuery))
+         q instanceof ANDQuery || q instanceof KleneQuery ||
+         q instanceof MinusQuery))
       {if (true) return q;}
     else
       {if (true) return sq;}
@@ -1117,27 +1118,6 @@ public class QueryParser implements QueryParserConstants {
     finally { jj_save(4, xla); }
   }
 
-  final private boolean jj_3_4() {
-    if (jj_3R_4()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_5() {
-    if (jj_scan_token(tok)) return true;
-    if (jj_scan_token(colon)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_3() {
-    if (jj_scan_token(and)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_1() {
-    if (jj_3R_3()) return true;
-    return false;
-  }
-
   final private boolean jj_3R_5() {
     if (jj_scan_token(number)) return true;
     return false;
@@ -1194,6 +1174,27 @@ public class QueryParser implements QueryParserConstants {
     }
     }
     }
+    return false;
+  }
+
+  final private boolean jj_3_4() {
+    if (jj_3R_4()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_5() {
+    if (jj_scan_token(tok)) return true;
+    if (jj_scan_token(colon)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_3() {
+    if (jj_scan_token(and)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_1() {
+    if (jj_3R_3()) return true;
     return false;
   }
 
