@@ -139,15 +139,14 @@ contained in a hit of {\tt Query2}.
 overlapping) a hit of {\tt Query2}.
 \end{description}
 
-\subsection{MINUS Operator: ``{\tt -}''}\label{sec:minus-query}
+\subsection{MINUS Operator}\label{sec:minus-query}
 
-The {\tt MINUS} (also `-') operator is a binary operator that takes a left and
+The {\tt MINUS} operator is a binary operator that takes a left and
 a right operand. It returns the hits from the left sub-query that are not also
 valid hits for right sub-query. For example:
 \begin{description}
-\item[Query1 - Query2] will match all the hits of {\tt Query1} that are
+\item[Query1 MINUS Query2] will match all the hits of {\tt Query1} that are
 not also hits of {\tt Query2}.
-\item[Query1 MINUS Query2] is a different syntax for the same query as above.
 \end{description}
 
 \subsection{Repeats Operator: ``+''}\label{sec:kleene-query}
