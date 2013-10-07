@@ -162,6 +162,8 @@ public class QueryParser {
       return toOrQuery((ORQuery)queryInst, space);
     } else if(queryInst instanceof ANDQuery) {
       return toAndQuery((ANDQuery)queryInst, space);
+    } else if(queryInst instanceof MinusQuery) {
+      return toMinusQuery((MinusQuery)queryInst, space);
     } else if(queryInst instanceof SequenceQuery) {
       return toSequenceQuery((SequenceQuery)queryInst, space);
     }
@@ -307,6 +309,20 @@ public class QueryParser {
     return new gate.mimir.search.query.AndQuery(andQueries);
   }
 
+  /**
+   * Conversion of the MinusQuery
+   * @param query
+   * @return
+   * @throws ParseException
+   */
+  private QueryNode toMinusQuery(MinusQuery query, String space) 
+                                             throws ParseException {
+    if(debug) System.out.println(space + "MinusQuery:");
+    QueryNode leftQuery = convert(query.leftQuery, space + " ");
+    QueryNode rightQuery = convert(query.rightQuery, space + " ");
+    return new gate.mimir.search.query.MinusQuery(leftQuery,
+                                                    rightQuery);
+  }
 
   /**
    * Conversion of the SequenceQuery
@@ -597,7 +613,8 @@ Query QueryPlus() :
     
     if(sq.size() == 1 && !(q instanceof InQuery || 
          q instanceof OverQuery || q instanceof ORQuery || 
-         q instanceof ANDQuery || q instanceof KleneQuery))
+         q instanceof ANDQuery || q instanceof KleneQuery ||
+         q instanceof MinusQuery))
       return q; 
     else 
       return sq; 

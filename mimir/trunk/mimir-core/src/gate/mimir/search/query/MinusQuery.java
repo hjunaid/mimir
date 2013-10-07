@@ -165,4 +165,9 @@ public class MinusQuery implements QueryNode {
   public QueryExecutor getQueryExecutor(QueryEngine engine) throws IOException {
     return new MinusQueryExecutor(engine, this);
   }
+
+  public String toString(){
+    return "MINUS (\nLEFT:" + left.toString() + ",\nRIGHT:" + 
+        right.toString() +"\n)";
+  }
 }
