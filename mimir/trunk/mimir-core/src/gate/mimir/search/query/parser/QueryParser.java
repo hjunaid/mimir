@@ -1118,11 +1118,6 @@ public class QueryParser implements QueryParserConstants {
     finally { jj_save(4, xla); }
   }
 
-  final private boolean jj_3R_5() {
-    if (jj_scan_token(number)) return true;
-    return false;
-  }
-
   final private boolean jj_3R_4() {
     if (jj_scan_token(period)) return true;
     if (jj_scan_token(regex)) return true;
@@ -1195,6 +1190,11 @@ public class QueryParser implements QueryParserConstants {
 
   final private boolean jj_3_1() {
     if (jj_3R_3()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_5() {
+    if (jj_scan_token(number)) return true;
     return false;
   }
 

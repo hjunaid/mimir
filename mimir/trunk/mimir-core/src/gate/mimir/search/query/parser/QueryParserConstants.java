@@ -72,7 +72,7 @@ public interface QueryParserConstants {
     "\",\"",
     "<or>",
     "<and>",
-    "<minus>",
+    "\"MINUS\"",
     "\"+\"",
     "\"?\"",
     "\"IN\"",
