@@ -541,7 +541,8 @@ TOKEN:{<colon: ":">}
 TOKEN:{<comma: ",">}
 TOKEN:{<or: "|" | "OR">}
 TOKEN:{<and: "&" | "AND">}
-TOKEN:{<minus: "-" | "MINUS">}
+// don't use "-" for minus because it clashes with negative numbers
+TOKEN:{<minus: "MINUS">}
 TOKEN:{<plus: "+">}
 TOKEN:{<question: "?">}
 TOKEN:{<in: "IN">}
