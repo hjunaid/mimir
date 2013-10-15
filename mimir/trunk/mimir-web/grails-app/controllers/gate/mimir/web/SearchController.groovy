@@ -432,8 +432,11 @@ class SearchController {
   /**
    * Action for obtaining the document metadata.
    * Parameters:
-   *   - rank: the rank of the desired document
-   *   - fieldNames (optional): a comma-separated list of other field names to 
+   * - queryId: the for the query to be used for getting the document. 
+   * - rank: the rank of the desired document
+   * - documentId, as an alternative to the (queryId, rank) pair: the ID for the
+   *   requested document.
+   * - fieldNames (optional): a comma-separated list of other field names to 
    *   be returned. 
    * Returns:
    *   - the document URI
@@ -442,57 +445,80 @@ class SearchController {
    */
   def documentMetadata = {
     def p = params["request"] ?: params
-    //a closure representing the return message
-    def message;
-    //get the query ID
+    // get the document ID
+    long documentId
     String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      //get the parameters
-      String rankStr = p["rank"]
-      if(rankStr){
-        try{
-          long rank = Long.parseLong(rankStr)
-          // see if any fields were requested
-          Map<String, Serializable> metadata = null;
-          def fieldNamesStr = p["fieldNames"]
-          if(fieldNamesStr) {
-            Set<String> fieldNames = new HashSet<String>()
-            // split on each comma (not preceded by a backslash)
-            fieldNamesStr.split(/\s*(?<!\\),\s*/).collect{
-              // un-escape commas
-              it.replace('\\,', ',')
-            }.each{fieldNames.add(it)}
-            metadata = runner.getDocumentMetadataFields(rank, fieldNames)
+    if(queryId) {
+      QueryRunner runner = searchService.getQueryRunner(queryId);
+      if(runner) {
+        def documentRankParam = p["rank"]
+        if(documentRankParam) {
+          //we have all the required parameters
+          long documentRank
+          try{
+            documentRank = documentRankParam as long
+            documentId = runner.getDocumentID(documentRank)
+          } catch (Exception e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+              "Invalid value provided for parameter rank (not an integer)!")
+            return;
           }
-          //we have all required parameters
-          String documentURI = runner.getDocumentURI(rank)
-          String documentTitle = runner.getDocumentTitle(rank)
-          message = buildMessage(SUCCESS, null){
-            delegate.documentTitle(documentTitle)
-            delegate.documentURI(documentURI)
-            metadata?.each{String key, Serializable value -> 
-              delegate.metadataField(name:key, value:value.toString())
-            }
-          }
-        } catch(NumberFormatException e) {
-          message = buildMessage(ERROR,
-            "Non-integer value provided for parameter rank", null);
-        } catch(Exception e){
-          message = buildMessage(ERROR, 
-            'Error while obtaining the document metadata: "' + 
-            e.getMessage() + "\"!", null)
+        } else {
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+            "No value provided for the rank parameter.")
+          return;
         }
       } else {
-        message= buildMessage(ERROR, 
-        "No value provided for parameter rank!", null)
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+          "Could not find query with ID $queryId!")
       }
     } else {
-      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
+      //no queryId value supplied: use documentId
+      String documentIdStr = p["documentId"]
+      if(documentIdStr) {
+        try{
+          documentId = documentIdStr as long
+        } catch (Exception e) {
+          log.error("Error in render", e)
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+            "Invalid value provided for parameter documentId (not an integer)!")
+          return;
+        }
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+          "You must supply either a documentId or the queryId and rank!")
+      }
+    }
+    // at this point we have the documentId
+    Index theIndex = (Index)request.theIndex
+    DocumentData docData = theIndex.getDocumentData(documentId)
+    //a closure representing the return message
+    def message;
+    
+    Map<String, Serializable> metadata = null;
+    def fieldNamesStr = p["fieldNames"]
+    if(fieldNamesStr) {
+      // split on each comma (not preceded by a backslash)
+      metadata = fieldNamesStr.split(/\s*(?<!\\),\s*/).collect{
+        // un-escape commas
+        it.replace('\\,', ',')
+      }.collect { String fieldName ->
+         [(fieldName):docData.getMetadataField(fieldName)]
+      }
+    }
+    //we have all required values
+    String documentURI = docData.getDocumentURI()
+    String documentTitle = docData.getDocumentTitle()
+    message = buildMessage(SUCCESS, null){
+      delegate.documentTitle(documentTitle)
+      delegate.documentURI(documentURI)
+      metadata?.each{String key, Serializable value ->
+        delegate.metadataField(name:key, value:value.toString())
+      }
     }
     //return the results
     render(contentType:"text/xml", builder: new StreamingMarkupBuilder(),
-    message)
+        message)
   }
 
     
