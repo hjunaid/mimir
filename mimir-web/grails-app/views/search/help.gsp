@@ -207,6 +207,30 @@
   </div>  
   
   <div class="action-box">
+    <span class="action-name">documentMetadata</span>
+    <span class="action-desc">Action for obtaining the document metadata.</span>
+    <div class="list"><b>Parameters:</b>
+      <table>
+        <tr>
+        <td>documentId</td>
+        <td>the document ID (as obtained from a call to the 
+        <strong>documentId</strong> action) for the requested document.</td>
+        </tr>
+        <tr>
+        <td>fieldNames</td>
+        <td>(optional) a comma-separated list of other field names to be returned.</td>
+        </tr>        
+      </table>
+      <p><b>Returns:</b></p> 
+      <ul>
+        <li>the document URI</li>
+        <li>the document title</li>
+        <li>the values for the other field names, if requested and present</li>
+      </ul>
+    </div>
+  </div>    
+  
+  <div class="action-box">
     <span class="action-name">renderDocument</span>
     <span class="action-desc">Renders the document text and hits, in the context
     of a given query. The html of the document is rendered directly to the 

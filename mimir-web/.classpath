@@ -110,5 +110,7 @@
 	</classpathentry>
 	<classpathentry kind="src" path="src/gwt"/>
 	<classpathentry exported="true" kind="con" path="GROOVY_DSL_SUPPORT"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/mimir-client"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/mimir-core"/>
 	<classpathentry kind="output" path="target-eclipse/classes"/>
 </classpath>
