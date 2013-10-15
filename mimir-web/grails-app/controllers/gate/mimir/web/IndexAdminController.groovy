@@ -116,7 +116,7 @@ class IndexAdminController {
         try {
           def idsToDelete = cmd.documentIds.split(/\p{javaWhitespace}+/).collect {
             lastTriedNumber = it
-            return it.toInteger()
+            return it.toLong()
           }
 
           // if we get to here we have a list of Integers

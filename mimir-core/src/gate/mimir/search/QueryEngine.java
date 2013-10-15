@@ -1011,8 +1011,12 @@ public class QueryEngine {
    * documents are never returned as search results.
    * @param documentIds
    */
-  public void deleteDocuments(Collection<Long> documentIds) {
-    if(deletedDocumentIds.addAll(documentIds)) {
+  public void deleteDocuments(Collection<? extends Number> documentIds) {
+    List<Long> idsToDelete = new ArrayList<Long>(documentIds.size());
+    for(Number n : documentIds) {
+      idsToDelete.add(Long.valueOf(n.longValue()));
+    }
+    if(deletedDocumentIds.addAll(idsToDelete)) {
       writeDeletedDocsLater();
     }
   }
@@ -1031,7 +1035,7 @@ public class QueryEngine {
    * this method for a document ID that is not currently marked as deleted has
    * no effect.
    */
-  public void undeleteDocument(int documentId) {
+  public void undeleteDocument(long documentId) {
     if(deletedDocumentIds.remove(documentId)) {
       writeDeletedDocsLater();
     }
@@ -1042,8 +1046,12 @@ public class QueryEngine {
    * this method for a document ID that is not currently marked as deleted has
    * no effect.
    */
-  public void undeleteDocuments(Collection<Long> documentIds) {
-    if(deletedDocumentIds.removeAll(documentIds)) {
+  public void undeleteDocuments(Collection<? extends Number> documentIds) {
+    List<Long> idsToUndelete = new ArrayList<Long>(documentIds.size());
+    for(Number n : documentIds) {
+      idsToUndelete.add(Long.valueOf(n.longValue()));
+    }
+    if(deletedDocumentIds.removeAll(idsToUndelete)) {
       writeDeletedDocsLater();
     }
   }
