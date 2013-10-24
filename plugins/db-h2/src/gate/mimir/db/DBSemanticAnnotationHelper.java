@@ -1007,6 +1007,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     }
     boolean firstWhere = true;
     // add constraints
+    List<Constraint> unusedConstraints = new ArrayList<Constraint>(constraints);
     if(hasLevel1Constraints) {
       if(nominalFeatureNames != null) {
         for(String aFeatureName : nominalFeatureNames) {
@@ -1051,6 +1052,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
                 params.add("(?" + ((String[])aConstraint.getValue())[1] + ")"
                         + ((String[])aConstraint.getValue())[0]);
               }
+              unusedConstraints.remove(aConstraint);
             }
           }
         }        
@@ -1103,6 +1105,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
               } else {
                 params.add(Long.valueOf(aConstraint.getValue().toString()));
               }
+              unusedConstraints.remove(aConstraint);
             }
           }
         }        
@@ -1144,6 +1147,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
               } else {
                 params.add(Double.valueOf(aConstraint.getValue().toString()));
               }              
+              unusedConstraints.remove(aConstraint);
             }
           }
         }        
@@ -1191,6 +1195,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
                 params.add("(?" + ((String[])aConstraint.getValue())[1] + ")"
                         + ((String[])aConstraint.getValue())[0]);
               }
+              unusedConstraints.remove(aConstraint);
             }
           }
         }        
@@ -1200,7 +1205,25 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       selectStr.append(" AND "+ tableName(null, L2_TABLE_SUFFIX) + ".ID = " + 
           tableName(null, MENTIONS_TABLE_SUFFIX) + ".L2_ID");
     }
-    
+    if(unusedConstraints.size() > 0) {
+      StringBuilder msg = new StringBuilder();
+      if(unusedConstraints.size() == 1) {
+        msg.append("The following constraint name was not recognised: \"");
+        msg.append(unusedConstraints.get(0).getFeatureName());
+        msg.append("\".");
+      } else {
+        msg.append("The following constraint names were not recognised: ");
+        boolean first = true;
+        for(Constraint aConstraint : unusedConstraints) {
+          if(first) first = false; else msg.append(", ");
+          msg.append('"');
+          msg.append(aConstraint.getFeatureName());
+          msg.append('"');
+        }
+        msg.append(".");
+      }
+      throw new RuntimeException(msg.toString());
+    }
     if(!hasLevel2Constraints && level2Used) {
       // no level 2 constraints
       if(firstWhere){
