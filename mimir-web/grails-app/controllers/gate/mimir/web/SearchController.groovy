@@ -502,7 +502,7 @@ class SearchController {
       metadata = fieldNamesStr.split(/\s*(?<!\\),\s*/).collect{
         // un-escape commas
         it.replace('\\,', ',')
-      }.collect { String fieldName ->
+      }.collectEntries { String fieldName ->
          [(fieldName):docData.getMetadataField(fieldName)]
       }
     }
