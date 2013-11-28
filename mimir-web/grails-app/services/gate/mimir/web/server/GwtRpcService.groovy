@@ -101,7 +101,7 @@ class GwtRpcService implements gate.mimir.web.client.GwtRpcService {
           // also obtain some documents data
           List<DocumentData> documents = []
           int maxRank = Math.min(firstDocumentRank + documentsCount,
-            qRunner.getDocumentsCount());
+            Math.max(qRunner.getDocumentsCount(), qRunner.getDocumentsCurrentCount()) );
           for(int docRank = firstDocumentRank; docRank < maxRank; docRank++) {
             DocumentData docData = new DocumentData(
                 documentRank:docRank,
