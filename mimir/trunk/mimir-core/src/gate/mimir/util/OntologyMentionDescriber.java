@@ -25,7 +25,7 @@ import gate.mimir.AbstractSemanticAnnotationHelper.MentionDescriber;
  * For this describer to work, the array of descriptive features (see 
  * {@link AbstractSemanticAnnotationHelper#getDescriptiveFeatures()}) must start
  * with the name of the <code>class</code> feature, followed optionally by the 
- * name of the <code>feature</code> feature. All subsequent feature names are
+ * name of the <code>instance</code> feature. All subsequent feature names are
  * ignored.
  */
 public class OntologyMentionDescriber implements MentionDescriber {
