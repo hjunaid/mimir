@@ -119,7 +119,7 @@ public class OntologyMentionDescriber implements MentionDescriber {
   protected String getName(String uri) {
     if(localNamesOnly) {
       // we need to shorten the full name
-      int pos = uri.indexOf(nameSpaceSeparator);
+      int pos = uri.lastIndexOf(nameSpaceSeparator);
       return pos < 0 ? uri : uri.substring(pos + nameSpaceSeparator.length());
     } else {
       return uri;
