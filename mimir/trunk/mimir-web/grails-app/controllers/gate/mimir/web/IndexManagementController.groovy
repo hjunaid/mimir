@@ -42,6 +42,9 @@ class IndexManagementController {
         response.sendError(HttpServletResponse.SC_FORBIDDEN,
             "Index with ID ${params.indexId} is in state ${theIndex.state}")
       }
+    } else {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
+      "Index ID ${params.indexId} not known!")
     }
   }
 
@@ -55,6 +58,9 @@ class IndexManagementController {
         response.sendError(HttpServletResponse.SC_FORBIDDEN,
             "Index with ID ${params.indexId} is in state ${theIndex.state}")
       }
+    } else {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
+      "Index ID ${params.indexId} not known!")
     }
   }
 
@@ -66,6 +72,9 @@ class IndexManagementController {
         new ObjectOutputStream (response.outputStream).withStream {stream ->
           stream.writeDouble(value)
         }
+      } else {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND,
+        "Index ID ${params.indexId} not known!")
       }
     } catch(Exception e){
       response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -89,6 +98,9 @@ class IndexManagementController {
         response.sendError(HttpServletResponse.SC_FORBIDDEN,
             "Index with ID ${params.indexId} is in state ${theIndex.state}")
       }
+    } else {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND,
+      "Index ID ${params.indexId} not known!")
     }
   }
   
