@@ -135,22 +135,14 @@ grails.exceptionresolver.params.exclude = ['password']
 // configure auto-caching of queries by default (if false you can cache individual queries with 'cache: true')
 grails.hibernate.cache.queries = false
 
+grails.serverURL = "http://localhost:8080/${appName}"
 
 // set per-environment serverURL stem for creating absolute links
 environments {
   development { 
     // whether to install the java.util.logging bridge for sl4j. Disable for AppEngine!
     grails.logging.jul.usebridge = true
-    grails.serverURL = "http://localhost:8080/${appName}" 
-  }
-  
-  production { 
-    grails.serverURL = "http://www.changeme.com" 
-  }
-  
-  test { 
-    grails.serverURL = "http://localhost:8080/${appName}" 
-  }
+  }  
 }
 
 // log4j configuration
