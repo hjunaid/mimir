@@ -24,6 +24,14 @@ import gate.mimir.index.mg4j.zipcollection.DocumentCollectionWriter;
 import gate.mimir.index.mg4j.zipcollection.DocumentData;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -48,6 +56,20 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
   
   public static final String TOKEN_INDEX_BASENAME = "token";
   
+  protected static final CharsetEncoder UTF8_CHARSET_ENCODER = Charset.forName("UTF-8").newEncoder();
+  
+  protected static final CharsetDecoder UTF8_CHARSET_DECODER = Charset.forName("UTF-8").newDecoder();
+  
+  static {
+    try {
+      UTF8_CHARSET_ENCODER.replaceWith("[UNMAPPED]".getBytes("UTF-8"));
+      UTF8_CHARSET_ENCODER.onMalformedInput(CodingErrorAction.REPLACE);
+      UTF8_CHARSET_ENCODER.onUnmappableCharacter(CodingErrorAction.REPLACE);
+    } catch(UnsupportedEncodingException e) {
+      // this should never happen
+      throw new RuntimeException("UTF-8 not supported");
+    }
+  }
   /**
    * A zip collection builder used to build a zip of the collection
    * if this has been requested.
@@ -207,6 +229,18 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
           GATEDocument gateDocument) throws IndexException {
     FeatureMap tokenFeatures = ann.getFeatures();
     String value = (String)tokenFeatures.get(featureName);
+    // make sure we get valid UTF-8 content
+    // illegal strings will simply be rendered as "?"
+    try {
+      CharBuffer cb = CharBuffer.wrap(value);
+      ByteBuffer bb = UTF8_CHARSET_ENCODER.encode(cb);
+      cb = UTF8_CHARSET_DECODER.decode(bb);
+      value  = cb.toString();
+    } catch(CharacterCodingException e) {
+      // this should not happen
+      value = null;
+      logger.error("Error while normalizing input", e);
+    }
     currentTerm.replace(value == null ? "" : value);
     //save the *unprocessed* term to the collection, if required.
     if(collectionWriter != null) {
