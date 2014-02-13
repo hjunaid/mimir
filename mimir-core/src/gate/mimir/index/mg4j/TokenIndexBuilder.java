@@ -62,7 +62,7 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
   
   static {
     try {
-      UTF8_CHARSET_ENCODER.replaceWith("[UNMAPPED]".getBytes("UTF-8"));
+      UTF8_CHARSET_ENCODER.replaceWith("[?]".getBytes("UTF-8"));
       UTF8_CHARSET_ENCODER.onMalformedInput(CodingErrorAction.REPLACE);
       UTF8_CHARSET_ENCODER.onUnmappableCharacter(CodingErrorAction.REPLACE);
     } catch(UnsupportedEncodingException e) {
