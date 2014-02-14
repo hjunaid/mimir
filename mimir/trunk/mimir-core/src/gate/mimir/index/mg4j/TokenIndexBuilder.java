@@ -56,20 +56,10 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
   
   public static final String TOKEN_INDEX_BASENAME = "token";
   
-  protected static final CharsetEncoder UTF8_CHARSET_ENCODER = Charset.forName("UTF-8").newEncoder();
+  protected final CharsetEncoder utf8CharsetEncoder = Charset.forName("UTF-8").newEncoder();
   
-  protected static final CharsetDecoder UTF8_CHARSET_DECODER = Charset.forName("UTF-8").newDecoder();
+  protected final CharsetDecoder utf8CharsetDecoder = Charset.forName("UTF-8").newDecoder();
   
-  static {
-    try {
-      UTF8_CHARSET_ENCODER.replaceWith("[?]".getBytes("UTF-8"));
-      UTF8_CHARSET_ENCODER.onMalformedInput(CodingErrorAction.REPLACE);
-      UTF8_CHARSET_ENCODER.onUnmappableCharacter(CodingErrorAction.REPLACE);
-    } catch(UnsupportedEncodingException e) {
-      // this should never happen
-      throw new RuntimeException("UTF-8 not supported");
-    }
-  }
   /**
    * A zip collection builder used to build a zip of the collection
    * if this has been requested.
@@ -148,7 +138,14 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
       logger.info("Creating zipped collection for field \"" + featureName + "\"");
       collectionWriter = new DocumentCollectionWriter(indexer.getIndexDir());
     }
-    
+    try {
+      utf8CharsetEncoder.replaceWith("[?]".getBytes("UTF-8"));
+      utf8CharsetEncoder.onMalformedInput(CodingErrorAction.REPLACE);
+      utf8CharsetEncoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+    } catch(UnsupportedEncodingException e) {
+      // this should never happen
+      throw new RuntimeException("UTF-8 not supported");
+    }
   }
 
 
@@ -233,8 +230,8 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
     // illegal strings will simply be rendered as "?"
     try {
       CharBuffer cb = CharBuffer.wrap(value);
-      ByteBuffer bb = UTF8_CHARSET_ENCODER.encode(cb);
-      cb = UTF8_CHARSET_DECODER.decode(bb);
+      ByteBuffer bb = utf8CharsetEncoder.encode(cb);
+      cb = utf8CharsetDecoder.decode(bb);
       value  = cb.toString();
     } catch(CharacterCodingException e) {
       // this should not happen
