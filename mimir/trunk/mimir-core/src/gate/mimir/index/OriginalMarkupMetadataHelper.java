@@ -194,6 +194,15 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
     if(tokens.length <= nonTokens.length){
       output.append(nonTokens[tokens.length - 1]);
     }
+    // any remaining tags, are zero-length, after the last token
+    while(currentTag != null) {
+      String openingTag = docTags.tagDescriptors.get(currentTag[0]);
+      output.append(openingTag);
+      output.append(getClosingTag(openingTag));
+      // consume the tag
+      currentTag = (tagIter != null && tagIter.hasNext()) ? 
+              tagIter.next() : null;
+    }
   }
 
   /* (non-Javadoc)
@@ -274,11 +283,11 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
     }
     
     while(currentTag != null){
-      //we did not exhaust all tags, we'll assign all remaining tags to the last
-      //token
-      int tokIdx = tokens.length -1;
+      // we did not exhaust all tags, we'll assign all remaining tags as
+      // zero-length tags after the last token
+      int tokIdx = tokens.length;
       int tagDescId = getTagId(currentTag, documentTags);
-      documentTags.tags.add(new int[]{tagDescId, tokIdx, tokIdx + 1});
+      documentTags.tags.add(new int[]{tagDescId, tokIdx, tokIdx});
       //update the current tag
       currentTag = tagsiter.hasNext() ? tagsiter.next() : null;
       tagStart = currentTag == null ? -1 : currentTag.getStartNode().getOffset();
