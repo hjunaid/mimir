@@ -47,8 +47,8 @@ import gate.mimir.search.query.Binding;
  * document at search time.
  * 
  * The metadata saved by this class is stored in the main document metadata map 
- * using this class's name as a key. The value save is itself a Map, with 
- * multiple metadata fields. 
+ * using this class's name as a key. The value saved is a {@link DocumentTags}
+ * instance populated with the tags data.
  */
 public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper, 
     DocumentRenderer {
@@ -137,7 +137,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
               currentHit = (hitIter != null && hitIter.hasNext()) ? 
                       hitIter.next() : null;
             }
-          }else if(currentTag != null && currentTag[1] == tokIdx){
+          } else if(currentTag != null && currentTag[1] == tokIdx) {
             //we only have a TAG to use
             String openingTag = docTags.tagDescriptors.get(currentTag[0]);
             output.append(openingTag);
@@ -151,7 +151,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
             //consume the tag
             currentTag = (tagIter != null && tagIter.hasNext()) ? 
                     tagIter.next() : null;
-          }else{
+          } else {
             //we only have a HIT to use
             output.append(HIT_OPENING_TAG);
             int spanEnd = currentHit.getTermPosition() + currentHit.getLength() -1;
