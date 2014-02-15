@@ -29,7 +29,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-
 import gate.Annotation;
 import gate.AnnotationSet;
 import gate.GateConstants;
@@ -89,22 +88,22 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
     //key = token offset for close tag
     //value: list of tag IDs that end at that location
     SortedMap<Integer, LinkedList<String>> spansToEnd = 
-      new TreeMap<Integer, LinkedList<String>>();
-    Iterator<int[]> tagIter = docTags.tags != null ? 
-            docTags.tags.iterator() : null;
+        new TreeMap<Integer, LinkedList<String>>();
+    Iterator<int[]> tagIter =
+        docTags.tags != null ? docTags.tags.iterator() : null;
     int[] currentTag = (tagIter != null && tagIter.hasNext()) ? 
             tagIter.next() : null;
     Iterator<Binding> hitIter = hits != null ? hits.iterator() : null;
     Binding currentHit = (hitIter != null && hitIter.hasNext()) ? 
             hitIter.next() : null;
-    for(int tokIdx = 0; tokIdx < tokens.length; tokIdx++){
-      if(docTags != null){
+    for(int tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+      if(docTags != null) {
         //check if we need to open any tags here
         while((currentTag != null && currentTag[1] == tokIdx) ||
-              (currentHit != null && currentHit.getTermPosition() == tokIdx)){
+              (currentHit != null && currentHit.getTermPosition() == tokIdx)) {
           //we need to open a tag or a hit
           if(currentTag != null && currentTag[1] == tokIdx &&
-             currentHit != null && currentHit.getTermPosition() == tokIdx){
+             currentHit != null && currentHit.getTermPosition() == tokIdx) {
             //we have both a tag and a hit, starting at the same position
             //we start the one that ends later, with a preference for a tag
             //(as hits should be inner-most)
@@ -114,19 +113,25 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
               output.append(openingTag);
               
               String closingTag = getClosingTag(openingTag);
-              LinkedList<String> spans = spansToEnd.get(currentTag[2]);
-              if(spans == null){
-                spans = new LinkedList<String>();
-                spansToEnd.put(currentTag[2], spans);
+              if(currentTag[1] == currentTag[2]) {
+                // zero-length tag
+                output.append(closingTag);
+              } else {
+                // queue the closing tag for later
+                LinkedList<String> spans = spansToEnd.get(currentTag[2]);
+                if(spans == null){
+                  spans = new LinkedList<String>();
+                  spansToEnd.put(currentTag[2], spans);
+                }
+                spans.addFirst(closingTag);                
               }
-              spans.addFirst(closingTag);
               //consume the tag
               currentTag = (tagIter != null && tagIter.hasNext()) ? 
                       tagIter.next() : null;
             }else{
               //consume the HIT
               output.append(HIT_OPENING_TAG);
-              int spanEnd = currentHit.getTermPosition() + currentHit.getLength() -1; 
+              int spanEnd = currentHit.getTermPosition() + currentHit.getLength(); 
               LinkedList<String> spans = spansToEnd.get(spanEnd);
               if(spans == null){
                 spans = new LinkedList<String>();
@@ -142,19 +147,25 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
             String openingTag = docTags.tagDescriptors.get(currentTag[0]);
             output.append(openingTag);
             String closingTag = getClosingTag(openingTag);
-            LinkedList<String> spans = spansToEnd.get(currentTag[2]);
-            if(spans == null){
-              spans = new LinkedList<String>();
-              spansToEnd.put(currentTag[2], spans);
+            if(currentTag[1] == currentTag[2]) {
+              // zero-length tag
+              output.append(closingTag);
+            } else {
+              // queue the closing tag for later
+              LinkedList<String> spans = spansToEnd.get(currentTag[2]);
+              if(spans == null){
+                spans = new LinkedList<String>();
+                spansToEnd.put(currentTag[2], spans);
+              }
+              spans.addFirst(closingTag);                
             }
-            spans.addFirst(closingTag);
             //consume the tag
             currentTag = (tagIter != null && tagIter.hasNext()) ? 
                     tagIter.next() : null;
           } else {
             //we only have a HIT to use
             output.append(HIT_OPENING_TAG);
-            int spanEnd = currentHit.getTermPosition() + currentHit.getLength() -1;
+            int spanEnd = currentHit.getTermPosition() + currentHit.getLength();
             LinkedList<String> spans = spansToEnd.get(spanEnd);
             if(spans == null){
               spans = new LinkedList<String>();
@@ -167,11 +178,10 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
           }
         }
       }
-      //write the token
+      // write the token
       output.append(tokens[tokIdx]);
-      
-      //check if we need to close any spans here
-      while(spansToEnd.size() > 0 && spansToEnd.firstKey() == tokIdx){
+      // check if we need to close any tags here
+      while(spansToEnd.size() > 0 && spansToEnd.firstKey() == tokIdx + 1){
         LinkedList<String> closingTags = spansToEnd.remove(spansToEnd.firstKey());
         for(String aTag : closingTags){
           output.append(aTag);
@@ -179,7 +189,10 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
       }
       //write the non-token, if any
       if(tokIdx < nonTokens.length) output.append(nonTokens[tokIdx]);
-
+    }
+    // write the last nonToken, if any
+    if(tokens.length <= nonTokens.length){
+      output.append(nonTokens[tokens.length - 1]);
     }
   }
 
@@ -211,27 +224,36 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
     for(int tokIdx = 0; tokIdx < tokens.length; tokIdx++){
       long tokStart = tokens[tokIdx].getStartNode().getOffset();
       long tokEnd = tokens[tokIdx].getEndNode().getOffset();
-      //see if there are any tags to close at this offset
-      while(tagsToEnd.size() > 0 && tagsToEnd.firstKey() <= tokStart){
+      // see if there are any tags to close at this offset
+      Long firstTagEnd = tagsToEnd.isEmpty() ? null : tagsToEnd.firstKey();
+      while(tagsToEnd.size() > 0 && firstTagEnd <= tokStart) {
         //get all tags ending inside the previous token or the space before the 
         //current token
-        LinkedList<Integer> tags = tagsToEnd.remove(tagsToEnd.firstKey());
+        LinkedList<Integer> tags = tagsToEnd.remove(firstTagEnd);
         for(int aTag : tags){
-          documentTags.tags.get(aTag)[2] = tokIdx -1;
+          documentTags.tags.get(aTag)[2] = tokIdx;
         }
+        firstTagEnd = tagsToEnd.isEmpty() ? null : tagsToEnd.firstKey();
       }
       //see if we need to save any tags at this offset
       while(currentTag != null){
         if(tagStart < tokEnd){
           //the current tag starts within the current token
           int tagDescId = getTagId(currentTag, documentTags);
-          documentTags.tags.add(new int[]{tagDescId, tokIdx, -1});
-          LinkedList<Integer> tagsEnding = tagsToEnd.get(tagEnd);
-          if(tagsEnding == null){
-            tagsEnding = new LinkedList<Integer>();
-            tagsToEnd.put(tagEnd, tagsEnding);
+          int[] newTag = new int[]{tagDescId, tokIdx, -1};
+          documentTags.tags.add(newTag);
+          // if the new tag is zero-length, we actually know its ending position
+          if(tagEnd <= tokStart) {
+            newTag[2] = tokIdx;  
+          } else {
+            // we queue it, and we'll find the end position later
+            LinkedList<Integer> tagsEnding = tagsToEnd.get(tagEnd);
+            if(tagsEnding == null){
+              tagsEnding = new LinkedList<Integer>();
+              tagsToEnd.put(tagEnd, tagsEnding);
+            }
+            tagsEnding.addFirst(documentTags.tags.size() -1);            
           }
-          tagsEnding.addFirst(documentTags.tags.size() -1);
           //update the current tag
           currentTag = tagsiter.hasNext() ? tagsiter.next() : null;
           tagStart = currentTag == null ? -1 : currentTag.getStartNode().getOffset();
@@ -244,7 +266,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
     }//for tokens
     while(tagsToEnd.size() > 0){
       //we did not close all tags yet
-      int tokIdx = tokens.length -1;
+      int tokIdx = tokens.length;
       LinkedList<Integer> tags = tagsToEnd.remove(tagsToEnd.firstKey());
       for(int aTag : tags){
         documentTags.tags.get(aTag)[2] = tokIdx;
@@ -256,7 +278,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
       //token
       int tokIdx = tokens.length -1;
       int tagDescId = getTagId(currentTag, documentTags);
-      documentTags.tags.add(new int[]{tagDescId, tokIdx, tokIdx});
+      documentTags.tags.add(new int[]{tagDescId, tokIdx, tokIdx + 1});
       //update the current tag
       currentTag = tagsiter.hasNext() ? tagsiter.next() : null;
       tagStart = currentTag == null ? -1 : currentTag.getStartNode().getOffset();
@@ -408,7 +430,10 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
    * <ol>
    *   <li>the index in the {@link #tagDescriptors} array for the tag</li>
    *   <li>the start offset for the tag (in terms of token position);</li>
-   *   <li>the end offset for the tag (in terms of token position);</li>
+   *   <li>the end offset for the tag (in terms of token position); This 
+   *   corresponds to the first token that is <strong>not<strong> part of the
+   *   tag, hence it could point to a non-existent token for tags that include
+   *   the last token in the document.</li>
    * </ol>
    * 
    */
@@ -442,6 +467,19 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
       }
     }
     
+    @Override
+    public String toString() {
+      StringBuffer str = new StringBuffer();
+      boolean first = true;
+      for(int[] aTag : tags) {
+        if(first) first = false;
+        else str.append(' ');
+        str.append(tagDescriptors.get(aTag[0])).append('(').append(aTag[1])
+            .append(':').append(aTag[2]).append(')');
+      }
+      return str.toString();
+    }
+
     /**
      * A set used internally to ensure uniqueness of the tag descriptors. 
      */
