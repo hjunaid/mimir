@@ -27,18 +27,29 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.configuration.ConfigurationException;
 
+import gate.Document;
+import gate.Factory;
 import gate.Gate;
+import gate.Utils;
+import gate.mimir.AbstractSemanticAnnotationHelper;
+import gate.mimir.IndexConfig;
+import gate.mimir.index.OriginalMarkupMetadataHelper;
+import gate.mimir.index.mg4j.GATEDocument;
 import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
+import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
 import gate.mimir.search.QueryRunner;
 import gate.mimir.search.RankingQueryRunnerImpl;
 import gate.mimir.search.RemoteQueryRunner;
+import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.QueryParser;
@@ -61,7 +72,8 @@ import gate.util.GateException;
 public class Scratch {
 
   public static void main (String[] args) throws Exception {
-     mainSimple(args);
+    mainOMMH(args);
+//     mainSimple(args);
 //     mainDirectIndexes(args);
 //    mainBuildDirectIndex(args);
 //    mainQueryIndex(args);
@@ -400,4 +412,42 @@ public class Scratch {
         nf.format(System.currentTimeMillis() - start) + " ms.");
   }
   
+  
+  public static void mainOMMH(String[] args) throws Exception {
+    Gate.setGateHome(new File("gate-home"));
+    Gate.setUserConfigFile(new File("gate-home/user-gate.xml"));
+    Gate.init();
+    // load the DB plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/db-h2").toURI().toURL());
+    // load the measurements plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/measurements").toURI().toURL());
+    // load the SPARQL plugin
+    Gate.getCreoleRegister().registerDirectories(
+      new File("../plugins/sparql").toURI().toURL());
+
+    IndexConfig indexConfig = TestUtils.getTestIndexConfig(new File("/tmp"), 
+        Class.forName("gate.mimir.db.DBSemanticAnnotationHelper", true, 
+            Gate.getClassLoader()).asSubclass(
+                AbstractSemanticAnnotationHelper.class));
+    
+    OriginalMarkupMetadataHelper ommh = new OriginalMarkupMetadataHelper( new HashSet<String>(Arrays.asList(
+        new String[] {
+            "b", "i", "li", "ol", "p", "sup", "sub", "u", "ul", "br"})));
+    
+    Document doc = Factory.newDocument(new File(args[0]).toURI().toURL());
+    GATEDocument gDoc = new GATEDocument(doc, indexConfig);
+    String[] documentTokens = new String[gDoc.getTokenAnnots().length];
+    for(int i = 0; i < documentTokens.length; i++) {
+      documentTokens[i] = Utils.cleanStringFor(doc, gDoc.getTokenAnnots()[i]);
+    }
+    DocumentData docData = new DocumentData("document URI", "documentTitle", 
+        documentTokens, gDoc.getNonTokens()); 
+    
+    ommh.documentStart(gDoc);
+    ommh.documentEnd(gDoc, docData);
+    
+    ommh.render(docData, new LinkedList<Binding>(), System.out);
+  }
 }
