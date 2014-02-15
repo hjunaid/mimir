@@ -29,6 +29,7 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.configuration.ConfigurationException;
@@ -434,7 +435,7 @@ public class Scratch {
     
     OriginalMarkupMetadataHelper ommh = new OriginalMarkupMetadataHelper( new HashSet<String>(Arrays.asList(
         new String[] {
-            "b", "i", "li", "ol", "p", "sup", "sub", "u", "ul", "br"})));
+            "b", "i", "li", "ol", "p", "sup", "sub", "u", "ul", "br", "div"})));
     
     Document doc = Factory.newDocument(new File(args[0]).toURI().toURL());
     GATEDocument gDoc = new GATEDocument(doc, indexConfig);
@@ -447,6 +448,12 @@ public class Scratch {
     
     ommh.documentStart(gDoc);
     ommh.documentEnd(gDoc, docData);
+    
+    System.out.println("\nOMMH Tags:\n" + 
+        ((Map)docData.getMetadataField(
+            OriginalMarkupMetadataHelper.class.getName())).get(
+                OriginalMarkupMetadataHelper.TAGS_KEY) + 
+         "\n");
     
     ommh.render(docData, new LinkedList<Binding>(), System.out);
   }
