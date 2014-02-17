@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+
 import gate.Annotation;
 import gate.AnnotationSet;
 import gate.GateConstants;
@@ -46,8 +47,8 @@ import gate.mimir.search.query.Binding;
  * document at search time.
  * 
  * The metadata saved by this class is stored in the main document metadata map 
- * using this class's name as a key. The value saved is a {@link DocumentTags}
- * instance populated with the tags data.
+ * using this class's name as a key. The value save is itself a Map, with 
+ * multiple metadata fields. 
  */
 public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper, 
     DocumentRenderer {
@@ -88,22 +89,22 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
     //key = token offset for close tag
     //value: list of tag IDs that end at that location
     SortedMap<Integer, LinkedList<String>> spansToEnd = 
-        new TreeMap<Integer, LinkedList<String>>();
-    Iterator<int[]> tagIter =
-        docTags.tags != null ? docTags.tags.iterator() : null;
+      new TreeMap<Integer, LinkedList<String>>();
+    Iterator<int[]> tagIter = docTags.tags != null ? 
+            docTags.tags.iterator() : null;
     int[] currentTag = (tagIter != null && tagIter.hasNext()) ? 
             tagIter.next() : null;
     Iterator<Binding> hitIter = hits != null ? hits.iterator() : null;
     Binding currentHit = (hitIter != null && hitIter.hasNext()) ? 
             hitIter.next() : null;
-    for(int tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
-      if(docTags != null) {
+    for(int tokIdx = 0; tokIdx < tokens.length; tokIdx++){
+      if(docTags != null){
         //check if we need to open any tags here
         while((currentTag != null && currentTag[1] == tokIdx) ||
-              (currentHit != null && currentHit.getTermPosition() == tokIdx)) {
+              (currentHit != null && currentHit.getTermPosition() == tokIdx)){
           //we need to open a tag or a hit
           if(currentTag != null && currentTag[1] == tokIdx &&
-             currentHit != null && currentHit.getTermPosition() == tokIdx) {
+             currentHit != null && currentHit.getTermPosition() == tokIdx){
             //we have both a tag and a hit, starting at the same position
             //we start the one that ends later, with a preference for a tag
             //(as hits should be inner-most)
@@ -111,13 +112,11 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
               //consume the TAG
               String openingTag = docTags.tagDescriptors.get(currentTag[0]);
               output.append(openingTag);
-              
               String closingTag = getClosingTag(openingTag);
-              if(currentTag[1] == currentTag[2]) {
+              if(currentTag[2] == -1) {
                 // zero-length tag
                 output.append(closingTag);
               } else {
-                // queue the closing tag for later
                 LinkedList<String> spans = spansToEnd.get(currentTag[2]);
                 if(spans == null){
                   spans = new LinkedList<String>();
@@ -131,7 +130,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
             }else{
               //consume the HIT
               output.append(HIT_OPENING_TAG);
-              int spanEnd = currentHit.getTermPosition() + currentHit.getLength(); 
+              int spanEnd = currentHit.getTermPosition() + currentHit.getLength() -1; 
               LinkedList<String> spans = spansToEnd.get(spanEnd);
               if(spans == null){
                 spans = new LinkedList<String>();
@@ -142,16 +141,15 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
               currentHit = (hitIter != null && hitIter.hasNext()) ? 
                       hitIter.next() : null;
             }
-          } else if(currentTag != null && currentTag[1] == tokIdx) {
+          }else if(currentTag != null && currentTag[1] == tokIdx){
             //we only have a TAG to use
             String openingTag = docTags.tagDescriptors.get(currentTag[0]);
             output.append(openingTag);
             String closingTag = getClosingTag(openingTag);
-            if(currentTag[1] == currentTag[2]) {
+            if(currentTag[2] == -1) {
               // zero-length tag
               output.append(closingTag);
             } else {
-              // queue the closing tag for later
               LinkedList<String> spans = spansToEnd.get(currentTag[2]);
               if(spans == null){
                 spans = new LinkedList<String>();
@@ -162,10 +160,10 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
             //consume the tag
             currentTag = (tagIter != null && tagIter.hasNext()) ? 
                     tagIter.next() : null;
-          } else {
+          }else{
             //we only have a HIT to use
             output.append(HIT_OPENING_TAG);
-            int spanEnd = currentHit.getTermPosition() + currentHit.getLength();
+            int spanEnd = currentHit.getTermPosition() + currentHit.getLength() -1;
             LinkedList<String> spans = spansToEnd.get(spanEnd);
             if(spans == null){
               spans = new LinkedList<String>();
@@ -178,10 +176,11 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
           }
         }
       }
-      // write the token
+      //write the token
       output.append(tokens[tokIdx]);
-      // check if we need to close any tags here
-      while(spansToEnd.size() > 0 && spansToEnd.firstKey() == tokIdx + 1){
+      
+      //check if we need to close any spans here
+      while(spansToEnd.size() > 0 && spansToEnd.firstKey() == tokIdx){
         LinkedList<String> closingTags = spansToEnd.remove(spansToEnd.firstKey());
         for(String aTag : closingTags){
           output.append(aTag);
@@ -189,19 +188,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
       }
       //write the non-token, if any
       if(tokIdx < nonTokens.length) output.append(nonTokens[tokIdx]);
-    }
-    // write the last nonToken, if any
-    if(tokens.length <= nonTokens.length){
-      output.append(nonTokens[tokens.length - 1]);
-    }
-    // any remaining tags, are zero-length, after the last token
-    while(currentTag != null) {
-      String openingTag = docTags.tagDescriptors.get(currentTag[0]);
-      output.append(openingTag);
-      output.append(getClosingTag(openingTag));
-      // consume the tag
-      currentTag = (tagIter != null && tagIter.hasNext()) ? 
-              tagIter.next() : null;
+
     }
   }
 
@@ -230,32 +217,31 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
     Annotation currentTag = tagsiter.hasNext() ? tagsiter.next() : null;
     long tagStart = currentTag == null ? -1 : currentTag.getStartNode().getOffset();
     long tagEnd = currentTag == null ? -1 : currentTag.getEndNode().getOffset();
-    for(int tokIdx = 0; tokIdx < tokens.length; tokIdx++){
+    for(int tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
       long tokStart = tokens[tokIdx].getStartNode().getOffset();
       long tokEnd = tokens[tokIdx].getEndNode().getOffset();
-      // see if there are any tags to close at this offset
-      Long firstTagEnd = tagsToEnd.isEmpty() ? null : tagsToEnd.firstKey();
-      while(tagsToEnd.size() > 0 && firstTagEnd <= tokStart) {
+      //see if there are any tags to close at this offset
+      while(tagsToEnd.size() > 0 && tagsToEnd.firstKey() <= tokStart){
         //get all tags ending inside the previous token or the space before the 
         //current token
-        LinkedList<Integer> tags = tagsToEnd.remove(firstTagEnd);
+        LinkedList<Integer> tags = tagsToEnd.remove(tagsToEnd.firstKey());
         for(int aTag : tags){
-          documentTags.tags.get(aTag)[2] = tokIdx;
+          documentTags.tags.get(aTag)[2] = tokIdx -1;
         }
-        firstTagEnd = tagsToEnd.isEmpty() ? null : tagsToEnd.firstKey();
       }
       //see if we need to save any tags at this offset
       while(currentTag != null){
         if(tagStart < tokEnd){
           //the current tag starts within the current token
           int tagDescId = getTagId(currentTag, documentTags);
-          int[] newTag = new int[]{tagDescId, tokIdx, -1};
-          documentTags.tags.add(newTag);
-          // if the new tag is zero-length, we actually know its ending position
-          if(tagEnd <= tokStart) {
-            newTag[2] = tokIdx;  
+          documentTags.tags.add(new int[]{tagDescId, tokIdx, -1});
+          if(tagEnd <= tokStart){
+            // the tag starts and ends before the current token starts, so it's
+            // either zero-length, or whitespace-only
+            // leave the end position as -1.
           } else {
-            // we queue it, and we'll find the end position later
+            // not a zero-length tag, 
+            // so we'll need to find the closing position later
             LinkedList<Integer> tagsEnding = tagsToEnd.get(tagEnd);
             if(tagsEnding == null){
               tagsEnding = new LinkedList<Integer>();
@@ -275,7 +261,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
     }//for tokens
     while(tagsToEnd.size() > 0){
       //we did not close all tags yet
-      int tokIdx = tokens.length;
+      int tokIdx = tokens.length -1;
       LinkedList<Integer> tags = tagsToEnd.remove(tagsToEnd.firstKey());
       for(int aTag : tags){
         documentTags.tags.get(aTag)[2] = tokIdx;
@@ -283,9 +269,9 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
     }
     
     while(currentTag != null){
-      // we did not exhaust all tags, we'll assign all remaining tags as
-      // zero-length tags after the last token
-      int tokIdx = tokens.length;
+      //we did not exhaust all tags, we'll assign all remaining tags to the last
+      //token
+      int tokIdx = tokens.length -1;
       int tagDescId = getTagId(currentTag, documentTags);
       documentTags.tags.add(new int[]{tagDescId, tokIdx, tokIdx});
       //update the current tag
@@ -439,10 +425,9 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
    * <ol>
    *   <li>the index in the {@link #tagDescriptors} array for the tag</li>
    *   <li>the start offset for the tag (in terms of token position);</li>
-   *   <li>the end offset for the tag (in terms of token position); This 
-   *   corresponds to the first token that is <strong>not<strong> part of the
-   *   tag, hence it could point to a non-existent token for tags that include
-   *   the last token in the document.</li>
+   *   <li>the end offset for the tag (in terms of token position); That is the
+   *   position of the last token that is part of this tag.  Zero-length tags
+   *   are represented by setting this position to -1.</li>
    * </ol>
    * 
    */
@@ -476,6 +461,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
       }
     }
     
+    
     @Override
     public String toString() {
       StringBuffer str = new StringBuffer();
@@ -488,7 +474,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
       }
       return str.toString();
     }
-
+    
     /**
      * A set used internally to ensure uniqueness of the tag descriptors. 
      */
@@ -514,6 +500,8 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
      * appear in the correct document order. 
      */
     private List<int[]> tags;
+    
+    
   }
   
   /**
