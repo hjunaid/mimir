@@ -435,7 +435,7 @@ public class Scratch {
     
     OriginalMarkupMetadataHelper ommh = new OriginalMarkupMetadataHelper( new HashSet<String>(Arrays.asList(
         new String[] {
-            "b", "i", "li", "ol", "p", "sup", "sub", "u", "ul", "br", "div"})));
+            "b", "i", "li", "ol", "p", "sup", "sub", "u", "ul", "br", "div", "span"})));
     
     Document doc = Factory.newDocument(new File(args[0]).toURI().toURL());
     GATEDocument gDoc = new GATEDocument(doc, indexConfig);
