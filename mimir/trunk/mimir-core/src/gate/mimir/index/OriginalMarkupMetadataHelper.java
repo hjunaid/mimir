@@ -470,7 +470,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
         if(first) first = false;
         else str.append(' ');
         str.append(tagDescriptors.get(aTag[0])).append('(').append(aTag[1])
-            .append(':').append(aTag[2]).append(')');
+            .append(':').append(aTag[2]).append(")\n");
       }
       return str.toString();
     }
