@@ -97,7 +97,7 @@ class GwtRpcService implements gate.mimir.web.client.GwtRpcService {
         ResultsData rData = new ResultsData(
           resultsTotal:qRunner.getDocumentsCount(),
           resultsPartial: qRunner.getDocumentsCurrentCount())
-        if(firstDocumentRank >= 0) {
+        if(rData.resultsTotal > 0 && firstDocumentRank >= 0) {
           // also obtain some documents data
           List<DocumentData> documents = []
           int maxRank = Math.min(firstDocumentRank + documentsCount,
