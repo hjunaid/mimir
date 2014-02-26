@@ -14,6 +14,7 @@
  */
 package gate.mimir.tool;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -533,6 +534,70 @@ public class WebUtils {
               + " Connection class: " + conn.getClass().getCanonicalName());
     }
   }
+  
+  /**
+   * Calls a web service action (i.e. it connects to a URL) using the POST HTTP
+   * method, sending the given bytes as the request
+   * body.  The request is sent using chunked transfer encoding, and the
+   * request's Content-Type is set to application/octet-stream.  If the
+   * connection fails, for whatever reason, or the response code is different
+   * from {@link HttpURLConnection#HTTP_OK}, then an IOException is raised.
+   * This method will drain (and discard) all content available from either the
+   * input and error streams of the resulting connection (which should permit
+   * connection keepalives).
+   *   
+   * @param baseUrl the constant part of the URL to be accessed.
+   * @param data a {@link ByteArrayOutputStream} containing the data to be 
+   * written. Its {@link ByteArrayOutputStream#writeTo(OutputStream)} method 
+   * will be called causing it to write its data to the output connection.
+   * @param params an array of String values, that contain an alternation of
+   * parameter name, and parameter values.
+   * @throws IOException if the connection fails.
+   */
+  public void postData(String baseUrl, ByteArrayOutputStream data,
+          String... params) throws IOException {
+    URL actionUrl = new URL(buildUrl(baseUrl, params));
+    URLConnection conn = openURLConnection(actionUrl);
+    if(conn instanceof HttpURLConnection) {
+      HttpURLConnection httpConn = (HttpURLConnection)conn;
+      try {
+        // enable output and set HTTP method
+        httpConn.setDoOutput(true);
+        httpConn.setRequestMethod("POST");
+        // turn on chunking (we don't want to buffer the output if we don't
+        // have to). 0 means use default chunk size.
+        httpConn.setChunkedStreamingMode(0);
+        // don't time out
+        httpConn.setConnectTimeout(0);
+        httpConn.setReadTimeout(0);
+        
+        // MIME type (defaults to form encoded, so must change it)
+        httpConn.setRequestProperty("Content-Type", "application/octet-stream");
+
+        // connect and send the object
+        httpConn.connect();
+        
+        OutputStream httpOutputStream = httpConn.getOutputStream();
+        data.writeTo(httpOutputStream);
+        httpOutputStream.close();
+        
+        int code = httpConn.getResponseCode();
+        if(code != HttpURLConnection.HTTP_OK) {
+          // try to get more details
+          String message = httpConn.getResponseMessage();
+          throw new IOException(code
+                  + (message != null ? " (" + message + ")" : "")
+                  + " Remote connection failed.");
+        }
+      } finally {
+        // make sure the connection is drained, to allow connection keepalive
+        drainConnection(httpConn);
+      }
+    } else {
+      throw new IOException("Connection received is not HTTP!"
+              + " Connection class: " + conn.getClass().getCanonicalName());
+    }
+  }  
   
   /**
    * Calls a web service action (i.e. it connects to a URL) using the POST HTTP
