@@ -14,18 +14,16 @@
  */
 package gate.mimir.index;
 
-import java.io.IOException;
-import java.net.URL;
-
-import gate.Resource;
 import gate.creole.AbstractLanguageAnalyser;
 import gate.creole.ExecutionException;
-import gate.creole.ResourceInstantiationException;
 import gate.creole.metadata.CreoleParameter;
 import gate.creole.metadata.CreoleResource;
 import gate.creole.metadata.Optional;
 import gate.creole.metadata.RunTime;
 import gate.mimir.tool.WebUtils;
+import gate.util.GateRuntimeException;
+
+import java.net.URL;
 
 
 /**
@@ -34,6 +32,8 @@ import gate.mimir.tool.WebUtils;
 @CreoleResource(comment="A PR that sends documents to a Mímir server for indexing.",
  name="Mímir Indexing PR")
 public class MimirIndexingPR extends AbstractLanguageAnalyser {
+
+  private static final long serialVersionUID = 3291873032301133998L;
 
   private URL mimirIndexUrl;
   
@@ -83,6 +83,12 @@ public class MimirIndexingPR extends AbstractLanguageAnalyser {
 
   @Override
   public void cleanup() {
+    try {
+      mimirConnector.close();
+    } catch(Exception e) {
+      throw new GateRuntimeException("Execption while closing Mímir connector", 
+          e);
+    }
     mimirConnector = null;
   }
 
@@ -92,15 +98,14 @@ public class MimirIndexingPR extends AbstractLanguageAnalyser {
       if(mimirConnector == null) {
         // first run or config has changed: [re-]create
         if(mimirUsername != null && mimirUsername.length() > 0) {
-          mimirConnector = new MimirConnector(
+          mimirConnector = new MimirConnector(mimirIndexUrl,
             new WebUtils(mimirUsername, mimirPassword));          
         } else {
-          mimirConnector = new MimirConnector();  
+          mimirConnector = new MimirConnector(mimirIndexUrl);  
         }
       }
-      
-      mimirConnector.sendToMimir(getDocument(), null, mimirIndexUrl);
-    } catch(IOException e) {
+      mimirConnector.sendToMimir(getDocument(), null);
+    } catch(Exception e) {
       throw new ExecutionException(
         "Error communicating with the Mímir server", e);
     }
