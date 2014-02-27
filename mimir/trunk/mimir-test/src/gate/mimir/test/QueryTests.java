@@ -93,8 +93,6 @@ public class QueryTests {
     Gate.getCreoleRegister().registerDirectories(new File("gate-home/plugins/ANNIE-tokeniser").toURI().toURL());
     // load the DB plugin
     Gate.getCreoleRegister().registerDirectories(new File("../plugins/db-h2").toURI().toURL());
-    // load the Sesame plugin
-    Gate.getCreoleRegister().registerDirectories(new File("../plugins/sesame").toURI().toURL());    
     // load the measurements plugin
     Gate.getCreoleRegister().registerDirectories(new File("../plugins/measurements").toURI().toURL());
     
