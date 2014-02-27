@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- gate.xml -->
+<!-- $Id: gate.xml 6434 2004-12-10 11:26:30Z valyt $ -->
+
+<!-- Configuration for GATE, shared by all users. Settings here may be
+     overridden by values in the user's own gate.xml.
+      
+     Entries in this file will be processed at Gate.init()
+     time - i.e. will appear in every GATE invocation 
+     
+     Default values for an embedded setup: minimal configuration, assuming
+     most options will be set-up programmatically. -->
+
+<GATE>
+
+<GATECONFIG Save_options_on_exit="false"  Save_session_on_exit="false" />
+
+</GATE>

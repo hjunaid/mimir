@@ -1,0 +1,163 @@
+<project name="mimir" default="all">
+  <property name="build.sysclasspath" value="ignore" />
+  <property file="build.properties" />
+
+  <property name="mimir-core.dir" location="${mimir-core.dirname}" />
+  <property name="mimir-client.dir" location="${mimir-client.dirname}" />
+  <property name="plugins.dir" location="${plugins.dirname}" />
+  <property name="grails-plugin.dir" location="${grails-plugin.dirname}" />
+  <property name="grails-cloud-webapp.dir"
+            location="${grails-cloud-webapp.dirname}" />
+  <property name="mimir-guide.dir" location="doc" />  
+
+  <property name="generated-header.java" location="etc/generated-header.java" />
+  <property name="generated-header.tex" location="etc/generated-header.tex" />
+  
+  <!-- Load the AntContrib tasks -->
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+  <classpath>
+    <pathelement location="${mimir-core.dir}/build/ant-contrib-1.0b3.jar"/>
+  </classpath>
+  </taskdef>
+  
+  <!-- Location of your grails binary - override this in build.properties if
+  grails is not on your path -->
+  <property name="grails.bin" value="grails" />
+
+  <!-- Grails is a .bat file on Windows, which has to be run in an ant <exec>
+  using cmd.exe /c, so need to detect the OS and set up the <exec>
+  appropriately. -->
+  <target name="detect.os">
+    <condition property="running.on.windows">
+      <os family="winnt" />
+    </condition>
+  </target>
+
+  <target name="grails.command.win" if="running.on.windows">
+    <echo>Detected Windows operating system</echo>
+    <macrodef name="grails">
+      <element name="extraargs" implicit="true" />
+      <attribute name="dir" />
+      <sequential>
+        <exec executable="cmd.exe" dir="@{dir}" failonerror="true">
+          <arg value="/c" />
+          <arg value="${grails.bin}" />
+          <extraargs />
+        </exec>
+      </sequential>
+    </macrodef>
+  </target>
+
+  <target name="grails.command.notwin" unless="running.on.windows">
+    <echo>Detected non-Windows operating system</echo>
+    <macrodef name="grails">
+      <element name="extraargs" implicit="true" />
+      <attribute name="dir" />
+      <sequential>
+        <exec executable="${grails.bin}" dir="@{dir}" failonerror="true">
+          <extraargs />
+        </exec>
+      </sequential>
+    </macrodef>
+  </target>
+
+  <target name="grails.command" depends="detect.os, grails.command.win, grails.command.notwin" />
+
+  <target name="resolve-tex-templates">
+    <copy todir="${mimir-guide.dir}" overwrite="true">
+      <fileset dir="${mimir-guide.dir}" includes="**/*.tex.template" />
+      <globmapper from="*.template" to="*" />
+      <filterset>
+        <filter token="version" value="${app.version}" />
+      </filterset>
+      <filterchain>
+        <concatfilter prepend="${generated-header.tex}" />
+      </filterchain>
+    </copy>
+  </target>
+  
+  <macrodef name="resolve-groovy-templates">
+    <attribute name="dir" />
+    <sequential>
+      <copy todir="@{dir}" overwrite="true">
+        <fileset dir="@{dir}" includes="**/*.groovy.template" />
+        <globmapper from="*.template" to="*" />
+        <filterset>
+          <filter token="version" value="${app.version}" />
+          <filter token="gwtversion" value="${gwt.version}" />
+        </filterset>
+        <filterchain>
+          <concatfilter prepend="${generated-header.java}" />
+        </filterchain>
+      </copy>
+    </sequential>
+  </macrodef>
+
+  <target name="core">
+    <ant dir="${mimir-core.dir}" target="publish" />
+    <ant dir="${mimir-client.dir}" target="publish" />
+  </target>
+
+  <target name="plugins">
+    <ant dir="${plugins.dir}/db-h2" target="jar" />
+    <ant dir="${plugins.dir}/sesame" target="jar" />
+    <ant dir="${plugins.dir}/measurements" target="jar" />
+    <ant dir="${plugins.dir}/sparql" target="jar" />
+  </target>
+
+  <target name="grails-plugin" depends="grails.command">
+    <!-- Update the version for the mimir-web plugin -->
+    <delete file="${grails-plugin.dir}/plugin.xml" />
+
+    <resolve-groovy-templates dir="${grails-plugin.dir}" />
+    
+    <trycatch>
+      <try>
+        <grails dir="${grails-plugin.dir}">
+          <arg value="package-plugin" />
+        </grails>
+      </try>
+      <catch>
+        <echo>First attempt at package-plugin failed.  This often happens</echo>
+        <echo>the first time you build, or after deleting directories</echo>
+        <echo>under ~/.grails.  Re-trying...</echo>
+        <grails dir="${grails-plugin.dir}">
+          <arg value="package-plugin" />
+        </grails>
+      </catch>
+    </trycatch>
+    
+  </target>
+
+  <target name="prepare-cloud-app">
+    <resolve-groovy-templates dir="${grails-cloud-webapp.dir}" />
+    <grails dir="${grails-cloud-webapp.dir}">
+      <arg value="set-version ${app.version}" />
+    </grails>
+  </target>
+  
+  <target name="mimir-demo">
+    <echo>Tme mimir-demo Grails application is not supported any more. Please
+use mimir-cloud instead.</echo>
+  </target>
+  <target name="all" 
+    depends="core, plugins, grails-plugin, prepare-cloud-app, resolve-tex-templates" />
+
+  <target name="clean" depends="grails.command">
+    <ant dir="${mimir-core.dir}" target="clean" />
+    <ant dir="${mimir-client.dir}" target="clean" />
+    <ant dir="${plugins.dir}/db-h2" target="clean" />
+    <ant dir="${plugins.dir}/sesame" target="clean" />
+    <ant dir="${plugins.dir}/measurements" target="clean" />
+    <ant dir="${plugins.dir}/sparql" target="clean" />
+    <grails dir="${grails-plugin.dir}">
+      <arg value="clean" />
+    </grails>
+    <delete>
+      <fileset dir="${grails-plugin.dir}/lib" includes="**/*" />
+    </delete>
+  	<delete>
+  	  <fileset dir="${grails-plugin.dir}" includes="grails-${grails-plugin.name}-*.zip" />
+  	</delete>
+  </target>
+</project>

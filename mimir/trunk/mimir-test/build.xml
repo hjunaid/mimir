@@ -1,0 +1,139 @@
+<project name="mimir-test" default="jar" basedir="."  xmlns:ivy="antlib:org.apache.ivy.ant">
+  <property name="build.sysclasspath" value="ignore" />  
+  <property name="app.name" value="mimir-test" />
+  <property name="app.title" value="Mimir Tests" />
+  
+  <!-- Common Properties -->
+  <property file="../build.properties" />
+  <property environment="env"/>
+	
+	<property name="core-home" location="../${mimir-core.dirname}"/>
+	<property name="client-home" location="../${mimir-client.dirname}"/>
+	
+  <!-- Load Ivy support -->
+  <property name="build.dir" location="${core-home}/build" />
+  <path id="ivy.lib.path">
+      <fileset dir="${build.dir}" includes="*.jar"/>
+  </path>
+  
+  <taskdef resource="org/apache/ivy/ant/antlib.xml"
+           uri="antlib:org.apache.ivy.ant"
+           classpathref="ivy.lib.path"/>  
+  
+  <target name="depend">
+    <ivy:configure file="${build.dir}/ivysettings.xml"/>
+    <ivy:resolve file="${build.dir}/ivy.xml" log="quiet"/>
+    <ivy:cachepath pathid="ivylibs"/>
+
+    <ivy:cachepath organisation="org.codehaus.groovy" module="groovy-all" revision="2.0.8" inline="true" conf="default" pathid="groovylibs"/>
+  </target>	
+  
+	<property name="helpers.to.test"
+		value="gate.mimir.db.DBSemanticAnnotationHelper" />
+	
+  <path id="libs">
+    <fileset dir="lib" includes="**/*.jar" />
+    <fileset dir="${core-home}/lib" includes="**/*.jar" />
+  	<fileset dir="${core-home}" includes="mimir-core-${app.version}.jar" />
+  	<fileset dir="${client-home}" includes="mimir-client-${app.version}.jar" />
+    <path refid="ivylibs" />
+    <path refid="groovylibs" />
+  </path>
+  
+  <property name="classes.dir" location="classes" />
+  <property name="src.dir" location="src" />
+  <property name="conf.dir" location="conf" />
+  <property name="doc.dir" location="doc" />
+  
+  <property name="jar.file" location="${app.name}-${app.version}.jar" />
+  <path id="compile.classpath">
+    <path refid="libs" />
+  </path>
+
+  <target name="clean">
+    <delete dir="${classes.dir}"/>
+    <delete file="${jar.file}"/>
+  </target>
+  
+  <target name="compile" depends="depend">
+    <mkdir dir="${classes.dir}"/>
+    <javac destdir="${classes.dir}"
+           srcdir="${src.dir}"
+           debug="true"
+           target="1.7"
+           source="1.7"
+    	     encoding="UTF-8"
+           classpathref="compile.classpath" />
+  </target>
+  
+  <target name="jar" depends="clean, compile">
+    <jar file="${jar.file}" basedir="${classes.dir}" update="false"/>      
+  </target>  
+  
+  <target name="distro" depends="jar, javadoc" />
+  
+  <!-- Docs -->
+  <target name="javadoc">
+    <javadoc access="protected"
+             destdir="${doc.dir}/javadoc"
+             classpathref="compile.classpath"
+             Encoding="UTF-8"
+             Use="yes"
+             Windowtitle="${app.title} (${app.version}) JavaDoc"
+             docencoding="UTF-8"
+             charset="UTF-8"
+             source="1.7"
+             useexternalfile="yes"
+             breakiterator="true">
+      <fileset dir="${src.dir}" includes="**/*.java"/>
+      <link href="http://java.sun.com/javase/6/docs/api/"/>
+      <link href="http://hudson.gate.ac.uk/job/GATE-Nightly/javadoc/"/>
+    </javadoc>
+    <zip destfile="${app.name}-${app.version}-javadocs.zip">
+      <zipfileset dir="${doc.dir}/javadoc"
+                  prefix="${app.name}-${app.version}-javadocs" />
+    </zip>
+    <delete dir="${doc.dir}/javadoc" />
+  </target>
+
+	<target name="speedTest">
+		<java classname="gate.mimir.test.Scratch"
+			    maxmemory="4G"
+			    fork="true">
+      <classpath>
+        <pathelement location="${conf.dir}" />
+        <pathelement location="${classes.dir}" />
+        <path refid="compile.classpath" />
+      </classpath>
+			<arg value="/data/mimir-indexes/index-patents-300k.mimir"/>
+		</java>
+	</target>
+	
+  <target name="test" depends="compile">
+    <junit fork="true" showoutput="yes" printsummary="yes" maxmemory="1G">
+      <classpath>
+        <pathelement location="${conf.dir}" />
+        <pathelement location="${classes.dir}" />
+        <path refid="compile.classpath" />
+      </classpath>
+    	<sysproperty key="helpers.to.test" value="${helpers.to.test}" />
+        <!--<sysproperty key="keepTestIndex" value="true" />-->
+      <formatter type="xml" />
+      <batchtest>
+        <fileset dir="${src.dir}" includes="**/*Tests.java" />
+      </batchtest>
+    </junit>
+  </target>
+
+  <target name="runconsole" depends="compile">
+    <java fork="true" classname="gate.mimir.test.ScratchConsole" maxmemory="8G">
+      <jvmarg value="-XX:MaxPermSize=512M" />
+      <classpath>
+        <pathelement location="${conf.dir}" />
+        <pathelement location="${classes.dir}" />
+        <path refid="compile.classpath" />
+      </classpath>
+      <arg line="${console.args}" />
+    </java>
+  </target>
+</project>

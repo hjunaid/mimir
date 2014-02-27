@@ -1,0 +1,108 @@
+<project name="mimir-client" default="publish" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+  <property name="build.sysclasspath" value="ignore" />
+  <property name="app.name" value="mimir-client" />
+  <property name="app.title" value="Mimir Client" />
+  
+  <!-- Common Properties -->
+	<property file="../build.properties" />
+  <property environment="env"/>
+	
+  <property name="core-home" location="../${mimir-core.dirname}"/>
+  <!-- Load Ivy support -->
+  <property name="build.dir" location="${core-home}/build" />
+  <path id="ivy.lib.path">
+      <fileset dir="${build.dir}" includes="*.jar"/>
+  </path>
+  
+  <taskdef resource="org/apache/ivy/ant/antlib.xml"
+           uri="antlib:org.apache.ivy.ant"
+           classpathref="ivy.lib.path"/>  
+  
+  <target name="depend">
+    <ivy:configure file="${build.dir}/ivysettings.xml"/>
+    <ivy:resolve file="${build.dir}/ivy.xml"  log="quiet"/>
+    <ivy:cachepath pathid="ivylibs"/>
+  </target>
+    
+  
+  <path id="corelibs">
+    <fileset dir="${core-home}/lib" includes="**/*.jar" />
+    <fileset dir="${core-home}" includes="mimir-core-${app.version}.jar" />
+    <path refid="ivylibs" />
+  </path>
+  
+  <property name="classes.dir" location="classes" />
+  <property name="src.dir" location="src" />
+  <property name="doc.dir" location="doc" />
+
+  <property name="grails-plugin.dir" location="../${grails-plugin.dirname}" />
+	
+  <property name="jar.name" value="${app.name}-${app.version}.jar" />
+  <property name="jar.file" location="${jar.name}" />	
+	
+  <path id="compile.classpath">
+    <path refid="corelibs" />
+  </path>
+
+  <target name="clean">
+    <delete dir="${classes.dir}"/>
+    <delete>
+      <fileset dir="." includes="${app.name}-*.jar" />
+    </delete>
+  </target>
+  
+  <target name="compile" depends="depend">
+    <mkdir dir="${classes.dir}"/>
+    <javac destdir="${classes.dir}"
+           srcdir="${src.dir}"
+           debug="true"
+           target="1.7"
+           source="1.7"
+    	     encoding="UTF-8"
+           classpathref="compile.classpath" />
+  </target>
+  
+  <target name="jar" depends="clean, compile">
+    <jar file="${jar.file}" basedir="${classes.dir}" update="false"/>      
+  </target>  
+  
+  <target name="creole.xml">
+    <copy overwrite="true" file="creole.xml.template" tofile="creole.xml">
+      <filterset>
+        <filter token="jar" value="${jar.name}" />
+      </filterset>
+    </copy>
+  </target>
+	
+  <target name="distro" depends="jar, javadoc" />
+  
+  <!-- Docs -->
+  <target name="javadoc">
+    <javadoc access="protected"
+             destdir="${doc.dir}/javadoc"
+             classpathref="compile.classpath"
+             Encoding="UTF-8"
+             Use="yes"
+             Windowtitle="${app.title} (${app.version}) JavaDoc"
+             docencoding="UTF-8"
+             charset="UTF-8"
+             source="1.7"
+             useexternalfile="yes"
+             breakiterator="true">
+      <fileset dir="${src.dir}" includes="**/*.java"/>
+      <link href="http://java.sun.com/javase/6/docs/api/"/>
+      <link href="http://hudson.gate.ac.uk/job/GATE-Nightly/javadoc/"/>
+    </javadoc>
+    <zip destfile="${app.name}-${app.version}-javadocs.zip">
+      <zipfileset dir="${doc.dir}/javadoc"
+                  prefix="${app.name}-${app.version}-javadocs" />
+    </zip>
+    <delete dir="${doc.dir}/javadoc" />
+  </target>
+
+  <target name="publish" depends="jar, creole.xml">
+    <copy todir="${grails-plugin.dir}/lib" flatten="true">
+      <fileset file="${jar.file}" />
+    </copy>
+  </target>
+</project>
