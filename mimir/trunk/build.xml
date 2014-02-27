@@ -100,7 +100,6 @@
 
   <target name="plugins">
     <ant dir="${plugins.dir}/db-h2" target="jar" />
-    <ant dir="${plugins.dir}/sesame" target="jar" />
     <ant dir="${plugins.dir}/measurements" target="jar" />
     <ant dir="${plugins.dir}/sparql" target="jar" />
   </target>
@@ -147,7 +146,6 @@ use mimir-cloud instead.</echo>
     <ant dir="${mimir-core.dir}" target="clean" />
     <ant dir="${mimir-client.dir}" target="clean" />
     <ant dir="${plugins.dir}/db-h2" target="clean" />
-    <ant dir="${plugins.dir}/sesame" target="clean" />
     <ant dir="${plugins.dir}/measurements" target="clean" />
     <ant dir="${plugins.dir}/sparql" target="clean" />
     <grails dir="${grails-plugin.dir}">
