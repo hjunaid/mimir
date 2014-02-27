@@ -1,9 +1,0 @@
-.buttons input.download {
-    background: transparent url(../images/skin/download_archive.png) 5px 50% no-repeat;
-    padding-left: 28px;
-}
-
-.name {
-    text-align: left;
-    white-space: nowrap;
-}
