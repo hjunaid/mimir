@@ -83,7 +83,6 @@ class RemoteIndexProxy implements Runnable {
    * The hibernate ID of the index for which this proxy was created.
    */
   def id
-  double closingProgress = 0.0
   
   boolean stop = false
   
@@ -94,7 +93,6 @@ class RemoteIndexProxy implements Runnable {
       RemoteIndex.withTransaction{
         RemoteIndex index = RemoteIndex.get(id)
         fetchRemoteState(index)
-        if(index.state == Index.CLOSING) fetchClosingProgress(index)
       }
       Thread.sleep(DELAY)
     }
@@ -108,16 +106,6 @@ class RemoteIndexProxy implements Runnable {
     }
     catch(IOException e) {
       index.state = Index.FAILED
-      log.error("Problem communicating with remote index", e)
-    }
-  }
-  
-  private fetchClosingProgress(RemoteIndex index) {
-    try {
-      closingProgress = webUtilsManager.currentWebUtils(index).getDouble(
-          "${index.remoteUrl}/manage/closingProgressBin")
-    }
-    catch(IOException e) {
       log.error("Problem communicating with remote index", e)
     }
   }

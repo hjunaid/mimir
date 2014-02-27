@@ -15,11 +15,11 @@
 package gate.mimir.search.terms;
 
 import gate.mimir.SemanticAnnotationHelper;
+import gate.mimir.index.AtomicAnnotationIndex;
 import gate.mimir.index.Mention;
 import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.AnnotationQuery;
-
 import it.unimi.di.big.mg4j.index.IndexIterator;
 import it.unimi.di.big.mg4j.search.DocumentIterator;
 import it.unimi.di.big.mg4j.index.IndexReader;
@@ -91,14 +91,14 @@ public class AnnotationTermsQuery implements TermsQuery {
       String[] termDescriptions = describeAnnotations ? 
           new String[mentions.size()] : null;
       int[] counts = null;
-      IndexReaderPool annotationIndexReaderPool = null;
+      AtomicAnnotationIndex atomicAnnIndex = null;
       IndexReader annotationIndexReader = null;
       try {
         if(countsEnabled) {
           counts = new int[mentions.size()];
-          annotationIndexReaderPool = engine.getAnnotationIndex(
+          atomicAnnIndex = engine.getAnnotationIndex(
             annotationQuery.getAnnotationType());
-          annotationIndexReader = annotationIndexReaderPool.borrowReader();
+          annotationIndexReader = atomicAnnIndex.getIndex().getReader();
         }
         
         int[] lengths = new int[mentions.size()];
@@ -121,7 +121,7 @@ public class AnnotationTermsQuery implements TermsQuery {
         return new TermsResultSet(terms, lengths, counts, termDescriptions);
       } finally {
         if(annotationIndexReader != null) {
-          annotationIndexReaderPool.returnReader(annotationIndexReader);
+          annotationIndexReader.close();
         }
       }
     } else {

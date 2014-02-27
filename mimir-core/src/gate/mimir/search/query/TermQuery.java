@@ -16,6 +16,7 @@
 package gate.mimir.search.query;
 
 import gate.mimir.IndexConfig;
+import gate.mimir.index.AtomicIndex;
 import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -86,10 +87,10 @@ public class TermQuery implements QueryNode {
      * A local reference to the {@link IndexReaderPool} from the 
      * {@link QueryEngine}.
      */
-    private IndexReaderPool indexReaderPool;
+    private AtomicIndex atomicIndex;
     
     /**
-     * The {@link IndexReader} from the {@link #indexReaderPool}.
+     * The {@link IndexReader} from the {@link #atomicIndex}.
      */
     private IndexReader indexReader;
     
@@ -106,30 +107,37 @@ public class TermQuery implements QueryNode {
     
     /**
      * @param node
-     * @param index
+     * @param invertedIndex
      * @throws IOException if the index files cannot be accessed.
      */
     public TermQueryExecutor(TermQuery node, QueryEngine engine) throws IOException {
       super(engine, node);
       this.query = node;
-      indexReaderPool = query.getIndex(engine);
+      atomicIndex = query.getIndex(engine);
 
-      if(indexReaderPool == null) throw new IllegalArgumentException(
+      if(atomicIndex == null) throw new IllegalArgumentException(
               "No index provided for field " + node.getIndexName() + "!");
-      indexReader = indexReaderPool.borrowReader();      
-      // if we have the term ID, use that
-      if(query.termId != DocumentIterator.END_OF_LIST) {
-        this.indexIterator = indexReader.documents(query.termId);
-        // set the term (used by rankers)
-        MutableString mutableString = new MutableString(query.getTerm());
-        indexReaderPool.getIndex().termProcessor.processTerm(mutableString);
-        this.indexIterator.term(mutableString);
+      Index mg4jIndex = atomicIndex.getIndex();
+      if(mg4jIndex != null) {
+        indexReader = mg4jIndex.getReader();      
+        // if we have the term ID, use that
+        if(query.termId != DocumentIterator.END_OF_LIST) {
+          this.indexIterator = indexReader.documents(query.termId);
+          // set the term (used by rankers)
+          MutableString mutableString = new MutableString(query.getTerm());
+          atomicIndex.getIndex().termProcessor.processTerm(mutableString);
+          this.indexIterator.term(mutableString);
+        } else {
+          //use the term processor for the query term
+          MutableString mutableString = new MutableString(query.getTerm());
+          atomicIndex.getIndex().termProcessor.processTerm(mutableString);
+          this.indexIterator = indexReader.documents(mutableString.toString());        
+        }        
       } else {
-        //use the term processor for the query term
-        MutableString mutableString = new MutableString(query.getTerm());
-        indexReaderPool.getIndex().termProcessor.processTerm(mutableString);
-        this.indexIterator = indexReader.documents(mutableString.toString());        
+        // the atomic index is empty: we have exhausted the search already
+        latestDocument = -1;
       }
+
       positionsIterator = null;
     }
 
@@ -183,7 +191,8 @@ public class TermQuery implements QueryNode {
       if(closed) return;
       super.close();
       indexIterator = null;
-      indexReaderPool.returnReader(indexReader);
+      indexReader.close();
+//      atomicIndex.returnReader(indexReader);
     }
 
     
@@ -322,15 +331,10 @@ public class TermQuery implements QueryNode {
    * @param engine
    * @return
    */
-  public IndexReaderPool getIndex(QueryEngine engine) {
+  public AtomicIndex getIndex(QueryEngine engine) {
     switch(this.indexType){
       case TOKENS:
-        if(indexName == null){
-          //token query, with no index name provided -> use the default
-          return engine.getIndexes()[0];
-        }else{
-          return engine.getTokenIndex(indexName);
-        }
+        return engine.getTokenIndex(indexName);
       case ANNOTATIONS:
         return engine.getAnnotationIndex(indexName);
       default:

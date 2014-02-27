@@ -1,28 +1,28 @@
 /*
- *  TokenIndexBuilder.java
+ *  AtomicTokenIndex.java
  *
- *  Copyright (c) 2007-2011, The University of Sheffield.
+ *  Copyright (c) 2007-2013, The University of Sheffield.
  *
  *  This file is part of GATE Mímir (see http://gate.ac.uk/family/mimir.html), 
  *  and is free software, licenced under the GNU Lesser General Public License,
  *  Version 3, June 2007 (also included with this distribution as file
  *  LICENCE-LGPL3.html).
  *
- *  Ian Roberts, 03 Mar 2009
+ *  Valentin Tablan, 19 Dec 2013
  *
  *  $Id$
  */
-package gate.mimir.index.mg4j;
+package gate.mimir.index;
 
 import gate.Annotation;
 import gate.FeatureMap;
 import gate.mimir.DocumentMetadataHelper;
 import gate.mimir.IndexConfig.TokenIndexerConfig;
-import gate.mimir.index.IndexException;
-import gate.mimir.index.Indexer;
-import gate.mimir.index.mg4j.zipcollection.DocumentCollectionWriter;
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
+import gate.mimir.MimirIndex;
+import it.unimi.di.big.mg4j.index.Index;
+import it.unimi.dsi.lang.ObjectParser;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -36,17 +36,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.log4j.Logger;
 
-
 /**
- * A index builder for token features.
+ * An {@link AtomicIndex} implementation for indexing tokens.
  */
-public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
-
-  private static Logger logger = Logger.getLogger(TokenIndexBuilder.class);
-
+public class AtomicTokenIndex extends AtomicIndex {
+  
+  private final static Logger logger = Logger.getLogger(AtomicTokenIndex.class);
+  
   /**
    * A constant (empty String array) used for filtering terms from indexing.
    * @see #calculateTermStringForAnnotation(Annotation, GATEDocument)
@@ -54,32 +52,15 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
    */
   private static final String[] DO_NOT_INDEX = new String[]{};
   
-  public static final String TOKEN_INDEX_BASENAME = "token";
   
-  protected final CharsetEncoder utf8CharsetEncoder = Charset.forName("UTF-8").newEncoder();
+  protected final CharsetEncoder UTF8_CHARSET_ENCODER = Charset.forName("UTF-8").newEncoder();
   
-  protected final CharsetDecoder utf8CharsetDecoder = Charset.forName("UTF-8").newDecoder();
-  
-  /**
-   * A zip collection builder used to build a zip of the collection
-   * if this has been requested.
-   */
-  protected DocumentCollectionWriter collectionWriter = null;
+  protected final CharsetDecoder UTF8_CHARSET_DECODER = Charset.forName("UTF-8").newDecoder();
   
   /**
-   * An array of helpers for creating document metadata. 
+   * Is this token index responsible for writing the zip collection?
    */
-  protected DocumentMetadataHelper[] docMetadataHelpers;
-  
-  /**
-   * Stores the document URI for writing to the zip collection;
-   */
-  protected String documentURI;
-  
-  /**
-   * Stores the document title for writing to the zip collection. 
-   */
-  protected String documentTitle;
+  protected boolean zipCollectionEnabled = false;
   
   /**
    * Stores the document tokens for writing to the zip collection;
@@ -91,6 +72,10 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
    */
   protected List<String> documentNonTokens;
   
+  /**
+   * An array of helpers for creating document metadata. 
+   */
+  protected DocumentMetadataHelper[] docMetadataHelpers;
   
   /**
    * GATE document factory used by the zip builder, and also to
@@ -98,73 +83,72 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
    */
   protected GATEDocumentFactory factory;
   
-  /**
-   * The (zero-based) index of the field we want to index.
-   */
-  protected int fieldToIndex;
   
   /**
    * The feature name corresponding to the field.
    */
   protected String featureName;
   
+
   
-  public TokenIndexBuilder(BlockingQueue<GATEDocument> inputQueue,
-          BlockingQueue<GATEDocument> outputQueue, Indexer indexer,
-          GATEDocumentFactory factory, boolean zipCollection,
-          String baseName,
-          TokenIndexerConfig config) {
-    super(inputQueue, outputQueue, indexer, baseName, 
-        config.isDirectIndexEnabled());
-    this.termProcessor = config.getTermProcessor();
-    this.docMetadataHelpers = indexer.getIndexConfig().getDocMetadataHelpers();
+  /**
+   * Creates a new atomic index for indexing tokens. 
+   * @param parent the top level {@link MimirIndex} to which this new atomic 
+   * index belongs.
+   * @param name the name for the new atomic index. This will be used as the
+   * name of the top level directory for this atomic index (which is a 
+   * sub-directory of the parent) and as a base name for all the files of this 
+   * atomic index.
+   * @param hasDirectIndex should a direct index be created as well.
+   * @param inputQueue the queue where documents are submitted for indexing;
+   * @param outputQueue the queue where indexed documents are returned to;
+   * @throws IndexException 
+   * @throws IOException 
+   */
+  public AtomicTokenIndex(MimirIndex parent, String name,
+      boolean hasDirectIndex, BlockingQueue<GATEDocument> inputQueue,
+      BlockingQueue<GATEDocument> outputQueue, TokenIndexerConfig config,
+      boolean zipCollection) throws IOException, IndexException {
+    super(parent, name, hasDirectIndex, 
+        config.getTermProcessor(), inputQueue, outputQueue);
     this.featureName = config.getFeatureName();
-    for(fieldToIndex = 0; 
-        fieldToIndex < indexer.getIndexConfig().getTokenIndexers().length; 
-        fieldToIndex++){
-      if(this.featureName.equals(indexer.getIndexConfig().
-              getTokenIndexers()[fieldToIndex].getFeatureName())){
-        break;
-      }
+    this.zipCollectionEnabled = zipCollection;
+    if(zipCollectionEnabled) {
+      documentTokens = new LinkedList<String>();
+      documentNonTokens = new LinkedList<String>();
+      docMetadataHelpers = parent.getIndexConfig().getDocMetadataHelpers();
     }
-    if(this.fieldToIndex >= indexer.getIndexConfig().getTokenIndexers().length){
-      throw new IllegalArgumentException(
-              "Could not find the token feature name \"" + this.featureName +
-              "\" in the index config!");
-    }
-    this.factory = factory;
     
-    if(zipCollection) {
-      logger.info("Creating zipped collection for field \"" + featureName + "\"");
-      collectionWriter = new DocumentCollectionWriter(indexer.getIndexDir());
-    }
+    // save the term processor
+    additionalProperties.setProperty(Index.PropertyKeys.TERMPROCESSOR, 
+        ObjectParser.toSpec(termProcessor));
+    
     try {
-      utf8CharsetEncoder.replaceWith("[?]".getBytes("UTF-8"));
-      utf8CharsetEncoder.onMalformedInput(CodingErrorAction.REPLACE);
-      utf8CharsetEncoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+      UTF8_CHARSET_ENCODER.replaceWith("[?]".getBytes("UTF-8"));
+      UTF8_CHARSET_ENCODER.onMalformedInput(CodingErrorAction.REPLACE);
+      UTF8_CHARSET_ENCODER.onUnmappableCharacter(CodingErrorAction.REPLACE);
     } catch(UnsupportedEncodingException e) {
       // this should never happen
       throw new RuntimeException("UTF-8 not supported");
     }
+    
+    indexingThread = new Thread(this, "Mimir-" + name + " indexing thread");
+    indexingThread.start();
   }
 
-
+  
   /**
    * If zipping, inform the collection builder that a new document
    * is about to start.
    */
   protected void documentStarting(GATEDocument gateDocument) throws IndexException {
-    if(collectionWriter != null) {
-      documentURI = gateDocument.uri().toString();
-      documentTitle = gateDocument.title().toString();
-      documentTokens = new LinkedList<String>();
-      documentNonTokens = new LinkedList<String>();
+    if(zipCollectionEnabled) {
+      // notify the metadata helpers
       if(docMetadataHelpers != null){
         for(DocumentMetadataHelper aHelper : docMetadataHelpers){
           aHelper.documentStart(gateDocument);
         }
       }
-
     }
     // set lastTokenIndex to -1 so we don't have to special-case the first
     // token in the document in calculateStartPosition
@@ -176,19 +160,20 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
    * the current document.
    */
   protected void documentEnding(GATEDocument gateDocument) throws IndexException {
-    if(collectionWriter != null) {
-      DocumentData docData = new DocumentData(documentURI, 
-              documentTitle, 
-              documentTokens.toArray(new String[documentTokens.size()]),
-              documentNonTokens.toArray(new String[documentNonTokens.size()])); 
+    if(zipCollectionEnabled) {
+      DocumentData docData = new DocumentData(
+          gateDocument.uri().toString(), 
+          gateDocument.title().toString(),
+          documentTokens.toArray(new String[documentTokens.size()]),
+          documentNonTokens.toArray(new String[documentNonTokens.size()])); 
       if(docMetadataHelpers != null){
         for(DocumentMetadataHelper aHelper : docMetadataHelpers){
           aHelper.documentEnd(gateDocument, docData);
         }
       }
-      collectionWriter.writeDocument(docData);
-      documentTokens = null;
-      documentNonTokens = null;
+      parent.writeZipDocumentData(docData);
+      documentTokens.clear();
+      documentNonTokens.clear();
     }
   }
 
@@ -197,7 +182,8 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
    * order of offset.
    */
   protected Annotation[] getAnnotsToProcess(GATEDocument gateDocument) {
-    return gateDocument.getTokenAnnots();
+    Annotation[] tokens = gateDocument.getTokenAnnots(); 
+    return tokens;
   }
 
   /**
@@ -227,20 +213,24 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
     FeatureMap tokenFeatures = ann.getFeatures();
     String value = (String)tokenFeatures.get(featureName);
     // make sure we get valid UTF-8 content
-    // illegal strings will simply be rendered as "?"
-    try {
-      CharBuffer cb = CharBuffer.wrap(value);
-      ByteBuffer bb = utf8CharsetEncoder.encode(cb);
-      cb = utf8CharsetDecoder.decode(bb);
-      value  = cb.toString();
-    } catch(CharacterCodingException e) {
-      // this should not happen
-      value = null;
-      logger.error("Error while normalizing input", e);
+   // illegal strings will simply be rendered as "[UNMAPPED]"
+    if(value != null) {
+      try {
+        CharBuffer cb = CharBuffer.wrap(value);
+        ByteBuffer bb = UTF8_CHARSET_ENCODER.encode(cb);
+        cb = UTF8_CHARSET_DECODER.decode(bb);
+        value  = cb.toString();
+      } catch(CharacterCodingException e) {
+        // this should not happen
+        value = null;
+        logger.error("Error while normalizing input", e);
+      }      
     }
+
+    
     currentTerm.replace(value == null ? "" : value);
     //save the *unprocessed* term to the collection, if required.
-    if(collectionWriter != null) {
+    if(zipCollectionEnabled) {
       documentTokens.add(currentTerm.toString());
       documentNonTokens.add(gateDocument.getNonTokens()[tokenPosition]);
     }
@@ -251,18 +241,12 @@ public class TokenIndexBuilder extends MimirIndexBuilder implements Runnable {
       //the processor has filtered the term -> don't index it.
       return DO_NOT_INDEX;
     }
-    
   }
 
   /**
    * Overridden to close the zip collection builder.
    */
   @Override
-  public void flush() throws ConfigurationException, IOException {
-    if(collectionWriter != null) {
-      logger.info("Saving zipped collection");
-      collectionWriter.close();
-    }
-    super.flush();
+  protected void flush() throws IOException {
   }
 }

@@ -15,7 +15,7 @@
 package gate.mimir;
 
 import gate.Document;
-import gate.mimir.index.Indexer;
+import gate.mimir.index.AtomicAnnotationIndex;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.util.DefaultMentionDescriber;
@@ -314,12 +314,7 @@ public abstract class AbstractSemanticAnnotationHelper implements
 
   
   @Override
-  public void init(Indexer indexer) {
-    checkInit();
-  }
-
-  @Override
-  public void init(QueryEngine queryEngine) {
+  public void init(AtomicAnnotationIndex index) {
     checkInit();
     // calculate the list of descriptive features if needed
     if(descriptiveFeatures == null) {
@@ -342,5 +337,4 @@ public abstract class AbstractSemanticAnnotationHelper implements
       descriptiveFeatures = featNames.toArray(new String[featNames.size()]);
     }
   }
-  
 }

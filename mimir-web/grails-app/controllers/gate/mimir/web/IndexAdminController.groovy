@@ -43,21 +43,6 @@ class IndexAdminController {
     [indexInstance:indexInstance]
   }
   
-  def closingProgress = {
-    def indexInstance = Index.findByIndexId(params.indexId)
-    if(!indexInstance) {
-      render("No such index ${params.indexId}")
-      return
-    }
-
-    double progress = indexInstance.closingProgress()
-    if(indexInstance.state == Index.CLOSING) {
-      render([progress:percentNumberInstance.format(progress)] as JSON)
-    } else {
-      render([complete:true] as JSON)
-    }
-  }
-  
   def close = {
     def indexInstance = Index.findByIndexId(params.indexId)
     
@@ -68,7 +53,7 @@ class IndexAdminController {
       if(indexInstance.state == Index.CLOSING) {
         flash.message = "Index  \"${indexInstance.name}\" is already in the process of closing."
       }
-      else if(indexInstance.state == Index.INDEXING) {
+      else if(indexInstance.state == Index.READY) {
         indexInstance.close()
         flash.message = "Index  \"${indexInstance.name}\" closing.  This may take a long time."
       }
@@ -83,8 +68,8 @@ class IndexAdminController {
       flash.message = "Index not found with index id ${params.indexId}"
       redirect(action:admin, params:params)
     }
-    else if(indexInstance.state != Index.SEARCHING) {
-      flash.message = "Index \"${indexInstance.name}\" is not in the searching state"
+    else if(indexInstance.state != Index.READY) {
+      flash.message = "Index \"${indexInstance.name}\" is not open"
       redirect(action:admin, params:params)
     }
     else {
@@ -103,8 +88,8 @@ class IndexAdminController {
       flash.message = "Index not found with index id ${params.indexId}"
       redirect(action:admin, params:params)
     }
-    else if(indexInstance.state != Index.SEARCHING) {
-      flash.message = "Index \"${indexInstance.name}\" is not in the searching state"
+    else if(indexInstance.state != Index.READY) {
+      flash.message = "Index \"${indexInstance.name}\" is not open"
       redirect(action:admin, params:params)
     }
     else {

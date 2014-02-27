@@ -81,13 +81,9 @@ public class AnnotationQuery implements QueryNode {
       isInDocumentMode = (helper.getMode() == 
           SemanticAnnotationHelper.Mode.DOCUMENT);
       // get the mention URIs
-      long start = System.currentTimeMillis();
       TermsResultSet trs = new AnnotationTermsQuery(query).execute(engine);
       if(trs.termStrings != null && trs.termStrings.length > 0 && 
          trs.termLengths != null) {
-        logger.info("Query: \"" + query.toString()  + "\". Obtained " + 
-            trs.termStrings.length + " mention IDs in " + 
-            (System.currentTimeMillis() - start) + " ms.");
         QueryNode[] disjuncts = new QueryNode[trs.termStrings.length];
         for(int index = 0; index < trs.termStrings.length; index++) {
           // create a term query for the mention URI
@@ -137,7 +133,7 @@ public class AnnotationQuery implements QueryNode {
       if(underlyingHit == null) return null;
       long doc = underlyingHit.getDocumentId();
       if(isInDocumentMode) {
-        return new Binding(query, doc, 0, engine.getDocumentSizes().getInt(doc),
+        return new Binding(query, doc, 0, engine.getIndex().getDocumentSize(doc),
           underlyingHit.getContainedBindings());        
       } else {
         return new Binding(query, doc,
@@ -145,7 +141,6 @@ public class AnnotationQuery implements QueryNode {
           underlyingHit.getLength(),
           underlyingHit.getContainedBindings());        
       }
-
     }
    
     @Override

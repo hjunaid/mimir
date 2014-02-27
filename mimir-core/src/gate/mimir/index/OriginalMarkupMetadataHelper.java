@@ -29,14 +29,11 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-
 import gate.Annotation;
 import gate.AnnotationSet;
 import gate.GateConstants;
 import gate.mimir.DocumentMetadataHelper;
 import gate.mimir.DocumentRenderer;
-import gate.mimir.index.mg4j.GATEDocument;
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.Binding;
 
 /**
@@ -77,7 +74,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
    * rendered.
    * @param hits the list of hits that need to also be rendered.
    * @param output a {@link Appendable} to which the output is written. 
-   * @see gate.mimir.DocumentRenderer#render(gate.mimir.index.mg4j.zipcollection.DocumentData, java.util.List, java.lang.Appendable)
+   * @see gate.mimir.DocumentRenderer#render(gate.mimir.index.DocumentData, java.util.List, java.lang.Appendable)
    */
   public void render(DocumentData documentData, List<Binding> hits,
           Appendable output) throws IOException {
@@ -470,7 +467,7 @@ public class OriginalMarkupMetadataHelper implements DocumentMetadataHelper,
         if(first) first = false;
         else str.append(' ');
         str.append(tagDescriptors.get(aTag[0])).append('(').append(aTag[1])
-            .append(':').append(aTag[2]).append(")\n");
+            .append(':').append(aTag[2]).append(')');
       }
       return str.toString();
     }

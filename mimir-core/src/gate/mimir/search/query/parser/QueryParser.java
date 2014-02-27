@@ -32,7 +32,7 @@ public class QueryParser implements QueryParserConstants {
   // please note that this variable is updated only on certain occassions
   int column;
   int row;
-  private static final boolean debug = false;
+  boolean debug = true;
 
   private static final OffsetComparator OFFSET_COMPARATOR = new OffsetComparator();
 

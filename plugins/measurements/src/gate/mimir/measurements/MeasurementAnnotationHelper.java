@@ -21,20 +21,18 @@ import gate.mimir.AbstractSemanticAnnotationHelper;
 import gate.mimir.Constraint;
 import gate.mimir.ConstraintType;
 import gate.mimir.SemanticAnnotationHelper;
-import gate.mimir.index.Indexer;
+import gate.mimir.index.AtomicAnnotationIndex;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.util.DelegatingSemanticAnnotationHelper;
 import gate.util.GateRuntimeException;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -172,31 +170,29 @@ public class MeasurementAnnotationHelper extends
   }
 
   @Override
-  public void init(Indexer indexer) {
+  public void init(AtomicAnnotationIndex indexer) {
     // create the delegate - needs to happen before super.init
-    if(delegateHelperType == null) { throw new IllegalArgumentException(
-      "No value provided for delegateHelperType"); }
-    try {
-      AbstractSemanticAnnotationHelper theDelegate =
-        delegateHelperType.newInstance();
-      theDelegate.setAnnotationType(getAnnotationType());
-      // nominal features for delegate do not include spec
-      theDelegate.setNominalFeatures(new String[]{TYPE_FEATURE,
-        DIMENSION_FEATURE, NORM_UNIT_FEATURE});
-      theDelegate.setFloatFeatures(new String[]{NORM_VALUE_FEATURE,
-        NORM_MIN_VALUE_FEATURE, NORM_MAX_VALUE_FEATURE});
-      
-      setDelegate(theDelegate);
-    } catch(Exception e) {
-      throw new IllegalArgumentException("The delegate helper class " +
-        delegateHelperType.getName() + " could not be instantiated", e);
+    if(getDelegate() == null) {
+      if(delegateHelperType == null) { throw new IllegalArgumentException(
+          "No value provided for delegateHelperType"); }
+        try {
+          AbstractSemanticAnnotationHelper theDelegate =
+            delegateHelperType.newInstance();
+          theDelegate.setAnnotationType(getAnnotationType());
+          // nominal features for delegate do not include spec
+          theDelegate.setNominalFeatures(new String[]{TYPE_FEATURE,
+            DIMENSION_FEATURE, NORM_UNIT_FEATURE});
+          theDelegate.setFloatFeatures(new String[]{NORM_VALUE_FEATURE,
+            NORM_MIN_VALUE_FEATURE, NORM_MAX_VALUE_FEATURE});
+          
+          setDelegate(theDelegate);
+        } catch(Exception e) {
+          throw new IllegalArgumentException("The delegate helper class " +
+            delegateHelperType.getName() + " could not be instantiated", e);
+        }
     }
     super.init(indexer);
-  }
-
-  @Override
-  public void init(QueryEngine queryEngine) {
-    super.init(queryEngine);
+    
     URL commonUrl = resolveUrl(commonWordsLocation);
     URL unitsUrl = resolveUrl(unitsFileLocation);
     try {

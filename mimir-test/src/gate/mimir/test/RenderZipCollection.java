@@ -3,8 +3,8 @@ package gate.mimir.test;
 import gate.Gate;
 import gate.mimir.DocumentRenderer;
 import gate.mimir.IndexConfig;
-import gate.mimir.index.Indexer;
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
+import gate.mimir.MimirIndex;
+import gate.mimir.index.DocumentData;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -55,17 +55,16 @@ public class RenderZipCollection {
     // load the IndexConfig to obtain the right renderer
     IndexConfig indexConfig =
             IndexConfig.readConfigFromFile(new File(indexDir,
-                    Indexer.INDEX_CONFIG_FILENAME), indexDir);
+                    MimirIndex.INDEX_CONFIG_FILENAME), indexDir);
     DocumentRenderer renderer = indexConfig.getDocumentRenderer();
 
     // enumerate the zip collection files
-    File mg4jDir = new File(indexDir, Indexer.MG4J_INDEX_DIRNAME);
-    File[] zipCollectionFiles = mg4jDir.listFiles(new FilenameFilter() {
+    File[] zipCollectionFiles = indexDir.listFiles(new FilenameFilter() {
       
       @Override
       public boolean accept(File dir, String name) {
-        return name.startsWith(Indexer.MIMIR_COLLECTION_BASENAME)
-                && name.endsWith(Indexer.MIMIR_COLLECTION_EXTENSION);
+        return name.startsWith("mimir-collection-")
+                && name.endsWith(".zip");
       }
     });
 

@@ -35,50 +35,16 @@ class IndexManagementController {
   def indexUrl = {
     def theIndex = Index.findByIndexId(params.indexId)
     if(theIndex) {
-      if(theIndex.state == Index.INDEXING) {
-        render(text:theIndex.indexUrl(), contentType:"text/plain",
-            encoding:"UTF-8")
-      } else {
-        response.sendError(HttpServletResponse.SC_FORBIDDEN,
-            "Index with ID ${params.indexId} is in state ${theIndex.state}")
-      }
-    } else {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND,
-      "Index ID ${params.indexId} not known!")
+      render(text:theIndex.indexUrl(), contentType:"text/plain",
+        encoding:"UTF-8")
     }
   }
 
   def close = {
     def theIndex = Index.findByIndexId(params.indexId)
     if(theIndex) {
-      if(theIndex.state == Index.INDEXING) {
-        theIndex.close()
-        render("OK")
-      } else {
-        response.sendError(HttpServletResponse.SC_FORBIDDEN,
-            "Index with ID ${params.indexId} is in state ${theIndex.state}")
-      }
-    } else {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND,
-      "Index ID ${params.indexId} not known!")
-    }
-  }
-
-  def closingProgressBin = {
-    try {
-      def theIndex = Index.findByIndexId(params.indexId)
-      if(theIndex) {
-        double value = theIndex.closingProgress()
-        new ObjectOutputStream (response.outputStream).withStream {stream ->
-          stream.writeDouble(value)
-        }
-      } else {
-        response.sendError(HttpServletResponse.SC_NOT_FOUND,
-        "Index ID ${params.indexId} not known!")
-      }
-    } catch(Exception e){
-      response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-          "Error while obtaining the closing progress: \"" + e.getMessage() + "\"!")
+      theIndex.close()
+      render("OK")
     }
   }
 
@@ -89,18 +55,10 @@ class IndexManagementController {
   def addDocuments = {
     def theIndex = Index.findByIndexId(params.indexId)
     if(theIndex) {
-      if(theIndex.state == Index.INDEXING) {
-        request.inputStream.withStream { stream ->
-          theIndex.indexDocuments(stream)
-        }
-        render("OK")
-      } else {
-        response.sendError(HttpServletResponse.SC_FORBIDDEN,
-            "Index with ID ${params.indexId} is in state ${theIndex.state}")
+      request.inputStream.withStream { stream ->
+        theIndex.indexDocuments(stream)
       }
-    } else {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND,
-      "Index ID ${params.indexId} not known!")
+      render("OK")
     }
   }
   

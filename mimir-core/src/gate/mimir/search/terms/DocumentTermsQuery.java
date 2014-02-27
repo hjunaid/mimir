@@ -15,10 +15,9 @@
 package gate.mimir.search.terms;
 
 import gate.mimir.SemanticAnnotationHelper;
-import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
+import gate.mimir.index.AtomicIndex;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
-import it.unimi.di.big.mg4j.index.IndexReader;
 
 import java.io.IOException;
 
@@ -73,13 +72,7 @@ public class DocumentTermsQuery extends AbstractIndexTermsQuery {
   @Override
   public TermsResultSet execute(QueryEngine engine) throws IOException {
     prepare(engine);
-    IndexReader indexReader = null;
-    try {
-      indexReader = directIndexPool.borrowReader();
-      return buildResultSet(indexReader.documents(MimirDirectIndexBuilder
-        .longToTerm(documentIds[0])));
-    } finally {
-      if(indexReader != null) directIndexPool.returnReader(indexReader);
-    }
+    return buildResultSet(atomicIndex.getDirectIndex().documents
+        (AtomicIndex.longToTerm(documentIds[0])));
   }
 }

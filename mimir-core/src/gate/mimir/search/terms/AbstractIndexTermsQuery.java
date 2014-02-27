@@ -15,6 +15,7 @@
 package gate.mimir.search.terms;
 
 import gate.mimir.SemanticAnnotationHelper;
+import gate.mimir.index.AtomicIndex;
 import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
@@ -59,15 +60,10 @@ public abstract class AbstractIndexTermsQuery extends
   protected final IndexType indexType;
 
   /**
-   * The direct index used for executing the query. This value is non-null only
-   * if a direct index was configured as part of the Mímir index being searched.
+   * The atomic index used for executing the query. This includes both the 
+   * inverted and the direct index (if configured).
    */
-  protected transient IndexReaderPool directIndexPool;
-
-  /**
-   * The indirect index used for executing the query.
-   */
-  protected transient IndexReaderPool indirectIndexPool;
+  protected transient AtomicIndex atomicIndex;
 
   /**
    * The semantic annotation helper for the correct annotation type (as given by
@@ -208,19 +204,17 @@ public abstract class AbstractIndexTermsQuery extends
     this.engine = engine;
     switch(indexType){
       case ANNOTATIONS:
-        directIndexPool = engine.getAnnotationDirectIndex(indexName);
-        indirectIndexPool = engine.getAnnotationIndex(indexName);
+        atomicIndex = engine.getAnnotationIndex(indexName);
         annotationHelper = engine.getAnnotationHelper(indexName);
         break;
       case TOKENS:
-        directIndexPool = engine.getTokenDirectIndex(indexName);
-        indirectIndexPool = engine.getTokenIndex(indexName);
+        atomicIndex = engine.getTokenIndex(indexName);
         break;
       default:
         throw new IllegalArgumentException("Invalid index type: " +
           indexType.toString());
     }
-    if(directIndexPool == null) { throw new IllegalArgumentException(
+    if(!atomicIndex.hasDirectIndex()) { throw new IllegalArgumentException(
       "This type of query requires a " +
         "direct index, but one was not found for (" +
         indexType.toString().toLowerCase() + ") sub-index \"" + indexName +
@@ -264,7 +258,7 @@ public abstract class AbstractIndexTermsQuery extends
       String termString = null;
       // get the term string
       try {
-        termString = indirectIndexPool.getTerm(termId);
+        termString = atomicIndex.getDirectTerm(termId).toString();
       } catch(Exception e) {
         System.err.println("Error reading indirect index term with ID " +
           termId);

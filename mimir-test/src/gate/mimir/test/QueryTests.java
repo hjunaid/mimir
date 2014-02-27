@@ -20,9 +20,9 @@ import gate.Document;
 import gate.Gate;
 import gate.mimir.AbstractSemanticAnnotationHelper;
 import gate.mimir.IndexConfig;
+import gate.mimir.MimirIndex;
 import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.index.IndexException;
-import gate.mimir.index.Indexer;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.AndQuery;
 import gate.mimir.search.query.AnnotationQuery;
@@ -108,7 +108,7 @@ public class QueryTests {
           AbstractSemanticAnnotationHelper.class));
       
       // now start indexing the documents
-      Indexer indexer = new Indexer(indexConfig);
+      MimirIndex index = new MimirIndex(indexConfig);
       String pathToZipFile = "data/gatexml-output.zip";
       File zipFile = new File(pathToZipFile);
       String fileURI = zipFile.toURI().toString();
@@ -121,9 +121,9 @@ public class QueryTests {
         }
         URL url = new URL("jar:" + fileURI + "!/" + entry.getName());
         Document doc = gate.Factory.newDocument(url, "UTF-8");
-        indexer.indexDocument(doc);
+        index.indexDocument(doc);
       }
-      indexer.close();      
+      index.close();      
     }
   }
 
@@ -154,7 +154,7 @@ public class QueryTests {
   @Test
   public void testSequenceQueryGaps() throws IOException, IndexException {
     for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+      QueryEngine engine = new MimirIndex(indexDir).getQueryEngine();
       TermQuery tq1 = new TermQuery("string", "up");
       TermQuery tq2 = new TermQuery("string", "to");
       TermQuery tq3 = new TermQuery("string", "the");
@@ -183,7 +183,7 @@ public class QueryTests {
   @Test
   public void testRepeatsAndOrQueries() throws IndexException, IOException {
     for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+      QueryEngine engine = new MimirIndex(indexDir).getQueryEngine();;
       Map<String, String> empty = Collections.emptyMap();
       AnnotationQuery annQuery = new AnnotationQuery("Measurement", empty);
       RepeatsQuery rQuery = new RepeatsQuery(annQuery, 1, 3);
@@ -211,7 +211,7 @@ public class QueryTests {
   public void testSequenceAndRepeatsQueries() throws IndexException,
           IOException {
     for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+      QueryEngine engine = new MimirIndex(indexDir).getQueryEngine();;
       Map<String, String> empty = Collections.emptyMap();
       AnnotationQuery annQuery = new AnnotationQuery("Measurement", empty);
       SequenceQuery sQuery =
@@ -239,7 +239,7 @@ public class QueryTests {
   @Test
   public void testGapImplementations() throws IndexException, IOException {
     for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);    
+      QueryEngine engine = new MimirIndex(indexDir).getQueryEngine();;    
       TermQuery tq1 = new TermQuery("string", "up");
       TermQuery tq3 = new TermQuery("root", "the");
       SequenceQuery sQuery1 =
@@ -265,7 +265,7 @@ public class QueryTests {
   @Test
   public void testDiffer() throws IOException, IndexException {
     File indexDir = indexDirs[0];
-    QueryEngine engine = new QueryEngine(indexDir);
+    QueryEngine engine = new MimirIndex(indexDir).getQueryEngine();;
     String[] terms = new String[]{"up", "to", "the"};
     TermQuery[] tqs = new TermQuery[terms.length];
     for(int i = 0; i < terms.length; i++) {
@@ -281,7 +281,7 @@ public class QueryTests {
   public void annotationQuery() throws IndexException, IOException {
     String[] qResNames = new String[indexDirs.length]; 
     for(int  i = 0; i <  indexDirs.length; i++) {
-      QueryEngine engine = new QueryEngine(indexDirs[i]);
+      QueryEngine engine = new MimirIndex(indexDirs[i]).getQueryEngine();;
       Map<String, String> constraints = new HashMap<String, String>();
       constraints.put("spec", "1 to 32 degF");
       AnnotationQuery annQuery = new AnnotationQuery("Measurement", constraints);
@@ -298,7 +298,7 @@ public class QueryTests {
   public void testStringSequenceQuery() throws IndexException, IOException {
     String[] qResNames = new String[indexDirs.length]; 
     for(int  i = 0; i <  indexDirs.length; i++) {
-      QueryEngine engine = new QueryEngine(indexDirs[i]);
+      QueryEngine engine = new MimirIndex(indexDirs[i]).getQueryEngine();
       String[] terms = new String[] {"up", "to", "the"};
       // String[] terms = new String[]{"ability", "of", /*"the", "agent",*/ "to",
       // "form", "an", "acid", "or", "base", "upon", "heating", "whereby",
@@ -325,7 +325,7 @@ public class QueryTests {
   public void testCategorySequenceQuery() throws IndexException, IOException {
     String[] qResNames = new String[indexDirs.length]; 
     for(int  i = 0; i <  indexDirs.length; i++) {
-      QueryEngine engine = new QueryEngine(indexDirs[i]);
+      QueryEngine engine = new MimirIndex(indexDirs[i]).getQueryEngine();
       String[] terms = new String[]{"NN", "NN", "NN"};
       TermQuery[] termQueries = new TermQuery[terms.length];
       for(int j = 0; j < terms.length; j++) {
@@ -347,7 +347,7 @@ public class QueryTests {
   public void testAnnotationSequenceQuery() throws IndexException, IOException {
     String[] qResNames = new String[indexDirs.length]; 
     for(int  i = 0; i <  indexDirs.length; i++) {
-      QueryEngine engine = new QueryEngine(indexDirs[i]);
+      QueryEngine engine = new MimirIndex(indexDirs[i]).getQueryEngine();
       Map<String, String> empty = Collections.emptyMap();
       AnnotationQuery annQuery = new AnnotationQuery("Measurement", empty);
       SequenceQuery sequenceQuery = new SequenceQuery(null/* gaps */, annQuery, annQuery, annQuery);
@@ -364,7 +364,7 @@ public class QueryTests {
   public void testRepeatsQuery() throws IndexException, IOException {
     String[] qResNames = new String[indexDirs.length];
     for(int  i = 0; i <  indexDirs.length; i++) {
-      QueryEngine engine = new QueryEngine(indexDirs[i]);
+      QueryEngine engine = new MimirIndex(indexDirs[i]).getQueryEngine();
       Map<String, String> empty = Collections.emptyMap();
       AnnotationQuery annQuery = new AnnotationQuery("Measurement", empty);
       RepeatsQuery repeatsQuery = new RepeatsQuery(annQuery, 3, 3);
@@ -381,7 +381,7 @@ public class QueryTests {
   public void testWithinQuery() throws IndexException, IOException {
     String[] qResNames = new String[indexDirs.length];
     for(int  i = 0; i <  indexDirs.length; i++) {
-      QueryEngine engine = new QueryEngine(indexDirs[i]);
+      QueryEngine engine = new MimirIndex(indexDirs[i]).getQueryEngine();
       AnnotationQuery intervalQuery = new AnnotationQuery("Measurement", Collections.singletonMap("type", "interval"));
       TermQuery toQuery = new TermQuery("string", "to");
       WithinQuery withinQuery = new WithinQuery(toQuery, intervalQuery);
@@ -398,7 +398,7 @@ public class QueryTests {
   public void testInAndQuery() throws IndexException, IOException {
     String[] qResNames = new String[indexDirs.length];
     for(int  i = 0; i <  indexDirs.length; i++) {
-      QueryEngine engine = new QueryEngine(indexDirs[i]);
+      QueryEngine engine = new MimirIndex(indexDirs[i]).getQueryEngine();
       QueryNode inAndQuery = new WithinQuery(new AndQuery(new TermQuery(null, "London"),
                 new TermQuery(null, "press")), new AnnotationQuery(
                 "Reference", new HashMap<String, String>()));
@@ -415,7 +415,7 @@ public class QueryTests {
   public void testMeasurementSpecQuery() throws IndexException, IOException {
     String[] qResNames = new String[indexDirs.length];
     for(int  i = 0; i <  indexDirs.length; i++) {
-      QueryEngine engine = new QueryEngine(indexDirs[i]);
+      QueryEngine engine = new MimirIndex(indexDirs[i]).getQueryEngine();
       AnnotationQuery specQuery = new AnnotationQuery("Measurement", Collections.singletonMap("spec", "5 cm"));
       qResNames[i] = "measurementSpec-" + i; 
       performQuery(qResNames[i], specQuery, engine);
@@ -427,9 +427,9 @@ public class QueryTests {
   }
   
   @Test
-  public void testQueryEngineRenderDocument() throws IndexException {
+  public void testQueryEngineRenderDocument() throws IndexException, IOException {
     for(File indexDir : indexDirs) {
-      QueryEngine engine = new QueryEngine(indexDir);
+      QueryEngine engine = new MimirIndex(indexDir).getQueryEngine();
       List<Binding> hits = new ArrayList<Binding>();
       hits.add(new Binding(null, 0, 100, 5, null));
       hits.add(new Binding(null, 0, 110, 4, null));
@@ -453,7 +453,7 @@ public class QueryTests {
     String[] qResNames = new String[indexDirs.length];
     String[] qResNames2 = new String[indexDirs.length];
     for(int  i = 0; i <  indexDirs.length; i++) {
-      QueryEngine engine = new QueryEngine(indexDirs[i]);
+      QueryEngine engine = new MimirIndex(indexDirs[i]).getQueryEngine();
       QueryNode qNode = QueryParser.parse("{Document}");
       qResNames[i] = "doc-" + i;
       int hits = performQuery(qResNames[i], qNode, engine);

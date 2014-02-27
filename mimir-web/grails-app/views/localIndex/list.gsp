@@ -9,8 +9,8 @@
     <body>
         <div class="nav">
             <span class="menuButton"><g:link class="home" controller="mimirStaticPages" action="admin">Admin Home</g:link></span>
-            <span class="menuButton"><g:link class="create" action="create">Create New Local Index for Indexing</g:link></span>
-            <span class="menuButton"><g:link class="create" action="importIndex">Import Existing Index for Searching</g:link>
+            <span class="menuButton"><g:link class="create" action="create">Create New Local Index</g:link></span>
+            <span class="menuButton"><g:link class="create" action="importIndex">Import Existing Index</g:link>
         </div>
         <div class="body">
             <h1>Local Index List</h1>
@@ -36,7 +36,7 @@
                             <td>${fieldValue(bean:localIndexInstance, field:'indexDirectory')}</td>
                             <td>${fieldValue(bean:localIndexInstance, field:'scorer')}</td>
                         		<td>
-						                  <g:if test='${localIndexInstance.state == Index.SEARCHING}'>
+						                  <g:if test='${localIndexInstance.state == Index.READY}'>
 						                    <g:link controller="gus" action="search"
 						                      params="[indexId:localIndexInstance.indexId]">Search this index.</g:link>
 						                  

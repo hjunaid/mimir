@@ -12,7 +12,7 @@
  *
  *  $Id$
  */
-package gate.mimir.index.mg4j;
+package gate.mimir.index;
 
 import gate.Annotation;
 import gate.AnnotationSet;
@@ -56,6 +56,12 @@ public class GATEDocument implements Document {
    * features.
    */
   private static long documentID = 0;
+  
+  /**
+   * The number of occurrences (in all sub-indexes) generated as a result of 
+   * indexing this document.
+   */
+  private long occurrences = 0;
   
   /**
    * An MG4J word reader for this document.
@@ -150,7 +156,7 @@ public class GATEDocument implements Document {
   /**
    * Private constructor used to create the {@link #END_OF_QUEUE} instance.
    */
-  private GATEDocument(){
+  protected GATEDocument(){
   }
   
   public GATEDocument(gate.Document gateDocument,
@@ -257,6 +263,30 @@ public class GATEDocument implements Document {
               indexConfig.getDocumentUriFeatureName(), uri);
     }
     return uri;
+  }
+
+  /**
+   * Notifies this GATEDocument that some more index occurrences were produced
+   * in the process of indexing it.
+   * 
+   * This method is synchronized because the same GATEDocument instance is being
+   * indexed in parallel by multiple sub-indexers.
+   *  
+   * @param newOccurrences the number of new occurrences generated
+   */
+  public synchronized void addOccurrences(long newOccurrences) {
+    occurrences += newOccurrences;
+  }
+  
+  /**
+   * Returns the number of index occurrences that the indexing of this 
+   * GATEDocument has generated. This value is only correct after the document
+   * has been indexed by all sub-indexers.
+   * 
+   * @return the number of occurrences.
+   */
+  public long getOccurrences() {
+    return occurrences;
   }
 
   /* (non-Javadoc)

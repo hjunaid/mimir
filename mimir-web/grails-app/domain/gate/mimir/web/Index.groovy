@@ -17,7 +17,7 @@ import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException
 import gate.mimir.search.terms.TermsQuery;
 import gate.mimir.search.terms.TermsResultSet;
-import gate.mimir.index.mg4j.zipcollection.DocumentData
+import gate.mimir.index.DocumentData
 
 /**
  * Top level class representing a single index (local or remote) in mimir.
@@ -33,11 +33,14 @@ class Index implements Serializable {
    */
   String indexId
   
-  /**
-   * Current state of this index.
-   */
+
   String state
   
+  /**
+   * The custom CSS injected in the results page produced by this index. This
+   * allows the user customisation of how results are presented (in concert with
+   * suitable HTML tags being stored at indexing time).
+   */
   String css
   
   /**
@@ -82,14 +85,6 @@ class Index implements Serializable {
    * and then return promptly, it should not wait for the shutdown to finish.
    */
   void close() {
-    throw new UnsupportedOperationException()
-  }
-  
-  /**
-   * Obtain the progress of the index closing operation if one is currently
-   * running, or 1 otherwise.
-   */
-  double closingProgress() {
     throw new UnsupportedOperationException()
   }
   
@@ -154,8 +149,7 @@ class Index implements Serializable {
   }
   
   // Constants for the possible state values
-  public static final String INDEXING = "indexing"
-  public static final String SEARCHING = "searching"
+  public static final String READY = "ready" // good for searching and indexing
   public static final String CLOSING = "closing"
   public static final String WORKING = "working"
   public static final String FAILED = "failed"

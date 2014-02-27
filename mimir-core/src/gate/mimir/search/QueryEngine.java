@@ -19,14 +19,12 @@ import gate.mimir.DocumentMetadataHelper;
 import gate.mimir.DocumentRenderer;
 import gate.mimir.IndexConfig;
 import gate.mimir.IndexConfig.SemanticIndexerConfig;
+import gate.mimir.MimirIndex;
 import gate.mimir.SemanticAnnotationHelper;
+import gate.mimir.index.AtomicAnnotationIndex;
+import gate.mimir.index.AtomicTokenIndex;
+import gate.mimir.index.DocumentData;
 import gate.mimir.index.IndexException;
-import gate.mimir.index.Indexer;
-import gate.mimir.index.mg4j.MentionsIndexBuilder;
-import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
-import gate.mimir.index.mg4j.TokenIndexBuilder;
-import gate.mimir.index.mg4j.zipcollection.DocumentCollection;
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.AnnotationQuery;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryExecutor;
@@ -34,71 +32,21 @@ import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException;
 import gate.mimir.search.query.parser.QueryParser;
 import gate.mimir.search.score.MimirScorer;
-import gate.mimir.util.MG4JTools;
-import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntBigList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
-import it.unimi.di.big.mg4j.index.Index;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.log4j.Logger;
 
 /**
  * This class represents the entry point to the Mimir search API.
  */
 public class QueryEngine {
-  
-  private class WriteDeletedDocsTask extends TimerTask {
-    public void run() {
-      synchronized(writeDeletedDocsTimer) {
-        File delFile = new File(indexDir, DELETED_DOCUMENT_IDS_FILE_NAME);
-        if(delFile.exists()) {
-          delFile.delete();
-        }
-        try{
-          logger.debug("Writing deleted documents set");
-          ObjectOutputStream oos = new ObjectOutputStream(
-                  new GZIPOutputStream(
-                  new BufferedOutputStream(
-                  new FileOutputStream(delFile))));
-          oos.writeObject(deletedDocumentIds);
-          oos.flush();
-          oos.close();
-          logger.debug("Writing deleted documents set completed.");
-        }catch (IOException e) {
-          logger.error("Exception while writing deleted documents set", e);
-        }        
-      }
-    }
-  }
   
   
   /**
@@ -118,69 +66,6 @@ public class QueryEngine {
      */
     ANNOTATIONS
   }
-
-  /**
-   * The various indexes in the Mimir composite index. The array contains first
-   * the token indexes (in the same order as listed in the index configuration),
-   * followed by the mentions indexes (in the same order as listed in the index
-   * configuration).
-   */
-  protected IndexReaderPool[] indexReaderPools;
-  
-  /**
-   * Array containing the direct indexes (if enabled) for the Mímir composite
-   * index.
-   */
-  protected IndexReaderPool[] directIndexReaderPools;
-
-  /**
-   * The zipped document collection from MG4J (built during the indexing of the
-   * first token feature). This can be used to obtain the document text and to
-   * display the content of the hits.
-   */
-  protected DocumentCollection documentCollection;
-
-  /**
-   * A cache of {@link DocumentData} values used for returning the various
-   * document details (title, URI, text).
-   */
-  protected Long2ObjectLinkedOpenHashMap<DocumentData> documentCache;
-
-  /**
-   * The maximum number of documents to be stored in the document cache.
-   */
-  protected static final int DOCUMENT_CACHE_SIZE = 100;
-  
-  /**
-   * The set of IDs for the documents marked as deleted. 
-   */
-  private transient SortedSet<Long> deletedDocumentIds;
-  
-  /**
-   * A timer used to execute the writing of deleted documents data to disk.
-   * This timer is used to create a delay, allowing a batch of writes to be 
-   * coalesced into a single one.
-   */
-  private transient Timer writeDeletedDocsTimer;
-  
-  /**
-   * The timer task used to top write to disk the deleted documents data.
-   * This value is non-null only when there is a pending write. 
-   */
-  private volatile transient WriteDeletedDocsTask writeDeletedDocsTask;
-
-  /**
-   * The document sizes used during search time (if running in document mode) to
-   * simulate document-spanning annotations.
-   */
-  private transient IntBigList documentSizes;
-  
-  /**
-   * The name for the file (stored in the root index directory) containing 
-   * the serialised version of the {@link #deletedDocumentIds}. 
-   */
-  public static final String DELETED_DOCUMENT_IDS_FILE_NAME = "deleted.ser";
-  
   
   /**
    * The maximum size of an index that can be loaded in memory (by default 64
@@ -194,11 +79,10 @@ public class QueryEngine {
    */
   public static final int DEFAULT_DOCUMENT_BLOCK_SIZE = 1000;
 
-  
   /**
-   * The top level directory of the Mimir index.
+   * The index being searched.
    */
-  protected File indexDir;
+  protected final MimirIndex index;
 
   /**
    * The index configuration this index was built from.
@@ -242,13 +126,6 @@ public class QueryEngine {
    * files).
    */
   private List<QueryRunner> activeQueryRunners;
-  
-  /**
-   * @return the indexDir
-   */
-  public File getIndexDir() {
-    return indexDir;
-  }
 
   /**
    * Are sub-bindings used in this query engine. Sub-bindings are used to
@@ -378,41 +255,7 @@ public class QueryEngine {
         "Don't understand sub-indexes of type " + indexType);
     }
   }
-  
-  /**
-   * Returns the set of indexes in the Mimir composite index. The array contains
-   * first the token indexes (in the same order as listed in the index
-   * configuration), followed by the mentions indexes (in the same order as
-   * listed in the index configuration).
-   * 
-   * @return an array of {@link Index} objects.
-   */
-  public IndexReaderPool[] getIndexes() {
-    return indexReaderPools;
-  }
 
-  /**
-   * Returns the set of direct indexes (if enabled) in the Mimir composite 
-   * index. The array contains first the token indexes (in the same order as 
-   * listed in the index configuration), followed by the mentions indexes 
-   * (in the same order as listed in the index configuration). In other words,
-   * this array is parallel to the one returned by {@link #getIndexes()}.
-   * 
-   * @return an array of {@link Index} objects.
-   */
-  public IndexReaderPool[] getDirectIndexes() {
-    return directIndexReaderPools;
-  }  
-  
-  /**
-   * Gets the list of document sizes from one underlying MG4J index (all 
-   * sub-indexes should have the same sizes).
-   * @return
-   */
-  public IntBigList getDocumentSizes() {
-    return documentSizes;
-  }
-  
   /**
    * Returns the index that stores the data for a particular feature of token
    * annotations.
@@ -420,35 +263,9 @@ public class QueryEngine {
    * @param featureName
    * @return
    */
-  public IndexReaderPool getTokenIndex(String featureName) {
-    for(int i = 0; i < indexConfig.getTokenIndexers().length; i++) {
-      if(indexConfig.getTokenIndexers()[i].getFeatureName().equals(featureName)) {
-        return indexReaderPools[i]; 
-      }
-    }
-    return null;
+  public AtomicTokenIndex getTokenIndex(String featureName) {
+    return index.getTokenIndex(featureName);
   }
-
-  /**
-   * Returns the <strong>direct</strong> index that stores the data for a 
-   * particular feature of token annotations. 
-   * 
-   * NB: direct indexes are used to search for term IDs given
-   * a document ID. For standard searches (getting documents given search terms)
-   * use the default (inverted) index returned by: 
-   * {@link #getTokenIndex(String)}.
-   * 
-   * @param featureName
-   * @return
-   */
-  public IndexReaderPool getTokenDirectIndex(String featureName) {
-    for(int i = 0; i < indexConfig.getTokenIndexers().length; i++) {
-      if(indexConfig.getTokenIndexers()[i].getFeatureName().equals(featureName)) {
-        return directIndexReaderPools[i]; 
-      }
-    }
-    return null;
-  }  
   
   /**
    * Returns the index that stores the data for a particular semantic annotation
@@ -457,41 +274,9 @@ public class QueryEngine {
    * @param annotationType
    * @return
    */
-  public IndexReaderPool getAnnotationIndex(String annotationType) {
-    for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
-      for(String aType : 
-          indexConfig.getSemanticIndexers()[i].getAnnotationTypes()) {
-        if(aType.equals(annotationType)) { 
-          return indexReaderPools[indexConfig.getTokenIndexers().length + i]; 
-        }
-      }
-    }
-    return null;
+  public AtomicAnnotationIndex getAnnotationIndex(String annotationType) {
+    return index.getAnnotationIndex(annotationType);
   }
-
-  /**
-   * Returns the <strong>direct</strong> index that stores the data for a 
-   * particular semantic annotation type.
-   * 
-   * NB: direct indexes are used to search for term IDs given
-   * a document ID. For standard searches (getting documents given search terms)
-   * use the default (inverted) index returned by: 
-   * {@link #getAnnotationIndex(String)}.
-   * 
-   * @param annotationType
-   * @return
-   */
-  public IndexReaderPool getAnnotationDirectIndex(String annotationType) {
-    for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
-      for(String aType : 
-          indexConfig.getSemanticIndexers()[i].getAnnotationTypes()) {
-        if(aType.equals(annotationType)) { 
-          return directIndexReaderPools[indexConfig.getTokenIndexers().length + i]; 
-        }
-      }
-    }
-    return null;
-  }  
   
   public SemanticAnnotationHelper getAnnotationHelper(String annotationType) {
     for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
@@ -506,6 +291,15 @@ public class QueryEngine {
     return null;
   }
   
+  
+  /**
+   * Gets the index this query engine is searching.
+   * @return
+   */
+  public MimirIndex getIndex() {
+    return index;
+  }
+
   /**
    * @return the index configuration for this index
    */
@@ -513,50 +307,63 @@ public class QueryEngine {
     return indexConfig;
   }
 
+  
+  
   /**
-   * Constructs a new {@link QueryEngine} for a specified Mimir index. The mimir
-   * semantic repository will be initialized using the default location in the
-   * filesystem, provided by the IndexConfig
-   * 
-   * @param indexDir
-   *          the directory containing an index.
-   * @throws IndexException
-   *           if there are problems while opening the indexes.
+   * Constructs a new query engine for a {@link MimirIndex}.
+   * @param index the index to be searched.
    */
-  public QueryEngine(File indexDir) throws gate.mimir.index.IndexException {
-    this.indexDir = indexDir;
-    // read the index config
-    try {
-      indexConfig =
-        IndexConfig.readConfigFromFile(new File(indexDir,
-                Indexer.INDEX_CONFIG_FILENAME), indexDir);
-      initMG4J();
-      // initialise the semantic indexers
-      if(indexConfig.getSemanticIndexers() != null && 
-              indexConfig.getSemanticIndexers().length > 0) {
-        for(SemanticIndexerConfig sic : indexConfig.getSemanticIndexers()){
-          for(SemanticAnnotationHelper sah : sic.getHelpers()){
-            sah.init(this);
-            if(sah.getMode() == SemanticAnnotationHelper.Mode.DOCUMENT &&
-                documentSizes == null) {
-              // we need to load the document sizes from a token index
-              documentSizes = getIndexes()[0].getIndex().sizes;
-            }            
-          }
-        }
-      }
-      readDeletedDocs();
-      
-      activeQueryRunners = Collections.synchronizedList(
-              new ArrayList<QueryRunner>());
-    } catch(FileNotFoundException e) {
-      throw new IndexException("File not found!", e);
-    } catch(IOException e) {
-      throw new IndexException("Input/output exception!", e);
-    }
+  public QueryEngine(MimirIndex index) {
+    this.index = index;
+    this.indexConfig = index.getIndexConfig();
+    activeQueryRunners = Collections.synchronizedList(
+        new ArrayList<QueryRunner>());
     subBindingsEnabled = false;
-    writeDeletedDocsTimer = new Timer("Delete documents writer");
   }
+
+//  /**
+//   * Constructs a new {@link QueryEngine} for a specified Mimir index. The mimir
+//   * semantic repository will be initialized using the default location in the
+//   * filesystem, provided by the IndexConfig
+//   * 
+//   * @param indexDir
+//   *          the directory containing an index.
+//   * @throws IndexException
+//   *           if there are problems while opening the indexes.
+//   */
+//  public QueryEngine(File indexDir) throws gate.mimir.index.IndexException {
+//    // read the index config
+//    try {
+//      indexConfig =
+//        IndexConfig.readConfigFromFile(new File(indexDir,
+//                Indexer.INDEX_CONFIG_FILENAME), indexDir);
+//      initMG4J();
+//      // initialise the semantic indexers
+//      if(indexConfig.getSemanticIndexers() != null && 
+//              indexConfig.getSemanticIndexers().length > 0) {
+//        for(SemanticIndexerConfig sic : indexConfig.getSemanticIndexers()){
+//          for(SemanticAnnotationHelper sah : sic.getHelpers()){
+//            sah.init(this);
+//            if(sah.getMode() == SemanticAnnotationHelper.Mode.DOCUMENT &&
+//                documentSizes == null) {
+//              // we need to load the document sizes from a token index
+//              documentSizes = getIndexes()[0].getIndex().sizes;
+//            }            
+//          }
+//        }
+//      }
+//      
+//      
+//      activeQueryRunners = Collections.synchronizedList(
+//              new ArrayList<QueryRunner>());
+//    } catch(FileNotFoundException e) {
+//      throw new IndexException("File not found!", e);
+//    } catch(IOException e) {
+//      throw new IndexException("Input/output exception!", e);
+//    }
+//    subBindingsEnabled = false;
+//
+//  }
 
   /**
    * Get the {@link SemanticAnnotationHelper} corresponding to a query's
@@ -712,7 +519,12 @@ public class QueryEngine {
    */
   public String[][] getRightContext(Binding hit, int numTokens)
   throws IndexException {
-    DocumentData docData = getDocumentData(hit.getDocumentId());
+    DocumentData docData;
+    try {
+      docData = index.getDocumentData(hit.getDocumentId());
+    } catch(IOException e) {
+      throw new IndexException(e);
+    }
     int startOffset = hit.getTermPosition() + hit.getLength();
     if(startOffset >= docData.getTokens().length) {
       // hit is at the end of the document
@@ -751,7 +563,11 @@ public class QueryEngine {
    */
   public String[][] getText(long documentID, int termPosition, int length)
   throws IndexException {
-    return getDocumentData(documentID).getText(termPosition, length);
+    try {
+      return index.getDocumentData(documentID).getText(termPosition, length);
+    } catch(IOException e) {
+      throw new IndexException(e); 
+    }
   }
 
   /**
@@ -773,15 +589,23 @@ public class QueryEngine {
     DocumentRenderer docRenderer = indexConfig.getDocumentRenderer();
     if(docRenderer == null) { throw new IndexException(
     "No document renderer is configured for this index!"); }
-    docRenderer.render(getDocumentData(docID), hits, output);
+    docRenderer.render(index.getDocumentData(docID), hits, output);
   }
 
   public String getDocumentTitle(long docID) throws IndexException {
-    return getDocumentData(docID).getDocumentTitle();
+    try {
+      return index.getDocumentData(docID).getDocumentTitle();
+    } catch(IOException e) {
+      throw new IndexException(e);
+    }
   }
 
   public String getDocumentURI(long docID) throws IndexException {
-    return getDocumentData(docID).getDocumentURI();
+    try {
+      return index.getDocumentData(docID).getDocumentURI();
+    } catch(IOException e) {
+      throw new IndexException(e);
+    }
   }
 
   /**
@@ -798,34 +622,14 @@ public class QueryEngine {
    */
   public Serializable getDocumentMetadataField(long docID, String fieldName) 
       throws IndexException {
-    return getDocumentData(docID).getMetadataField(fieldName);
+    try {
+      return index.getDocumentData(docID).getMetadataField(fieldName);
+    } catch(IOException e) {
+      throw new IndexException(e);
+    }
   }
   
-  /**
-   * Gets the {@link DocumentData} for a given document ID, from the on disk 
-   * document collection. In memory caching is performed to reduce the cost of 
-   * this call. 
-   * @param documentID
-   *          the ID of the document to be obtained.
-   * @return the {@link DocumentData} associated with the given document ID.
-   * @throws IndexException
-   */
-  public synchronized DocumentData getDocumentData(long documentID)
-  throws IndexException {
-    if(isDeleted(documentID)) {
-      throw new IndexException("Invalid document ID " + documentID);
-    }
-    DocumentData documentData = documentCache.getAndMoveToFirst(documentID);
-    if(documentData == null) {
-      // cache miss
-      documentData = documentCollection.getDocumentData(documentID);
-      documentCache.putAndMoveToFirst(documentID, documentData);
-      if(documentCache.size() > DOCUMENT_CACHE_SIZE) {
-        documentCache.removeLast();
-      }
-    }
-    return documentData;
-  }
+
 
   /**
    * Closes this {@link QueryEngine} and releases all resources.
@@ -842,259 +646,6 @@ public class QueryEngine {
         logger.error("Exception while closing query runner.", e);
       }
     }
-    // close the document collection
-    documentCollection.close();
-    // close all the semantic indexers
-    logger.info("Closing Semantic Annotation Helpers.");
-    if(indexConfig.getSemanticIndexers() != null) {
-      for(SemanticIndexerConfig aSIC : indexConfig.getSemanticIndexers()) {
-        if(aSIC.getHelpers() != null) {
-          for(int i = 0; i < aSIC.getHelpers().length; i++) {
-            SemanticAnnotationHelper aHelper = aSIC.getHelpers()[i];
-            aHelper.close(this);
-          }
-        }
-      }
-    }
-    // write the deleted documents set
-    synchronized(writeDeletedDocsTimer) {
-      if(writeDeletedDocsTask != null) {
-        writeDeletedDocsTask.cancel();
-      }
-      writeDeletedDocsTimer.cancel();
-      // explicitly call it one last time
-      new WriteDeletedDocsTask().run();
-    }
-    documentCache.clear();
-    for(IndexReaderPool aPool : indexReaderPools) {
-      try {
-        aPool.close();
-      } catch(IOException e) {
-        // log and ignore
-        logger.error("Exception while closing index reader pool.", e);
-      }
-    }
-    indexReaderPools = null;
-
-    for(IndexReaderPool aPool : directIndexReaderPools) {
-      try {
-        if(aPool != null) aPool.close();
-      } catch(IOException e) {
-        // log and ignore
-        logger.error("Exception while closing direct index reader pool.", e);
-      }
-    }
-    directIndexReaderPools = null;
-    
   }
 
-  /**
-   * Opens all the MG4J indexes.
-   * 
-   * @throws IOException
-   * @throws IndexException
-   */
-  protected void initMG4J() throws IOException, IndexException {
-    indexReaderPools = new IndexReaderPool[
-        indexConfig.getTokenIndexers().length + 
-        indexConfig.getSemanticIndexers().length];
-    
-    directIndexReaderPools = new IndexReaderPool[
-        indexConfig.getTokenIndexers().length +
-        indexConfig.getSemanticIndexers().length];
-    
-    try {
-      File mg4JIndexDir = new File(indexDir, Indexer.MG4J_INDEX_DIRNAME);
-      // Load the token indexes
-      for(int i = 0; i < indexConfig.getTokenIndexers().length; i++) {
-        File indexBasename =
-          new File(mg4JIndexDir, Indexer.MG4J_INDEX_BASENAME + "-"
-                  + TokenIndexBuilder.TOKEN_INDEX_BASENAME + "-" + i);
-        indexReaderPools[i] = openOneSubIndex(indexBasename.toURI());
-        directIndexReaderPools[i] = null;
-        if(indexConfig.getTokenIndexers()[i].isDirectIndexEnabled()) {
-          indexBasename = new File(mg4JIndexDir, 
-              Indexer.MG4J_INDEX_BASENAME + "-" + 
-              TokenIndexBuilder.TOKEN_INDEX_BASENAME + "-" + i + 
-              MimirDirectIndexBuilder.BASENAME_SUFFIX);
-            directIndexReaderPools[i] = openOneSubIndex(indexBasename.toURI());
-        }
-      }
-      // load the mentions indexes
-      for(int i = 0; i < indexConfig.getSemanticIndexers().length; i++) {
-        File indexBasename =
-          new File(mg4JIndexDir, Indexer.MG4J_INDEX_BASENAME + "-"
-                  + MentionsIndexBuilder.MENTIONS_INDEX_BASENAME + "-"
-                  + i);
-        indexReaderPools[indexConfig.getTokenIndexers().length + i] =
-          openOneSubIndex(indexBasename.toURI());
-        directIndexReaderPools[indexConfig.getTokenIndexers().length + i] = null;
-        if(indexConfig.getSemanticIndexers()[i].isDirectIndexEnabled()) {
-          indexBasename = new File(mg4JIndexDir, 
-              Indexer.MG4J_INDEX_BASENAME + "-" + 
-              MentionsIndexBuilder.MENTIONS_INDEX_BASENAME + "-" + i +
-              MimirDirectIndexBuilder.BASENAME_SUFFIX);
-          directIndexReaderPools[indexConfig.getTokenIndexers().length + i] = 
-              openOneSubIndex(indexBasename.toURI());
-        }
-      }
-      // open the zipped document collection
-      documentCollection = new DocumentCollection(indexDir);
-      // prepare the document cache
-      documentCache = new Long2ObjectLinkedOpenHashMap<DocumentData>();
-    } catch(IOException e) {
-      // IOException gets thrown upward
-      throw e;
-    } catch(Exception e) {
-      // all other exceptions get wrapped
-      throw new IndexException("Exception while opening indexes.", e);
-    }
-  }
-
-  /**
-   * Opens on MG4J sub-index.
-   * 
-   * @param indexUri
-   *          the URI of the index to be opened. This a file path containing the
-   *          basename for all the files in the index (i.e. the full file path
-   *          without the extension).
-   * @return a {@link Index} implementation.
-   * @throws ConfigurationException
-   * @throws SecurityException
-   * @throws IOException
-   * @throws URISyntaxException
-   * @throws ClassNotFoundException
-   * @throws InstantiationException
-   * @throws IllegalAccessException
-   * @throws InvocationTargetException
-   * @throws NoSuchMethodException
-   */
-  protected IndexReaderPool openOneSubIndex(URI indexUri) throws ConfigurationException,
-  SecurityException, IOException, URISyntaxException,
-  ClassNotFoundException, InstantiationException,
-  IllegalAccessException, InvocationTargetException,
-  NoSuchMethodException {
-    // see if the index needs upgrading
-    MG4JTools.upgradeIndex(indexUri);
-    Index theIndex = MG4JTools.openMg4jIndex(indexUri);
-    return new IndexReaderPool(theIndex, indexUri);
-  }
-  
-  /**
-   * Given a index URI (a file URI denoting the index base name for all the 
-   * index files), this method checks if the index if an older version, and 
-   * upgrades it to the current version, making sure it can be opened. 
-   * @param indexUri
-   * @throws IOException
-   * @throws ClassNotFoundException
-   * @throws ConfigurationException 
-   * @deprecated Use {@link MG4JTools#upgradeIndex(URI)} instead
-   */
-  public static void upgradeIndex(URI indexUri) throws IOException, 
-      ClassNotFoundException, ConfigurationException {
-        MG4JTools.upgradeIndex(indexUri);
-      }
-  
-  /**
-   * Marks a given document (identified by its ID) as deleted. Deleted documents
-   * are never returned as search results.
-   * @param documentId
-   */
-  public void deleteDocument(long documentId) {
-    if(deletedDocumentIds.add(documentId)) {
-      writeDeletedDocsLater();
-    }
-  }
-
-  /**
-   * Marks the given batch of documents (identified by ID) as deleted. Deleted
-   * documents are never returned as search results.
-   * @param documentIds
-   */
-  public void deleteDocuments(Collection<? extends Number> documentIds) {
-    List<Long> idsToDelete = new ArrayList<Long>(documentIds.size());
-    for(Number n : documentIds) {
-      idsToDelete.add(Long.valueOf(n.longValue()));
-    }
-    if(deletedDocumentIds.addAll(idsToDelete)) {
-      writeDeletedDocsLater();
-    }
-  }
-  
-  /**
-   * Checks whether a given document (specified by its ID) is marked as deleted. 
-   * @param documentId
-   * @return
-   */
-  public boolean isDeleted(long documentId) {
-    return deletedDocumentIds.contains(documentId);
-  }
-  
-  /**
-   * Mark the given document (identified by ID) as <i>not</i> deleted.  Calling
-   * this method for a document ID that is not currently marked as deleted has
-   * no effect.
-   */
-  public void undeleteDocument(long documentId) {
-    if(deletedDocumentIds.remove(documentId)) {
-      writeDeletedDocsLater();
-    }
-  }
-  
-  /**
-   * Mark the given documents (identified by ID) as <i>not</i> deleted.  Calling
-   * this method for a document ID that is not currently marked as deleted has
-   * no effect.
-   */
-  public void undeleteDocuments(Collection<? extends Number> documentIds) {
-    List<Long> idsToUndelete = new ArrayList<Long>(documentIds.size());
-    for(Number n : documentIds) {
-      idsToUndelete.add(Long.valueOf(n.longValue()));
-    }
-    if(deletedDocumentIds.removeAll(idsToUndelete)) {
-      writeDeletedDocsLater();
-    }
-  }
-  
-  /**
-   * Writes the set of deleted document to disk in a background thread, after a
-   * short delay. If a previous request has not started yet, this new request 
-   * will replace it. 
-   */
-  protected void writeDeletedDocsLater() {
-    synchronized(writeDeletedDocsTimer) {
-      if(writeDeletedDocsTask != null) {
-        writeDeletedDocsTask.cancel();
-      }
-      writeDeletedDocsTask = new WriteDeletedDocsTask();
-      writeDeletedDocsTimer.schedule(writeDeletedDocsTask, 1000);
-    }
-  }
-  
-  /**
-   * Reads the list of deleted documents from disk. 
-   */
-  @SuppressWarnings("unchecked")
-  protected synchronized void readDeletedDocs() throws IOException{
-    deletedDocumentIds = Collections.synchronizedSortedSet(
-            new TreeSet<Long>());
-    File delFile = new File(indexDir, DELETED_DOCUMENT_IDS_FILE_NAME);
-    if(delFile.exists()) {
-      try {
-        ObjectInputStream ois = new ObjectInputStream(
-                new GZIPInputStream(
-                new BufferedInputStream(
-                new FileInputStream(delFile))));
-        // an old index will have saved a Set<Integer>, a new one will be
-        // Set<Long>
-        Set<? extends Number> savedSet = (Set<? extends Number>)ois.readObject();
-        for(Number n : savedSet) {
-          deletedDocumentIds.add(Long.valueOf(n.longValue()));
-        }
-      } catch(ClassNotFoundException e) {
-        // this should never happen
-        throw new RuntimeException(e);
-      }
-    }
-  }
 }

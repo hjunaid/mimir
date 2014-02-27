@@ -244,7 +244,7 @@ java -jar UNPACK.jar""")
     } finally {
       IndexArchive.withTransaction() {
         // re-start the index in searching mode
-        indexArchive.theIndex.state = Index.SEARCHING
+        indexArchive.theIndex.state = Index.READY
         indexArchive.theIndex.save(flush:true, failOnError:true)
       }
     }

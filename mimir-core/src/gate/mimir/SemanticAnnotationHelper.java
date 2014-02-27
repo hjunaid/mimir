@@ -16,7 +16,7 @@ package gate.mimir;
 
 import gate.Annotation;
 import gate.Document;
-import gate.mimir.index.Indexer;
+import gate.mimir.index.AtomicAnnotationIndex;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 
@@ -70,18 +70,11 @@ public interface SemanticAnnotationHelper extends Serializable{
   }
   
   /**
-   * Called by the containing {@link Indexer} when this helper is first created, 
-   * when doing indexing.
-   * @param indexer
+   * Called by the containing {@link MimirIndex} when this helper is first 
+   * created.
+   * @param index the {@link AtomicAnnotationIndex} this helpers is used by.
    */
-  public void init(Indexer indexer);
-  
-  /**
-   * Called by the containing {@link QueryEngine} when this helper is first 
-   * created, in preparation for searching.
-   * @param queryEngine
-   */
-  public void init(QueryEngine queryEngine);
+  public void init(AtomicAnnotationIndex index);
   
   /**
    * This method converts an annotation into the corresponding semantic metadata
@@ -91,7 +84,7 @@ public interface SemanticAnnotationHelper extends Serializable{
    * @return the URIs for the mention (created in the triple store) that are 
    * associated with the input annotation.
    */
-  public String[] getMentionUris(Annotation annotation, int length, Indexer indexer); 
+  public String[] getMentionUris(Annotation annotation, int length, AtomicAnnotationIndex indexer); 
   
   /**
    * Prepares this helper for running on a new document.
@@ -167,7 +160,7 @@ public interface SemanticAnnotationHelper extends Serializable{
    * Closes this annotation helper. Implementers should perform maintenance 
    * operations (such as closing connections to ORDI, etc) on this call.
    */
-  public void close(Indexer indexer);
+  public void close(AtomicAnnotationIndex index);
   
   
   /**

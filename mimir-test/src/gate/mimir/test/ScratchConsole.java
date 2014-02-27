@@ -1,9 +1,11 @@
 package gate.mimir.test;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 
 import gate.Gate;
+import gate.mimir.MimirIndex;
 import gate.mimir.index.IndexException;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.query.parser.QueryParser;
@@ -14,11 +16,10 @@ public class ScratchConsole {
   /**
    * @param args
    * @throws GateException 
-   * @throws MalformedURLException 
    * @throws IndexException 
+   * @throws IOException 
    */
-  public static void main(String[] args) throws MalformedURLException, 
-      GateException, IndexException {
+  public static void main(String[] args) throws GateException, IndexException, IOException {
     // GATE, Mimir init
     Gate.setGateHome(new File("gate-home"));
     Gate.setUserConfigFile(new File("gate-home/user-gate.xml"));
@@ -34,7 +35,7 @@ public class ScratchConsole {
       new File("../plugins/measurements").toURI().toURL());
     Gate.getCreoleRegister().registerDirectories(
       new File("../plugins/sparql").toURI().toURL());
-    QueryEngine qEngine = new QueryEngine(new File(args[0]));
+    QueryEngine qEngine = new MimirIndex(new File(args[0])).getQueryEngine();
     // Prepare console
     Console console = new Console();
     console.setVariable("qEngine", qEngine);

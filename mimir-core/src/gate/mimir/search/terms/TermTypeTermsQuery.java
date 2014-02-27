@@ -24,6 +24,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import gate.mimir.SemanticAnnotationHelper;
+import gate.mimir.index.AtomicIndex;
 import gate.mimir.search.IndexReaderPool;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
@@ -165,15 +166,15 @@ public class TermTypeTermsQuery implements TermsQuery {
     ObjectArrayList<String> termDescriptions = describeAnnotations ? 
         new ObjectArrayList<String>() : null;
     IntArrayList termCounts = countsEnabled ? new IntArrayList() : null;    
-    IndexReaderPool indirectIndexPool = null;
+    AtomicIndex atomicIndex = null;
     SemanticAnnotationHelper annotationHelper = null;
     switch(indexType){
       case ANNOTATIONS:
-        indirectIndexPool = engine.getAnnotationIndex(termType);
+        atomicIndex = engine.getAnnotationIndex(termType);
         annotationHelper = engine.getAnnotationHelper(termType);
         break;
       case TOKENS:
-        indirectIndexPool = engine.getTokenIndex(termType);
+        atomicIndex = engine.getTokenIndex(termType);
         break;
       default:
         throw new IllegalArgumentException("Invalid index type: " +
@@ -185,8 +186,8 @@ public class TermTypeTermsQuery implements TermsQuery {
     }
     
     // once we have the index reader, we scan the whole dictionary
-    termId:for(long i = 0; i < indirectIndexPool.getDictionary().size64(); i++) {
-      String termString = indirectIndexPool.getTerm(i);
+    termId:for(long i = 0; i < atomicIndex.getDirectTerms().size64(); i++) {
+      String termString = atomicIndex.getDirectTerm(i).toString();
       // check this term should be returned
       if(indexType == IndexType.ANNOTATIONS &&
          !annotationHelper.isMentionUri(termString)) continue termId;
@@ -198,7 +199,7 @@ public class TermTypeTermsQuery implements TermsQuery {
         termDescriptions.add(annotationHelper.describeMention(termString));
       }
       if(countsEnabled) {
-        long termCount = indirectIndexPool.getTermOccurenceCounts().get(i);
+        long termCount = atomicIndex.getDirectTermOccurenceCount(i);
         if(termCount > Integer.MAX_VALUE) {
           logger.warn("Term count lenght greater than 32 bit. Data was pratially lost!");
           termCounts.add(Integer.MAX_VALUE);

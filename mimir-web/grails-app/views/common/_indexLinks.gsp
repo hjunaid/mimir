@@ -6,7 +6,7 @@
       <g:link controller="indexAdmin" action="admin"
         params="[indexId:indexInstance.indexId]"
         title='Click to manage ${indexName}'>${indexName}</g:link>
-      <g:if test="${indexInstance.state == Index.SEARCHING}">
+      <g:if test="${indexInstance.state == Index.READY}">
         (<g:link controller="search" action="info"
           params="[indexId:indexInstance.indexId]"
           title='Click to search ${indexName}'>search</g:link>)

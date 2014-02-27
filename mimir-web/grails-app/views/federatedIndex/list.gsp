@@ -40,7 +40,7 @@
 								<td>${fieldValue(bean:federatedIndexInstance, field:'state')}
 								</td>
 								<td>
-									<g:if test='${federatedIndexInstance.state == Index.SEARCHING}'>
+									<g:if test='${federatedIndexInstance.state == Index.READY}'>
 									  <g:link controller="gus" action="search"
 	                    params="[indexId:federatedIndexInstance.indexId]">Search this index.</g:link>
 									

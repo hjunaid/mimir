@@ -206,8 +206,8 @@ serialisable to be usable (i.e. they must implement the
 
 \subsection*{Direct Indexes}
 \label{sec:direct-indexes}
-Starting with version 5, \Mimir{} can build direct indexes as well as inverted
-ones. By default only inverted indexes are created, which are used to associate
+Starting with version $5.0$, \Mimir{} can build direct indexes as well as
+inverted ones. By default only inverted indexes are created, which are used to associate
 terms to documents. Direct indexes encode the inverse relation from documents to
 terms, hence a direct index can be used to find out which terms occur in any
 given document.
@@ -238,11 +238,9 @@ index(directIndex:true) {
 Note that direct indexes can only be enabled at the level of a {\tt index}
 element in the template, and not for individual annotation types.
 
-Direct indexes are built during the closing of the index, so enabling them will
-slightly increase the time taken for the close operation, but will not affect
-the indexing time. They are stored in separate files from the default indirect
-indexes, so they will not affect the functionality that does not require direct
-indexes at all.
+Direct indexes are stored in separate files from the default indirect indexes,
+so they will not affect the functionality that does not require direct indexes
+at all.
 
 Direct indexes can currently only be searched via the Java API provided by the
 {\tt gate.mimir.search.terms} package.

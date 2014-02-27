@@ -14,7 +14,7 @@
  */
 package gate.mimir.web;
 
-import gate.mimir.index.mg4j.zipcollection.DocumentData
+import gate.mimir.index.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.RemoteQueryRunner
 import gate.mimir.search.query.QueryNode;
@@ -143,10 +143,6 @@ class RemoteIndex extends Index {
     }catch(Exception e){
       return new String[0][0]
     }
-  }
-  
-  public double closingProgress() {
-    return remoteIndexService.findProxy(this).closingProgress
   }
   
   String indexUrl() {

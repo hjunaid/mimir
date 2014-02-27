@@ -9,33 +9,6 @@
     <title>Mimir index &quot;${indexInstance.name}&quot;</title>
     <mimir:load/>
 
-    <g:if test="${indexInstance.state == Index.CLOSING}">
-      <g:javascript src="json2.min.js" plugin="mimir-web" />
-      <g:javascript>
-        function updateProgress() {
-          <g:remoteFunction
-            url="[controller:'indexAdmin', action:'closingProgress', params:[indexId:indexInstance.indexId]]"
-            method="GET" onSuccess="doProgressUpdate(e)"
-            onFailure="progressUpdateFailed(e)" />;
-        }
-
-        function doProgressUpdate(response) {
-          var result = JSON.parse(response.responseText);
-          if(result.complete) {
-            window.location.reload();
-          } else {
-            document.getElementById('closingProgress-bar').style.width = result.progress;
-            document.getElementById('closingProgress-value').innerHTML = result.progress;
-            setTimeout(updateProgress, 5000);
-          }
-        }
-
-        function progressUpdateFailed(response) {
-          var progValue = document.getElementById('closingProgress-value');
-          progValue.innerHTML = progValue.innerHTML + ' (unable to update dynamically, please reload to check progress)';
-        }
-      </g:javascript>
-    </g:if>
   </head>
   <body>
     <div class="nav">
@@ -100,7 +73,7 @@
               </tr>          
             </g:if>
 
-            <g:if test="${indexInstance.state == Index.SEARCHING}">
+            <g:if test="${indexInstance.state == Index.READY}">
               <tr class="${row++ % 2 == 0 ? 'even' :'odd'}">
                 <td colspan="2">
                   <g:link controller="search" action="index"
@@ -115,12 +88,6 @@
                 </td>
               </tr>
             </g:if>
-            <g:elseif test="${indexInstance.state == Index.CLOSING}">
-              <tr class="${row++ % 2 == 0 ? 'even' :'odd'}">
-                <td>Index Closing Progress:</td>
-                <td><mimir:progressbar id="closingProgress" value="${indexInstance.closingProgress()}" /><g:javascript>setTimeout(updateProgress, 5000);</g:javascript></td>
-              </tr>
-            </g:elseif>
           </tbody>
         </table>
       </div>
@@ -139,21 +106,15 @@
             </span></td>
             <td><span class="button">
               <g:actionSubmit class="delete"
-                title="Click to delete this index."
-                onclick="return confirm('Are you sure?');" value="Delete" />
+                title="Click to delete this index."  value="Delete" />
             </span></td>
           </g:form>
-          <g:if test="${indexInstance.state == Index.INDEXING}">
-            <g:form action="close" params="[indexId:indexInstance?.indexId]">
-              <input type="hidden" name="indexId" value="${indexInstance?.indexId}" />
-              <td><span class="button">
-                <g:submitButton class="close"
-                  title="Click to stop the indexing process and prepare this index for searching."
-                  onclick="return confirm('Are you sure?');" name="Close"/>
-              </span></td>              
+          <g:if test="${indexInstance instanceof gate.mimir.web.LocalIndex && indexInstance.state == Index.READY}">
+            <g:form action="sync" controller="localIndex" id="${indexInstance?.id}"  method="POST">
+              <td><span class="button"><input type="submit" class="save" value="Sync to Disk" 
+              title="Request all documents in memory are saved to disk ASAP." />
+              </span></td>
             </g:form>
-          </g:if>
-          <g:elseif test="${indexInstance instanceof gate.mimir.web.LocalIndex && indexInstance.state == Index.SEARCHING}">
             <g:form action="download" controller="indexDownload" id="${indexInstance?.id}"  method="GET">
               <td><span class="button"><input type="submit" class="download" value="Download" 
               title="Click to download this index." />
@@ -166,7 +127,7 @@
                   value="[Re-]Archive and Download"/>
               </span></td>
             </g:form>
-          </g:elseif>
+          </g:if>
          </tr>
         </table>
       </div>

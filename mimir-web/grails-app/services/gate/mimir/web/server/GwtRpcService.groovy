@@ -47,8 +47,8 @@ class GwtRpcService implements gate.mimir.web.client.GwtRpcService {
         if(!index) {
           throw new MimirSearchException("Invalid index ID ${indexId}")
         }
-        else if(index.state != Index.SEARCHING) {
-          throw new MimirSearchException("Index ${indexId} is not open for searching")
+        else if(index.state != Index.READY) {
+          throw new MimirSearchException("Index ${indexId} is not ready")
         }
         else {
           String queryId = searchService.postQuery(index, query)
@@ -97,11 +97,11 @@ class GwtRpcService implements gate.mimir.web.client.GwtRpcService {
         ResultsData rData = new ResultsData(
           resultsTotal:qRunner.getDocumentsCount(),
           resultsPartial: qRunner.getDocumentsCurrentCount())
-        if(rData.resultsTotal > 0 && firstDocumentRank >= 0) {
+        if(firstDocumentRank >= 0) {
           // also obtain some documents data
           List<DocumentData> documents = []
           int maxRank = Math.min(firstDocumentRank + documentsCount,
-            Math.max(qRunner.getDocumentsCount(), qRunner.getDocumentsCurrentCount()) );
+            qRunner.getDocumentsCount());
           for(int docRank = firstDocumentRank; docRank < maxRank; docRank++) {
             DocumentData docData = new DocumentData(
                 documentRank:docRank,

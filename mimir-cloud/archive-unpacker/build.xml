@@ -26,7 +26,7 @@
 	
 	<target name="compile" depends="resources">
 		<mkdir dir="${classes.dir}" />
-		<javac destdir="${classes.dir}" srcdir="${src.dir}" debug="true" target="1.6" source="1.6" classpathref="compile.classpath" />
+		<javac destdir="${classes.dir}" srcdir="${src.dir}" debug="true" target="1.7" source="1.7" classpathref="compile.classpath" />
 	</target>
 
 	<target name="jar" depends="clean, compile">

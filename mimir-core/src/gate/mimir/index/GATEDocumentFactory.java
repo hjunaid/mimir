@@ -12,7 +12,7 @@
  *
  *  $Id$
  */
-package gate.mimir.index.mg4j;
+package gate.mimir.index;
 
 import gate.mimir.IndexConfig;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;

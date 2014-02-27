@@ -14,8 +14,8 @@
  */
 package gate.mimir;
 
-import gate.mimir.index.mg4j.GATEDocument;
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
+import gate.mimir.index.DocumentData;
+import gate.mimir.index.GATEDocument;
 
 /**
  * Interface for classes that implement a method of generating document 

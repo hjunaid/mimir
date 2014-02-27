@@ -130,7 +130,7 @@ class FederatedIndexController {
           //make sure the proxy is created
           federatedIndexService.findProxy(federatedIndexInstance)
           flash.message = "FederatedIndex \"${federatedIndexInstance.name}\" created"
-          if(federatedIndexInstance.state == Index.INDEXING) {
+          if(federatedIndexInstance.state == Index.READY) {
             federatedIndexService.registerIndex(federatedIndexInstance)
           }
           redirect(controller:'mimirStaticPages', action: 'admin')

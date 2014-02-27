@@ -21,8 +21,8 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import gate.mimir.DocumentMetadataHelper;
-import gate.mimir.index.mg4j.GATEDocument;
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
+import gate.mimir.index.DocumentData;
+import gate.mimir.index.GATEDocument;
 import gate.mimir.search.QueryEngine;
 
 

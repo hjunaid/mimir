@@ -12,7 +12,7 @@
  *
  *  $Id$
  */
-package gate.mimir.index.mg4j.zipcollection;
+package gate.mimir.index;
 
 import java.io.Serializable;
 import java.util.HashMap;

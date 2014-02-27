@@ -14,7 +14,7 @@
  */
 package gate.mimir.web
 
-import gate.mimir.index.mg4j.zipcollection.DocumentData
+import gate.mimir.index.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.FederatedQueryRunner
 import gate.mimir.search.query.QueryNode;
@@ -94,7 +94,7 @@ class FederatedIndexService {
   public void init() {
     FederatedIndex.list().each {
       findProxy(it)
-      if(it.state == Index.INDEXING) registerIndex(it)
+      if(it.state == Index.READY) registerIndex(it)
     }
   }
   
@@ -176,7 +176,7 @@ class FederatedIndexService {
         return TermsResultSet.groupByDescription(
           index.indexes.collect{ 
             Index subIndex -> subIndex.postTermsQuery(query)
-          }
+          } as TermsResultSet[]
         )
       }
     }   
@@ -267,8 +267,8 @@ class FederatedIndexProxy implements Runnable{
         // all the same so far
         return cur
       }
-      else if([prev,cur].containsAll([Index.SEARCHING, Index.CLOSING])) {
-        // we know prev != cur, if one is closing and the other searching then
+      else if([prev,cur].containsAll([Index.READY, Index.CLOSING])) {
+        // we know prev != cur, if one is closing and the other ready then
         // some of our children have finished closing and some haven't
         return Index.CLOSING
       }
@@ -278,20 +278,12 @@ class FederatedIndexProxy implements Runnable{
         return Index.WORKING
       }
     }
-    
-    if(index.state == Index.CLOSING) {
-      closingProgress = index.indexes.collect {
-        (it.state == Index.CLOSING) ? it.closingProgress() : 1.0 
-      }.sum() / index.indexes.size()
-    }
   }
-  
   
   /**
    * The hibernate ID of the index for which this proxy was created.
    */
   def id
-  double closingProgress = 0.0
   private static final Logger log = Logger.getLogger("grails.app.service.${FederatedIndexProxy.class.getName()}")
   private static final int DELAY = 10000
   boolean stop = false

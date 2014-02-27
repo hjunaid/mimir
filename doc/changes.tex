@@ -1,11 +1,13 @@
 This appendix details the main changes in each \Mimir\ release.
 
 
-\section{Version 5.0 (forthcoming)}
+\section{Version 5.0 (February 2014)}
 \begin{itemize}
-  \item \Mimir{} has been upgraded to use MG4J version 5.2.1. Newly created
-  indexes will now be semi-succint, which is the highest performance
-  implementation.
+  \item \Mimir{} indexes are now updateable: new documents can be submitted for
+  indexing at any time.
+  \item \Mimir{} indexes are now live: they can index new documents and serve
+  queries at the same time. Manually {\em closing} indexes before they become
+  searcheable is no longer required.
   \item The {\em mimir-demo} example web application has been removed.
   \item The {\em mimir-cloud} has been modified to make it more suitable as a
   generic example web application.
@@ -20,7 +22,12 @@ This appendix details the main changes in each \Mimir\ release.
   mention. The S-A-H implementations included in the main distribution provide
   default implementations for this functionality, which can be replaced by
   pluggin-in alternative versions.
-  \item \Mimir{} now uses Grails 2.2.3 and GWT 2.5.0 to build the mimir-cloud
+  \item The on-disk format for \Mimir{} indexes has changed. This was required
+  in order to support live indexing  and searching.
+  \item \Mimir{} has been upgraded to use MG4J version 5.2.1. Newly created
+  indexes will now be semi-succint, which is the highest performance
+  implementation.
+  \item \Mimir{} now uses Grails 2.2.3 and GWT 2.6.0 to build the mimir-cloud
   web application.
   \item Bugfix: you can now use a string on the right hand side of a \verb!<!,
   \verb!>!, \verb!<=! and \verb!>=! in annotation queries. This was always

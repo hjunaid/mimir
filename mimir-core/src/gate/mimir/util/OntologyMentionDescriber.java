@@ -25,7 +25,7 @@ import gate.mimir.AbstractSemanticAnnotationHelper.MentionDescriber;
  * For this describer to work, the array of descriptive features (see 
  * {@link AbstractSemanticAnnotationHelper#getDescriptiveFeatures()}) must start
  * with the name of the <code>class</code> feature, followed optionally by the 
- * name of the <code>instance</code> feature. All subsequent feature names are
+ * name of the <code>feature</code> feature. All subsequent feature names are
  * ignored.
  */
 public class OntologyMentionDescriber implements MentionDescriber {
@@ -119,7 +119,7 @@ public class OntologyMentionDescriber implements MentionDescriber {
   protected String getName(String uri) {
     if(localNamesOnly) {
       // we need to shorten the full name
-      int pos = uri.lastIndexOf(nameSpaceSeparator);
+      int pos = uri.indexOf(nameSpaceSeparator);
       return pos < 0 ? uri : uri.substring(pos + nameSpaceSeparator.length());
     } else {
       return uri;

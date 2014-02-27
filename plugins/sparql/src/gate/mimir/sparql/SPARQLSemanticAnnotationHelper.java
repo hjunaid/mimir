@@ -14,8 +14,16 @@
  */
 package gate.mimir.sparql;
 
+import gate.mimir.Constraint;
+import gate.mimir.ConstraintType;
+import gate.mimir.SemanticAnnotationHelper;
+import gate.mimir.index.AtomicAnnotationIndex;
+import gate.mimir.index.Mention;
+import gate.mimir.search.QueryEngine;
+import gate.mimir.util.DelegatingSemanticAnnotationHelper;
+import gate.util.GateRuntimeException;
+
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectStreamException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -24,28 +32,14 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
-import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
 import org.apache.log4j.Logger;
-
-import gate.mimir.AbstractSemanticAnnotationHelper;
-import gate.mimir.Constraint;
-import gate.mimir.ConstraintType;
-import gate.mimir.SemanticAnnotationHelper;
-import gate.mimir.index.Indexer;
-import gate.mimir.index.Mention;
-import gate.mimir.search.QueryEngine;
-import gate.mimir.util.DelegatingSemanticAnnotationHelper;
-import gate.util.GateRuntimeException;
 
 /**
  * A Semantic annotation helper that, at query time, connects to a SPARQL
@@ -234,7 +228,7 @@ public class SPARQLSemanticAnnotationHelper extends
   }
   
   @Override
-  public void init(Indexer indexer) {
+  public void init(AtomicAnnotationIndex indexer) {
     super.init(indexer);
     // calculate authHeader value
     if(sparqlEndpointUser != null && sparqlEndpointUser.length() > 0){

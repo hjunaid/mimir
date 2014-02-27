@@ -14,8 +14,8 @@
  */
 package gate.mimir.search;
 
+import gate.mimir.index.DocumentData;
 import gate.mimir.index.IndexException;
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.tool.WebUtils;

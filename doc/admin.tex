@@ -291,33 +291,20 @@ a single virtual index.  All the indexing and searching functionality of
 \Mimir\ applies equally to all three index types.
 
 Each \Mimir\ index has a {\em state}, and the operations that can be performed
-on the index depend on which state it is currently in.  When first created, a
-local index will be in the {\em indexing} state, meaning it is waiting for
-documents to be added to the index.  When all the documents have been added to
-the index an administrator will close the index, putting it into the {\em
-closing} state.  For large indexes the closing process can take several hours,
-and when it is complete the index will enter the {\em searching} state, at
-which point it is available for querying.  The other possible state for a local
-index is {\em failed}, indicating a problem with the index.  Typically a failed
-index will need to be deleted by the administrator.  Thus it is apparent that
-an index cannot be used simultaneously for searching and indexing.  An existing
-set of index files can be imported into a running \Mimir\ instance as a local
-index, which will then immediately be in the {\em searching} state.
+on the index depend on which state it is currently in. Indexes spend most of
+their time in the {\em ready} state, when they can index new documents and
+answer queries. During various operations they may temporarilly be in a
+different state, such as {\em closing} while the index is being shut down,
+typically because the \Mimir{} server is itself being shut down. Sometimes a
+local index is {\em failed}, indicating a problem with the index.  Typically a
+failed index will need to be deleted by the administrator.
 
-Remote indexes inherit their state from the remote server, and federated
-indexes inherit their state by combining the states of their component indexes.
+Remote indexes inherit their state from the remote server, and federated indexes
+inherit their state by combining the states of their component indexes.
 A federated index may occasionally appear in the {\em working} state if its
-component indexes are not all in the same state (for example if some of them
-have started closing but others are still in {\em indexing} mode), but the
-working state will usually resolve to a normal state once the component indexes
-have synchronised.
+component indexes are not all in the same state, but the working state will
+usually resolve to a normal state once the component indexes have synchronised.
 
-Note that once a local index has moved from {\em indexing} to {\em closing} to
-{\em searching} it is not possible to add more documents to the same index.
-The suggested way to add to an index is to create a new index to hold the new
-documents, fill it, close it, and then create a federated index consisting of
-the original index plus the new one (or if the original index was itself
-federated, add the new index to the existing federation).
 
 A typical setup for a large-scale indexing task would be to have a number of
 identical ``slave'' servers running \Mimir, each with a single local index.  A
@@ -366,7 +353,7 @@ resolvable URLs then leave the option un-selected.
 %
 The index will be assigned a unique identifier and a new directory will be
 created under the \verb|indexBaseDirectory| you configured earlier to
-hold the index data.  The newly-created index will be in the {\em indexing}
+hold the index data.  The newly-created index will start in the {\em ready}
 state (see Figure~\ref{fig:local-index-created}), ready to receive documents
 for indexing.  For details of how to submit documents to the index, see
 Chapter~\ref{sec:indexing}.
@@ -392,25 +379,11 @@ link for the relevant index name from the \Mimir\ front page
 \label{fig:local-index-list}
 \end{figure}
 %
-Once all the documents to be indexed have been submitted the index can be
-closed using the {\em Close} link on the index information page.  This will
-change the state of the index to {\em closing} as described above and begin the
-closing process.  The information page will show a live-updating progress bar
-(Figure~\ref{fig:local-index-closing}) giving some indication of the time
-remaining until the index has completely closed.
-%
-\begin{figure}[htb!]
-\begin{center}
-\includegraphics[scale=0.5]{img/local-index-closing}
-\end{center}
-\caption{Closing a local index}
-\label{fig:local-index-closing}
-\end{figure}
-%
-
-When the closing process is complete (the progress bar reaches 100\%) the index
-will switch into {\em searching} mode, and the index can then be searched using
-the tools described in Chapter~\ref{sec:searching}.
+At any time, the index can then be searched using the tools described in
+Chapter~\ref{sec:searching}. Recently added documents only become avaialble for
+searching after a {\em sync-to-disk} has taken place. Sync operations happen
+automtaically at regular intervals, or can be triggered by the user by pressing
+the {\em Sync to Disk} button seen at the bottom of the index information page.
 
 \subsection{Working with Remote and Federated Indexes}
 
@@ -482,17 +455,14 @@ index.
 \subsection{Deleting Indexes}
 
 If an index registered with Mimir is no longer required it can be deleted by
-selecting the {\em Delete} button from the index information page (accessible
-by clicking on the name of the relevant index on the \Mimir\ front page).  For
+selecting the {\em Delete} button from the index information page (accessible by
+clicking on the name of the relevant index on the \Mimir\ front page).  For
 remote and federated indexes this simply deletes the ``registration'' of the
 index with \Mimir, which can be easily re-created as above.  For local indexes
 it also offers the option to delete the underlying index files from disk.  If a
-local index in {\em searching} state is deleted without deleting the disk files
-then the index can be re-created later using the {\em import an existing index
-for searching} option from the \Mimir\ front page.  However, if a local index
-in the {\em indexing} or {\em closing} state is deleted without having been
-properly closed then the index files will be unusable and will need to be
-deleted manually.
+local index is deleted without deleting the disk files then the index can be
+re-created later using the {\em import an existing index for searching} option
+from the \Mimir\ front page.
 
 \Mimir\ will not allow the deletion of an index which is currently part of a
 federated index in the same \Mimir\ instance.  To delete such an index, it must

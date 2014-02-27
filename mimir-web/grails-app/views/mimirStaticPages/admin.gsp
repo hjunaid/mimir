@@ -59,7 +59,7 @@
       <p>There are no local indexes configured in this M&iacute;mir instance.</p>
     </g:else>
     <p>You can <g:link controller="localIndex" action="create">create  a new local index</g:link>, or
-    <g:link controller="localIndex" action="importIndex">import an existing index for searching</g:link>.</p>
+    <g:link controller="localIndex" action="importIndex">import an existing index</g:link>.</p>
     
     <h3>Remote Indexes <span style="font-size:small;" title="Click for more information!">(<mimir:revealAnchor id="help3">?</mimir:revealAnchor>)</span></h3>
     <mimir:revealBlock id="help3"><p class="help">Remote indexes are indexes managed by a different 

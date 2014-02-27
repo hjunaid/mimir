@@ -119,11 +119,13 @@ Commands that you have to execute are formatted in a distinctive font
     during the previous step. The \Mimir{} Indexing PR instance will make
     sure the annotated documents are sent for indexing to your new Local Index.
   \end{enumerate}
-  \item Go back to the index details page in your browser. Click the {\em Close}
-  button, and wait for the index to finish closing. When done, go back to the
-  main administration page. 
-  \item {\bf You can now search the new index} by clicking the {\em search} link
-  next to the name of your new index.
+  \item {\bf Search the new index:} as soon as the index has started indexing
+  document, you can used it to search by clicking the {\em search} link next to
+  the name of your new index. There is a time delay between documents being
+  submitted for indexing and them being available for searching. YOu can speed
+  this process up by manualy performing a {\em sync-to-disk} operation or by
+  reducing the time interval between batches. Both of these actions are
+  available on the index administration page.
 \end{enumerate}
 
 To shut down the running web application, create a file named {\tt

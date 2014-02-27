@@ -14,7 +14,7 @@ package gate.mimir.web;
 
 import org.hibernate.proxy.HibernateProxy;
 
-import gate.mimir.index.mg4j.zipcollection.DocumentData
+import gate.mimir.index.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.FederatedQueryRunner
 import gate.mimir.search.query.QueryNode;
@@ -119,10 +119,6 @@ class FederatedIndex extends Index {
   String[][] annotationsConfig() {
     //all subindexes have the same config
     return indexes[0].annotationsConfig()
-  }
-  
-  public double closingProgress() {
-    return federatedIndexService.findProxy(this).closingProgress
   }
 
   public void deleteDocuments(Collection<Long> documentIds) {

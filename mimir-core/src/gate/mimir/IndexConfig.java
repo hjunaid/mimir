@@ -206,8 +206,16 @@ public class IndexConfig implements Serializable {
   /**
    * The current format version for the XML files containing serialisations of 
    * IndexConfig instances.
+   * Version numbers:
+   * <dl>
+   * <dt>4</dt><dd>First version number used. Indexes previous to this did not 
+   * save their version.</dd>
+   * <dt>5</dt><dd>Mimir indexes are now built with MG4J-big (64 bits).</dd>
+   * <dt>6</dt><dd>Added support for direct indexes.</dd>
+   * <dt>7</dt><dd>Mímir 5.0 live index.</dt>
+   * </dl>
    */
-  private static final int FORMAT_VERSION = 6;
+  public static final int FORMAT_VERSION = 7;
 
   /**
    * The default feature name for obtaining document URIs (provided as features
@@ -215,6 +223,17 @@ public class IndexConfig implements Serializable {
    */
   public static final String DOCUMENT_URI_FEATURE_DEFAULT_NAME =
           "gate.mimir.uri";
+  
+  /**
+   * The default value for {@link #timeBetweenBatches} (1 hour).
+   */
+  public static final int DEFAULT_TIME_BETWEEN_BATCHES = 3600 * 1000;
+  
+  
+  /**
+   * The default value for {@link #maximumBatches}
+   */
+  public static final int DEFAULT_MAXIMUM_BATCHES = 20;
   
   /**
    * A Map storing values that need to be passed between the various pluggable
@@ -280,6 +299,23 @@ public class IndexConfig implements Serializable {
     this.options = new HashMap<String, String>();
   }
 
+  
+  
+  /**
+   * @return the formatVersion See {@link #FORMAT_VERSION}.
+   */
+  public int getFormatVersion() {
+    return formatVersion;
+  }
+
+  /**
+   * See {@link #FORMAT_VERSION}.
+   * @param formatVersion the formatVersion to set
+   */
+  public void setFormatVersion(int formatVersion) {
+    this.formatVersion = formatVersion;
+  }
+
   /**
    * Gets the top level directory of an index.
    * 
@@ -332,6 +368,52 @@ public class IndexConfig implements Serializable {
    */
   public SemanticIndexerConfig[] getSemanticIndexers() {
     return semanticIndexers;
+  }
+  
+  /**
+   * Gets the current value for the time interval (in milliseconds) between the 
+   * saving of a batch and the next. This is the maximum interval documents 
+   * submitted for indexing are kept in RAM (and are thus not searcheable).
+   * 
+   * Defaults to {@value #DEFAULT_TIME_BETWEEN_BATCHES}.
+   * @return
+   */
+  public int getTimeBetweenBatches() {
+    return timeBetweenBatches;
+  }
+
+  /**
+   * Sets the current value for the time interval (in milliseconds) between the 
+   * saving of a batch and the next. This is the maximum interval documents 
+   * submitted for indexing are kept in RAM (and are thus not searcheable). 
+   * 
+   * Defaults to {@value #DEFAULT_TIME_BETWEEN_BATCHES}.
+   */  
+  public void setTimeBetweenBatches(int timeBetweenBatches) {
+    this.timeBetweenBatches = timeBetweenBatches;
+  }
+
+  /**
+   * Gets the maximum number of on-disk index batches before an index compaction
+   * is triggered.
+   * 
+   * Defaults to {@value #DEFAULT_MAXIMUM_BATCHES}.
+   * @return
+   */
+  public int getMaximumBatches() {
+    return maximumBatches;
+  }
+
+  
+  /**
+   * Sets the maximum number of on-disk index batches before an index compaction
+   * is triggered.
+   * 
+   * Defaults to {@link #DEFAULT_MAXIMUM_BATCHES}.
+   * @param maximumBatches
+   */
+  public void setMaximumBatches(int maximumBatches) {
+    this.maximumBatches = maximumBatches;
   }
 
   /**
@@ -575,6 +657,21 @@ public class IndexConfig implements Serializable {
    * {@link #DOCUMENT_URI_FEATURE_DEFAULT_NAME}.
    */
   private String documentUriFeatureName = DOCUMENT_URI_FEATURE_DEFAULT_NAME;
+  
+  
+  /**
+   * The maximum amount of time between dumping batches to disk, i.e. the 
+   * maximum amount of time a document may be stored in RAM after having been 
+   * submitted for indexing and before it becomes searchable. 
+   */
+  private int timeBetweenBatches = DEFAULT_TIME_BETWEEN_BATCHES;
+  
+  
+  /**
+   * The maximum number of constituent batches in any atomic index before a 
+   * compact operation is triggered. 
+   */
+  private int maximumBatches = DEFAULT_MAXIMUM_BATCHES;
   
   /**
    * A Map with arbitrary configuration options, which is made available to all

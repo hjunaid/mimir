@@ -12,15 +12,26 @@
  */
 package gate.mimir.sesame;
 
+import static gate.mimir.sesame.SesameUtils.HAS_LENGTH;
+import static gate.mimir.sesame.SesameUtils.HAS_MENTION;
+import static gate.mimir.sesame.SesameUtils.MIMIR_NAMESPACE;
 import static gate.mimir.sesame.SesameUtils.SESAME_CONNECTION_COUNT_KEY;
 import static gate.mimir.sesame.SesameUtils.SESAME_INDEX_DIRNAME;
-import static gate.mimir.sesame.SesameUtils.SESAME_RMANAGER_KEY;
-import static gate.mimir.sesame.SesameUtils.SESAME_CONFIG_FILENAME;
 import static gate.mimir.sesame.SesameUtils.SESAME_REPOSITORY_NAME_KEY;
-import static gate.mimir.sesame.SesameUtils.MIMIR_NAMESPACE;
-import static gate.mimir.sesame.SesameUtils.HAS_MENTION;
-import static gate.mimir.sesame.SesameUtils.HAS_LENGTH;
-import static gate.mimir.sesame.SesameUtils.HAS_FEATURES;
+import static gate.mimir.sesame.SesameUtils.SESAME_RMANAGER_KEY;
+import gate.Annotation;
+import gate.Document;
+import gate.FeatureMap;
+import gate.Gate;
+import gate.mimir.AbstractSemanticAnnotationHelper;
+import gate.mimir.Constraint;
+import gate.mimir.ConstraintType;
+import gate.mimir.IndexConfig;
+import gate.mimir.SemanticAnnotationHelper;
+import gate.mimir.index.AtomicAnnotationIndex;
+import gate.mimir.index.Mention;
+import gate.mimir.search.QueryEngine;
+import gate.util.GateRuntimeException;
 
 import java.io.File;
 import java.io.FileReader;
@@ -33,7 +44,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.openrdf.OpenRDFException;
@@ -57,17 +67,12 @@ import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
-import org.openrdf.query.algebra.TupleExpr;
-import org.openrdf.query.algebra.evaluation.QueryBindingSet;
-import org.openrdf.query.impl.DatasetImpl;
 import org.openrdf.query.parser.sparql.SPARQLParser;
-import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import org.openrdf.repository.config.RepositoryConfig;
 import org.openrdf.repository.config.RepositoryConfigException;
-import org.openrdf.repository.config.RepositoryConfigUtil;
 import org.openrdf.repository.manager.LocalRepositoryManager;
 import org.openrdf.repository.manager.RepositoryManager;
 import org.openrdf.rio.RDFFormat;
@@ -76,21 +81,6 @@ import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.RDFParser;
 import org.openrdf.rio.Rio;
-
-import gate.Annotation;
-import gate.Document;
-import gate.FeatureMap;
-import gate.Gate;
-import gate.mimir.AbstractSemanticAnnotationHelper;
-import gate.mimir.Constraint;
-import gate.mimir.ConstraintType;
-import gate.mimir.IndexConfig;
-import gate.mimir.SemanticAnnotationHelper;
-import gate.mimir.index.IndexException;
-import gate.mimir.index.Indexer;
-import gate.mimir.index.Mention;
-import gate.mimir.search.QueryEngine;
-import gate.util.GateRuntimeException;
 
 public class SesameSemanticAnnotationHelper extends
 		AbstractSemanticAnnotationHelper {
@@ -270,7 +260,7 @@ public class SesameSemanticAnnotationHelper extends
 	private static final long serialVersionUID = 1396623744631385943L;
 
 	@Override
-	public void init(Indexer indexer) {
+	public void init(AtomicAnnotationIndex indexer) {
 		super.init(indexer);
 		setFloatFeatures(concatenateArrays(getIntegerFeatures(), getFloatFeatures()));
 		setIntegerFeatures(new String[0]);
@@ -284,30 +274,8 @@ public class SesameSemanticAnnotationHelper extends
     this.uriFeaturePredicates = new URI[this.uriFeatureNames.length];
 
 		try {
-			connection = getRepositoryConnection(indexer.getIndexConfig());
+			connection = getRepositoryConnection(indexer.getParent().getIndexConfig());
 			connection.setAutoCommit(true);
-			parser = new SPARQLParser();
-			// ensure static initialization is done.
-			factory = ValueFactoryImpl.getInstance();
-			if (!staticInitDone)
-				staticInit(connection, factory);
-			uriCache = new URICache(this);
-			docsSoFar = 0;
-			initCommon();
-		} catch (RepositoryException e) {
-			logger.error(e);
-		} catch (RepositoryConfigException e) {
-			logger.error(e);
-		} catch (OpenRDFException e) {
-			logger.error(e);
-		}
-	}
-
-	@Override
-	public void init(QueryEngine queryEngine) {
-		super.init(queryEngine);
-		try {
-			connection = getRepositoryConnection(queryEngine.getIndexConfig());
 			parser = new SPARQLParser();
 			// ensure static initialization is done.
 			factory = ValueFactoryImpl.getInstance();
@@ -339,7 +307,7 @@ public class SesameSemanticAnnotationHelper extends
   
   @Override
 	public String[] getMentionUris(Annotation ann, int length,
-			Indexer indexer) {
+	    AtomicAnnotationIndex indexer) {
 		if (!isInited())  init(indexer);
 		
     FeatureMap featuresToIndex;
@@ -367,7 +335,6 @@ public class SesameSemanticAnnotationHelper extends
 	@Override
 	public List<Mention> getMentions(String annotationType,
 			List<Constraint> constraints, QueryEngine engine) {
-		if (!isInited()) init(engine);
 		StringBuilder atQuery = new StringBuilder(
 				"?annotationTemplateInstance " + "<" + RDF.TYPE.stringValue()
 						+ "> " + "<" + annotationTemplateURILevel1 + "> .\n");
@@ -514,10 +481,8 @@ public class SesameSemanticAnnotationHelper extends
 					"Error while generating SPARQL query. The generated query "
 							+ "was: " + query.toString(), e);
 		} catch (QueryEvaluationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (RepositoryException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return new ArrayList<Mention>();
@@ -532,7 +497,7 @@ public class SesameSemanticAnnotationHelper extends
   }
 
   @Override
-	public void close(Indexer indexer) {
+	public void close(AtomicAnnotationIndex index) {
 		if (isInited()) {
 			logger.info("Closing Sesame Repository Connection");
 			try {
@@ -545,21 +510,20 @@ public class SesameSemanticAnnotationHelper extends
 			connection = null;
 			parser = null;
 			// if we're the last helper, shutdown the ORDI source
-			int clientCount = (Integer) indexer.getIndexConfig().getContext()
+			int clientCount = (Integer) index.getParent().getIndexConfig().getContext()
 					.get(SESAME_CONNECTION_COUNT_KEY);
 			clientCount--;
-			indexer.getIndexConfig()
-					.getContext()
+			index.getParent().getIndexConfig().getContext()
 					.put(SESAME_CONNECTION_COUNT_KEY,
 							Integer.valueOf(clientCount));
 			if (clientCount == 0) {
 				// shutting down the ORDI Source
-				RepositoryManager manager = (RepositoryManager) indexer
+				RepositoryManager manager = (RepositoryManager) index.getParent()
 						.getIndexConfig().getContext().get(SESAME_RMANAGER_KEY);
 				if (manager != null) {
 					logger.info("Shutting down Sesame repositoryManager");
 					manager.shutDown();
-					indexer.getIndexConfig().getContext()
+					index.getParent().getIndexConfig().getContext()
 							.remove(SESAME_RMANAGER_KEY);
 				}
 			}

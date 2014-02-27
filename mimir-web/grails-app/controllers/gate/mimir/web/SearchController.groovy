@@ -18,7 +18,7 @@ import java.io.OutputStreamWriter;
 import gate.mimir.web.Index;
 import gate.mimir.web.SearchService;
 import groovy.xml.StreamingMarkupBuilder;
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
+import gate.mimir.index.DocumentData;
 import gate.mimir.search.query.Binding;
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException;
@@ -72,17 +72,17 @@ class SearchController {
   def beforeInterceptor = {
     def theIndex = Index.findByIndexId(params.indexId)
     if(theIndex) {
-      if(theIndex.state == Index.SEARCHING) {
+      if(theIndex.state == Index.READY) {
         request.theIndex = theIndex
         return true
-      }
-      else if(theIndex.state == Index.INDEXING) {
-        response.sendError(HttpServletResponse.SC_FORBIDDEN,
-            "Index with ID ${params.indexId} is open for indexing, not searching. Please close the index, then try your search again.")
       }
       else if(theIndex.state == Index.CLOSING) {
         response.sendError(HttpServletResponse.SC_FORBIDDEN,
             "Index with ID ${params.indexId} is in the process of closing")
+      }
+      else {
+        response.sendError(HttpServletResponse.SC_FORBIDDEN,
+          "Index with ID ${params.indexId} is not ready")
       }
     }
     else {
@@ -196,38 +196,6 @@ class SearchController {
       try{
         //we have all required parameters
         long docCount = runner.getDocumentsCount()
-        message = buildMessage(SUCCESS, null){
-          value(docCount)
-        }
-      }catch(Exception e){
-        message = buildMessage(ERROR,
-                "Error while obtaining the documents count: \"" +
-                e.getMessage() + "\"!", null)
-      }
-    } else{
-      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
-    }
-    //return the results
-    render(contentType:"text/xml", builder: new StreamingMarkupBuilder(),
-        message)
-  }
-  
-  /**
-   * Gets the number of result documents.
-   * @return <code>-1</code> if the search has not yet completed, the total
-   * number of result document otherwise.
-   */
-  def documentsCountSync = {
-    def p = params["request"] ?: params
-    //a closure representing the return message
-    def message;
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      try{
-        //we have all required parameters
-        long docCount = runner.getDocumentsCountSync()
         message = buildMessage(SUCCESS, null){
           value(docCount)
         }
@@ -490,6 +458,7 @@ class SearchController {
           try{
             documentRank = documentRankParam as long
             documentId = runner.getDocumentID(documentRank)
+println("Doc ID $documentId")            
           } catch (Exception e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST,
               "Invalid value provided for parameter rank (not an integer)!")
@@ -523,6 +492,7 @@ class SearchController {
     }
     // at this point we have the documentId
     Index theIndex = (Index)request.theIndex
+println("Doc ID2 $documentId")
     DocumentData docData = theIndex.getDocumentData(documentId)
     //a closure representing the return message
     def message;

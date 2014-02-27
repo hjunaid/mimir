@@ -43,9 +43,33 @@ class LocalIndexController {
       flash.message = "LocalIndex not found with id ${params.id}"
       redirect(controller:'indexManagement', action:'home')
     }
-    else { return [ localIndexInstance : localIndexInstance ]
+    else { 
+      
+      return [ 
+          localIndexInstance : localIndexInstance,
+          indexedDocs: localIndexService.getIndex(localIndexInstance)?.getIndexedDocumentsCount(),
+          oldVersion: localIndexService.isOldVersion(localIndexInstance)]
     }
   }
+  
+  
+  def upgradeFormat = {
+    def localIndexInstance = LocalIndex.get( params.id )
+    if(!localIndexInstance) {
+      flash.message = "LocalIndex not found with id ${params.id}"
+      redirect(controller:'indexManagement', action:'home')
+    } else {
+      try{
+        localIndexService.upgradeIndex(localIndexInstance)
+        flash.message = "Index converted"
+      } catch (Exception e) {
+        log.error(e)
+        flash.message = "There was an error while trying to convert the index."
+      }
+      redirect(action:'show', params:[id:localIndexInstance.id])
+    }
+  }
+  
   
   def deleteBin = {
     def indexInstance = Index.findByIndexId(params.indexId)
@@ -113,7 +137,9 @@ class LocalIndexController {
       redirect(uri:"/")
     }
     else {
-      return [ localIndexInstance : localIndexInstance ]
+      return [ localIndexInstance : localIndexInstance,
+        timeBetweenBatches : localIndexService.getIndex(localIndexInstance)?.timeBetweenBatches
+         ]
     }
   }
   
@@ -138,6 +164,8 @@ class LocalIndexController {
       localIndexInstance.properties = params
       if(localIndexInstance.scorer == 'null') localIndexInstance.scorer = null
       if(!localIndexInstance.hasErrors() && localIndexInstance.save()) {
+        localIndexService.getIndex(localIndexInstance).setTimeBetweenBatches(
+          Integer.parseInt(params.timeBetweenBatches))
         flash.message = "LocalIndex ${localIndexInstance.name} updated"
         redirect(controller:"indexAdmin", action:"admin", 
           params:[indexId:localIndexInstance.indexId])
@@ -177,7 +205,7 @@ class LocalIndexController {
     def localIndexInstance = new LocalIndex(indexId:indexId)
     localIndexInstance.name = params.name
     localIndexInstance.uriIsExternalLink = params.uriIsExternalLink ? true : false
-    localIndexInstance.state = Index.INDEXING
+    localIndexInstance.state = Index.READY
     try {
       def mimirConfigurationInstance = MimirConfiguration.findByIndexBaseDirectoryIsNotNull()
       if(!mimirConfigurationInstance) {
@@ -221,6 +249,24 @@ class LocalIndexController {
   }
   
   /**
+   * Ask the index to sync all documents to disk
+   */
+  def sync = {
+    def localIndexInstance = LocalIndex.get( params.id )
+    
+    if(!localIndexInstance) {
+      flash.message = "LocalIndex not found with id ${params.id}"
+      redirect(controller:'indexManagement', action:'home')
+    }
+    else {
+      localIndexService.getIndex(localIndexInstance).requestSyncToDisk()
+      flash.message = "Sync to disk was requested."
+      redirect(controller: 'indexAdmin', action: 'admin', 
+          params: [indexId:localIndexInstance.indexId])
+    }
+  }
+  
+  /**
    * Register an existing index directory to be opened for searching.
    */
   def importIndex = {
@@ -234,7 +280,7 @@ class LocalIndexController {
     localIndexInstance.name = params.name
     localIndexInstance.uriIsExternalLink = params.uriIsExternalLink ? true : false
     localIndexInstance.indexDirectory = params.indexDirectory
-    localIndexInstance.state = Index.SEARCHING
+    localIndexInstance.state = Index.READY
     // sanity check that the specified directory exists and has the right
     // stuff in it
     def indexDir = new File(params.indexDirectory)
@@ -242,8 +288,7 @@ class LocalIndexController {
       localIndexInstance.errors.rejectValue('indexDirectory', 'gate.mimir.web.LocalIndex.indexDirectory.notexist')
       render(view:'importIndex', model:[localIndexInstance:localIndexInstance])
     }
-    else if(!new File(indexDir, 'config.xml').isFile() ||
-    !new File(indexDir, 'mg4j').isDirectory()) {
+    else if(!new File(indexDir, 'config.xml').isFile()) {
       localIndexInstance.errors.rejectValue('indexDirectory', 'gate.mimir.web.LocalIndex.indexDirectory.notindex')
       render(view:'importIndex', model:[localIndexInstance:localIndexInstance])
     }

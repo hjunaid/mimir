@@ -14,6 +14,7 @@
  */
 package gate.mimir.web;
 
+import java.io.File;
 import java.util.concurrent.Callable;
 
 import gate.mimir.web.Index;
@@ -27,9 +28,9 @@ import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryRunner;
 import gate.mimir.AbstractSemanticAnnotationHelper;
 import gate.mimir.IndexConfig
+import gate.mimir.MimirIndex;
 import gate.mimir.index.IndexException;
-import gate.mimir.index.Indexer
-import gate.mimir.index.mg4j.zipcollection.DocumentData;
+import gate.mimir.index.DocumentData;
 import gate.mimir.SemanticAnnotationHelper;
 import gate.mimir.IndexConfig.SemanticIndexerConfig;
 import gate.mimir.search.query.parser.ParseException;
@@ -42,11 +43,7 @@ import gate.mimir.util.*
 class LocalIndexService {
   
   def grailsApplication 
-  
-  /**
-   * We don't use transactions, as we don't access the database from this 
-   * service.
-   */
+
   static transactional = true
 
   /**
@@ -64,34 +61,20 @@ class LocalIndexService {
    */
   def searchThreadPool
     
-  private Map indexers = [:]
-
-
-  private Map queryEngines = [:]
+  private Map<Long, MimirIndex> indexes = [:]
 
   /**
    * At startup, any indexes that are listed in the DB as being in any state
-   * other than searching are now invalid, so need to be marked as failed.
+   * other than ready are now invalid, so need to be marked as failed.
    */
   public void init() {
     LocalIndex.withTransaction {
       LocalIndex.list().each {
-        if(it.state != Index.SEARCHING) {
+        if(it.state != Index.READY) {
           it.state = Index.FAILED
         }
       }
     }
-  }
-                          
-  public synchronized Indexer findIndexer(LocalIndex index) {
-    def indexer = indexers[index.id]
-    if(!indexer) {
-      if(index.state != Index.INDEXING) {
-        throw new IllegalStateException(
-            "Index ${index.indexId} is not open for indexing")
-      }
-    }
-    return indexer
   }
 
   /**
@@ -99,110 +82,116 @@ class LocalIndexService {
    * specified by the given LocalIndex, and store the corresponding Indexer for
    * future use.
    */
-  public synchronized Indexer createIndex(LocalIndex index, IndexTemplate templ) {
+  public synchronized MimirIndex createIndex(LocalIndex index, IndexTemplate templ) {
     def indexConfig = GroovyIndexConfigParser.createIndexConfig(
         templ.configuration, new File(index.indexDirectory))
-    Indexer indexer = new Indexer(indexConfig)
-    indexers[index.id] = indexer
-    return indexer
+    MimirIndex theIndex = new MimirIndex(indexConfig)
+    indexes[index.id] = theIndex
+    return theIndex
   }
 
   public void close(LocalIndex index) {
-    if(index.state == Index.INDEXING) {
+    if(index.state == Index.READY) {
       index.state = Index.CLOSING
       index.save()
       def indexId = index.id
-      Thread.start {
-        try {
-          indexers.remove(indexId)?.close()
-          LocalIndex.withTransaction { status ->
-            def theIndex = LocalIndex.get(indexId)
-            theIndex.state = Index.SEARCHING
-            theIndex.save()
-          }
-        }
-        catch(IndexException e) {
-          log.error("Error while closing index ${indexId}", e)
-          LocalIndex.withTransaction { status ->
-            def theIndex = LocalIndex.get(indexId)
-            theIndex.state = Index.FAILED
-            theIndex.save()          
-          }
-        }
+      try {
+        indexes.remove(indexId)?.close()
+        index.state = Index.READY
+        index.save()
       }
-    } else if(index.state == Index.SEARCHING) {
-      QueryEngine engine = queryEngines.remove(index.id)
-      if(engine) {
-        engine.close()
+      catch(IndexException e) {
+        log.error("Error while closing index ${indexId}", e)
+        index.state = Index.FAILED
+        index.save()          
       }
-    }
-  }
-  
-  public double closingProgress(LocalIndex index) {
-    try{
-      return findIndexer(index).getClosingProgress()
-    } catch (IllegalStateException e) {
-      return 1.0d
     }
   }
   
   public synchronized QueryRunner getQueryRunner(LocalIndex index, String query) 
       throws ParseException {
-    return getQueryEngine(index).getQueryRunner(query)
+    return getIndex(index).getQueryEngine().getQueryRunner(query)
   }
   
   public synchronized DocumentData getDocumentData(LocalIndex index, long documentId) {
-    return getQueryEngine(index).getDocumentData(documentId)
+    return getIndex(index).getQueryEngine().getIndex().getDocumentData(documentId)
   }
   
   public synchronized void renderDocument(LocalIndex index, long documentId, Appendable out) {
-    getQueryEngine(index).renderDocument(documentId, [], out)
+    getIndex(index).getQueryEngine().renderDocument(documentId, [], out)
   }
   
   
   public synchronized void deleteDocuments(LocalIndex index, Collection<Long> documentIds) {
-    getQueryEngine(index).deleteDocuments(documentIds)
+    getIndex(index).getQueryEngine().getIndex().deleteDocuments(documentIds)
   }
 
   public synchronized void undeleteDocuments(LocalIndex index, Collection<Long> documentIds) {
-    getQueryEngine(index).undeleteDocuments(documentIds)
+    getIndex(index).getQueryEngine().getIndex().undeleteDocuments(documentIds)
   }
-    
   
-  public synchronized QueryEngine getQueryEngine (LocalIndex index){
-    QueryEngine engine = queryEngines[index.id]
-    if(!engine) {
-      if(index.state != Index.SEARCHING) {
-        throw new IllegalStateException(
-        "Index ${index.indexId} is not open for searching")
-      }
+  /**
+   * Checks if this local index is using an old on-disk format  
+   * @param index the index to test
+   * @return
+   */
+  public boolean isOldVersion(LocalIndex index) {
+    File indexDirectory = new File(index.indexDirectory)
+    File indexConfigFile = new File(indexDirectory,
+      MimirIndex.INDEX_CONFIG_FILENAME);
+    IndexConfig indexConfig = IndexConfig.readConfigFromFile(indexConfigFile);
+    return indexConfig.getFormatVersion() < IndexConfig.FORMAT_VERSION
+  }
+  
+  
+  public void upgradeIndex(LocalIndex index) {
+    // unload if it was loaded
+    if(index) {
+      close(index)
+      IndexUpgrader.upgradeIndex(new File(index.indexDirectory))
+      // and re-open it
+      index.state = Index.READY
+      index.save(flush:true)
+    }
+  }
+  
+  public synchronized MimirIndex getIndex (LocalIndex index){
+    MimirIndex mIndex = indexes[index.id]
+    QueryEngine engine = null
+    if(mIndex) {
+      engine = mIndex.getQueryEngine()
+    } else {
+      // index not yet open
       try {
-        engine = new QueryEngine(new File(index.indexDirectory))
+        mIndex = new MimirIndex(new File(index.indexDirectory))
+        indexes[index.id] = mIndex
+        engine = mIndex.getQueryEngine()
         engine.queryTokeniser = queryTokeniser
         engine.executor = searchThreadPool
-        engine.setSubBindingsEnabled(index.subBindingsEnabled?:false) 
-        queryEngines[index.id] = engine
+        engine.setSubBindingsEnabled(index.subBindingsEnabled?:false)
       } catch (Exception e) {
         log.error("Cannot open local index at ${index?.indexDirectory}", e)
-        index.state = Index.FAILED
+        LocalIndex.withTransaction {
+          index.state = Index.FAILED
+          index.save(flush:true)
+        }
         return null
       }
     }
+ 
     // the scorer may have changed, so we update it every time
     if(index.scorer) {
       engine.setScorerSource(grailsApplication.config.gate.mimir.scorers[index.scorer] as Callable<MimirScorer>)
     } else {
       engine.setScorerSource(null)
     }
-    return engine    
+    return mIndex    
   }
   
   public String[][] annotationsConfig(LocalIndex index) {
     IndexConfig indexConfig = null
-    if(index.state == Index.INDEXING) {
-      indexConfig = findIndexer(index)?.indexConfig
-    } else if(index.state == Index.SEARCHING) {
-      indexConfig = getQueryEngine(index)?.indexConfig
+    if(index.state == Index.READY) {
+      indexConfig = getIndex(index)?.indexConfig
     }
     if(indexConfig) {
       SemanticIndexerConfig[] semIndexers = indexConfig.getSemanticIndexers();
@@ -249,10 +238,7 @@ class LocalIndexService {
     String indexDirectory = index.indexDirectory
     // stop the index
     try{
-      QueryEngine engine = queryEngines.remove(index.id)
-      if (engine) {
-        engine.close()
-      }
+      indexes.remove(index.id)?.close()
     } catch(Exception e) {
       log.warn("Exception while trying to close index, prior to deletion", e)
     }
@@ -276,9 +262,14 @@ class LocalIndexService {
   @PreDestroy
   public void destroy() {
     // close the local indexes in a civilised fashion
-    // (for indexes that are not in SEARCHING mode, there is no civilised way!)
-    LocalIndex.list().each{ LocalIndex index ->
-      if(index.state == Index.SEARCHING) close(index)
+    // (for indexes that are not in READY mode, there is no civilised way!)
+    log.info("Closing all open indexes")
+    indexes.each{ id, MimirIndex mIndex ->
+      try {
+        mIndex.close()
+      } catch (Throwable t) {
+        log.error("Error while closing index at ${mIndex.getIndexDirectory()}", t)
+      }
     }
   }
 }

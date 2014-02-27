@@ -15,7 +15,7 @@
 package gate.mimir.search.terms;
 
 import gate.mimir.SemanticAnnotationHelper;
-import gate.mimir.index.mg4j.MimirDirectIndexBuilder;
+import gate.mimir.index.AtomicIndex;
 import gate.mimir.search.QueryEngine;
 import gate.mimir.search.QueryEngine.IndexType;
 import it.unimi.di.big.mg4j.index.IndexIterator;
@@ -73,19 +73,11 @@ public class DocumentsAndTermsQuery extends AbstractIndexTermsQuery {
   @Override
   public TermsResultSet execute(QueryEngine engine) throws IOException {
     prepare(engine);
-    IndexReader[] indexReaders = new IndexReader[documentIds.length];
-    try {
-      IndexIterator[] iterators = new IndexIterator[documentIds.length];
-      for(int i = 0; i < documentIds.length; i++) {
-        indexReaders[i] = directIndexPool.borrowReader();
-        iterators[i] = indexReaders[i].documents(
-          MimirDirectIndexBuilder.longToTerm(documentIds[i]));
-      }
-      return buildResultSet(AndDocumentIterator.getInstance(iterators));
-    } finally {
-      for(IndexReader reader : indexReaders) {
-        directIndexPool.returnReader(reader);
-      }
+    IndexIterator[] iterators = new IndexIterator[documentIds.length];
+    for(int i = 0; i < documentIds.length; i++) {
+      iterators[i] = atomicIndex.getDirectIndex().documents(
+        AtomicIndex.longToTerm(documentIds[i]));
     }
+    return buildResultSet(AndDocumentIterator.getInstance(iterators));
   }
 }

@@ -15,7 +15,8 @@ package gate.mimir.web;
 
 import java.io.Writer;
 
-import gate.mimir.index.mg4j.zipcollection.DocumentData
+import gate.mimir.MimirIndex;
+import gate.mimir.index.DocumentData
 import gate.mimir.search.QueryRunner
 import gate.mimir.search.query.QueryNode;
 import gate.mimir.search.query.parser.ParseException
@@ -69,9 +70,9 @@ class LocalIndex extends Index implements Serializable {
   }
 
   void indexDocuments(InputStream stream) {
-    def indexer = localIndexService.findIndexer(this)
-    if(!indexer) {
-      throw new IllegalStateException("Cannot find indexer for index ${this}")
+    MimirIndex mIndex = localIndexService.getIndex(this)
+    if(!mIndex) {
+      throw new IllegalStateException("Cannot open index for index ${this}")
     }
 
     new ObjectInputStream(stream).withStream { objectStream ->
@@ -79,7 +80,7 @@ class LocalIndex extends Index implements Serializable {
         ResourceData rd = Gate.creoleRegister[doc.getClass().name]
         if(rd) {
           rd.addInstantiation(doc)
-          indexer.indexDocument(doc)
+          mIndex.indexDocument(doc)
         }
         else {
           throw new ResourceInstantiationException(
@@ -93,10 +94,6 @@ class LocalIndex extends Index implements Serializable {
     localIndexService.close(this)
   }
   
-  double closingProgress() {
-    return localIndexService.closingProgress(this)
-  }
-  
   String[][] annotationsConfig() {
     return localIndexService.annotationsConfig(this)
   }
@@ -106,7 +103,7 @@ class LocalIndex extends Index implements Serializable {
   }
   
   QueryRunner startQuery(QueryNode query) {
-    return localIndexService.getQueryEngine(this).getQueryRunner(query)
+    return localIndexService.getIndex(this).getQueryEngine().getQueryRunner(query)
   }
   
   /* (non-Javadoc)
@@ -114,7 +111,7 @@ class LocalIndex extends Index implements Serializable {
    */
   @Override
   public TermsResultSet postTermsQuery(TermsQuery query) {
-    return query.execute(localIndexService.getQueryEngine(this))
+    return query.execute(localIndexService.getIndex(this).getQueryEngine())
   }
 
   /**
@@ -123,6 +120,7 @@ class LocalIndex extends Index implements Serializable {
   * @return
   */
   DocumentData getDocumentData(long documentID) {
+println("Doc ID3 $documentID")
     return localIndexService.getDocumentData(this, documentID)
   }
 

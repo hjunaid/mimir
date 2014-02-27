@@ -45,7 +45,7 @@ import="gate.mimir.web.Index" %>
 
 								<td>${fieldValue(bean:remoteIndexInstance, field:'state')}</td>
 								<td>
-									<g:if test='${remoteIndexInstance.state == Index.SEARCHING}'>
+									<g:if test='${remoteIndexInstance.state == Index.READY}'>
 										<g:link controller="gus" action="search"
 											params="[indexId:remoteIndexInstance.indexId]">Search this index.</g:link>
 

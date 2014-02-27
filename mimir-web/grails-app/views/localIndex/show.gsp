@@ -66,6 +66,22 @@
 			</td>
 		</tr>
 
+    <g:if test="${oldVersion}">
+      <tr class="prop">
+        <td><strong>Old format:</strong></td>
+        <td>This index has been produced with an older version of 
+        M&iacute;mir and cannot be opened.<br>
+        <g:link controller="localIndex" action="upgradeFormat" 
+        id="${localIndexInstance?.id}">Convert it to the current format</g:link>
+        </td>
+      </tr>
+    </g:if>
+
+    <tr class="prop">
+      <td valign="top" class="name">Indexed documents count:</td>
+      <td valign="top" class="value">${indexedDocs}</td>
+    </tr>
+
     <tr class="prop">
       <td valign="top" class="name">Scorer:</td>
 

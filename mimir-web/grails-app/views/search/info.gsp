@@ -12,7 +12,7 @@
         <div class="message">${flash.message}</div>
       </g:if>
       <h1>Mimir index &quot;${indexInstance.name}&quot;</h1>
-      <g:if test="${indexInstance.state == Index.SEARCHING}">
+      <g:if test="${indexInstance.state == Index.READY}">
         <p><g:link action="index" params="[indexId:indexInstance.indexId]"
               title="Search this index">Search this index using the web UI.</g:link> </br>
 						<g:link controller="search" action="help"

@@ -19,8 +19,8 @@
       <exclude org="org.apache.tika" module="tika-parsers"/>
       <exclude org="org.apache.lucene" module="lucene-core"/>
       <exclude org="org.codehaus.woodstox" module="woodstox-core-lgpl"/>
-      <exclude org="xmlunit" module="xmlunit"/>
       <exclude org="org.springframework" module="spring-aop"/>
+      <exclude org="xmlunit" module="xmlunit"/>
       <exclude org="xpp3" module="xpp3"/>
     </dependency>
     <!-- Load some libraries needed by GATE classes, but drop transitive deps. -->

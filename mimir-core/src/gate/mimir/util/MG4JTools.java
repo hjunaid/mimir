@@ -14,7 +14,7 @@
  */
 package gate.mimir.util;
 
-import gate.mimir.index.mg4j.MimirIndexBuilder;
+import gate.mimir.index.AtomicIndex;
 import gate.mimir.search.QueryEngine;
 import it.unimi.di.big.mg4j.index.DiskBasedIndex;
 import it.unimi.di.big.mg4j.index.Index;
@@ -66,7 +66,7 @@ public class MG4JTools {
         // and generate the new one
         File termsFile = new File(URI.create(indexUri.toString()
           + DiskBasedIndex.TERMS_EXTENSION));
-        MimirIndexBuilder.generateTermMap(termsFile, termMapFile);
+        AtomicIndex.generateTermMap(termsFile, termMapFile, null);
       } else {
         throw new IOException("Could not rename old termmap file (" + 
             termMapFile.getAbsolutePath() + ").");

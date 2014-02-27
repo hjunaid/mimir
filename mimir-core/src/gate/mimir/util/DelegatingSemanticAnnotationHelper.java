@@ -21,8 +21,9 @@ import gate.Annotation;
 import gate.Document;
 import gate.mimir.AbstractSemanticAnnotationHelper;
 import gate.mimir.Constraint;
+import gate.mimir.MimirIndex;
 import gate.mimir.SemanticAnnotationHelper;
-import gate.mimir.index.Indexer;
+import gate.mimir.index.AtomicAnnotationIndex;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 
@@ -186,14 +187,9 @@ public abstract class DelegatingSemanticAnnotationHelper extends
   }
 
   @Override
-  public void init(Indexer indexer) {
-    super.init(indexer);
-    delegate.init(indexer);
-  }
-
-  @Override
-  public void init(QueryEngine queryEngine) {
-    delegate.init(queryEngine);
+  public void init(AtomicAnnotationIndex index) {
+    super.init(index);
+    delegate.init(index);
   }
 
   @Override
@@ -203,8 +199,8 @@ public abstract class DelegatingSemanticAnnotationHelper extends
 
   @Override
   public String[] getMentionUris(Annotation annotation, int length,
-          Indexer indexer) {
-    return delegate.getMentionUris(annotation, length, indexer);
+      AtomicAnnotationIndex index) {
+    return delegate.getMentionUris(annotation, length, index);
   }
 
   @Override
@@ -237,8 +233,8 @@ public abstract class DelegatingSemanticAnnotationHelper extends
 
 
   @Override
-  public void close(Indexer indexer) {
-    delegate.close(indexer);
+  public void close(AtomicAnnotationIndex index) {
+    delegate.close(index);
   }
 
   @Override

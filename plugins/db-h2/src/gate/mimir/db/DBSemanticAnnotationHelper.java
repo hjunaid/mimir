@@ -22,7 +22,7 @@ import gate.mimir.Constraint;
 import gate.mimir.ConstraintType;
 import gate.mimir.IndexConfig;
 import gate.mimir.SemanticAnnotationHelper;
-import gate.mimir.index.Indexer;
+import gate.mimir.index.AtomicAnnotationIndex;
 import gate.mimir.index.Mention;
 import gate.mimir.search.QueryEngine;
 
@@ -236,7 +236,6 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
    */
   public static final String DB_DIR_NAME = "db";
 
-  
   /**
    * Key used to retrieve the {@link List} of table base names (see 
    * {@link #tableBaseName}) from the {@link IndexConfig#getContext()} context.
@@ -358,8 +357,8 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   private transient FeatureMap documentFeatures;
   
   @Override
-  public void init(Indexer indexer) {
-    super.init(indexer);
+  public void init(AtomicAnnotationIndex index) {
+    super.init(index);
     if(getUriFeatures() != null && getUriFeatures().length > 0) {
       logger.warn(
               "This helper type does not fully support URI features, "
@@ -375,23 +374,23 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     
     // calculate the basename
     // to avoid inter-locking between the multiple SB-based indexers, they each 
-    // create their ow database.
+    // create their own database.
     tableBaseName = annotationType.replaceAll("[^\\p{Alnum}_]", "_");
-    List<String> baseNames = (List<String>)indexer.getIndexConfig()
+    List<String> baseNames = (List<String>)index.getParent().getIndexConfig()
         .getContext().get(DB_NAMES_CONTEXT_KEY);
     if(baseNames == null) {
       baseNames = new LinkedList<String>();
-      indexer.getIndexConfig().getContext().put(DB_NAMES_CONTEXT_KEY, baseNames);
+      index.getParent().getIndexConfig().getContext().put(DB_NAMES_CONTEXT_KEY, baseNames);
     }
     while(baseNames.contains(tableBaseName)) {
       tableBaseName += "_";
     }
     baseNames.add(tableBaseName);
     
-    File dbDir = new File(indexer.getIndexDir(), DB_DIR_NAME);
+    File dbDir = new File(index.getIndexDirectory(), DB_DIR_NAME);
     try {
       Class.forName("org.h2.Driver");
-      String cacheSizeStr = indexer.getIndexConfig().getOptions().get(
+      String cacheSizeStr = index.getParent().getIndexConfig().getOptions().get(
               DB_CACHE_SIZE_OPTIONS_KEY);
       // default to 100 MiB, if not provided
       if(cacheSizeStr == null) cacheSizeStr = Integer.toString(100 *1024);
@@ -400,46 +399,14 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
               "/" + tableBaseName + ";CACHE_SIZE=" + cacheSizeStr, "sa", "");
       dbConnection.setAutoCommit(true);
       dbConnection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-      createDb(indexer);
-    } catch(SQLException e) {
-      throw new RuntimeException("Error while initialising the database", e);
-    } catch(ClassNotFoundException e) {
-      throw new RuntimeException("Database driver not loaded.", e);
-    }
-  }
-  
-  @Override
-  public void init(QueryEngine qEngine) {
-    super.init(qEngine);
-    File dbDir = new File(qEngine.getIndexDir(), DB_DIR_NAME);
-    if(!dbDir.exists()) { throw new IllegalArgumentException(
-            "Target database directory (at " + dbDir.getAbsolutePath()
-                    + ") does not exist!"); 
-    }
-    try {
-      Class.forName("org.h2.Driver");
-      String cacheSizeStr = qEngine.getIndexConfig().getOptions().get(
-              DB_CACHE_SIZE_OPTIONS_KEY);
-      // default to 100 MiB, if not provided
-      if(cacheSizeStr == null) cacheSizeStr = Integer.toString(100 *1024);
-      // open the database in write mode first: when the DB was not shutdown
-      // properly, H2 performs an automatic recovery, which needs write mode.
-      dbConnection = DriverManager.getConnection(
-              "jdbc:h2:file:" + dbDir.getAbsolutePath() + 
-              "/" + tableBaseName + ";CACHE_SIZE=" + cacheSizeStr, "sa", "");
-      dbConnection.close();
-      // now open the database in read-only mode, which speeds things up 
-      // considerably.
-      dbConnection = DriverManager.getConnection(
-              "jdbc:h2:file:" + dbDir.getAbsolutePath() + 
-              "/" + tableBaseName + ";ACCESS_MODE_DATA=r;CACHE_SIZE=" + cacheSizeStr, "sa", "");
-      dbConnection.setReadOnly(true);
+      createDb(index);
     } catch(SQLException e) {
       throw new RuntimeException("Error while initialising the database", e);
     } catch(ClassNotFoundException e) {
       throw new RuntimeException("Database driver not loaded.", e);
     }
     
+
     nominalFeatureNameSet = new HashSet<String>();
     if(nominalFeatureNames != null){
       for(String name : nominalFeatureNames) nominalFeatureNameSet.add(name);
@@ -539,7 +506,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
    * 
    * @throws SQLException 
    */
-  protected void createDb(Indexer indexer) throws SQLException {
+  protected void createDb(AtomicAnnotationIndex indexer) throws SQLException {
     Statement stmt = dbConnection.createStatement();
     // ////////////////////////////////
     // create the Level 1 table
@@ -580,7 +547,9 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     if(level2Used) {
       createStr = new StringBuilder(
           "CREATE TABLE IF NOT EXISTS " + tableName(null, L2_TABLE_SUFFIX) + 
-          " (ID IDENTITY NOT NULL PRIMARY KEY, L1_ID BIGINT");
+          " (ID IDENTITY NOT NULL PRIMARY KEY, L1_ID BIGINT," +
+          " FOREIGN KEY(L1_ID) REFERENCES " + 
+          tableName(null, L1_TABLE_SUFFIX) + "(ID)"  );
       selectStr = new StringBuilder(
           "SELECT ID FROM " + tableName(null, L2_TABLE_SUFFIX) + " WHERE L1_ID IS ?");
       insertStr = new StringBuilder(
@@ -610,13 +579,6 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
       insertStr.append(")");
       logger.debug("Create statement:\n" + createStr.toString());
       stmt.execute(createStr.toString());
-      // add the foreign key constraint
-      String forKeyStr = "ALTER TABLE " + tableName(null, L2_TABLE_SUFFIX) + 
-          " ADD CONSTRAINT " + tableName(null, "L1L2FK") + 
-          " FOREIGN KEY(L1_ID) REFERENCES " + 
-          tableName(null, L1_TABLE_SUFFIX) + "(ID)";
-      logger.debug("Foreign key:\n" + forKeyStr);
-      stmt.execute(forKeyStr);
       
       logger.debug("Select Level 2:\n" + selectStr.toString());
       level2SelectStmt = dbConnection.prepareStatement(selectStr.toString());
@@ -627,13 +589,17 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     // /////////////////////////////
     createStr = new StringBuilder(
         "CREATE TABLE IF NOT EXISTS " + tableName(null, MENTIONS_TABLE_SUFFIX) + 
-        " (ID IDENTITY NOT NULL PRIMARY KEY, L1_ID BIGINT");
+        " (ID IDENTITY NOT NULL PRIMARY KEY, L1_ID BIGINT," +
+        " FOREIGN KEY (L1_ID) REFERENCES " + 
+        tableName(null, L1_TABLE_SUFFIX) + "(ID)");
+
     selectStr = new StringBuilder(
             "SELECT ID FROM " + tableName(null, MENTIONS_TABLE_SUFFIX) + " WHERE L1_ID IS ?");
     insertStr = new StringBuilder(
             "INSERT INTO " + tableName(null, MENTIONS_TABLE_SUFFIX) + " VALUES(DEFAULT, ?");
     if(level2Used) {
-      createStr.append(", L2_ID BIGINT");  
+      createStr.append(", L2_ID BIGINT, FOREIGN KEY (L2_ID) REFERENCES " + 
+          tableName(null, L2_TABLE_SUFFIX) + "(ID)");
       selectStr.append(" AND L2_ID IS ?");
       insertStr.append(", ?");
     }
@@ -642,21 +608,6 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     insertStr.append(", ?)");
     logger.debug("Create statement:\n" + createStr.toString());
     stmt.execute(createStr.toString());
-    // add the foreign keys
-    String forKeyStr = "ALTER TABLE " + tableName(null, MENTIONS_TABLE_SUFFIX) + 
-        " ADD CONSTRAINT " + tableName(null, "L1MenFK") + 
-        " FOREIGN KEY (L1_ID) REFERENCES " + 
-        tableName(null, L1_TABLE_SUFFIX) + "(ID)";
-    logger.debug("Foreign key:\n" + forKeyStr);
-    stmt.execute(forKeyStr);
-    if(level2Used) {
-      forKeyStr = "ALTER TABLE " + tableName(null, MENTIONS_TABLE_SUFFIX) + 
-      " ADD CONSTRAINT " + tableName(null, "L2MenFK") + 
-      " FOREIGN KEY (L2_ID) REFERENCES " + 
-      tableName(null, L2_TABLE_SUFFIX) + "(ID)";
-      logger.debug("Foreign key:\n" + forKeyStr);
-      stmt.execute(forKeyStr);      
-    }
     
     logger.debug("Select Mentions:\n" + selectStr.toString());
     mentionsSelectStmt = dbConnection.prepareStatement(selectStr.toString());
@@ -748,7 +699,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   
   @Override
   public String[] getMentionUris(Annotation ann, int length,
-          Indexer indexer) {
+      AtomicAnnotationIndex index) {
     FeatureMap featuresToIndex;
     if(getMode() == Mode.DOCUMENT) {
       length = -1;
@@ -1289,7 +1240,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   }
 
   @Override
-  public void close(Indexer indexer) {
+  public void close(AtomicAnnotationIndex indexer) {
     closeDB();
   }
 
