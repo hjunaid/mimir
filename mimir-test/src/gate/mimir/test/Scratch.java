@@ -105,8 +105,6 @@ public class Scratch {
     // load the DB plugin
     Gate.getCreoleRegister().registerDirectories(
       new File("../plugins/db-h2").toURI().toURL());
-//    Gate.getCreoleRegister().registerDirectories(
-//      new File("../plugins/sesame").toURI().toURL());    
     // load the measurements plugin
     Gate.getCreoleRegister().registerDirectories(
       new File("../plugins/measurements").toURI().toURL());
@@ -202,8 +200,6 @@ public class Scratch {
     // load the DB plugin
     Gate.getCreoleRegister().registerDirectories(
       new File("../plugins/db-h2").toURI().toURL());
-//    Gate.getCreoleRegister().registerDirectories(
-//      new File("../plugins/sesame").toURI().toURL());    
     // load the measurements plugin
     Gate.getCreoleRegister().registerDirectories(
       new File("../plugins/measurements").toURI().toURL());
@@ -483,8 +479,6 @@ public class Scratch {
     // load the DB plugin
     Gate.getCreoleRegister().registerDirectories(
       new File("../plugins/db-h2").toURI().toURL());
-//    Gate.getCreoleRegister().registerDirectories(
-//      new File("../plugins/sesame").toURI().toURL());    
     // load the measurements plugin
     Gate.getCreoleRegister().registerDirectories(
       new File("../plugins/measurements").toURI().toURL());
