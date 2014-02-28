@@ -13,11 +13,6 @@ plugins, leveraging the CREOLE plugin framework of GATE Embedded).
 stores annotation data using H2\footnote{\url{http://h2database.com}}, an
 in-process embedded SQL database.
 
-\item[plugins/sesame] An alternative annotation storage implementation that
-stores its annotation data in a triple store using the Sesame API
-(\url{http://www.openrdf.org/}).  Annotations with an ``inst'' feature are
-treated as links into the knowledge base, supporting richer semantic queries.
-
 \item[plugins/sparql] A helper that can be layered on top of any other storage
 implementation to provide semantic querying against a separate knowledge base,
 accessible at a SPARQL endpoint.
@@ -163,15 +158,15 @@ plugins {
 }
 \end{lstlisting}
 
-This section specifies the \Mimir\ plugins that should be loaded, and
-determines the kinds of annotation helpers you will be able to use in your
-indexes.  You generally need at least one of the standard {\tt db-h2} and/or
-{\tt sesame} plugins to be able to do anything useful with \Mimir, and you may
-want the {\tt measurements} plugin as well if you will be searching on
-Measurement annotations and/or the {\tt sparql} plugin if you have an external
-knowledge base.  Section~\ref{sec:indexing:helpers} has more information about
-the standard annotation helpers, and section~\ref{sec:extend:helpers} discusses
-how to implement your own custom ones.
+This section specifies the \Mimir\ plugins that should be loaded, and determines
+the kinds of annotation helpers you will be able to use in your indexes.  You
+generally need at least  the standard {\tt db-h2} plugin to be able to do
+anything useful with \Mimir, and you may want the {\tt measurements} plugin as
+well if you will be searching on Measurement annotations and/or the {\tt sparql}
+plugin if you have an external knowledge base. 
+Section~\ref{sec:indexing:helpers} has more information about the standard
+annotation helpers, and section~\ref{sec:extend:helpers} discusses how to
+implement your own custom ones.
 
 \Mimir\ uses the GATE plugin mechanism, so \Mimir\ plugins are actually
 very simple CREOLE plugins\footnote{See
