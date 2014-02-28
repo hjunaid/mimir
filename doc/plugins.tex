@@ -6,12 +6,12 @@ can be found in section~\ref{sec:extend:helpers}.
 
 \section{The {\tt db-h2} Plugin}\label{sec:plugins:db}
 
-The {\tt db-h2} plugin is one of two plugins (the other being the {\tt sesame}
-plugin) that provides a {\em generic} semantic annotation helper implementation
-that can be configured for any annotation type with any features.  The helper
-provided by {\tt db-h2} uses an embedded relational database engine
-(\url{http://www.h2database.com/}) to store the annotation data, and generally
-provides the best performance of the standard generic helpers.
+The {\tt db-h2} plugin a plugin that provides a {\em generic} semantic
+annotation helper implementation that can be configured for any annotation type
+with any features.  The helper provided by {\tt db-h2} uses an embedded
+relational database engine (\url{http://www.h2database.com/}) to store the
+annotation data, and generally provides the best performance of the standard
+generic helpers.
 
 \lstinline!gate.mimir.db.DBSemanticAnnotationHelper! is the helper class
 provided by the {\tt db-h2} plugin.  It has a constructor that takes a
@@ -52,52 +52,7 @@ The supported constructor arguments are:
 \ede
 
 The DB-based helper does not distinguish between text- and URI-valued features,
-indexing both types in the same way, but it accepts both kinds as arguments
-to be consistent with the Sesame helper (described below).  When using the
-{\tt import as} mechanism, switching an index template from the DB helper to
-the Sesame helper or vice versa is simply a matter of changing the name of the
-class being imported.
-
-\section{The {\tt sesame} Plugin}\label{sec:plugins:sesame}
-
-The {\tt sesame} plugin provides the other standard generic helper,
-\lstinline!gate.mimir.sesame.SesameSemanticAnnotationHelper!.  This helper
-stores annotation data as triples in a Sesame repository (by default using
-OWLIM as the underlying storage engine).
-
-The \lstinline!SesameSemanticAnnotationHelper! constructor takes the same named
-arguments as the DB helper for the annotation type and feature names (see the
-previous section for details).  Internally all numeric features (integer and
-float) are stored as floating point numbers, but the helper accepts both
-``integerFeatures'' and ``floatFeatures'' parameters for consistency with the
-DB helper.
-
-For advanced users it also provides a mechanism to specify the location of the
-Sesame repository configuration template file (in the standard Turtle RDF
-format), as a parameter named either ``absolutePath'' (for an absolute path
-to the file) or ``relativePath'' (for a path relative to the {\tt sesame}
-plugin directory).  The default configuration file is {\tt resources/owlim.ttl}
-under the {\tt sesame} plugin.  When specifying a custom repository
-configuration it is important to retain the repositoryID of ``owlim'' as this
-is assumed by the helper code.
-
-\subsection{Searching in the Knowledge Base}
-
-For annotations that have a URI-valued feature named ``inst'', the Sesame
-helper provides an additional ``synthetic'' feature named
-{\tt semanticConstraint} that provides a way to query for annotations based on
-information in the knowledge base.
-\begin{lstlisting}[breaklines]
-{Organization semanticConstraint = "?inst <http://proton.semanticweb.org/2005/04/protont#locatedIn> <http://example.com#Sheffield> ."}
-\end{lstlisting}
-
-The value of the semanticConstraint feature is a SPARQL fragment that has
-access to the {\tt ?inst} variable, referring to the URI in the ``inst''
-feature of the annotation.  This mechanism can only query for one specific
-feature (inst) and only against triples stored in the same semantic repository
-as the \Mimir\ annotation data.  For a more flexible approach to semantic
-queries that can make use of semantic data stored in a remote knowledge base,
-see the {\tt sparql} plugin (section~\ref{sec:plugins:sparql}).
+indexing both types in the same way, but it accepts both kinds as arguments.
 
 \section{The {\tt measurements} Plugin}\label{sec:plugins:measurements}
 
@@ -155,8 +110,7 @@ The following parameters are supported:
   of generic helper that the Measurements helper should delegate to.  This
   class must provide a 6-argument constructor taking the annotation type (a
   String) and five String arrays for the nominal, integer, float, text and URI
-  feature names respectively.  Both the DB and Sesame helpers provide this
-  constructor.
+  feature names respectively.
 \item[unitsFile] the location of the {\tt units.dat} file used to configure the
   measurements parser.  If not specified, a default file provided with the
   {\tt measurements} plugin is used.  This value can be an absolute URL
