@@ -29,7 +29,6 @@ gateInit {
 plugins {
       dbh2 = "../plugins/db-h2"
       measurements = "../plugins/measurements"
-      sesame = "../plugins/sesame"
       sparql = "../plugins/sparql"
 }
 
