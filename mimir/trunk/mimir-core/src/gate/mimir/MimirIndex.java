@@ -469,6 +469,10 @@ public class MimirIndex {
     this.indexDirectory = this.indexConfig.getIndexDirectory();
     
     openIndex();
+
+    // save the config for the new index
+    IndexConfig.writeConfigToFile(indexConfig, new File(indexDirectory,
+            INDEX_CONFIG_FILENAME));
   }
   
   /**
