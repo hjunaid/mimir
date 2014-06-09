@@ -3,7 +3,7 @@
   <info
     organisation="uk.ac.gate"
     module="mimir-core"
-    revision="4.0-SNAPSHOT">
+    revision="5.0-SNAPSHOT">
     <description homepage="http://gate.ac.uk/mimir" />
   </info>
 
@@ -13,19 +13,18 @@
 
   <dependencies defaultconf="*->master(default),runtime(default)" >
     <!-- GATE (minus unused deps) -->
-    <dependency name="gate-core" org="uk.ac.gate" rev="7.1">
+    <dependency name="gate-core" org="uk.ac.gate" rev="8.0">
       <artifact name="gate-core" type="jar" />
       <exclude org="org.apache.tika" module="tika-core"/>
       <exclude org="org.apache.tika" module="tika-parsers"/>
-      <exclude org="org.apache.lucene" module="lucene-core"/>
       <exclude org="org.codehaus.woodstox" module="woodstox-core-lgpl"/>
       <exclude org="org.springframework" module="spring-aop"/>
       <exclude org="xmlunit" module="xmlunit"/>
       <exclude org="xpp3" module="xpp3"/>
     </dependency>
     <!-- Load some libraries needed by GATE classes, but drop transitive deps. -->
-    <dependency org="org.apache.tika" name="tika-core" rev="1.0" transitive="false" />
-    <dependency org="org.apache.tika" name="tika-parsers" rev="1.0" transitive="false" />
+    <dependency org="org.apache.tika" name="tika-core" rev="1.5" transitive="false" />
+    <dependency org="org.apache.tika" name="tika-parsers" rev="1.5" transitive="false" />
     
     <!-- MG4J (minus unused deps) -->
     <dependency org="it.unimi.di" name="mg4j-big" rev="5.2.1" >
