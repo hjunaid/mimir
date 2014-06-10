@@ -120,7 +120,6 @@ class LocalIndex extends Index implements Serializable {
   * @return
   */
   DocumentData getDocumentData(long documentID) {
-println("Doc ID3 $documentID")
     return localIndexService.getDocumentData(this, documentID)
   }
 
