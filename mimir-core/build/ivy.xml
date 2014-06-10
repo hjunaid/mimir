@@ -3,7 +3,7 @@
   <info
     organisation="uk.ac.gate"
     module="mimir-core"
-    revision="5.0-SNAPSHOT">
+    revision="5.1-SNAPSHOT">
     <description homepage="http://gate.ac.uk/mimir" />
   </info>
 
