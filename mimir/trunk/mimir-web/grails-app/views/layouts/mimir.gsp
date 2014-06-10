@@ -26,12 +26,9 @@
             <tbody>
             <tr>
               <td  valign="top" colSpan="3">
-                <div align="left"><img alt="Mimir" align="top" 
-                src="${resource(dir:'images', file:'logo.png')}" /></div></td>
+                <div align="left"><mimir:logo /></div></td>
               <td valign="top" width="20%">
-                <div align="right"><img alt="Powered by M&iacute;mir"
-                src="${resource(dir:'images', file:'logo-poweredby.png')}"
-                border="0"/></div></td></tr></tbody></table>
+                <div align="right"><mimir:powered/></div></td></tr></tbody></table>
         </div>
         <div id="content">
           <g:layoutBody />

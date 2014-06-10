@@ -23,14 +23,11 @@
 				<tr>
 					<td valign="top" colSpan="3">
 						<div align="left">
-							<img alt="Mimir" align="top"
-								src="${resource(dir:'images', file:'logo.png', plugin:'mimir-web')}" />
+							<mimir:logo />
 						</div></td>
 					<td valign="top" width="20%">
 						<div align="right">
-							<img alt="Powered by M&iacute;mir"
-								src="${resource(dir:'images', file:'logo-poweredby.png', plugin:'mimir-web')}"
-								border="0" />
+							<mimir:powered/>
 							<sec:ifLoggedIn>
 								<br />You are logged in as <strong><sec:username /></strong>. (<g:link
 									controller="logout">Log out</g:link>)</sec:ifLoggedIn>
