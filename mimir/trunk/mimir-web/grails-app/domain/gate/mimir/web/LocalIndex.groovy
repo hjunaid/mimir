@@ -138,5 +138,8 @@ class LocalIndex extends Index implements Serializable {
   void undeleteDocuments(Collection<Long> documentIds) {
     localIndexService.undeleteDocuments(this, documentIds)
   }
-  
+
+  void sync() {
+    localIndexService.getIndex(this).requestSyncToDisk()
+  }
 }

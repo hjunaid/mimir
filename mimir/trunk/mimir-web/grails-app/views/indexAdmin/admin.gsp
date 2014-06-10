@@ -104,8 +104,9 @@
             </span>
             </td>
           </g:form>
-          <g:if test="${indexInstance instanceof gate.mimir.web.LocalIndex && indexInstance.state == Index.READY}">
-            <g:form action="sync" controller="localIndex" id="${indexInstance?.id}"  method="POST">
+          <g:if test="${indexInstance.state == Index.READY}">
+            <g:form action="sync" controller="indexAdmin"
+                  params="[indexId:indexInstance.indexId]" method="POST">
               <td><span class="button"><input type="submit" class="save" value="Sync to Disk" 
               title="Request all documents in memory are saved to disk ASAP." />
               </span></td>

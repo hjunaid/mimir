@@ -147,6 +147,13 @@ class Index implements Serializable {
   void undeleteDocuments(Collection<Long> documentIds) {
     throw new UnsupportedOperationException()
   }
+
+  /**
+   * Request that any outstanding indexed documents be flushed to disk.
+   */
+  void sync() {
+    throw new UnsupportedOperationException()
+  }
   
   // Constants for the possible state values
   public static final String READY = "ready" // good for searching and indexing
