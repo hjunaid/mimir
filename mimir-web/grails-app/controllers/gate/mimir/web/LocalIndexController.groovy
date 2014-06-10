@@ -249,24 +249,6 @@ class LocalIndexController {
   }
   
   /**
-   * Ask the index to sync all documents to disk
-   */
-  def sync = {
-    def localIndexInstance = LocalIndex.get( params.id )
-    
-    if(!localIndexInstance) {
-      flash.message = "LocalIndex not found with id ${params.id}"
-      redirect(controller:'indexManagement', action:'home')
-    }
-    else {
-      localIndexService.getIndex(localIndexInstance).requestSyncToDisk()
-      flash.message = "Sync to disk was requested."
-      redirect(controller: 'indexAdmin', action: 'admin', 
-          params: [indexId:localIndexInstance.indexId])
-    }
-  }
-  
-  /**
    * Register an existing index directory to be opened for searching.
    */
   def importIndex = {

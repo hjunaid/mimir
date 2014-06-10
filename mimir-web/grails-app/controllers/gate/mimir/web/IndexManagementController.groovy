@@ -48,6 +48,14 @@ class IndexManagementController {
     }
   }
 
+  def sync = {
+    def theIndex = Index.findByIndexId(params.indexId)
+    if(theIndex) {
+      theIndex.sync()
+      render("OK")
+    }
+  }
+
   /**
    * Takes a binary serialization of one or more GATE documents on the input
    * stream, deserializes it and passes it to the indexer.

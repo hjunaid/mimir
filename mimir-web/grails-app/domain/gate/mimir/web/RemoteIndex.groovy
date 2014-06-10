@@ -205,4 +205,22 @@ class RemoteIndex extends Index {
       }
     }
   }
+
+  /**
+   * Ask the remote index to sync.
+   */
+  void sync() {
+    String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) + 
+    "manage/sync";
+    try{
+      webUtilsManager.currentWebUtils(this).getVoid(urlStr)
+    }catch(IOException e){
+      log.error("Problem communicating with the remote server!", e)
+      RemoteIndex.withTransaction{
+        //by convention, any communication error switches the index state
+        state = Index.FAILED
+      }
+    }   
+  }
+
 }

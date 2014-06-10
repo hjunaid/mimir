@@ -128,5 +128,11 @@ class FederatedIndex extends Index {
   public void undeleteDocuments(Collection<Long> documentIds) {
     federatedIndexService.undeleteDocuments(this, documentIds)
   }
+
+  void sync() {
+    indexes.each {
+      it.sync()
+    }
+  }
   
 }

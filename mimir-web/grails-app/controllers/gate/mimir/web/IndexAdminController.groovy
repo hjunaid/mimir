@@ -60,6 +60,23 @@ class IndexAdminController {
     }
     redirect(action:admin, params:params)    
   }
+
+  /**
+   * Ask the index to sync all documents to disk
+   */
+  def sync = {
+    def indexInstance = Index.findByIndexId(params.indexId)
+    
+    if(!indexInstance) {
+      flash.message = "Index not found with index id ${params.indexId}"
+      redirect(action:admin, params:params)
+    }
+    else {
+      indexInstance.sync()
+      flash.message = "Sync to disk was requested."
+      redirect(action:admin, params:params)
+    }
+  }
   
   def deletedDocuments = {
     def indexInstance = Index.findByIndexId(params.indexId)
