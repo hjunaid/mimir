@@ -40,6 +40,8 @@ class MimirTagLib implements ApplicationContextAware {
    * Autowired
    */
   def mimirIndexService
+
+  def grailsApplication
   
   static NumberFormat percentNumberInstance = NumberFormat.getPercentInstance(Locale.US)
 
@@ -242,6 +244,24 @@ class MimirTagLib implements ApplicationContextAware {
     } catch(Exception ex) {
       log.error("Exception rendering document ${documentRank}", ex)
       out << g.message(code:"gus.renderDocument.exception", args:[ex.message])
+    }
+  }
+
+  def logo = { attrs, body ->
+    def logoUri = grailsApplication.config.gate.mimir.logo.main ?: '/images/logo.png'
+    if(logoUri =~ /^https?:/) {
+      out << "<img src=\"${logoUri}\" alt=\"Logo\">"
+    } else {
+      out << r.img(uri:logoUri, alt:'Logo')
+    }
+  }
+
+  def powered = { attrs, body ->
+    def logoUri = grailsApplication.config.gate.mimir.logo.powered ?: '/images/logo-poweredby.png'
+    if(logoUri =~ /^https?:/) {
+      out << "<img src=\"${logoUri}\" alt=\"Powered by M&iacute;mir\">"
+    } else {
+      out << r.img(uri:logoUri, alt:'Logo')
     }
   }
 }
