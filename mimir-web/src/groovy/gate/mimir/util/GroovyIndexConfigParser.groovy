@@ -18,6 +18,8 @@ import gate.mimir.IndexConfig
 import gate.mimir.IndexConfig.SemanticIndexerConfig
 import gate.mimir.IndexConfig.TokenIndexerConfig
 
+import groovy.time.TimeCategory
+
 /**
  * Helper class for parsing Groovy index configuration scripts into IndexConfig
  * objects.
@@ -43,7 +45,7 @@ public class GroovyIndexConfigParser {
     mc.annotation = semanticAnnotationsHandler.&annotation
     script.metaClass = mc
     
-    script.run()
+    use(TimeCategory, script.&run)
 
     // process the tokenFeatures section
     def tokenFeaturesClosure = scriptBinding.tokenFeatures
@@ -65,6 +67,21 @@ public class GroovyIndexConfigParser {
         semanticAnnotationsHandler.indexerConfigs as SemanticIndexerConfig[],
         scriptBinding.documentMetadataHelpers as DocumentMetadataHelper[],
         scriptBinding.documentRenderer)
+
+    if(scriptBinding.hasVariable('timeBetweenBatches')) {
+      // if timeBetweenBatches is a Duration like 5.minutes then convert
+      // it back to milliseconds, otherwise assume it is just a number of
+      // milliseconds in the first place
+      if(scriptBinding.timeBetweenBatches.respondsTo("toMilliseconds")) {
+        indexConfig.timeBetweenBatches = (int)scriptBinding.timeBetweenBatches.toMilliseconds()
+      } else {
+        indexConfig.timeBetweenBatches = scriptBinding.timeBetweenBatches as int
+      }
+    }
+
+    if(scriptBinding.hasVariable('maximumBatches')) {
+      indexConfig.maximumBatches = scriptBinding.maximumBatches as int
+    }
 
     semanticAnnotationsHandler.clear()
     tokenFeaturesHandler.clear()

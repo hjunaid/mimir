@@ -28,3 +28,7 @@
 /@    28  @/documentRenderer = new OriginalMarkupMetadataHelper()
 /@    29  @/documentFeaturesHelper = new DocumentFeaturesMetadataHelper("date","source","id", "type")
 /@    30  @/documentMetadataHelpers = [documentRenderer, documentFeaturesHelper]
+/@    31  @/
+/@    32  @/// miscellaneous options - these are the defaults
+/@    33  @///timeBetweenBatches = 1.hour
+/@    34  @///maximumBatches = 20

@@ -169,6 +169,10 @@ semanticAnnotations = {
 }
 documentRenderer = new OriginalMarkupMetadataHelper()
 documentMetadataHelpers = [documentRenderer]
+
+// miscellaneous options - these are the defaults
+//timeBetweenBatches = 1.hour
+//maximumBatches = 20
 """
         IndexTemplate.withTransaction {
           def defaultTemplate = new IndexTemplate(
