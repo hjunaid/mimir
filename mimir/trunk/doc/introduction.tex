@@ -157,9 +157,9 @@ avoid this, the index batches can be compacted into a single batch. \Mimir{}
 indexes will automatically do that once the number of batches exceeds a certain
 threshold (which can be modified via API calls).
 
-In order to keep its consistency, a Mímir index {\bf must} be closed orderly
-before the mimir server process is shut down. Shutting down the \Mimir{} server
-(e.g. the {\tt mimir-cloud} web application) will automatically close all
-currently open indexes. Users should never forcefully destroy the mimir server
-process, as that would not allow the close operations to be performed, which can
-lead to data loss, or it can corrupt existing indexes.
+In order to keep its consistency, a \Mimir{} index {\bf must} be closed in an
+orderly fashion before the mimir server process is shut down. Shutting down the
+\Mimir{} server (e.g. the {\tt mimir-cloud} web application) will automatically
+close all currently open indexes. Users should never forcefully destroy the
+\Mimir{} server process, as that would not allow the close operations to be
+performed, which can lead to data loss, or it can corrupt existing indexes.
