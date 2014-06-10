@@ -171,7 +171,7 @@ Things to note:
 \subsection*{Document Rendering and Metadata}
 \defaultIndexTemplate[linerange={28-30},firstnumber=28]
 
-The final part of the template concerns how document-level metadata is indexed,
+The next part of the template concerns how document-level metadata is indexed,
 and how this can be combined with the document text to render the document
 content at search time, with matches of the query highlighted.  These tasks are
 performed by objects that implement the interfaces
@@ -202,6 +202,28 @@ serialised and stored in the index. At search time, the stored metadata fields
 can be retrieved back from the index. Note that the values used must be
 serialisable to be usable (i.e. they must implement the 
 \lstinline!java.io.Serializable!) interface. 
+
+\subsection*{Miscellaneous options}
+\defaultIndexTemplate[linerange={32-34},firstnumber=32]
+Finally, additional miscellaneous options can be specified at the end of the
+template.  The supported options are:
+\bde
+\item[timeBetweenBatches] the maximum amount of time that the indexer should
+  wait between writing batches to disk.  Since only batches that have been
+  dumped to disk are searchable, this specifies the maximum time a document
+  should be held in RAM after having been submitted for indexing but before it
+  becomes available to be searched.  The value can either be a plain number (of
+  milliseconds) or a Groovy \lstinline!TimeCategory! duration expression such
+  as \lstinline!10.minutes!.  If unspecified, the default is one hour (3600000
+  milliseconds).  Note that it is always possible to force the system to dump
+  the current batch to disk immediately via the index administration page.
+\item[maximumBatches] the maximum number of constituent batches before a
+  compaction operation is triggered.  The default is 20, and it should rarely
+  be necessary to modify this as index compaction is transparent -- the index
+  behaves exactly the same whether or not it has recently been
+  compacted\footnote{The main difference is that a compacted index requires
+  fewer open file handles to operate.}.
+\ede
 
 \subsection*{Direct Indexes}
 \label{sec:direct-indexes}
@@ -246,12 +268,12 @@ Direct indexes can currently only be searched via the Java API provided by the
 
 \section{Adding Documents to an Index}\label{sec:indexing:add-docs}
 
-Once an index has been created in {\em indexing} mode, the next stage is to add
-documents to the index.  \Mimir\ provides an HTTP API for this which accepts
-documents for indexing via HTTP POST requests that include the document in Java
-serialised format.  The easiest way to make use of this API is via GCP (the
-GATE Cloud Paralleliser batch processing tool) using a
-\lstinline!MimirOutputHandler!.  This GCP output handler makes use of the
+Once an index has been created, the next stage is to add documents to the
+index.  \Mimir\ provides an HTTP API for this which accepts documents for
+indexing via HTTP POST requests that include the document in Java serialised
+format.  The easiest way to make use of this API is via GCP (the GATE Cloud
+Paralleliser batch processing tool) using a \lstinline!MimirOutputHandler!.
+This GCP output handler makes use of the
 \lstinline!gate.mimir.index.MimirConnector! (in the {\tt mimir-client} module)
 to actually make the remote call, and you can use the same API in your own
 code.  To add a GATE document to an open index simply call:
