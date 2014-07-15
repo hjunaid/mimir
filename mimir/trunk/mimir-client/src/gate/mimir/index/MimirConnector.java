@@ -144,7 +144,7 @@ public class MimirConnector {
     
     synchronized(this) {
       if(doc != null){
-        objectOutputStream.writeObject(doc);
+        objectOutputStream.writeUnshared(doc);
       }
       if(byteBuffer.size() > BYTE_BUFFER_SIZE) {
         writeBuffer(); // this will also empty (reset) the buffer
