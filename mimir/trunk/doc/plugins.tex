@@ -26,7 +26,8 @@ import gate.mimir.db.DBSemanticAnnotationHelper as DefaultHelper
 semanticAnnotations = {
   index {
     annotation helper:new DefaultHelper(annType:'Person',
-    nominalFeatures:["gender", "title"], stringFeatures:["name"])) }
+      nominalFeatures:["gender", "title"], textFeatures:["name"]))
+  }
 }
 \end{lstlisting}
 
