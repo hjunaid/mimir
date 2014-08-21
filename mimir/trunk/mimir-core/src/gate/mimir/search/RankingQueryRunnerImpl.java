@@ -139,6 +139,9 @@ public class RankingQueryRunnerImpl implements QueryRunner {
           docIndex = (documentIndexes != null ? 
               documentIndexes[(int)(i - start)] : i);
           docId = documentIds.getLong(docIndex);
+          // don't need to check for deletion here as we know for sure that this
+          // doc ID is ok.  The only exception would be if it was deleted since
+          // this query was originally issued, but I think we can live with that
           long newDoc = queryExecutor.nextDocument(docId - 1);
           // sanity check
           if(newDoc == docId) {
@@ -201,7 +204,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
       try{
         // collect all documents and their scores
         if(ranking) scorer.wrap(queryExecutor);
-        long docId = ranking ? scorer.nextDocument(-1) : queryExecutor.nextDocument(-1);
+        long docId = nextNotDeleted();
         while(docId >= 0) {
           // enlarge the hits list
           if(ranking){
@@ -223,7 +226,7 @@ public class RankingQueryRunnerImpl implements QueryRunner {
           }
           // and store the new doc ID
           documentIds.add(docId);
-          docId = ranking ? scorer.nextDocument(-1) : queryExecutor.nextDocument(-1);
+          docId = nextNotDeleted();
         }
         allDocIdsCollected = true;
         if(ranking) {
@@ -733,5 +736,20 @@ public class RankingQueryRunnerImpl implements QueryRunner {
         // ignore
       }      
     }
+  }
+
+  /**
+   * Find the next document ID for the current query executor which is not
+   * marked as deleted in the index.
+   */
+  protected long nextNotDeleted() throws IOException {
+    long docId = ranking ? scorer.nextDocument(-1)
+                         : queryExecutor.nextDocument(-1);
+    while(docId >= 0 && queryEngine.getIndex().isDeleted(docId)) {
+      docId = ranking ? scorer.nextDocument(-1)
+                      : queryExecutor.nextDocument(-1);
+    }
+    
+    return docId;
   }
 }
