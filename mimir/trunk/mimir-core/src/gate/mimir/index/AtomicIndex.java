@@ -454,7 +454,10 @@ public abstract class AtomicIndex implements Runnable {
     
     // prepare the documental cluster
     Index[] indexes = new Index[batches.size()];
-    long[] cutPoints = new long[indexes.length];
+    // cut points between the batches - there are numBatches+1 cutpoints,
+    // cutPoints[0] is always zero, and cutPoints[i] is the sum of the
+    // sizes of batches 0 to i-1 inclusive
+    long[] cutPoints = new long[indexes.length + 1];
     cutPoints[0] = 0;
     int numberOfTerms = -1;
     int numberOfDocuments = -1;
@@ -468,10 +471,8 @@ public abstract class AtomicIndex implements Runnable {
     
     for(MG4JIndex aSubIndex : batches) {
       indexes[indexIdx] = aSubIndex.invertedIndex;
-      if(indexIdx < cutPoints.length - 1) {
-        cutPoints[indexIdx + 1] = cutPoints[indexIdx] + 
-            aSubIndex.invertedIndex.numberOfDocuments;
-      }
+      cutPoints[indexIdx + 1] = cutPoints[indexIdx] + 
+          aSubIndex.invertedIndex.numberOfDocuments;
       numberOfTerms += aSubIndex.invertedIndex.numberOfTerms;
       numberOfDocuments += aSubIndex.invertedIndex.numberOfDocuments;
       numberOfPostings += aSubIndex.invertedIndex.numberOfPostings;
