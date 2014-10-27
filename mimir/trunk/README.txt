@@ -12,14 +12,9 @@ following directories:
     (http://www.h2database.com/) 
   - measurements: specialised SAH providing advanced support for Measurement
     annotations
-  - ordi: *deprecated* generic SAH implementation using OWLIM via ORDI.
-  - sesame: generic SAH implementation using OWLIM via Sesame.
   - sparql: SAH implementation that uses semantic queries against a SPARQL
     end-point to filter the results of standard Mímir queries. 
 - mimir-test: Unit tests for mimir-core and mimir plugins.
-- mimir-demo (automatically generated using Apache Ant): a very simple Grails
-  application demonstrating the use of the Mímir Grails plugin to create a
-  fully-working web application. 
 - mimir-cloud: the Grails application used for the Mímir installs on 
   http://GATECloud.net. Unlike mimir-demo, this is a fully-fledged application, 
   which includes support for security. In most cases, if you need a simple way
