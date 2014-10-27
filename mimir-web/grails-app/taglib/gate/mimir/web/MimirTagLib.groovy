@@ -248,20 +248,28 @@ class MimirTagLib implements ApplicationContextAware {
   }
 
   def logo = { attrs, body ->
-    def logoUri = grailsApplication.config.gate.mimir.logo.main ?: '/images/logo.png'
-    if(logoUri =~ /^https?:/) {
-      out << "<img src=\"${logoUri}\" alt=\"Logo\">"
+    def logoUri = grailsApplication.config.gate.mimir.logo.main
+    if(logoUri) {
+      if(logoUri =~ /^https?:/) {
+        out << "<img src=\"${logoUri}\" alt=\"Logo\">"
+      } else {
+        out << r.img(uri:logoUri, alt:'Logo')
+      }
     } else {
-      out << r.img(uri:logoUri, alt:'Logo')
+      out << r.img(dir:'images', file:'logo.png', alt:'Logo', plugin:'mimir-web')
     }
   }
 
   def powered = { attrs, body ->
-    def logoUri = grailsApplication.config.gate.mimir.logo.powered ?: '/images/logo-poweredby.png'
-    if(logoUri =~ /^https?:/) {
-      out << "<img src=\"${logoUri}\" alt=\"Powered by M&iacute;mir\">"
+    def logoUri = grailsApplication.config.gate.mimir.logo.powered
+    if(logoUri) {
+      if(logoUri =~ /^https?:/) {
+        out << "<img src=\"${logoUri}\" alt=\"Powered by M&iacute;mir\">"
+      } else {
+        out << r.img(uri:logoUri, alt:'Powered by M&iacute;mir')
+      }
     } else {
-      out << r.img(uri:logoUri, alt:'Logo')
+      out << r.img(dir:'images', file:'logo-poweredby.png', alt:'Powered by M&iacute;mir', plugin:'mimir-web')
     }
   }
 }
