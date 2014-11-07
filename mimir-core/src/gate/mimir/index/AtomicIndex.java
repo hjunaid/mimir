@@ -993,7 +993,9 @@ public abstract class AtomicIndex implements Runnable {
               }
             });
 	  // write the terms, termmap, and bloom filter files
-    BloomFilter<Void> termFilter = BloomFilter.create(numTermsInRAM);
+    
+    // make sure we can't create a Bloom filter of expected size 0
+    BloomFilter<Void> termFilter = BloomFilter.create(Math.max(numTermsInRAM, 1));
     PrintWriter pw = new PrintWriter( 
         new OutputStreamWriter(new FastBufferedOutputStream(
             new FileOutputStream(mg4jBasename + DiskBasedIndex.TERMS_EXTENSION), 
