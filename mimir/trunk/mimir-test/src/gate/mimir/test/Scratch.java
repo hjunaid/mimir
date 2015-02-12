@@ -84,10 +84,10 @@ import gate.util.GateException;
 public class Scratch {
 
   public static void main (String[] args) throws Exception {
-    mainIndexConvert(args);
+//    mainIndexConvert(args);
 //    mainIndexer5(args);
     
-//     mainSimple(args);
+     mainSimple(args);
     
 //    mainDirectIndexes(args);
 //    mainBuildDirectIndex(args);
@@ -212,7 +212,7 @@ public class Scratch {
 //    String query = "{Document date > 20070000}";
 //    String query = "{Abstract}";
    
-    String[] queries = new String[]{"electrical", "the", "{Document date > 20070000}"};
+    String[] queries = new String[] {"{Mention inst=\"http://dbpedia.org/resource/Sean_Bean\"}"}; //new String[]{"electrical", "the", "{Document date > 20070000}"};
     long start = System.currentTimeMillis();
     NumberFormat nf = NumberFormat.getNumberInstance();
     for(String query : queries) {
