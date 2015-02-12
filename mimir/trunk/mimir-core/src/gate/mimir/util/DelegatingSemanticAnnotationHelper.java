@@ -79,6 +79,7 @@ public abstract class DelegatingSemanticAnnotationHelper extends
 
   public void setDelegate(SemanticAnnotationHelper delegate) {
     this.delegate = delegate;
+    this.mode = delegate.getMode();
   }
 
   
@@ -175,15 +176,13 @@ public abstract class DelegatingSemanticAnnotationHelper extends
   }
 
   
-  /* (non-Javadoc)
-   * @see gate.mimir.AbstractSemanticAnnotationHelper#getMode()
+  /**
+   * Always return the delegate's mode, as it makes no sense for a delegating
+   * helper to operate in a different mode from its underlying delegate.
    */
   @Override
   public Mode getMode() {
-    if(mode == null) {
-      mode = delegate.getMode();
-    }
-    return mode;
+    return delegate.getMode();
   }
 
   @Override
