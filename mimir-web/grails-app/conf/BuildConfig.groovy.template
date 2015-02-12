@@ -24,7 +24,7 @@ grails.project.dependency.resolution = {
     dependencies {
       
       // GATE(-core), minus unused deps
-      compile ('uk.ac.gate:gate-core:8.0') {
+      compile ('uk.ac.gate:gate-core:8.1-SNAPSHOT') {
         excludes 'tika-core', 'tika-parsers', 'lucene-core', 
             'woodstox-core-lgpl', 'spring-aop', 'xmlunit', 'xpp3'
       }
