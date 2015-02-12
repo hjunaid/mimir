@@ -111,12 +111,12 @@ public class AtomicAnnotationIndex extends AtomicIndex {
     documentHelpers = new LinkedList<SemanticAnnotationHelper>();
     for(int i = 0; i <  siConfig.getAnnotationTypes().length; i++){
       SemanticAnnotationHelper theHelper = siConfig.getHelpers()[i];
+      theHelper.init(this);
       if(theHelper.getMode() == SemanticAnnotationHelper.Mode.DOCUMENT) {
         documentHelpers.add(theHelper);
       } else {
         annotationHelpers.put(siConfig.getAnnotationTypes()[i], theHelper);  
       }
-      theHelper.init(this);
     }
     offsetComparator = new OffsetComparator();
     // start the indexing thread
