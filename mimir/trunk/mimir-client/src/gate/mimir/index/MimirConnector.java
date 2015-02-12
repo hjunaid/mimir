@@ -189,9 +189,12 @@ public class MimirConnector {
       // second phase - post to the URL we were given
       // close the object OS so that it writes its coda
       objectOutputStream.close();
-      webUtils.postData(postUrlBuilder.toString(), byteBuffer);
-      byteBuffer.reset();
-      objectOutputStream = new ObjectOutputStream(byteBuffer);
+      try {
+        webUtils.postData(postUrlBuilder.toString(), byteBuffer);
+      } finally {
+        byteBuffer.reset();
+        objectOutputStream = new ObjectOutputStream(byteBuffer);
+      }
     }
     
     lastWrite = System.currentTimeMillis();
