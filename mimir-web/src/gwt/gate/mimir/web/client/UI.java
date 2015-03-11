@@ -458,7 +458,7 @@ public class UI implements EntryPoint {
    * How many characters are displayed for each snippet (for longer snippets,
    * the middle content is truncated and replaced by an ellipsis).  
    */
-  protected int maxSnippetLength = 100;
+  protected int maxSnippetLength = 150;
   
   /**
    * This is the entry point method.
