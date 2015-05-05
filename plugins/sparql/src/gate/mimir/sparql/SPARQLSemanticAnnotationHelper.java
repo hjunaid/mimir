@@ -251,8 +251,6 @@ public class SPARQLSemanticAnnotationHelper extends
       } catch(UnsupportedEncodingException e) {
         throw new UnsupportedCharsetException("UTF-8");
       }
-    } else {
-      authHeader = null;
     }
     // ensure we have a sparqlRequestMethod set on deserialization
     if(sparqlRequestMethod == null) {
