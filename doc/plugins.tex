@@ -204,6 +204,17 @@ The SPARQL semantic annotation helper class is called
 \item[sparqlEndpointUser and sparqlEndpointPassword] username and password used
   to authenticate to the SPARQL endpoint (only HTTP basic authentication is
   supported).  May be omitted if your endpoint does not require authentication.
+\item[sparqlRequestMethod] the mechanism by which the query will be passed to
+  the endpoint.  This value is an {\tt enum} type
+  {\tt gate.mimir.sparql.RequestMethod} with three possible values:
+  \bde
+  \item[GET] (default) the query will be URL encoded and appended to the URL as
+    a parameter \verb!?query=...!
+  \item[POST\textunderscore{}ENCODED] the query will be URL encoded as in the GET case and sent
+    in a POST request with content type {\tt application/x-www-form-urlencoded}
+  \item[POST\textunderscore{}PLAIN] the query will be sent as-is as the body of a POST request
+    with content type {\tt application/sparql-query}
+  \ede
 \ede
 
 The helper also accepts the usual ``annType'' and ``{\em xxx}Features''
@@ -219,11 +230,13 @@ annotations operating against DBpedia, to support the example query above:
 \begin{lstlisting}[texcl, breaklines, breakindent=150pt]
 import gate.mimir.db.DBSemanticAnnotationHelper as DBH
 import gate.mimir.sparql.SPARQLSemanticAnnotationHelper as SPARQLHelper
+import gate.mimir.sparql.RequestMethod as RM
 // \ldots
 semanticAnnotations = {
   index {
     annotation helper:new SPARQLHelper(
         sparqlEndpoint:'http://dbpedia.org/sparql',
+        sparqlRequestMethod:RM.POST_ENCODED,
         delegate:new DBH(annType:"Person", uriFeatures:['inst']))
   }
 }
@@ -236,6 +249,7 @@ semanticAnnotations = {
   index {
     annotation helper:new SPARQLHelper(
       sparqlEndpoint:'http://dbpedia.org/sparql',
+      sparqlRequestMethod:RM.POST_ENCODED,
       queryPrefix:
        'PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> \
         PREFIX xsd:<http://www.w3.org/2001/XMLSchema#> \
@@ -275,10 +289,12 @@ to factor out the common code.  Method declarations must be placed
 \begin{lstlisting}[texcl, breaklines, breakindent=150pt]
 import gate.mimir.db.DBSemanticAnnotationHelper as DBH
 import gate.mimir.sparql.SPARQLSemanticAnnotationHelper as SPARQLHelper
+import gate.mimir.sparql.RequestMethod as RM
 
 def standardHelper(type) {
   return new SPARQLHelper(
       sparqlEndpoint:'http://dbpedia.org/sparql',
+      sparqlRequestMethod:RM.POST_ENCODED,
       queryPrefix:
        'PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> \
         PREFIX xsd:<http://www.w3.org/2001/XMLSchema#> \
