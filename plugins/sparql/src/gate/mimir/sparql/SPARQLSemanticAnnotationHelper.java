@@ -25,7 +25,9 @@ import gate.util.GateRuntimeException;
 
 import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -101,10 +103,12 @@ public class SPARQLSemanticAnnotationHelper extends
    */
   private String sparqlEndpoint;
 
+  private RequestMethod sparqlRequestMethod = RequestMethod.GET;
+
   private transient String sparqlEndpointUser;
   
   private transient String sparqlEndpointPassword;
-  
+
   /**
    * HTTP Header used to authenticate with the remote endpoint. If set to 
    * <code>null</code>, then no authentication is done.
@@ -169,6 +173,13 @@ public class SPARQLSemanticAnnotationHelper extends
     this.sparqlEndpointPassword = sparqlEndpointPassword;
   }
 
+  public RequestMethod getSparqlRequestMethod() {
+    return sparqlRequestMethod;
+  }
+
+  public void setSparqlRequestMethod(RequestMethod sparqlRequestMethod) {
+    this.sparqlRequestMethod = sparqlRequestMethod;
+  }
   
   /**
    * Gets the name of the virtual features used to encode the SPARQL query.
@@ -242,6 +253,10 @@ public class SPARQLSemanticAnnotationHelper extends
       }
     } else {
       authHeader = null;
+    }
+    // ensure we have a sparqlRequestMethod set on deserialization
+    if(sparqlRequestMethod == null) {
+      sparqlRequestMethod = RequestMethod.GET;
     }
   }
 
@@ -317,13 +332,48 @@ public class SPARQLSemanticAnnotationHelper extends
   protected SPARQLResultSet runQuery(String query) throws IOException,
       XMLStreamException {
     try {
-      String urlStr =
-          sparqlEndpoint + "?query=" + URLEncoder.encode(query, "UTF-8");
+      String urlStr = sparqlEndpoint;
+      String requestBody = null;
+      String contentType = null;
+      
+      switch(sparqlRequestMethod) {
+        case GET:
+          urlStr =
+            sparqlEndpoint + "?query=" + URLEncoder.encode(query, "UTF-8");
+          break;
+
+        case POST_ENCODED:
+          requestBody = "query=" + URLEncoder.encode(query, "UTF-8");
+          contentType = "application/x-www-form-urlencoded";
+          break;
+
+        case POST_PLAIN:
+          requestBody = query;
+          contentType = "application/sparql-query";
+          break;
+
+        default:
+          throw new RuntimeException("Unknown request method " + sparqlRequestMethod);
+      }
       URL url = new URL(urlStr);
-      URLConnection urlConn = url.openConnection();
+      HttpURLConnection urlConn = (HttpURLConnection)url.openConnection();
       urlConn.setRequestProperty("Accept", "application/sparql-results+xml");
       if(authHeader != null) {
         urlConn.setRequestProperty("Authorization", authHeader);
+      }
+      // for POST requests, write the request content to the connection
+      if(requestBody != null) {
+        urlConn.setDoOutput(true);
+        urlConn.setRequestMethod("POST");
+        urlConn.setRequestProperty("Content-Type", contentType);
+        byte[] requestBytes = requestBody.getBytes("UTF-8");
+        urlConn.setFixedLengthStreamingMode(requestBytes.length);
+        OutputStream urlOut = urlConn.getOutputStream();
+        try {
+          urlOut.write(requestBytes);
+        } finally {
+          urlOut.close();
+        }
       }
       return new SPARQLResultSet(urlConn.getInputStream());
     } catch(UnsupportedEncodingException e) {
