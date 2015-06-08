@@ -124,7 +124,7 @@ class IndexArchiveService {
       } else {
         if(!tempDir.mkdirs()) {
           throw new RuntimeException(
-            "Temporary directory for index archives does not exist and could be created.")
+            "Temporary directory for index archives does not exist and could not be created.")
         }
       }
       
