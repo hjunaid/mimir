@@ -186,38 +186,31 @@ class SearchController {
    * number of result document otherwise. 
    */
   def documentsCount = {
-    def p = params["request"] ?: params
-    //a closure representing the return message
-    def message;
-    //get the query ID
-    String queryId = p["queryId"]
-    QueryRunner runner = searchService.getQueryRunner(queryId);
-    if(runner){
-      try{
-        //we have all required parameters
-        long docCount = runner.getDocumentsCount()
-        message = buildMessage(SUCCESS, null){
-          value(docCount)
-        }
-      }catch(Exception e){
-        message = buildMessage(ERROR,
-                "Error while obtaining the documents count: \"" +
-                e.getMessage() + "\"!", null)
-      }
-    } else{
-      message = buildMessage(ERROR, "Query ID ${queryId} not known!", null)
-    }
-    //return the results
-    render(contentType:"text/xml", builder: new StreamingMarkupBuilder(),
-        message)
+    doDocumentsCount { runner -> runner.getDocumentsCount() }
   }
-  
+
+  /**
+   * Synchronous version of documentsCount that waits until the count is known
+   * before returning.  This is only truly synchronous on a local index, since
+   * remote and federated indexes use a polling cycle internally.
+   */
+  def documentsCountSync = {
+    doDocumentsCount { runner -> runner.getDocumentsCountSync() }
+  }
+
   /**
    * Gets the number of result documents found so far. After the search 
    * completes, the result returned by this call is identical to that of 
    * {@link #documentsCount}.
    * @return the number of result documents known so far.   */
   def documentsCurrentCount = {
+    doDocumentsCount { runner -> runner.getDocumentsCurrentCount() }
+  }
+
+  /**
+   * Common implementation for all the getDocuments*Count methods.
+   */
+  private doDocumentsCount(callable) {
     def p = params["request"] ?: params
     //a closure representing the return message
     def message;
@@ -227,7 +220,7 @@ class SearchController {
     if(runner){
       try{
         //we have all required parameters
-        long docCount = runner.getDocumentsCurrentCount()
+        long docCount = callable.call(runner)
         message = buildMessage(SUCCESS, null){
           value(docCount)
         }
@@ -243,6 +236,7 @@ class SearchController {
     render(contentType:"text/xml", builder: new StreamingMarkupBuilder(),
         message)
   }
+
   
   /**
    * Gets the ID of a result document.
