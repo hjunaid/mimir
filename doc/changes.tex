@@ -1,5 +1,16 @@
 This appendix details the main changes in each \Mimir\ release.
 
+\section{Version 5.1 (June 2015)}
+\begin{itemize}
+\item \Mimir{} 5.1 depends on GATE Embedded 8.1.
+\item Bug fixes in various corner cases, in particular for very sparse semantic
+  annotations (where annotations of a particular type are found in relatively
+  few documents).
+\item Robustness improvements in \verb!mimir-client! indexing code.
+\item The SPARQL semantic annotation helper can now send queries to the SPARQL
+  endpoint using POST requests instead of GET, and now works correctly with
+  endpoints that require HTTP basic authentication.
+\end{itemize}
 
 \section{Version 5.0.1 (October 2014)}
 Two critical fixes:
