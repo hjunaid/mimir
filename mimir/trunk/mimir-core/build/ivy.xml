@@ -13,7 +13,7 @@
 
   <dependencies defaultconf="*->master(default),runtime(default)" >
     <!-- GATE (minus unused deps) -->
-    <dependency name="gate-core" org="uk.ac.gate" rev="8.1-SNAPSHOT">
+    <dependency name="gate-core" org="uk.ac.gate" rev="8.1">
       <artifact name="gate-core" type="jar" />
       <exclude org="org.apache.tika" module="tika-core"/>
       <exclude org="org.apache.tika" module="tika-parsers"/>
