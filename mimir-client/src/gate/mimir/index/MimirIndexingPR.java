@@ -23,6 +23,8 @@ import gate.creole.metadata.RunTime;
 import gate.mimir.tool.WebUtils;
 import gate.util.GateRuntimeException;
 
+import org.apache.log4j.Logger;
+
 import java.net.URL;
 
 
@@ -35,11 +37,15 @@ public class MimirIndexingPR extends AbstractLanguageAnalyser {
 
   private static final long serialVersionUID = 3291873032301133998L;
 
+  private static final Logger log = Logger.getLogger(MimirIndexingPR.class);
+
   private URL mimirIndexUrl;
   
   private String mimirUsername;
   
   private String mimirPassword;
+
+  private Integer connectionInterval;
 
   protected MimirConnector mimirConnector;
   
@@ -64,8 +70,7 @@ public class MimirIndexingPR extends AbstractLanguageAnalyser {
   @RunTime
   public void setMimirUsername(String mimirUsername) {
     this.mimirUsername = mimirUsername;
-    // invalidate the connector
-    this.mimirConnector = null;
+    closeConnector();
   }
 
   public String getMimirPassword() {
@@ -77,17 +82,36 @@ public class MimirIndexingPR extends AbstractLanguageAnalyser {
   @RunTime
   public void setMimirPassword(String mimirPassword) {
     this.mimirPassword = mimirPassword;
-    // invalidate the connector    
-    this.mimirConnector = null;
+    closeConnector();
+  }
+
+  public Integer getConnectionInterval() {
+    return connectionInterval;
+  }
+
+  @CreoleParameter(comment="Interval between connections to the Mímir server.  -1 causes each document "
+      + "to be sent immediately, positive values cause documents to be buffered and sent to the server in "
+      + "batches, which is generally much more efficient, particularly when the documents are short.",
+      defaultValue = "1000")
+  @Optional
+  @RunTime
+  public void setConnectionInterval(Integer connectionInterval) {
+    this.connectionInterval = connectionInterval;
+    closeConnector();
   }
 
   @Override
   public void cleanup() {
-    try {
-      mimirConnector.close();
-    } catch(Exception e) {
-      throw new GateRuntimeException("Execption while closing Mímir connector", 
-          e);
+    closeConnector();
+  }
+
+  protected void closeConnector() {
+    if(mimirConnector != null) {
+      try {
+        mimirConnector.close();
+      } catch(Exception e) {
+        log.warn("Execption while closing Mímir connector", e);
+      }
     }
     mimirConnector = null;
   }
@@ -102,6 +126,9 @@ public class MimirIndexingPR extends AbstractLanguageAnalyser {
             new WebUtils(mimirUsername, mimirPassword));          
         } else {
           mimirConnector = new MimirConnector(mimirIndexUrl);  
+        }
+        if(connectionInterval != null) {
+          mimirConnector.setConnectionInterval(connectionInterval.intValue());
         }
       }
       mimirConnector.sendToMimir(getDocument(), null);

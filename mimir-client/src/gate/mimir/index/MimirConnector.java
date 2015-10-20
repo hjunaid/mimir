@@ -84,6 +84,11 @@ public class MimirConnector {
   private int connectionInterval = -1;
   
   /**
+   * How many documents have been buffered since the last connection.
+   */
+  private int docsSinceLastConnection = 0;
+
+  /**
    * The URL of the mimir index that is to receive the document.  This would 
    * typically be of the form 
    * <code>http://server:port/mimir/&lt;index UUID&gt;/</code>.
@@ -145,6 +150,7 @@ public class MimirConnector {
     synchronized(this) {
       if(doc != null){
         objectOutputStream.writeUnshared(doc);
+        docsSinceLastConnection++;
       }
       if(byteBuffer.size() > BYTE_BUFFER_SIZE) {
         writeBuffer(); // this will also empty (reset) the buffer
@@ -170,7 +176,7 @@ public class MimirConnector {
    * @throws IOException 
    */
   protected synchronized void writeBuffer() throws IOException {
-    if(byteBuffer.size() > 0) {
+    if(docsSinceLastConnection > 0) {
       // first phase - call the indexUrl action to find out where to post the
       // data
       StringBuilder indexURLString = new StringBuilder(indexURL.toExternalForm());
@@ -194,6 +200,7 @@ public class MimirConnector {
       } finally {
         byteBuffer.reset();
         objectOutputStream = new ObjectOutputStream(byteBuffer);
+        docsSinceLastConnection = 0;
       }
     }
     
