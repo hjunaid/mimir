@@ -23,12 +23,14 @@ of software installed on your system:
   \url{http://ant.apache.org/}. Once installed, make sure your \verb!ANT_HOME!
   environment variable points to the top-level directory of your installation.
   Make  sure that the \verb!$ANT_HOME/bin! location is on your \verb!PATH!.
-  \item[Grails] version 2.2.3. You can download this from
+  \item[Grails] version 2.5.3. You can download this from
   \url{http://grails.org}. Once installed, make sure your \verb!GRAILS_HOME!
   environment variable points to the top-level directory of your installation.
   Make sure that the \verb!$GRAILS_HOME/bin! location is on your \verb!PATH!.
-  \textbf{Note that \Mimir\ requires Grails 2.2, it will not work with 2.3 or
-  later}.
+  \textbf{Note that \Mimir\ \mimirversion\ requires Grails 2.5.3, it will not
+  work with 3 or later}. Earlier versions of \Mimir\ used different versions
+  of Grails, make sure you are reading the documentation for the specific
+  version you are trying to run.
   \item[Working Internet Connection] The next step, described below, is the
   building of the \Mimir{} library. This starts by automatically downloading all
   the required dependencies, so it requires a working Internet connection. Once
@@ -72,9 +74,9 @@ Commands that you have to execute are formatted in a distinctive font
   required dependencies, compile all the \Mimir{} libraries, and build the {\tt
   mimir-web} Grails plugin.
   
-  If you have multiple Grails versions installed, and Grails 2.2.3 is not the
-  default, you must give priority to Grails 2.2.3.  Do so by executing
-  \cmd{export GRAILS\_HOME=/path/to/grails-2.2.3}, and then use the following:
+  If you have multiple Grails versions installed, and Grails 2.5.3 is not the
+  default, you must give priority to Grails 2.5.3.  Do so by executing
+  \cmd{export GRAILS\_HOME=/path/to/grails-2.5.3}, and then use the following:
   \cmd{ant -Dgrails.bin=\$GRAILS\_HOME/bin/grails} (instead of \cmd{ant}) to
   override the default Grails settings.
   \item {\bf Run the mimir-cloud application:}  change to the {\tt
