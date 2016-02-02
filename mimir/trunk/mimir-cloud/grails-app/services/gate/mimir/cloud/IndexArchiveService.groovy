@@ -20,8 +20,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.codehaus.groovy.grails.commons.ApplicationHolder;
-import org.codehaus.groovy.grails.commons.ConfigurationHolder;
+import grails.util.Holders;
 
 import gate.mimir.util.IndexArchiveState;
 import gate.mimir.util.MultiFileOutputStream;
@@ -30,15 +29,15 @@ import gate.mimir.web.LocalIndex;
 
 class IndexArchiveService {
 
-  def servletContext = ApplicationHolder.application.parentContext.servletContext
+  def servletContext = Holders.grailsApplication.parentContext.servletContext
   
-  def backgroundService
+  def executorService
 
   def localIndexService
   
   static transactional = true
 
-  def config = ConfigurationHolder.config
+  def config = Holders.config
   
   public IndexArchive getIndexArchive(LocalIndex theIndex) {
     IndexArchive indexArchive = IndexArchive.findByTheIndex(theIndex)
@@ -69,9 +68,9 @@ class IndexArchiveService {
     }
     if(indexArchive.state != IndexArchiveState.AVAILABLE) {
       // we need to re create the index archive
-      backgroundService.execute("Building local index archive") {
+      executorService.execute({
         packageIndex(indexArchive)
-      }
+      } as Runnable)
     }
     return indexArchive
   }
@@ -82,11 +81,11 @@ class IndexArchiveService {
       // delete the old files
       if(indexArchive.localDownloadDir) {
         File arcDir = new File(indexArchive.localDownloadDir)
-        backgroundService.execute("Delete old archive files") {
+        executorService.execute({
           if(arcDir.exists() && arcDir.isDirectory() && arcDir.canWrite()) {
             arcDir.deleteDir()
           }
-        }
+        } as Runnable)
       }
       indexArchive.delete(flush:true, failOnError:true)
     }

@@ -16,7 +16,7 @@
   <%-- If you add any GWT meta tags, they must   --%>
   <%-- be added before this line.                --%>
   <%--                                           --%>
-  <script type="text/javascript" src="${resource(dir: 'gwt/gate.mimir.web.UI', file: 'gate.mimir.web.UI.nocache.js')}"></script>
+  <script type="text/javascript" src="${r.resource(plugin:'mimir-web', dir: 'gwt/gate.mimir.web.UI', file: 'gate.mimir.web.UI.nocache.js')}"></script>
   
   <%-- Add any custom CSS from the current index --%>
   <g:if test="${index?.css}">

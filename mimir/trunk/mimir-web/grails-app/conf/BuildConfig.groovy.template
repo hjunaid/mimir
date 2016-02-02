@@ -2,6 +2,7 @@ grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
 grails.project.test.reports.dir = "target/test-reports"
 
+grails.project.dependency.resolver = "maven"
 grails.project.dependency.resolution = {
     // inherit Grails' default dependencies
     inherits("global") {
@@ -14,9 +15,10 @@ grails.project.dependency.resolution = {
         mavenRepo 'http://repo.gate.ac.uk/content/groups/public/'
         // uncomment the below to enable remote dependency resolution
         // from public Maven repositories
-        //mavenLocal()
+        mavenLocal()
         mavenCentral()
-        mavenRepo('https://repo.grails.org/grails/plugins')
+        grailsPlugins()
+        //mavenRepo('https://repo.grails.org/grails/plugins')
         //mavenRepo "http://snapshots.repository.codehaus.org"
         //mavenRepo "http://repository.codehaus.org"
         //mavenRepo "http://download.java.net/maven/2/"
@@ -24,56 +26,39 @@ grails.project.dependency.resolution = {
     }
     dependencies {
       
-      // GATE(-core), minus unused deps
-      compile ('uk.ac.gate:gate-core:8.1') {
-        excludes 'tika-core', 'tika-parsers', 'lucene-core', 
-            'woodstox-core-lgpl', 'spring-aop', 'xmlunit', 'xpp3'
-      }
-      // bring in some of the excluded dependencies, but non-transitively
-      compile('org.apache.tika:tika-core:1.0', 
-              'org.apache.tika:tika-parsers:1.0') {
-        transitive = false
-      }
-      
-      // MG4J, minus unused deps
-      compile ('it.unimi.di:mg4j-big:5.2.1') {
-        excludes 'hadoop-common', 'logback-classic' , 'tika-core', 
-            'tika-parsers', 'mysql-connector-java', 'velocity', 
-            'velocity-tools', 'jetty'
-      }
-      
-      compile ('com.google.guava:guava:14.0',
-              "org.grails:grails-webflow:$grailsVersion") {
-        // Exclude dependencies that conflict with Grails      
-        excludes 'xml-apis', 'xmlbeans', 'ant'
-      }
+      // bring in mimir-core and mimir-client from local m2 repository - this will
+      // bring GATE and MG4J as transitive dependencies
+      compile("uk.ac.gate:mimir-core:5.2-SNAPSHOT",
+              "uk.ac.gate:mimir-client:5.2-SNAPSHOT")
     
       // We must use the same version of Ant as the one provided by Grails
-      // For Grails 2.1.1, this is Ant 1.8.2
-      runtime 'org.apache.ant:ant:1.8.2'
+      // For Grails 2.5, this is Ant 1.9.4
+      runtime 'org.apache.ant:ant:1.9.4'
       
       // bring the correct library version for groovy 2
-      test "org.spockframework:spock-grails-support:0.7-groovy-2.0"
+      //test "org.spockframework:spock-grails-support:0.7-groovy-2.0"
     }
 
     plugins {
-      runtime ":resources:1.2.RC2"
-      build(":tomcat:$grailsVersion",
+      runtime ":resources:1.2.14"
+
+      build(":tomcat:7.0.55.3",
             ":release:2.0.3",
             ":rest-client-builder:1.0.2") {
           export = false
       }
-      compile(":hibernate:$grailsVersion")
-      compile(':webflow:2.0.0'){
-        exclude 'grails-webflow'
+      compile(":hibernate:3.6.10.18")
+      compile(':webflow:2.1.0'){
+        //exclude 'grails-webflow'
       }
-      compile(':gwt:0.8') {
-        excludes 'resources', 'release'
+      build ":extended-dependency-manager:0.5.5"
+      compile(':gwt:1.0.3') {
+        transitive = false
       }
-      test(":spock:0.7") {
-          // exclude default dependency, as that's unsuitable for groovy 2
-          exclude "spock-grails-support"
-      }      
+      //test(":spock:0.7") {
+      //    // exclude default dependency, as that's unsuitable for groovy 2
+      //    exclude "spock-grails-support"
+      //}      
     }
 }
 

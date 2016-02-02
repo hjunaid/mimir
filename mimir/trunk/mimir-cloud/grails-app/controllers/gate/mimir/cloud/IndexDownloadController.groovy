@@ -14,8 +14,6 @@ package gate.mimir.cloud
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.codehaus.groovy.grails.commons.ConfigurationHolder;
-
 import gate.mimir.util.IndexArchiveState;
 import gate.mimir.web.LocalIndex;
 

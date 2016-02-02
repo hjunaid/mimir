@@ -10,7 +10,6 @@
  *
  *  $Id$
  */
-import org.codehaus.groovy.grails.commons.ConfigurationHolder;
 
 import gate.mimir.security.Requestmap;
 import gate.mimir.security.Role;
@@ -31,7 +30,7 @@ class BootStrap {
         passwordExpired:false).save(failOnError:true, flush:true)
     if(adminUser.password == 'not set') {
       // admin user has no password set
-      String defaultPass = ConfigurationHolder.config.gate.mimir.defaultAdminPassword
+      String defaultPass = Holders.config.gate.mimir.defaultAdminPassword
       if(defaultPass != 'not set') {
         // a default admin password was provided via external config
         adminUser.password = springSecurityService.encodePassword(defaultPass)
