@@ -1,0 +1,22 @@
+<ivy-module version="2.0">
+
+  <info
+    organisation="uk.ac.gate"
+    module="mimir-client"
+    revision="5.2-SNAPSHOT">
+    <description homepage="http://gate.ac.uk/mimir" />
+  </info>
+
+  <configurations>
+    <conf name="default" />
+  </configurations>
+
+  <publications>
+    <artifact type="pom" ext="pom" conf="default" />
+    <artifact type="jar" ext="jar" conf="default" />
+  </publications>
+
+  <dependencies defaultconf="*->master(default),runtime(default)" >
+    <dependency name="mimir-core" org="uk.ac.gate" rev="5.2-SNAPSHOT" />
+  </dependencies>
+</ivy-module>

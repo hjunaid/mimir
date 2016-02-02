@@ -22,6 +22,7 @@
   <property name="doc.dir" location="doc" />
 	<property name="grails-plugin.dir" location="../${grails-plugin.dirname}" />
   <property name="jar.file" location="${app.name}-${app.version}.jar" />
+  <property name="pom.file" location="${app.name}-${app.version}.pom" />
 
   
 
@@ -99,10 +100,15 @@
   </target>
 
   <target name="publish" depends="jar">
-    <copy todir="${grails-plugin.dir}/lib" flatten="true">
+    <ivy:makepom ivyfile="${build.dir}/ivy.xml" pomfile="${pom.file}">
+      <mapping conf="*" scope="compile"/>
+    </ivy:makepom>
+    <ivy:publish resolver="local-m2-publish" forcedeliver="true" overwrite="true" publishivy="false"
+          artifactspattern="[artifact]-[revision].[ext]"/>
+    <!--<copy todir="${grails-plugin.dir}/lib" flatten="true">
       <fileset refid="libs.fileset" />
       <fileset file="${jar.file}" />
-    </copy>
+    </copy>-->
   </target>
   
 

@@ -2,10 +2,11 @@ grails.servlet.version = "2.5" // Change depending on target container complianc
 grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
 grails.project.test.reports.dir = "target/test-reports"
-grails.project.target.level = 1.6
-grails.project.source.level = 1.6
+grails.project.target.level = 1.7
+grails.project.source.level = 1.7
 //grails.project.war.file = "target/${appName}-${appVersion}.war"
 
+grails.project.dependency.resolver = "maven"
 grails.project.dependency.resolution = {
     // inherit Grails' default dependencies
     inherits("global") {
@@ -22,9 +23,10 @@ grails.project.dependency.resolution = {
         grailsHome()
         grailsCentral()
 
+        mavenRepo 'http://repo.gate.ac.uk/content/groups/public/'
         mavenLocal()
         mavenCentral()
-        mavenRepo('https://repo.grails.org/grails/plugins')
+        //mavenRepo('https://repo.grails.org/grails/plugins')
 
         // uncomment these (or add new ones) to enable remote dependency resolution from public Maven repositories
         //mavenRepo "http://snapshots.repository.codehaus.org"
@@ -37,21 +39,15 @@ grails.project.dependency.resolution = {
         // runtime 'mysql:mysql-connector-java:5.1.20'
       compile 'org.apache.commons:commons-compress:1.1'
       runtime 'org.hsqldb:hsqldb:2.2.9'
-      // bring the correct library version for groovy 2
-      test "org.spockframework:spock-grails-support:0.7-groovy-2.0"
     }
 
     plugins {
-        runtime ":hibernate:$grailsVersion"
-        runtime ":jquery:1.8.0"
-        runtime ":resources:1.2.RC2"
-        build ":tomcat:$grailsVersion"
-        compile ":background-thread:1.6"
-        compile ":spring-security-core:1.2.7.3"
-        test(":spock:0.7") {
-          // exclude default dependency, as that's unsuitable for groovy 2
-          exclude "spock-grails-support"
-        }
+        runtime ":hibernate:3.6.10.18"
+        runtime ":jquery:1.11.1"
+        runtime ":resources:1.2.14"
+        build ":tomcat:7.0.55.3"
+        compile ":spring-security-core:2.0.0"
+        compile ":executor:0.3"
     }
 }
 

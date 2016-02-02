@@ -9,14 +9,16 @@
 	
   <property name="core-home" location="../${mimir-core.dirname}"/>
   <!-- Load Ivy support -->
-  <property name="build.dir" location="${core-home}/build" />
+  <property name="core.build.dir" location="${core-home}/build" />
   <path id="ivy.lib.path">
-      <fileset dir="${build.dir}" includes="*.jar"/>
+      <fileset dir="${core.build.dir}" includes="*.jar"/>
   </path>
   
   <taskdef resource="org/apache/ivy/ant/antlib.xml"
            uri="antlib:org.apache.ivy.ant"
            classpathref="ivy.lib.path"/>  
+
+  <property name="build.dir" location="build" />
   
   <target name="depend">
     <ivy:configure file="${build.dir}/ivysettings.xml"/>
@@ -24,13 +26,6 @@
     <ivy:cachepath pathid="ivylibs"/>
   </target>
     
-  
-  <path id="corelibs">
-    <fileset dir="${core-home}/lib" includes="**/*.jar" />
-    <fileset dir="${core-home}" includes="mimir-core-${app.version}.jar" />
-    <path refid="ivylibs" />
-  </path>
-  
   <property name="classes.dir" location="classes" />
   <property name="src.dir" location="src" />
   <property name="doc.dir" location="doc" />
@@ -39,9 +34,10 @@
 	
   <property name="jar.name" value="${app.name}-${app.version}.jar" />
   <property name="jar.file" location="${jar.name}" />	
+  <property name="pom.file" location="${app.name}-${app.version}.pom" />
 	
   <path id="compile.classpath">
-    <path refid="corelibs" />
+    <path refid="ivylibs" />
   </path>
 
   <target name="clean">
@@ -101,8 +97,13 @@
   </target>
 
   <target name="publish" depends="jar, creole.xml">
-    <copy todir="${grails-plugin.dir}/lib" flatten="true">
+    <ivy:makepom ivyfile="${build.dir}/ivy.xml" pomfile="${pom.file}">
+      <mapping conf="*" scope="compile"/>
+    </ivy:makepom>
+    <ivy:publish resolver="local-m2-publish" forcedeliver="true" overwrite="true" publishivy="false"
+          artifactspattern="[artifact]-[revision].[ext]"/>
+    <!--<copy todir="${grails-plugin.dir}/lib" flatten="true">
       <fileset file="${jar.file}" />
-    </copy>
+    </copy>-->
   </target>
 </project>

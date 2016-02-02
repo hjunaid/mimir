@@ -1,4 +1,4 @@
-import grails.plugins.springsecurity.SecurityConfigType;
+import grails.plugin.springsecurity.SecurityConfigType;
 
 // locations to search for config files that get merged into the main config
 // config files can either be Java properties files or ConfigSlurper scripts
@@ -25,12 +25,14 @@ grails{
   /**
    * Grails Security config
    */
-  plugins{
+  plugin{
     springsecurity {
       userLookup.userDomainClassName = 'gate.mimir.security.User'
       userLookup.authorityJoinClassName = 'gate.mimir.security.UserRole'
       authority.className = 'gate.mimir.security.Role'
+      // backwards compatibility with existing databases
       password.algorithm='SHA-256'
+      password.hash.iterations = 1
       requestMap.className = 'gate.mimir.security.Requestmap'
       requestMap.urlField = 'url'
       requestMap.configAttributeField = 'configAttribute'
