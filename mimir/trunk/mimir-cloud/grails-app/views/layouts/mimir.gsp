@@ -2,15 +2,8 @@
 <html>
     <head>
         <title><g:layoutTitle default="Mimir" /></title>
-        <link rel="stylesheet" href="${resource(dir:'css',file:'mimir.css', plugin:'mimir-web')}" />
-        <%-- The query string is ignored but causes the browsers to refresh the 
-             cached version. The query value should be changed whenever the 
-             favicon changes. --%>
-        <link rel="shortcut icon" href="${resource(dir:'images',file:'mimir-favicon.ico',plugin:'mimir-web')}?v=1" type="image/x-icon" />
-				<link rel="apple-touch-icon" href="${resource(dir: 'images', file: 'mimir-apple-touch-icon.png',plugin:'mimir-web')}?v=1">
-				<link rel="apple-touch-icon" sizes="114x114" href="${resource(dir: 'images', file: 'mimir-apple-touch-icon-retina.png',plugin:'mimir-web')}?v=1">        
+        <r:require module="mimirWeb" />
         <g:layoutHead />
-        <g:javascript src="application.js" />
         <r:layoutResources/>
         <%-- Add any custom CSS content provided by the page. --%>
         <style type="text/css">
