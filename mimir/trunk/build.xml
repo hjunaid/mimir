@@ -148,6 +148,7 @@ use mimir-cloud instead.</echo>
     <ant dir="${plugins.dir}/db-h2" target="clean" />
     <ant dir="${plugins.dir}/measurements" target="clean" />
     <ant dir="${plugins.dir}/sparql" target="clean" />
+    <resolve-groovy-templates dir="${grails-plugin.dir}" />
     <grails dir="${grails-plugin.dir}">
       <arg value="clean" />
     </grails>
