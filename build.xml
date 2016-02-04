@@ -109,6 +109,10 @@
     <delete file="${grails-plugin.dir}/plugin.xml" />
 
     <resolve-groovy-templates dir="${grails-plugin.dir}" />
+
+    <grails dir="${grails-plugin.dir}">
+      <arg value="refresh-dependencies" />
+    </grails>
     
     <trycatch>
       <try>
