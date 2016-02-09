@@ -2,7 +2,7 @@
 <html>
     <head>
         <title><g:layoutTitle default="Mimir" /></title>
-        <r:require module="mimirWeb" />
+        <r:require module="mimirLayout" />
         <g:layoutHead />
         <r:layoutResources/>
         <%-- Add any custom CSS content provided by the page. --%>
