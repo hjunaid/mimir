@@ -92,7 +92,7 @@
   <target name="distro" depends="jar, javadoc" />
   
   <!-- Docs -->
-  <target name="javadoc">
+  <target name="javadoc" depends="depend">
     <javadoc access="protected"
              destdir="${doc.dir}/javadoc"
              classpathref="compile.classpath"
