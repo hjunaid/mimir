@@ -1386,8 +1386,8 @@ public class QueryParser implements QueryParserConstants {
 
   public ParseException generateParseException() {
     jj_expentries.removeAllElements();
-    boolean[] la1tokens = new boolean[45];
-    for (int i = 0; i < 45; i++) {
+    boolean[] la1tokens = new boolean[47];
+    for (int i = 0; i < 47; i++) {
       la1tokens[i] = false;
     }
     if (jj_kind >= 0) {
@@ -1406,7 +1406,7 @@ public class QueryParser implements QueryParserConstants {
         }
       }
     }
-    for (int i = 0; i < 45; i++) {
+    for (int i = 0; i < 47; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;

@@ -32,6 +32,8 @@ public interface QueryParserConstants {
   int rightsquarebracket = 42;
   int regex = 43;
   int tok = 44;
+  int LETTER = 45;
+  int DIGIT = 46;
 
   int DEFAULT = 0;
   int IN_STRING = 1;
@@ -82,6 +84,8 @@ public interface QueryParserConstants {
     "\"]\"",
     "\"REGEX\"",
     "<tok>",
+    "<LETTER>",
+    "<DIGIT>",
   };
 
 }
