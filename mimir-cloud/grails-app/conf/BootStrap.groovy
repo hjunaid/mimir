@@ -16,6 +16,8 @@ import gate.mimir.security.Role;
 import gate.mimir.security.User;
 import gate.mimir.security.UserRole;
 
+import grails.util.Holders
+
 class BootStrap {
 
   def springSecurityService
