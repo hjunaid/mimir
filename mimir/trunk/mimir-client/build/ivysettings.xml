@@ -12,7 +12,7 @@
       <ibiblio name="gate.ac.uk" m2compatible="true" 
         root="http://repo.gate.ac.uk/content/groups/public/" />
       <ibiblio name="local-m2-resolve" m2compatible="true"
-        root="file://${user.home}/.m2/repository" changingPattern=".*SNAPSHOT" />
+        root="${m2.repository.url}" changingPattern=".*SNAPSHOT" />
     </chain>
   </resolvers>
 </ivysettings>
