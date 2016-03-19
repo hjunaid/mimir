@@ -21,6 +21,7 @@
   <property name="build.dir" location="build" />
   
   <target name="depend">
+    <makeurl file="${user.home}/.m2/repository" property="m2.repository.url"/>
     <ivy:configure file="${build.dir}/ivysettings.xml"/>
     <ivy:resolve file="${build.dir}/ivy.xml"  log="quiet"/>
     <ivy:cachepath pathid="ivylibs"/>
