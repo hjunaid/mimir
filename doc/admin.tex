@@ -80,9 +80,17 @@ While we include this application as an example of a fully-fledged Grails
 application using the {\tt mimir-web} plugin, you may need to modify it slightly
 to make it mode suitable to your actual usage scenario.
 
+\subsection{Binary Distribution}
+
+Starting with version 5.2, a pre-built WAR of {\tt mimir-cloud} is available
+for download from \url{https://sourceforge.net/projects/gate/files/}.  This can
+be run using any standard Java servlet container, such as Tomcat or Jetty.  WAR
+files for nightly snapshot builds can be downloaded from
+\url{http://jenkins.gate.ac.uk/job/GATEMimir-Nightly/}.
+
 \subsection{Prerequisites}
 
-To build the \Mimir\ web application you will need:
+To build your own \Mimir\ web application you will need:
 \begin{itemize}
 \item A Java 7 or later JDK.  \Mimir\ has been tested with the Sun/Oracle and OpenJDK
   JVMs on Linux and Mac OS X.
@@ -122,7 +130,7 @@ and run the following {\tt ant} commands in this order:
 \end{enumerate}
 
 The next step is to configure the {\tt mimir-cloud} web application, and is
-described in the following Section.
+described in the following section.
 
 \subsection{Configuring}\label{sec:admin:config}
 
@@ -132,6 +140,13 @@ This file contains a number of settings that affect the running of the \Mimir\
 components. In many cases the default options will be sufficient, but you should
 nevertheless check the configuration and make sure it is appropriate for your
 needs.
+
+You can modify the {\tt MimirConfig.groovy} file directly, or you can use the
+``external configuration'' mechanism in Grails to override these settings at
+runtime.  The {\tt MimirConfig.groovy} settings are merged into the main Grails
+configuration with the prefix {\tt gate.mimir}, so for example to override the
+{\tt queryTokeniserGapp} setting you would set
+{\tt gate.mimir.queryTokeniserGapp = "..."} in the external configuration.
 
 \begin{lstlisting}
 gateInit {
@@ -262,16 +277,19 @@ configuration'' mechanism:
 \item {\tt mimir-config.groovy} in the working directory of the Java process.
 \end{itemize}
 
-Any values in these files override values specified in {\tt MimirConfig.groovy}
-or the main application {\tt Config.groovy}.  For production deployments, you
-should be sure to specify the public URL of your \Mimir\ server in one of these
-configuration files.  For example:
+As described above, any values in these files override values specified in
+{\tt MimirConfig.groovy} or the main application {\tt Config.groovy}.  For
+production deployments, you should be sure to specify the public URL of your
+\Mimir\ server in one of these configuration files.  For example:
 \begin{lstlisting}[texcl]
 gate.mimir.indexBaseDirectory = "/data/mimir/indexes"
 grails.serverURL = "http://example.com/mimir"
 // or just http://example.com if you have deployed \Mimir
 // as the ROOT web application
 \end{lstlisting}
+
+Note the {\tt gate.mimir} prefix when overriding {\tt MimirConfig.groovy}
+settings.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Indexes in \Mimir}
