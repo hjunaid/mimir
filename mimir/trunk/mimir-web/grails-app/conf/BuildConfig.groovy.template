@@ -28,8 +28,8 @@ grails.project.dependency.resolution = {
       
       // bring in mimir-core and mimir-client from local m2 repository - this will
       // bring GATE and MG4J as transitive dependencies
-      compile("uk.ac.gate:mimir-core:5.2-SNAPSHOT",
-              "uk.ac.gate:mimir-client:5.2-SNAPSHOT")
+      compile("uk.ac.gate:mimir-core:@version@",
+              "uk.ac.gate:mimir-client:@version@")
     
       // We must use the same version of Ant as the one provided by Grails
       // For Grails 2.5, this is Ant 1.9.4

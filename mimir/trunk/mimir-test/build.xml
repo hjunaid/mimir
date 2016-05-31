@@ -116,11 +116,13 @@
         <pathelement location="${classes.dir}" />
         <path refid="compile.classpath" />
       </classpath>
+        <sysproperty key="gate.home" value="/Users/ian/svn/gate" />
     	<sysproperty key="helpers.to.test" value="${helpers.to.test}" />
         <!--<sysproperty key="keepTestIndex" value="true" />-->
       <formatter type="xml" />
       <batchtest>
-        <fileset dir="${src.dir}" includes="**/*Tests.java" />
+<!--        <fileset dir="${src.dir}" includes="**/*Tests.java" />-->
+        <fileset dir="${src.dir}" includes="**/TestQueryParser.java" />
       </batchtest>
     </junit>
   </target>

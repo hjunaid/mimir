@@ -23,6 +23,8 @@ import gate.Gate;
 import gate.mimir.search.query.parser.QueryParser;
 import gate.util.GateException;
 
+import java.io.File;
+
 /**
  * A JUnit test class for testing the query parser.
  * 
@@ -37,7 +39,8 @@ public class TestQueryParser {
     logger.debug("Initializing gate for query tests");
     try {
       Gate.init();
-    } catch(GateException e) {
+      Gate.getCreoleRegister().registerDirectories(new File(Gate.getPluginsHome(), "ANNIE").toURI().toURL());
+    } catch(Exception e) {
       fail("Gate initialization failed!");
     }
   }
@@ -69,6 +72,12 @@ public class TestQueryParser {
   @Test
   public void testBareTokens() {
     String query = "15 September 2007";
+    executeParsing(query);
+  }
+
+  @Test
+  public void testNonAsciiTokens() {
+    String query = "Thîs ís à teßt €12 and 23¢";
     executeParsing(query);
   }
   
@@ -143,7 +152,7 @@ public class TestQueryParser {
     try {
       QueryParser.parse(query);
     } catch(Exception e) {
-      logger.debug(e.getMessage());
+      e.printStackTrace();
       fail();
     }
   }
