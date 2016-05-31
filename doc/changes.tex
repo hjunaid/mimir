@@ -1,10 +1,15 @@
 This appendix details the main changes in each \Mimir\ release.
 
-\section{Version 5.2-SNAPSHOT}
+\section{Version 5.2 (June 2016)}
 \begin{itemize}
+\item Now depends on GATE Embedded 8.2.
 \item The Grails plugin and \verb!mimir-cloud! application have been upgraded
   to Grails 2.5.4 for better compatibility with Java 8.  Note that the plugin
   and app will \emph{not} work with Grails 3.
+\item The query language can now handle non-ASCII characters in unquoted
+  strings.
+\item The \Mimir{} indexing PR is now much more efficient, able to send more
+  than one document in each HTTP call.
 \end{itemize}
 
 \section{Version 5.1 (June 2015)}
