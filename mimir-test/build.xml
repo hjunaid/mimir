@@ -9,6 +9,7 @@
 	
 	<property name="core-home" location="../${mimir-core.dirname}"/>
 	<property name="client-home" location="../${mimir-client.dirname}"/>
+        <property name="gate.home" location="../../gate" />
 	
   <!-- Load Ivy support -->
   <property name="build.dir" location="${core-home}/build" />
@@ -116,7 +117,7 @@
         <pathelement location="${classes.dir}" />
         <path refid="compile.classpath" />
       </classpath>
-        <sysproperty key="gate.home" value="/Users/ian/svn/gate" />
+        <sysproperty key="gate.home" value="${gate.home}" />
     	<sysproperty key="helpers.to.test" value="${helpers.to.test}" />
         <!--<sysproperty key="keepTestIndex" value="true" />-->
       <formatter type="xml" />
