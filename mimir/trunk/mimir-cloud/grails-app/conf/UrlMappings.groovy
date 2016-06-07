@@ -12,6 +12,6 @@ class UrlMappings {
     "/login/$action?"(controller: "login")
     "/logout/$action?"(controller: "logout")
 
-    "/_gcn_active" (view:'/status')
+    "/_gcn_active.html" (view:'/WEB-INF/grails-app/views/status.jsp')
   }
 }
