@@ -17,6 +17,6 @@
   </publications>
 
   <dependencies defaultconf="*->master(default),runtime(default)" >
-    <dependency name="mimir-core" org="uk.ac.gate" rev="5.2-SNAPSHOT" />
+    <dependency name="mimir-core" org="uk.ac.gate" rev="5.3-SNAPSHOT" />
   </dependencies>
 </ivy-module>
