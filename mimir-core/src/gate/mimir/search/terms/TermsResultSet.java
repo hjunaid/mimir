@@ -296,7 +296,7 @@ public class TermsResultSet implements Serializable {
         // we use the term position instead
         // newStrings[pos] = Integer.toString(pos);
         Set<String> uniq = new HashSet<String>();
-        for(String[] terms : tData.getStrings()) {
+        for(String[] terms : originalTermStrings[pos]) {
           for(String term : terms) {
             uniq.add(term);
           }
@@ -370,7 +370,11 @@ public class TermsResultSet implements Serializable {
     public String[][] getStrings() {
       String[][] res = new String[strings.length][];
       for(int i = 0; i < strings.length; i++) {
-        res[i] = strings[i].toArray(new String[strings[i].size()]);
+        if(strings[i] == null) {
+          res[i] = new String[0];
+        } else {
+          res[i] = strings[i].toArray(new String[strings[i].size()]);
+        }
       }
       return res;
     }
