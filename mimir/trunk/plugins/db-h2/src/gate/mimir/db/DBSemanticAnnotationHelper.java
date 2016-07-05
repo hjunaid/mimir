@@ -231,6 +231,11 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   private static final long serialVersionUID = 2734946594117068194L;
 
   /**
+   * Empty array to return when there are no mention URIs.
+   */
+  private static final String[] EMPTY_STRING_ARRAY = new String[0];
+
+  /**
    * The directory name for the database data (relative to the top level index
    * directory).
    */
@@ -274,6 +279,34 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
   protected int level1CacheSize = -1;
   protected int level2CacheSize = -1;
   protected int level3CacheSize = -1;
+
+  /**
+   * Should we index "null" instances where all the configured features are
+   * null or missing?  Normally this would be true for a normal annotation-mode
+   * helper but false for a document-mode helper.
+   */
+  protected boolean indexNulls = true;
+
+  /**
+   * Should this helper index "null" instances, where none of the configured
+   * features has a value set in the target (annotation or document) feature
+   * map?  Default is true, both for backwards compatibility and because this
+   * is the only value that makes sense for normal annotation-mode helpers, but
+   * it may be useful to set it to false for document-mode helpers where not
+   * every document has the target feature(s).
+   */
+  public void setIndexNulls(boolean indexNulls) {
+    this.indexNulls = indexNulls;
+  }
+
+  /**
+   * Should this helper index "null" instances, where none of the configured
+   * features has a value set in the target (annotation or document) feature
+   * map?
+   */
+  public boolean isIndexNulls() {
+    return indexNulls;
+  }
   
   /**
    * Prepared statement used to obtain the Level-1 ID based on the values of 
@@ -326,13 +359,11 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
 
   /**
    * The set of feature names for all the nominal features. 
-   * Only used at search time.
    */
   protected transient Set<String> nominalFeatureNameSet;  
   
   /**
    * The set of feature names for all the non-nominal features. 
-   * Only used at search time.
    */
   protected transient Set<String> nonNominalFeatureNameSet;
   
@@ -707,6 +738,31 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     } else {
       featuresToIndex = ann.getFeatures();
     }
+
+    if(!indexNulls) {
+      // we don't want to index instances where all the features are null, so
+      // check to see whether this is the case
+      boolean allFeaturesNull = true;
+      shortCircuit:do {
+        for(String featureName : nominalFeatureNameSet) {
+          if(featuresToIndex.get(featureName) != null) {
+            allFeaturesNull = false;
+            break shortCircuit;
+          }
+        }
+        for(String featureName : nonNominalFeatureNameSet) {
+          if(featuresToIndex.get(featureName) != null) {
+            allFeaturesNull = false;
+            break shortCircuit;
+          }
+        }
+      } while(false);
+
+      // no value found for any of the features, so drop this instance
+      if(allFeaturesNull) {
+        return EMPTY_STRING_ARRAY;
+      }
+    }
     
     try {
       // find the level 1 ID
@@ -740,7 +796,7 @@ public class DBSemanticAnnotationHelper extends AbstractSemanticAnnotationHelper
     } catch(Exception e) {
       // something went bad: we can't fix it :(
       logger.error("Error while interogating database. Annotation was lost!", e);
-      return new String[]{};
+      return EMPTY_STRING_ARRAY;
     }
   }
 
