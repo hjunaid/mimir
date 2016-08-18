@@ -1461,7 +1461,7 @@ public abstract class AtomicIndex implements Runnable {
 	 * @throws InterruptedException if this thread is interrupted while trying to
 	 * queue the dump request.
 	 */
-	public synchronized Future<Long> requestSyncToDisk() throws InterruptedException {
+	public Future<Long> requestSyncToDisk() throws InterruptedException {
 	  if(batchWriteTask == null) {
 	    batchWriteTask = new FutureTask<Long>(new Callable<Long>() {
         @Override
@@ -1483,7 +1483,7 @@ public abstract class AtomicIndex implements Runnable {
 	 * @throws InterruptedException if this thread is interrupted while trying to
    * queue the compaction request.
 	 */
-  public synchronized Future<Void> requestCompactIndex() throws InterruptedException {
+  public Future<Void> requestCompactIndex() throws InterruptedException {
     if(compactIndexTask == null) {
       compactIndexTask = new FutureTask<Void>(new Callable<Void>(){
         @Override
@@ -1596,17 +1596,13 @@ public abstract class AtomicIndex implements Runnable {
               if(batchWriteTask != null){
                 batchWriteTask.run();
               }
-              synchronized(this) {
-                batchWriteTask = null;
-              }
+              batchWriteTask = null;
             } else if(aDocument == COMPACT_INDEX) {
               // compress index was requested
               if(compactIndexTask != null) {
                 compactIndexTask.run();
               }
-              synchronized(this) {
-                compactIndexTask = null;
-              }
+              compactIndexTask = null;
             } else {
               try {
                 long occurencesBefore = occurrencesInRAM;
