@@ -590,6 +590,7 @@ public class TruncateIndex {
               docPointers.add(curPointer);
               counts.add(iter.count());
               IntArrayList thisDocPositions = new IntArrayList(iter.count());
+              positions.add(thisDocPositions);
               occurrences += iter.count();
               totalOccurrences += iter.count();
               if(iter.count() > maxCount) {
