@@ -14,6 +14,7 @@
  */
 package gate.mimir.util;
 
+import gate.Gate;
 import gate.mimir.IndexConfig;
 import gate.mimir.IndexConfig.SemanticIndexerConfig;
 import gate.mimir.IndexConfig.TokenIndexerConfig;
@@ -159,7 +160,14 @@ public class TruncateIndex {
   };
 
   public static void main(String... args) throws Exception {
-    truncateIndex(new File(args[0]));
+    Gate.runInSandbox(true);
+    Gate.init();
+    int i = 0;
+    while(i < args.length && "-p".equals(args[i])) {
+      Gate.getCreoleRegister().registerDirectories(new File(args[++i]).toURI().toURL());
+      i++;
+    }
+    truncateIndex(new File(args[i]));
   }
 
   /**
