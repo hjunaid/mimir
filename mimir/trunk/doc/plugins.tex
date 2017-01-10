@@ -33,7 +33,14 @@ semanticAnnotations = {
 
 The supported constructor arguments are:
 \bde
-\item[annType:] the annotation type which the helper is to process.
+\item[mode:] whether to index actual GATE annotations and their features, or to
+  index a single ``virtual'' annotation spanning the whole document from
+  document-level features.  The value must be either \verb!Mode.ANNOTATION!
+  (the default) or \verb!Mode.DOCUMENT!, where \verb!Mode! is the enum type
+  \verb!gate.mimir.SemanticAnnotationHelper.Mode!
+\item[annType:] the annotation type which the helper is to process, or for
+  document-mode helpers, the ``virtual'' annotation type under which the
+  specified features will be indexed.
 \item[nominalFeatures:] the names of the features to be indexed that have
   nominal values. An annotation feature is said be nominal if the range of
   possible values is clearly defined and limited in size. There is no hard rule
@@ -50,6 +57,13 @@ The supported constructor arguments are:
   possible values).
 \item[uriFeatures:] the names of the features to be indexed that have
   URIs as values.
+\item[indexNulls:] (boolean, defaults to \verb!true!) if this is set to false
+  then instances that have no values for {\em any} of the specified features
+  will not be indexed at all.  This is something that generally only makes
+  sense for document-mode helpers, when you want to index a feature that is
+  only present on some documents.  Setting \verb!indexNulls:false! allows you
+  to use \verb!OVER {AnnType}! queries to restrict searches to only the
+  documents that have that feature.
 \ede
 
 The DB-based helper does not distinguish between text- and URI-valued features,
