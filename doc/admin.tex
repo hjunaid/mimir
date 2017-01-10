@@ -311,7 +311,9 @@ answer queries. During various operations they may temporarilly be in a
 different state, such as {\em closing} while the index is being shut down,
 typically because the \Mimir{} server is itself being shut down. Sometimes a
 local index is {\em failed}, indicating a problem with the index.  Typically a
-failed index will need to be deleted by the administrator.
+failed index will need to be deleted by the administrator, though it may be
+possible to recover most of the data using the index repair tool (see
+section~\ref{sec:tools:repair}).
 
 Remote indexes inherit their state from the remote server, and federated indexes
 inherit their state by combining the states of their component indexes.
