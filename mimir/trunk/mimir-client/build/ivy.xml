@@ -3,7 +3,7 @@
   <info
     organisation="uk.ac.gate"
     module="mimir-client"
-    revision="5.3-SNAPSHOT">
+    revision="5.4-SNAPSHOT">
     <description homepage="http://gate.ac.uk/mimir" />
   </info>
 
@@ -17,6 +17,6 @@
   </publications>
 
   <dependencies defaultconf="*->master(default),runtime(default)" >
-    <dependency name="mimir-core" org="uk.ac.gate" rev="5.3-SNAPSHOT" />
+    <dependency name="mimir-core" org="uk.ac.gate" rev="5.4-SNAPSHOT" />
   </dependencies>
 </ivy-module>
