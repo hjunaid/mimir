@@ -116,7 +116,7 @@ class RemoteIndex extends Index {
    */
   DocumentData getDocumentData(long documentID) {
     String urlStr = (remoteUrl.endsWith("/") ? remoteUrl : (remoteUrl + "/")) +
-        "/search/documentDataBin";
+        "search/documentDataBin";
     return (DocumentData)webUtilsManager.currentWebUtils(this).getObject(
           urlStr,  "documentId", Long.toString(documentID));
   }
