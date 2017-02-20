@@ -1246,13 +1246,23 @@ public abstract class AtomicIndex implements Runnable {
       throw new IndexException("Error while saving tail properties", e);
     }
     //update the index-wide direct terms file
+    File newDirectTermsFile = new File(indexDirectory, DIRECT_TERMS_FILENAME + HEAD_NEW_EXT);
     pw = new PrintWriter(new OutputStreamWriter(new FastBufferedOutputStream(
-        new FileOutputStream(new File(indexDirectory, DIRECT_TERMS_FILENAME)),
-        64 * 1024), "UTF-8" ));
+        new FileOutputStream(newDirectTermsFile), 64 * 1024), "UTF-8" ));
     for (String t : directTerms ) {
       pw.println(t);
     }
     pw.close();
+
+    File directTermsFile = new File(indexDirectory, DIRECT_TERMS_FILENAME);
+    File oldDirectTermsFile = new File(indexDirectory, DIRECT_TERMS_FILENAME + HEAD_OLD_EXT);
+    if(!directTermsFile.exists() || directTermsFile.renameTo(oldDirectTermsFile)) {
+      if(newDirectTermsFile.renameTo(directTermsFile)) {
+        oldDirectTermsFile.delete();
+      } else {
+        throw new IndexException("Unable to save direct terms file");
+      }
+    }
   }
 	
 	
