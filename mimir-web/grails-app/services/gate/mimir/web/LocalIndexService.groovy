@@ -86,6 +86,12 @@ class LocalIndexService {
     def indexConfig = GroovyIndexConfigParser.createIndexConfig(
         templ.configuration, new File(index.indexDirectory))
     MimirIndex theIndex = new MimirIndex(indexConfig)
+    // set up the query engine
+    QueryEngine engine = theIndex.getQueryEngine()
+    engine.queryTokeniser = queryTokeniser
+    engine.executor = searchThreadPool
+    engine.setSubBindingsEnabled(index.subBindingsEnabled?:false)
+
     indexes[index.id] = theIndex
     return theIndex
   }
