@@ -1,5 +1,23 @@
 This appendix details the main changes in each \Mimir\ release.
 
+\section{Version 5.4 (February 2017)}
+\begin{itemize}
+\item Now depends on GATE Embedded 8.4.
+\item A few critical bug fixes:
+  \begin{itemize}
+  \item Fixed a bug that prevented fetching of results when querying a remote
+    index through the XML search API
+  \item Set the proper query tokeniser and executor when creating a brand new
+    index from an index template -- previously these were only being set for
+    existing indexes opened from disk.
+  \end{itemize}
+\item Robustness improvements to make it more likely that an index which was
+  not closed properly (e.g. if \Mimir\ was killed due to low memory conditions)
+  will be recoverable.  There were previously a couple of critical points where
+  a crash would leave the index in a state where it could not be recovered even
+  with the use of the repair tool.
+\end{itemize}
+
 \section{Version 5.3 (January 2017)}
 \begin{itemize}
 \item Now depends on GATE Embedded 8.3.
