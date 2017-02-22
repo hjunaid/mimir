@@ -191,7 +191,7 @@ public class TermQuery implements QueryNode {
       if(closed) return;
       super.close();
       indexIterator = null;
-      indexReader.close();
+      if(indexReader != null) indexReader.close();
 //      atomicIndex.returnReader(indexReader);
     }
 
