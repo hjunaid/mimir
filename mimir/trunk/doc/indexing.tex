@@ -247,6 +247,23 @@ In this case, direct indexes will be built for the {\tt string} and {\tt
 category} features of \verb!{Token}! annotations, but not for the {\tt root}
 feature.
 
+When building a direct index for a feature that is not present on every token,
+tokens that do not have the feature will be reported as ``null'' in terms query
+result sets.  In many cases this is not desirable (for example if only a small
+minority of tokens have the feature, the nulls will swamp the real values when
+calculating statistics), and for these situations \Mimir\ offers a custom MG4J
+term processor that will omit entirely any token where the feature is missing
+or empty.  You can configure this using
+\begin{lstlisting}[texcl]
+import gate.mimir.util.IgnoreEmptiesTermProcessor
+
+tokenFeatures = {
+  featureName(directIndex:true,
+      termProcessor:IgnoreEmptiesTermProcessor.INSTANCE)
+  // $\ldots$
+}
+\end{lstlisting}
+
 In the case of semantic annotations, direct indexes are enabled in a similar
 fashion:
 \begin{lstlisting}
