@@ -17,6 +17,8 @@
   </publications>
 
   <dependencies defaultconf="*->master(default),runtime(default)" >
-    <dependency name="mimir-core" org="uk.ac.gate" rev="5.4-SNAPSHOT" />
+    <dependency name="mimir-core" org="uk.ac.gate" rev="5.5-SNAPSHOT" />
+    <dependency org="org.apache.httpcomponents" name="httpcore" rev="4.4.6"/>
+    <dependency org="org.apache.httpcomponents" name="httpclient" rev="4.5.3"/>
   </dependencies>
 </ivy-module>
