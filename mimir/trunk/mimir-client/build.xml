@@ -53,8 +53,8 @@
     <javac destdir="${classes.dir}"
            srcdir="${src.dir}"
            debug="true"
-           target="1.7"
-           source="1.7"
+           target="1.8"
+           source="1.8"
     	     encoding="UTF-8"
            classpathref="compile.classpath" />
   </target>
@@ -83,7 +83,7 @@
              Windowtitle="${app.title} (${app.version}) JavaDoc"
              docencoding="UTF-8"
              charset="UTF-8"
-             source="1.7"
+             source="1.8"
              useexternalfile="yes"
              breakiterator="true">
       <fileset dir="${src.dir}" includes="**/*.java"/>
