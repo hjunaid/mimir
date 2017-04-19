@@ -243,4 +243,11 @@ public abstract class AbstractOverlapQuery implements QueryNode{
    */  
   protected QueryNode outerQuery;
 
+  public QueryNode getInnerQuery() {
+    return innerQuery;
+  }
+
+  public QueryNode getOuterQuery() {
+    return outerQuery;
+  }
 }

@@ -475,4 +475,11 @@ public class TermQuery implements QueryNode {
         ":" + term + ")";
   }
 
+  public IndexType getIndexType() {
+    return indexType;
+  }
+
+  public int getLength() {
+    return length;
+  }
 }
