@@ -81,7 +81,14 @@ public class SequenceQuery implements QueryNode {
       else if(end > start + max + 1) return 1;
       else return 0;
     }
-    
+
+    public int getMin() {
+      return min;
+    }
+
+    public int getMax() {
+      return max;
+    }
   }
   
   public static class SequenceQueryExecutor extends AbstractIntersectionQueryExecutor{
@@ -630,6 +637,10 @@ public class SequenceQuery implements QueryNode {
     }
     str.append(")");
     return str.toString();
+  }
+
+  public Gap[] getGaps() {
+    return gaps;
   }
 
 }

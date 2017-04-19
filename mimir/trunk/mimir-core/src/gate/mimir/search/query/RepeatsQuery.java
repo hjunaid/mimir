@@ -334,4 +334,15 @@ public class RepeatsQuery implements QueryNode {
         max + "])";
   }
 
+  public int getMin() {
+    return min;
+  }
+
+  public int getMax() {
+    return max;
+  }
+
+  public QueryNode getWrappedQuery() {
+    return wrappedQuery;
+  }
 }

@@ -170,4 +170,12 @@ public class MinusQuery implements QueryNode {
     return "MINUS (\nLEFT:" + left.toString() + ",\nRIGHT:" + 
         right.toString() +"\n)";
   }
+
+  public QueryNode getLeft() {
+    return left;
+  }
+
+  public QueryNode getRight() {
+    return right;
+  }
 }
